@@ -18,7 +18,7 @@
         "**/__pycache__": true,
         "**/*.egg-info": true
     },
-    "python.pythonPath": "/home/alex/Projects/arlunio/.env/bin/python3",
+    "python.pythonPath": ".env/bin/python3",
     "python.formatting.provider": "black",
     "restructuredtext.confPath": "${workspaceFolder}/lib/esbonio/docs"
 }
