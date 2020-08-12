@@ -1,0 +1,24 @@
+{
+    "[restructuredtext]": {
+        "editor.tabSize": 3,
+        "editor.rulers": [
+            80
+        ]
+    },
+    "files.associations": {
+        "setup.cfg": "ini"
+    },
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/.pyc": true,
+        "**/__pycache__": true,
+        "**/*.egg-info": true
+    },
+    "python.pythonPath": "/home/alex/Projects/arlunio/.env/bin/python3",
+    "python.formatting.provider": "black",
+    "restructuredtext.confPath": "${workspaceFolder}/lib/esbonio/docs"
+}
