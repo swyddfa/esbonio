@@ -1,0 +1,69 @@
+{
+    "scopeName": "source.rst",
+    "patterns": [
+        {
+            "include": "#body-element"
+        }
+    ],
+    "repository": {
+        "body-element": {
+            "patterns": [
+                {
+                    "include": "#section"
+                },
+                {
+                    "include": "#directive"
+                },
+                {
+                    "include": "#comment"
+                },
+                {
+                    "include": "#role"
+                }
+            ]
+        },
+        "comment": {
+            "match": "\\.\\..[^:]+",
+            "name": "comment.line"
+        },
+        "directive": {
+            "match": "\\.\\.\\s+(\\w+)::",
+            "captures": {
+                "1": {
+                    "name": "entity.name.type"
+                }
+            }
+        },
+        "role": {
+            "name": "meta.role.rst",
+            "begin": ":(\\w+):`",
+            "end": "`",
+            "beginCaptures": {
+                "1": {
+                    "name": "keyword.letter"
+                }
+            },
+            "patterns": [
+                {
+                    "match": "([^`]+)<(.*)>",
+                    "captures": {
+                        "1": {
+                            "name": "string"
+                        },
+                        "2": {
+                            "name": "entity.name.function"
+                        }
+                    }
+                },
+                {
+                    "match": "[^`]+",
+                    "name": "string"
+                }
+            ]
+        },
+        "section": {
+            "match": "^[=-]+",
+            "name": "keyword.control"
+        }
+    }
+}
