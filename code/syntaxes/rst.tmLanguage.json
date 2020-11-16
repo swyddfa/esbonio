@@ -12,33 +12,63 @@
                     "include": "#section"
                 },
                 {
-                    "include": "#directives"
+                    "include": "#field-list"
+                },
+                {
+                    "include": "#directive"
                 },
                 {
                     "include": "#comment"
                 },
                 {
-                    "include": "#role"
+                    "include": "#inline-element"
                 }
             ]
+        },
+        "inline-element": {
+            "patterns": [
+                {
+                    "include": "#role"
+                },
+                {
+                    "include": "#bold"
+                },
+                {
+                    "include": "#italic"
+                }
+            ]
+        },
+        "section": {
+            "match": "^[=-]+",
+            "name": "keyword.control"
         },
         "comment": {
             "begin": "(\\s*)\\.\\.[ ]",
             "end": "^(?!\\1\\s+)(?!\\s*$)",
             "name": "comment.line"
         },
-        "directives": {
+        "field-list": {
+            "begin": "(\\s*):([\\w-]+):[ ]?",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.type"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "field.list"
+        },
+        "directive": {
             "name": "meta.directive.rst",
             "patterns": [
                 {
-                    "include": "#code-block-directive"
+                    "include": "#python-code-block"
                 },
                 {
                     "include": "#generic-directive"
                 }
             ]
         },
-        "code-block-directive": {
+        "python-code-block": {
             "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+python",
             "beginCaptures": {
                 "2": {
@@ -54,16 +84,23 @@
             ]
         },
         "generic-directive": {
-            "match": "\\.\\.\\s+(\\w+)::",
-            "captures": {
-                "1": {
+            "begin": "(\\s*)\\.\\.\\s+([\\w-]+)::.*",
+            "beginCaptures": {
+                "2": {
                     "name": "entity.name.type"
                 }
-            }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "block.directive",
+            "patterns": [
+                {
+                    "include": "#body-element"
+                }
+            ]
         },
         "role": {
             "name": "meta.role.rst",
-            "begin": ":(\\w+):`",
+            "begin": ":([\\w-]+):`",
             "end": "`",
             "beginCaptures": {
                 "1": {
@@ -88,9 +125,13 @@
                 }
             ]
         },
-        "section": {
-            "match": "^[=-]+",
-            "name": "keyword.control"
+        "bold": {
+            "match": "\\*\\*.*\\*\\*",
+            "name": "markup.bold"
+        },
+        "italic": {
+            "match": "\\*.*\\*",
+            "name": "markup.italic"
         },
         "python-code": {
             "begin": "(\\s*)",
