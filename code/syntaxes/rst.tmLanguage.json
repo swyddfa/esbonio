@@ -12,7 +12,7 @@
                     "include": "#section"
                 },
                 {
-                    "include": "#directive"
+                    "include": "#directives"
                 },
                 {
                     "include": "#comment"
@@ -23,10 +23,37 @@
             ]
         },
         "comment": {
-            "match": "\\.\\..[^:]+",
+            "begin": "(\\s*)\\.\\.[ ]",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
             "name": "comment.line"
         },
-        "directive": {
+        "directives": {
+            "name": "meta.directive.rst",
+            "patterns": [
+                {
+                    "include": "#code-block-directive"
+                },
+                {
+                    "include": "#generic-directive"
+                }
+            ]
+        },
+        "code-block-directive": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+python",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.type"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "code.block.directive",
+            "patterns": [
+                {
+                    "include": "#python-code"
+                }
+            ]
+        },
+        "generic-directive": {
             "match": "\\.\\.\\s+(\\w+)::",
             "captures": {
                 "1": {
@@ -64,6 +91,16 @@
         "section": {
             "match": "^[=-]+",
             "name": "keyword.control"
+        },
+        "python-code": {
+            "begin": "(\\s*)",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "source.python",
+            "patterns": [
+                {
+                    "include": "source.python"
+                }
+            ]
         }
     }
 }

@@ -40,7 +40,10 @@
             {
                 "language": "rst",
                 "scopeName": "source.rst",
-                "path": "./syntaxes/rst.tmLanguage.json"
+                "path": "./syntaxes/rst.tmLanguage.json",
+                "embeddedLanguages": {
+                    "source.python": "python"
+                }
             }
         ],
         "configuration": {
