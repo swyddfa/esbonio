@@ -1,14 +1,15 @@
-import { ExtensionContext } from "vscode";
+import { ExtensionContext, workspace } from "vscode";
 
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
 
 let client: LanguageClient
 
 export function activate(context: ExtensionContext) {
-    console.log('Launching server.')
+    let python = workspace.getConfiguration('esbonio.python').get<string>('path')
+    console.log("Python path is: " + python)
     let exe: Executable = {
-        command: 'python3',
-        args: ['/home/alex/Projects/esbonio/code/dist/test.py']
+        command: python,
+        args: ['-m', 'esbonio']
     }
     let serverOptions: ServerOptions = exe
 
