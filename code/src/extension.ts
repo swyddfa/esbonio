@@ -14,7 +14,7 @@ export function activate(context: ExtensionContext) {
     let serverOptions: ServerOptions = exe
 
     let clientOptions: LanguageClientOptions = {
-        documentSelector: [{ scheme: 'file', language: 'plaintext' }]
+        documentSelector: [{ scheme: 'file', language: 'rst' }]
     }
     client = new LanguageClient('esbonio', 'Esbonio', serverOptions, clientOptions)
     client.start()

@@ -11,5 +11,4 @@ logging.basicConfig(
     filename="/home/alex/Projects/esbonio/lib/esbonio/lsp.log",
 )
 
-server = lsp.RstLanguageServer()
-server.run()
+lsp.server.start_io()
