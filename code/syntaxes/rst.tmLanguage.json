@@ -18,6 +18,9 @@
                     "include": "#directive"
                 },
                 {
+                    "include": "#link-definition"
+                },
+                {
                     "include": "#comment"
                 },
                 {
@@ -35,6 +38,12 @@
                 },
                 {
                     "include": "#italic"
+                },
+                {
+                    "include": "#link-reference"
+                },
+                {
+                    "include": "#code"
                 }
             ]
         },
@@ -48,7 +57,7 @@
             "name": "comment.line"
         },
         "field-list": {
-            "begin": "(\\s*):([\\w-]+):[ ]?",
+            "begin": "(\\s*):([\\w-]+):([ ]|$)",
             "beginCaptures": {
                 "2": {
                     "name": "entity.name.type"
@@ -109,7 +118,7 @@
             },
             "patterns": [
                 {
-                    "match": "([^`]+)<(.*)>",
+                    "match": "([^`]+)(<.*>)",
                     "captures": {
                         "1": {
                             "name": "string"
@@ -132,6 +141,43 @@
         "italic": {
             "match": "\\*.*\\*",
             "name": "markup.italic"
+        },
+        "code": {
+            "match": "``.*``",
+            "name": "string"
+        },
+        "link-definition": {
+            "match": "\\.\\.\\s+(_.*:)\\s+(.*)$",
+            "captures": {
+                "1": {
+                    "name": "string"
+                },
+                "2": {
+                    "name": "entity.name.function"
+                }
+            }
+        },
+        "link-reference": {
+            "begin": "`(?!`)",
+            "name": "meta.link.rst",
+            "end": "`_",
+            "patterns": [
+                {
+                    "match": "([^`]+)(<.*>)",
+                    "captures": {
+                        "1": {
+                            "name": "string"
+                        },
+                        "2": {
+                            "name": "entity.name.function"
+                        }
+                    }
+                },
+                {
+                    "match": "[^`]+",
+                    "name": "string"
+                }
+            ]
         },
         "python-code": {
             "begin": "(\\s*)",
