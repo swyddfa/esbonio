@@ -1,6 +1,11 @@
+import inspect
+import importlib
 import logging
+import pathlib
+import re
 from typing import Dict, Optional
 
+import appdirs
 import docutils.parsers.rst.directives as directives
 import docutils.parsers.rst.roles as roles
 
@@ -11,6 +16,7 @@ from pygls.types import (
     CompletionItemKind,
     CompletionList,
     CompletionParams,
+    MessageType,
 )
 
 from sphinx.application import Sphinx
@@ -18,12 +24,26 @@ from sphinx.application import Sphinx
 
 def completion_from_directive(name, directive) -> CompletionItem:
     """Convert an rst directive to a completion item we can return to the client."""
-    return CompletionItem(name, kind=CompletionItemKind.Class)
+
+    # 'Core' docutils directives are listed as tuples (modulename, ClassName) so we
+    # have to go and look them up ourselves.
+    if isinstance(directive, tuple):
+        mod, cls = directive
+        module = importlib.import_module(f"docutils.parsers.rst.directives.{mod}")
+        directive = getattr(module, cls)
+
+    documentation = inspect.getdoc(directive)
+    return CompletionItem(
+        name,
+        kind=CompletionItemKind.Class,
+        detail="directive",
+        documentation=documentation,
+    )
 
 
 def completion_from_role(name, role) -> CompletionItem:
     """Convert an rst directive to a completion item we can return to the client."""
-    return CompletionItem(name, kind=CompletionItemKind.Function)
+    return CompletionItem(name, kind=CompletionItemKind.Function, detail="role")
 
 
 class RstLanguageServer(LanguageServer):
@@ -47,10 +67,24 @@ server = RstLanguageServer()
 @server.feature(INITIALIZED)
 def on_initialized(rst: RstLanguageServer, params):
     """Do set up once the initial handshake has been completed."""
-    rst.logger.debug(params)
-    rst.logger.debug(rst.workspace.root_uri)
+    rst.logger.debug("Workspace root %s", rst.workspace.root_uri)
 
-    # TODO: Create a Sphinx application instance based on the active project
+    root = pathlib.Path(rst.workspace.root_uri.replace("file://", ""))
+    candidates = list(root.glob("**/conf.py"))
+
+    if len(candidates) == 0:
+        rst.show_message(
+            "Unable to find your 'conf.py', features will be limited",
+            msg_type=MessageType.Warning,
+        )
+
+    else:
+        # TODO: #1 Multi root workspaces?
+        # TODO: Multi sphinx projects?
+        src = candidates[0].parent
+        rst.logger.debug("Found config dir %s", src)
+        build = appdirs.user_cache_dir("esbonio", "swyddfa")
+        rst.app = Sphinx(src, src, build, build, "html", status=None, warning=None)
 
     # Lookup the directives and roles that have been registered
     dirs = {**directives._directive_registry, **directives._directives}
@@ -58,6 +92,12 @@ def on_initialized(rst: RstLanguageServer, params):
 
     role_s = {**roles._roles, **roles._role_registry}
     rst.roles = {k: completion_from_role(k, v) for k, v in role_s.items()}
+
+
+import re
+
+NEW_DIRECTIVE = re.compile("\\s*\\.\\.\\s+([\\w-]+)?")
+NEW_ROLE = re.compile("(^|\\s+):([\\w-]+)?")
 
 
 @server.feature(COMPLETION, trigger_characters=["."])
@@ -68,4 +108,13 @@ def completions(rst: RstLanguageServer, params: CompletionParams):
     doc = rst.workspace.get_document(uri)
     line = doc.lines[pos.line]
 
-    return CompletionList(False, [*rst.roles.values(), *rst.directives.values()])
+    if NEW_DIRECTIVE.match(line):
+        candidates = list(rst.directives.values())
+
+    elif NEW_ROLE.match(line):
+        candidates = list(rst.roles.values())
+
+    else:
+        candidates = [*rst.directives.values(), *rst.roles.values()]
+
+    return CompletionList(False, candidates)
