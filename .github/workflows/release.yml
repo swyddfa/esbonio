@@ -7,11 +7,13 @@ on:
     - develop
     paths:
     - 'code/**'
+    - '.github/workflows/release.yml'
   push:
     branches:
     - release
     paths:
     - 'code/**'
+    - '.github/workflows/release.yml'
 
 jobs:
   build:
