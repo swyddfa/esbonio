@@ -37,4 +37,4 @@ jobs:
         npm run deploy
       env:
         VSCE_PAT: ${{ secrets.VSCODE_PAT }}
-      if: success() && startsWith(github.ref, '/refs/heads/release')
+      if: success() && startsWith(github.ref, 'refs/heads/release')
