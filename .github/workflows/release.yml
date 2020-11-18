@@ -1,0 +1,35 @@
+name: Esbonio VSCode
+
+on:
+  pull_request:
+    branches:
+    - release
+    - develop
+    paths:
+    - 'code/**'
+  push:
+    branches:
+    - release
+    paths:
+    - 'code/**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: 'actions/checkout@v2'
+
+    - uses: 'actions/setup-node@v1'
+      with:
+        node-version: 12.x
+
+    - run: |
+        npm install
+        npm run compile
+      name: Build Extension
+
+    - name: 'Publish Extension'
+      run: npm run deploy
+      env:
+        VSCE_PAT: ${{ secrets.VSCODE_PAT }}
+      if: success() && startsWith(github.ref, '/refs/heads/release')
