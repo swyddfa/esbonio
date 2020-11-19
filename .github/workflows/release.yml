@@ -100,11 +100,11 @@ jobs:
     - run: |
         cd lib/esbonio
         python -m tox -e py`echo ${{ matrix.python-version }} | tr -d .`
-
       name: Test
 
     - name: Package
       run: |
+        cd lib/esbonio
         python -m tox -e pkg
       if: matrix.python-version == '3.8'
 
