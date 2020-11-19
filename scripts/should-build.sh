@@ -7,7 +7,7 @@ VSCODE="^code"
 PYTHON="^lib/esbonio"
 
 # Determine which files have changed
-files=$(git diff --name-only ${BASE}..HEAD)
+files=$(git diff --name-only ${BASE}..HEAD -- )
 echo -e "Files Changed:\n\n$files"
 
 case $1 in
