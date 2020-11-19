@@ -94,8 +94,22 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox
+        python -m pip install --upgrade tox bump2version
       name: Setup Environment
+
+    - run: |
+        cd lib/esbonio
+
+        version=$(grep '__version__' esbonio/_version.py | sed 's/"(.*)"/\1/')
+        build=$(echo $GITHUB_REF | sed -E 's/.*\/([0-9]+)\/.*/\1/')
+
+        echo "ref: ${GITHUB_REF}"
+        echo "Current Version: ${version}"
+        echo "Build number is ${build}"
+
+        python -m bump2version --new-version "${version}.dev${build}" dev
+      name: "Set Dev Version"
+      if: github.event_name == 'pull_request'
 
     - run: |
         cd lib/esbonio
@@ -106,6 +120,13 @@ jobs:
       run: |
         cd lib/esbonio
         python -m tox -e pkg
+      if: matrix.python-version == '3.8'
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: 'whl'
+        path: lib/esbonio/dist
       if: matrix.python-version == '3.8'
 
     - name: Publish
