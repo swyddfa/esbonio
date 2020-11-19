@@ -52,7 +52,7 @@ jobs:
   vscode:
     name: VSCode
     needs: trigger
-    if: ${{ trigger.outputs.vscode }}
+    if: ${{ needs.trigger.outputs.vscode }}
     runs-on: ubuntu-latest
     steps:
     - uses: 'actions/checkout@v2'
@@ -78,7 +78,7 @@ jobs:
   python:
     name: Python
     needs: trigger
-    if: ${{ trigger.outputs.python }}
+    if: ${{ needs.trigger.outputs.python }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
