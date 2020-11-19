@@ -23,7 +23,7 @@ case $1 in
         ;;
 esac
 
-changes=$(echo $files | grep -E ${PATTERN})
+changes=$(echo $files | grep -E "${PATTERN}")
 echo
 
 if [ -z "$changes" ]; then
