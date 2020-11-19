@@ -101,7 +101,7 @@ class NotebookTranslator(nodes.NodeVisitor):
     def append(self, text: str):
 
         if self.prefix is not None:
-            text = text.replace("\n", f"\n{self.prefix}")
+            text = text.replace("\n", "\n{}".format(self.prefix))
 
         self.current_cell.source += text
 
@@ -145,7 +145,7 @@ class NotebookTranslator(nodes.NodeVisitor):
 
         uri = pathlib.Path(node["uri"]).name
         fpath = pathlib.Path(RESOURCES, uri)
-        self.current_cell.source += f"\n![]({fpath})\n"
+        self.current_cell.source += "\n![]({})\n".format(fpath)
 
     def depart_image(self, node):
         pass
@@ -198,7 +198,7 @@ class NotebookTranslator(nodes.NodeVisitor):
 
     def depart_reference(self, node):
         url = node.attributes["refuri"]
-        self.current_cell.source += f"]({url})"
+        self.current_cell.source += "]({})".format(url)
 
     def visit_section(self, node):
         self.level += 1
@@ -236,7 +236,7 @@ class NotebookTranslator(nodes.NodeVisitor):
 
     def visit_title(self, node):
         title = "#" * self.level
-        self.append(f"{title} ")
+        self.append("{} ".format(title))
 
     def depart_title(self, node):
         self.append("\n")

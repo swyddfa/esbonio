@@ -29,7 +29,9 @@ def completion_from_directive(name, directive) -> CompletionItem:
     # have to go and look them up ourselves.
     if isinstance(directive, tuple):
         mod, cls = directive
-        module = importlib.import_module(f"docutils.parsers.rst.directives.{mod}")
+
+        modulename = "docutils.parsers.rst.directives.{}".format(mod)
+        module = importlib.import_module(modulename)
         directive = getattr(module, cls)
 
     documentation = inspect.getdoc(directive)
