@@ -52,7 +52,7 @@ jobs:
   vscode:
     name: VSCode
     needs: trigger
-    if: false
+    if: ${{ trigger.outputs.vscode }}
     runs-on: ubuntu-latest
     steps:
     - uses: 'actions/checkout@v2'
@@ -73,4 +73,35 @@ jobs:
         npm run deploy
       env:
         VSCE_PAT: ${{ secrets.VSCODE_PAT }}
+      if: success() && startsWith(github.ref, 'refs/heads/release')
+
+  python:
+    name: Python
+    needs: trigger
+    if: ${{ trigger.outputs.python }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - run: |
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade tox
+      name: Setup Environment
+
+    - run: |
+        cd lib/esbonio
+        python -m tox -e py38
+        python -m tox -e pkg
+      name: Test & Package
+
+    - name: Publish
+      run: |
+        cd lib/esbonio
+        python -m pip install twine
+        python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
       if: success() && startsWith(github.ref, 'refs/heads/release')
