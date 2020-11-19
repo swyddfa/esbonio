@@ -1,22 +1,57 @@
-name: Esbonio VSCode
+name: Esbonio
 
 on:
   pull_request:
     branches:
     - release
     - develop
-    paths:
-    - 'code/**'
-    - '.github/workflows/release.yml'
   push:
     branches:
     - release
-    paths:
-    - 'code/**'
-    - '.github/workflows/release.yml'
 
 jobs:
-  build:
+  # Simple job the checks to see which parts we actually have to build.
+  trigger:
+    name: Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      vscode: ${{steps.check-vscode.outputs.build}}
+      python: ${{steps.check-python.outputs.build}}
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - run: |
+        if [ -z "${BASE_REF}" ]; then
+          echo "BASE=HEAD^" >> $GITHUB_ENV
+        else
+          echo "BASE=origin/${BASE_REF}" >> $GITHUB_ENV
+        fi
+      name: Determine base
+      env:
+        BASE_REF: ${{ github.base_ref }}
+
+    - id: check-vscode
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh vscode
+      name: "Build VSCode?"
+
+    - id: check-python
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh python
+      name: "Build Python?"
+
+  vscode:
+    name: VSCode
+    needs: trigger
+    if: ${{ needs.trigger.outputs.vscode }}
     runs-on: ubuntu-latest
     steps:
     - uses: 'actions/checkout@v2'
@@ -37,4 +72,35 @@ jobs:
         npm run deploy
       env:
         VSCE_PAT: ${{ secrets.VSCODE_PAT }}
+      if: success() && startsWith(github.ref, 'refs/heads/release')
+
+  python:
+    name: Python
+    needs: trigger
+    if: ${{ needs.trigger.outputs.python }}
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - run: |
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade tox
+      name: Setup Environment
+
+    - run: |
+        cd lib/esbonio
+        python -m tox -e py38
+        python -m tox -e pkg
+      name: Test & Package
+
+    - name: Publish
+      run: |
+        cd lib/esbonio
+        python -m pip install twine
+        python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
       if: success() && startsWith(github.ref, 'refs/heads/release')

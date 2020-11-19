@@ -1,9 +1,10 @@
 .env
+.tox
 *.pyc
 *.egg-info
 *.log
 __pycache__
 _build
-
+build
 node_modules
 dist

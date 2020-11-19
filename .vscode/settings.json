@@ -1,5 +1,5 @@
 {
-    "[restructuredtext]": {
+    "[rst]": {
         "editor.tabSize": 3,
         "editor.rulers": [
             80
@@ -16,9 +16,9 @@
         "**/.DS_Store": true,
         "**/.pyc": true,
         "**/__pycache__": true,
-        "**/*.egg-info": true
+        "**/*.egg-info": true,
+        "**/.tox": true
     },
     "python.pythonPath": ".env/bin/python3",
     "python.formatting.provider": "black",
-    "restructuredtext.confPath": "${workspaceFolder}/lib/esbonio/docs"
 }
