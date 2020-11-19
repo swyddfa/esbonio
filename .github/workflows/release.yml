@@ -108,8 +108,37 @@ jobs:
         echo "Build number is ${build}"
 
         python -m bumpversion --new-version "${version}.dev${build}" dev
-      name: "Set Dev Version"
+      name: Set Dev Version
       if: matrix.python-version == '3.8' && github.event_name == 'pull_request'
+
+    - run: |
+
+        message=$(git log HEAD --pretty=format:'%s' | head -n 1 | tr '[:upper:]' '[:lower:]')
+        echo "Commit message: ${message}"
+
+        case $message in
+          major*)
+            KIND="major";;
+          minor*)
+            KIND="minor";;
+          *)
+            KIND="patch"
+        esac
+
+        python -m bumpversion ${KIND}
+        VERSION=$(grep '__version__' esbonio/_version.py | sed 's/.*"\(.*\)"/\1/')
+
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config user.name "github-actions[bot]"
+
+        git commit -am "New Release v${VERSION}"
+        git tag -a "v${VERSION}" -m "New Release v${VERSION}"
+
+        git push origin release
+        git push origin --tags
+
+      name: Set Release Version
+      if: matrix.python-version == '3.8' && github.event_name != 'pull_request'
 
     - run: |
         cd lib/esbonio
