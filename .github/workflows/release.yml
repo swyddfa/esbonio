@@ -19,6 +19,8 @@ jobs:
       python: ${{steps.check-python.outputs.build}}
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     - id: check-vscode
       run: |
