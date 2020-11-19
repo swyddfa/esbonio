@@ -3,7 +3,7 @@
 
 # File patterns to check for each component, if there's a match a build will be
 # triggered
-VSCODE="^code"
+VSCODE="code"
 PYTHON="lib/esbonio"
 
 # Determine which files have changed
