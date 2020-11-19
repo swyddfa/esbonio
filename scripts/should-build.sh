@@ -29,6 +29,8 @@ echo
 #echo $changes
 #echo
 
+rm changes
+
 if [ -z "$changes" ]; then
     echo "There is nothing to do."
 else
