@@ -75,16 +75,21 @@ jobs:
       if: success() && startsWith(github.ref, 'refs/heads/release')
 
   python:
-    name: Python
+    name: Python ${{ matrix.python-version }}
     needs: trigger
     if: ${{ needs.trigger.outputs.python }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v2
 
-    - uses: actions/setup-python@v1
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
       with:
-        python-version: 3.8
+        python-version: ${{ matrix.python-version }}
 
     - run: |
         python --version
@@ -94,13 +99,18 @@ jobs:
 
     - run: |
         cd lib/esbonio
-        python -m tox -e py38
+        python -m tox -e py`echo ${{ matrix.python-version }} | tr -d .`
+
+      name: Test
+
+    - name: Package
+      run: |
         python -m tox -e pkg
-      name: Test & Package
+      if: matrix.python-version == '3.8'
 
     - name: Publish
       run: |
         cd lib/esbonio
         python -m pip install twine
         python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
-      if: success() && startsWith(github.ref, 'refs/heads/release')
+      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
