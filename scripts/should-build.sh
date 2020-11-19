@@ -23,11 +23,10 @@ case $1 in
         ;;
 esac
 
-echo "Pattern: ${PATTERN}"
 changes=$(echo $files | grep -E "${PATTERN}")
 echo
-echo $changes
-echo
+#echo $changes
+#echo
 
 if [ -z "$changes" ]; then
     echo "There is nothing to do."

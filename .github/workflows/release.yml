@@ -46,7 +46,6 @@ jobs:
         echo ${BASE}
 
         ./scripts/should-build.sh python
-        exit 1
       name: "Build Python?"
 
   vscode:
