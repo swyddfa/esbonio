@@ -22,6 +22,16 @@ jobs:
       with:
         fetch-depth: 0
 
+    - run: |
+        if [ -z "${BASE_REF}" ]; then
+          echo "BASE=HEAD^" >> $GITHUB_ENV
+        else
+          echo "BASE=origin/${BASE_REF}" >> $GITHUB_ENV
+        fi
+      name: Determine base
+      env:
+        BASE_REF: ${{ github.base_ref }}
+
     - id: check-vscode
       run: |
         set -e
@@ -29,8 +39,6 @@ jobs:
 
         ./scripts/should-build.sh vscode
       name: "Build VSCode?"
-      env:
-        BASE: ${{ github.base_ref }}
 
     - id: check-python
       run: |
@@ -40,8 +48,6 @@ jobs:
         ./scripts/should-build.sh python
         exit 1
       name: "Build Python?"
-      env:
-        BASE: ${{ github.base_ref }}
 
   vscode:
     name: VSCode
