@@ -100,7 +100,7 @@ jobs:
     - run: |
         cd lib/esbonio
 
-        version=$(grep '__version__' esbonio/_version.py | sed 's/"(.*)"/\1/')
+        version=$(grep '__version__' esbonio/_version.py | sed 's/.*"\(.*\)"/\1/')
         build=$(echo $GITHUB_REF | sed -E 's/.*\/([0-9]+)\/.*/\1/')
 
         echo "ref: ${GITHUB_REF}"
