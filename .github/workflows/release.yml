@@ -1,22 +1,49 @@
-name: Esbonio VSCode
+name: Esbonio
 
 on:
   pull_request:
     branches:
     - release
     - develop
-    paths:
-    - 'code/**'
-    - '.github/workflows/release.yml'
   push:
     branches:
     - release
-    paths:
-    - 'code/**'
-    - '.github/workflows/release.yml'
 
 jobs:
-  build:
+  # Simple job the checks to see which parts we actually have to build.
+  trigger:
+    name: "Trigger Jobs"
+    outputs:
+      vscode: ${{steps.check-vscode.outputs.build}}
+      python: ${{steps.check-python.outputs.build}}
+    steps:
+    - uses: actions/checkout@v2
+
+    - id: check-vscode
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh vscode
+      name: "Build VSCode?"
+      env:
+        BASE: ${{ github.base_ref }}
+
+    - id: check-python
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh python
+        exit 1
+      name: "Build Python?"
+      env:
+        BASE: ${{ github.base_ref }}
+
+  vscode:
+    name: VSCode
+    needs: trigger
+    if: false
     runs-on: ubuntu-latest
     steps:
     - uses: 'actions/checkout@v2'
