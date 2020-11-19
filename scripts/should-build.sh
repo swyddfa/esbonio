@@ -4,7 +4,7 @@
 # File patterns to check for each component, if there's a match a build will be
 # triggered
 VSCODE="^code"
-PYTHON="^lib/esbonio"
+PYTHON="lib/esbonio"
 
 # Determine which files have changed
 files=$(git diff --name-only ${BASE}..HEAD -- )
@@ -23,7 +23,10 @@ case $1 in
         ;;
 esac
 
+echo "Pattern: ${PATTERN}"
 changes=$(echo $files | grep -E "${PATTERN}")
+echo
+echo $changes
 echo
 
 if [ -z "$changes" ]; then
