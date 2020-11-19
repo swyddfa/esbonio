@@ -75,32 +75,92 @@ jobs:
       if: success() && startsWith(github.ref, 'refs/heads/release')
 
   python:
-    name: Python
+    name: Python ${{ matrix.python-version }}
     needs: trigger
     if: ${{ needs.trigger.outputs.python }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
+        os: [ubuntu-latest]
     steps:
     - uses: actions/checkout@v2
 
-    - uses: actions/setup-python@v1
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
       with:
-        python-version: 3.8
+        python-version: ${{ matrix.python-version }}
 
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox
+        python -m pip install --upgrade tox bump2version
       name: Setup Environment
 
     - run: |
         cd lib/esbonio
-        python -m tox -e py38
+
+        version=$(grep '__version__' esbonio/_version.py | sed 's/.*"\(.*\)"/\1/')
+        build=$(echo $GITHUB_REF | sed -E 's/.*\/([0-9]+)\/.*/\1/')
+
+        echo "ref: ${GITHUB_REF}"
+        echo "Current Version: ${version}"
+        echo "Build number is ${build}"
+
+        python -m bumpversion --new-version "${version}.dev${build}" dev
+      name: Set Dev Version
+      if: matrix.python-version == '3.8' && github.event_name == 'pull_request'
+
+    - run: |
+
+        message=$(git log HEAD --pretty=format:'%s' | head -n 1 | tr '[:upper:]' '[:lower:]')
+        echo "Commit message: ${message}"
+
+        case $message in
+          major*)
+            KIND="major";;
+          minor*)
+            KIND="minor";;
+          *)
+            KIND="patch"
+        esac
+
+        python -m bumpversion ${KIND}
+        VERSION=$(grep '__version__' esbonio/_version.py | sed 's/.*"\(.*\)"/\1/')
+
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git config user.name "github-actions[bot]"
+
+        git commit -am "New Release v${VERSION}"
+        git tag -a "v${VERSION}" -m "New Release v${VERSION}"
+
+        git push origin release
+        git push origin --tags
+
+      name: Set Release Version
+      if: matrix.python-version == '3.8' && github.event_name != 'pull_request'
+
+    - run: |
+        cd lib/esbonio
+        python -m tox -e py`echo ${{ matrix.python-version }} | tr -d .`
+      name: Test
+
+    - name: Package
+      run: |
+        cd lib/esbonio
         python -m tox -e pkg
-      name: Test & Package
+      if: matrix.python-version == '3.8'
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: 'whl'
+        path: lib/esbonio/dist
+      if: matrix.python-version == '3.8'
 
     - name: Publish
       run: |
         cd lib/esbonio
         python -m pip install twine
         python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
-      if: success() && startsWith(github.ref, 'refs/heads/release')
+      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
