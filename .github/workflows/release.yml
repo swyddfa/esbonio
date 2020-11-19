@@ -13,6 +13,7 @@ jobs:
   # Simple job the checks to see which parts we actually have to build.
   trigger:
     name: "Trigger Jobs"
+    runs-on: ubuntu-latest
     outputs:
       vscode: ${{steps.check-vscode.outputs.build}}
       python: ${{steps.check-python.outputs.build}}
