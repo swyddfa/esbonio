@@ -112,6 +112,7 @@ jobs:
       if: matrix.python-version == '3.8' && github.event_name == 'pull_request'
 
     - run: |
+        cd lib/esbonio
 
         message=$(git log HEAD --pretty=format:'%s' | head -n 1 | tr '[:upper:]' '[:lower:]')
         echo "Commit message: ${message}"
