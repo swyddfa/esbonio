@@ -107,9 +107,9 @@ jobs:
         echo "Current Version: ${version}"
         echo "Build number is ${build}"
 
-        python -m bump2version --new-version "${version}.dev${build}" dev
+        python -m bumpversion --new-version "${version}.dev${build}" dev
       name: "Set Dev Version"
-      if: github.event_name == 'pull_request'
+      if: matrix.python-version == '3.8' && github.event_name == 'pull_request'
 
     - run: |
         cd lib/esbonio
