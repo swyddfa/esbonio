@@ -98,47 +98,18 @@ jobs:
       name: Setup Environment
 
     - run: |
-        cd lib/esbonio
+        set -e
 
-        version=$(grep '__version__' esbonio/_version.py | sed 's/.*"\(.*\)"/\1/')
-        build=$(echo $GITHUB_REF | sed -E 's/.*\/([0-9]+)\/.*/\1/')
-
-        echo "ref: ${GITHUB_REF}"
-        echo "Current Version: ${version}"
-        echo "Build number is ${build}"
-
-        python -m bumpversion --new-version "${version}.dev${build}" dev
+        ./scripts/make-dev-version.sh python
       name: Set Dev Version
       if: matrix.python-version == '3.8' && github.event_name == 'pull_request'
 
     - run: |
-        cd lib/esbonio
+        set -e
 
-        message=$(git log HEAD --pretty=format:'%s' | head -n 1 | tr '[:upper:]' '[:lower:]')
-        echo "Commit message: ${message}"
-
-        case $message in
-          major*)
-            KIND="major";;
-          minor*)
-            KIND="minor";;
-          *)
-            KIND="patch"
-        esac
-
-        python -m bumpversion ${KIND}
-        VERSION=$(grep '__version__' esbonio/_version.py | sed 's/.*"\(.*\)"/\1/')
-
-        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-        git config user.name "github-actions[bot]"
-
-        git commit -am "New Release v${VERSION}"
-        git tag -a "v${VERSION}" -m "New Release v${VERSION}"
-
-        git push origin release
-        git push origin --tags
-
+        ./scripts/make-release.sh python
       name: Set Release Version
+      id: info
       if: matrix.python-version == '3.8' && github.event_name != 'pull_request'
 
     - run: |
@@ -160,8 +131,49 @@ jobs:
       if: matrix.python-version == '3.8'
 
     - name: Publish
+      id: assets
       run: |
         cd lib/esbonio
         python -m pip install twine
         python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
+
+        whl=$(find dist/ -name '*.whl' -exec basename {} \;)
+        echo "::set-output name=WHL::$whl"
+
+        src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
+        echo "::set-output name=SRC::$src"
       if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+
+    # TODO: Use body / body_path to add release notes.
+    - name: Create Release
+      id: release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ steps.info.outputs.TAG }}
+        release_name: Esbonio Lib v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
+        draft: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_path: lib/esbonio/dist/${{ steps.assets.outputs.WHL }}
+        asset_name: ${{ steps.pkg.outputs.WHL }}
+        asset_content_type: application/octet-stream
+      if: steps.dorel.outputs.should_release
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_path: lib/esbonio/dist/${{ steps.pkg.outputs.SRC }}
+        asset_name: ${{ steps.pkg.outputs.SRC }}
+        asset_content_type: application/octet-stream
+      if: steps.dorel.outputs.should_release
