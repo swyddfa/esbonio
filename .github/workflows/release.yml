@@ -144,6 +144,7 @@ jobs:
       with:
         tag_name: ${{ steps.info.outputs.TAG }}
         release_name: Esbonio Lib v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
+        body_path: lib/esbonio/.changes.html
         draft: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

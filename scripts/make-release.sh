@@ -86,7 +86,7 @@ DATE=$(date +%Y-%m-%d)
 
 
 # Only if we are on the release branch.
-if [ "${GITHUB_REF}" = "refs/head/release" ]; then
+if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
 
     # Write the release notes for github
     python -m towncrier --draft --version="${VERSION}" | \
