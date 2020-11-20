@@ -94,23 +94,16 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version
+        python -m pip install --upgrade tox bump2version towncrier docutils
       name: Setup Environment
 
     - run: |
         set -e
 
-        ./scripts/make-dev-version.sh python
-      name: Set Dev Version
-      if: matrix.python-version == '3.8' && github.event_name == 'pull_request'
-
-    - run: |
-        set -e
-
         ./scripts/make-release.sh python
-      name: Set Release Version
+      name: Set Version
       id: info
-      if: matrix.python-version == '3.8' && github.event_name != 'pull_request'
+      if: matrix.python-version == '3.8'
 
     - run: |
         cd lib/esbonio

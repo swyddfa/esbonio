@@ -8,3 +8,5 @@ _build
 build
 node_modules
 dist
+
+.changes.html

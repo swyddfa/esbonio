@@ -6,7 +6,8 @@
         ]
     },
     "files.associations": {
-        "setup.cfg": "ini"
+        "setup.cfg": "ini",
+        "pyproject.toml": "ini"
     },
     "files.exclude": {
         "**/.git": true,
