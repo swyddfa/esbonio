@@ -1,7 +1,7 @@
 #!/bin/bash
 # Book keeping around making a release. This script will
 #
-# - Call bumpversion to generate a new version based on the commit message
+# - Call bumpversion to generate a new version based on the changelog
 # - Commit, tag and push the new version number.
 # - Export the tag name and release date for use later on in the pipeline.
 set -e
@@ -63,27 +63,50 @@ fi
 python -m bumpversion ${KIND}
 VERSION=$(grep 'current_version' .bumpversion.cfg | sed 's/.*=\s\(.*\)/\1/')
 
+# If we're in a PR build, make a dev version number based on it.
+if [[ "${GITHUB_REF}" == refs/pull/* ]]; then
+
+    build=$(echo $GITHUB_REF | sed -E 's/.*\/([0-9]+)\/.*/\1/')
+
+    echo "ref: ${GITHUB_REF}"
+    echo "Current Version: ${version}"
+    echo "Build number is ${build}"
+    echo
+
+    VERSION="${version}.dev${build}"
+    echo "Dev version number is: ${VERSION}"
+
+    python -m bumpversion --new-version "${VERSION}" dev
+
+fi
+
 TAG="${TAG_PREFIX}${VERSION}"
 DATE=$(date +%Y-%m-%d)
 
-# Write the release notes for github
-python -m towncrier --draft --version="${VERSION}" | \
-    rst2html.py --template=changes/github-template.html > .changes.html
 
-# Write the release notes for the changelog
-python -m towncrier --version="${VERSION}"
+# Only if we are on the release branch.
+if [ "${GITHUB_REF}" = "refs/head/release" ]; then
 
-# Setup git, commit, tag and push all the changes.
-git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git config user.name "github-actions[bot]"
+    # Write the release notes for github
+    python -m towncrier --draft --version="${VERSION}" | \
+        rst2html.py --template=changes/github-template.html > .changes.html
 
-git commit -am "${COMMIT_MSG}${VERSION}"
-git tag -a "${TAG}" -m "${COMMIT_MSG}${VERSION}"
+    # Write the release notes for the changelog
+    python -m towncrier --version="${VERSION}"
 
-git push origin release
-git push origin --tags
+    # Setup git, commit, tag and push all the changes.
+    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+    git config user.name "github-actions[bot]"
 
-# Export info that can be picked up in later steps.
-echo "::set-output name=VERSION::${VERSION}"
-echo "::set-output name=TAG::${TAG}"
-echo "::set-output name=DATE::${DATE}"
+    git commit -am "${COMMIT_MSG}${VERSION}"
+    git tag -a "${TAG}" -m "${COMMIT_MSG}${VERSION}"
+
+    git push origin release
+    git push origin --tags
+
+    # Export info that can be picked up in later steps.
+    echo "::set-output name=VERSION::${VERSION}"
+    echo "::set-output name=TAG::${TAG}"
+    echo "::set-output name=DATE::${DATE}"
+
+fi
