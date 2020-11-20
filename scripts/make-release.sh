@@ -77,7 +77,7 @@ if [[ "${GITHUB_REF}" == refs/pull/* ]]; then
     VERSION="${VERSION}.dev${BUILD}"
     echo "Dev version number is: ${VERSION}"
 
-    python -m bumpversion --new-version "${VERSION}" dev
+    python -m bumpversion --allow-dirty --new-version "${VERSION}" dev
 
 fi
 
