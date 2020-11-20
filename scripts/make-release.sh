@@ -66,14 +66,15 @@ VERSION=$(grep 'current_version' .bumpversion.cfg | sed 's/.*=\s\(.*\)/\1/')
 # If we're in a PR build, make a dev version number based on it.
 if [[ "${GITHUB_REF}" == refs/pull/* ]]; then
 
-    build=$(echo $GITHUB_REF | sed -E 's/.*\/([0-9]+)\/.*/\1/')
+    BUILD=$(echo $GITHUB_REF | sed -E 's/.*\/([0-9]+)\/.*/\1/')
 
+    echo
     echo "ref: ${GITHUB_REF}"
-    echo "Current Version: ${version}"
-    echo "Build number is ${build}"
+    echo "Current Version: ${VERSION}"
+    echo "Build number is ${BUILD}"
     echo
 
-    VERSION="${version}.dev${build}"
+    VERSION="${VERSION}.dev${BUILD}"
     echo "Dev version number is: ${VERSION}"
 
     python -m bumpversion --new-version "${VERSION}" dev
