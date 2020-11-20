@@ -6,3 +6,9 @@ Esbonio - to explain.
 
 A Python package that provides a number of Sphinx extensions and a [Language Server](https://microsoft.github.io/language-server-protocol/) for enhancing
 the editing experience of `*.rst` files in editors.
+
+## Installation
+
+```
+$ pip install esbonio
+```

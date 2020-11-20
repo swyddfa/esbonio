@@ -137,7 +137,6 @@ jobs:
         echo "::set-output name=SRC::$src"
       if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
 
-    # TODO: Use body / body_path to add release notes.
     - name: Create Release
       id: release
       uses: actions/create-release@v1
