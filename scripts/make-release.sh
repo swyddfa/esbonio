@@ -10,7 +10,7 @@ SRC=
 TAG_PREFIX=
 COMMIT_MSG=
 
-case $1) in
+case $1 in
     vscode)
         ;;
     python)

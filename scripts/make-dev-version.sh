@@ -5,7 +5,7 @@ set -e
 
 SRC=
 
-case $1) in
+case $1 in
     vscode)
         ;;
     python)
