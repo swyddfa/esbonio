@@ -163,9 +163,9 @@ jobs:
       with:
         upload_url: ${{ steps.release.outputs.upload_url }}
         asset_path: lib/esbonio/dist/${{ steps.assets.outputs.WHL }}
-        asset_name: ${{ steps.pkg.outputs.WHL }}
+        asset_name: ${{ steps.assets.outputs.WHL }}
         asset_content_type: application/octet-stream
-      if: steps.dorel.outputs.should_release
+      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1.0.1
@@ -173,7 +173,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/esbonio/dist/${{ steps.pkg.outputs.SRC }}
-        asset_name: ${{ steps.pkg.outputs.SRC }}
+        asset_path: lib/esbonio/dist/${{ steps.assets.outputs.SRC }}
+        asset_name: ${{ steps.assets.outputs.SRC }}
         asset_content_type: application/octet-stream
-      if: steps.dorel.outputs.should_release
+      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
