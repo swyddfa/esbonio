@@ -24,7 +24,7 @@ case $1 in
         ;;
 esac
 
-if [ -z "${SRC}" ];
+if [ -z "${SRC}" ]; then
     echo "SRC dir is not set!"
     exit 1
 fi
