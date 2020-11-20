@@ -41,26 +41,41 @@ fi
 
 cd ${SRC}
 
-message=$(git log HEAD --pretty=format:'%s' | head -n 1 | tr '[:upper:]' '[:lower:]')
-echo "Commit message: ${message}"
+# Make sure there's at least some changes...
+if [ -z "$(find changes -name '*.rst')" ]; then
+    echo "There are no changes!"
+    exit 1
+fi
 
-case $message in
-    major*)
-        KIND="major";;
-    minor*)
-        KIND="minor";;
-    *)
-        KIND="patch";;
-esac
+# Use the changelog to determine the type of release to make.
+if [ ! -z "$(find changes -name '*.breaking.rst')" ]; then
+    echo "Breaking changes found, doing major release!"
+    KIND="major"
+elif [ ! -z "$(find changes -name '*.feature.rst')" ]; then
+    echo "New features found, doing minor release!"
+    KIND="minor"
+else
+    echo "Nothing significant detected, doing patch release"
+    KIND="patch"
+fi
 
+# Bump the version accordingly
 python -m bumpversion ${KIND}
 VERSION=$(grep 'current_version' .bumpversion.cfg | sed 's/.*=\s\(.*\)/\1/')
 
-git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-git config user.name "github-actions[bot]"
-
 TAG="${TAG_PREFIX}${VERSION}"
 DATE=$(date +%Y-%m-%d)
+
+# Write the release notes for github
+python -m towncrier --draft --version="${VERSION}" | \
+    rst2html.py --template=changes/github-template.html > .changes.html
+
+# Write the release notes for the changelog
+python -m towncrier --version="${VERSION}"
+
+# Setup git, commit, tag and push all the changes.
+git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+git config user.name "github-actions[bot]"
 
 git commit -am "${COMMIT_MSG}${VERSION}"
 git tag -a "${TAG}" -m "${COMMIT_MSG}${VERSION}"
