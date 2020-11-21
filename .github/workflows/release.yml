@@ -96,7 +96,7 @@ jobs:
       uses: actions/upload-artifact@v1.0.0
       with:
         name: 'vsix'
-        path: code/${{ assets.outputs.VSIX }}
+        path: code/${{ steps.assets.outputs.VSIX }}
 
     - name: 'Publish Extension'
       run: |
