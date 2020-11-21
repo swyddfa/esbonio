@@ -83,7 +83,7 @@ jobs:
         npm run compile
       name: Build Extension
 
-    - run:
+    - run: |
         cd code
         npm run package
 
