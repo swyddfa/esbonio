@@ -52,7 +52,7 @@ jobs:
     name: VSCode
     needs: trigger
     if: ${{ needs.trigger.outputs.vscode }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # TODO: Enable windows, macOS builds.
     steps:
     - uses: 'actions/checkout@v2'
 
@@ -60,11 +60,43 @@ jobs:
       with:
         node-version: 12.x
 
+    - uses: 'actions/setup-python@v1'
+      with:
+        python-version: 3.8
+
+    - run: |
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade tox bump2version towncrier docutils
+      name: Install Build Tools
+
+    - run: |
+        set -e
+
+        ./scripts/make-release.sh vscode
+      name: Set Version
+      id: info
+
     - run: |
         cd code
         npm install
         npm run compile
       name: Build Extension
+
+    - run:
+        cd code
+        npm run package
+
+        vsix=$(find . -name '*.vsix' -exec basename {} \;)
+        echo "::set-output name=VSIX::$vsix"
+      id: assets
+      name: Package
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        name: 'vsix'
+        path: code/${{ assets.outputs.VSIX }}
 
     - name: 'Publish Extension'
       run: |
@@ -72,6 +104,29 @@ jobs:
         npm run deploy
       env:
         VSCE_PAT: ${{ secrets.VSCODE_PAT }}
+      if: success() && startsWith(github.ref, 'refs/heads/release')
+
+    - name: Create Release
+      id: release
+      uses: actions/create-release@v1
+      with:
+        tag_name: ${{ steps.info.outputs.TAG }}
+        release_name: Esbonio VSCode Extension v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
+        body_path: code/.changes.html
+        draft: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      if: success() && startsWith(github.ref, 'refs/heads/release')
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.release.outputs.upload_url }}
+        asset_path: code/${{ steps.assets.outputs.VSIX }}
+        asset_name: ${{ steps.assets.outputs.VSIX }}
+        asset_content_type: application/octet-stream
       if: success() && startsWith(github.ref, 'refs/heads/release')
 
   python:

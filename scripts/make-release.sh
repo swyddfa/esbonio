@@ -12,6 +12,9 @@ COMMIT_MSG=
 
 case $1 in
     vscode)
+        SRC="code"
+        TAG_PREFIX="esbonio-vscode"
+        COMMIT_MSG="Esbonio VSCode Ext Release v"
         ;;
     python)
         SRC="lib/esbonio"
@@ -55,7 +58,7 @@ elif [ ! -z "$(find changes -name '*.feature.rst')" ]; then
     echo "New features found, doing minor release!"
     KIND="minor"
 else
-    echo "Nothing significant detected, doing patch release"
+    echo "Doing patch release"
     KIND="patch"
 fi
 
