@@ -1,0 +1,1 @@
+Add ``--version`` option to the cli that will print the version number and exit.
