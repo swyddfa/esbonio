@@ -10,6 +10,8 @@ SRC=
 TAG_PREFIX=
 COMMIT_MSG=
 
+
+COMPONENT=$1
 case $1 in
     vscode)
         SRC="code"
@@ -77,7 +79,13 @@ if [[ "${GITHUB_REF}" == refs/pull/* ]]; then
     echo "Build number is ${BUILD}"
     echo
 
-    VERSION="${VERSION}.dev${BUILD}"
+    # Annoying that this can't be the same...
+    if [ "${COMPONENT}" = "vscode" ]; then
+        VERSION="${VERSION}-dev${BUILD}"
+    else
+        VERSION="${VERSION}.dev${BUILD}"
+    fi
+
     echo "Dev version number is: ${VERSION}"
 
     python -m bumpversion --allow-dirty --new-version "${VERSION}" dev
