@@ -10,8 +10,13 @@ SRC=
 TAG_PREFIX=
 COMMIT_MSG=
 
+
+COMPONENT=$1
 case $1 in
     vscode)
+        SRC="code"
+        TAG_PREFIX="esbonio-vscode"
+        COMMIT_MSG="Esbonio VSCode Ext Release v"
         ;;
     python)
         SRC="lib/esbonio"
@@ -55,7 +60,7 @@ elif [ ! -z "$(find changes -name '*.feature.rst')" ]; then
     echo "New features found, doing minor release!"
     KIND="minor"
 else
-    echo "Nothing significant detected, doing patch release"
+    echo "Doing patch release"
     KIND="patch"
 fi
 
@@ -74,7 +79,13 @@ if [[ "${GITHUB_REF}" == refs/pull/* ]]; then
     echo "Build number is ${BUILD}"
     echo
 
-    VERSION="${VERSION}.dev${BUILD}"
+    # Annoying that this can't be the same...
+    if [ "${COMPONENT}" = "vscode" ]; then
+        VERSION="${VERSION}-dev${BUILD}"
+    else
+        VERSION="${VERSION}.dev${BUILD}"
+    fi
+
     echo "Dev version number is: ${VERSION}"
 
     python -m bumpversion --allow-dirty --new-version "${VERSION}" dev

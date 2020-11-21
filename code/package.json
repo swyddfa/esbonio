@@ -11,7 +11,8 @@
     "scripts": {
         "compile": "tsc -b",
         "watch": "tsc -b -w",
-        "deploy": "vsce publish"
+        "deploy": "vsce publish",
+        "package": "vsce package"
     },
     "main": "dist/extension",
     "dependencies": {
