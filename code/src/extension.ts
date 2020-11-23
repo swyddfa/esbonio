@@ -1,54 +1,47 @@
 import { ExtensionContext, workspace, window } from "vscode";
-
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
+import { getPython, registerCommands } from "./commands";
+import { bootstrapLanguageServer } from "./languageServer";
+import { getOutputLogger } from "./log";
 
 let client: LanguageClient
 
-/**
- * Given the python interpreter to use, check to see if the language server is present.
- *
- * If it's not, give the user chance to install it. Will return false if we shouldn't
- * attempt to start the language server.
- */
-function checkLanguageServer(python: string): Promise<boolean> {
-    let promise: Promise<boolean> = new Promise((resolve, reject) => {
-
-
-
-        let message = "The Esbonio language server is not installed. Would you like to install it?"
-        window.showWarningMessage(message, { title: "Yes" }, { title: "No" }).then(res => {
-            if (res && res.title === "Yes") {
-                console.log("Installing language server...")
-
-            }
-            // Server not installed and user denied the prompt to install.
-            // No point in trying to start the server.
-            resolve(false)
-        })
-    })
-
-    return promise
-}
 
 export function activate(context: ExtensionContext) {
 
+    let logger = getOutputLogger()
+    logger.debug("Extension activated.")
+    let python = getPython()
 
-    let python = workspace.getConfiguration('esbonio.python').get<string>('path')
-    console.log("Python path is: " + python)
+    bootstrapLanguageServer(python).then(res => {
+        if (!res) {
+            logger.debug("Unable to bootstrap language server, will not attempt to start")
+            return
+        }
+        let exe: Executable = {
+            command: python,
+            args: ['-m', 'esbonio']
+        }
+        let serverOptions: ServerOptions = exe
 
-    checkLanguageServer(python)
+        let clientOptions: LanguageClientOptions = {
+            documentSelector: [{ scheme: 'file', language: 'rst' }]
+        }
+        client = new LanguageClient('esbonio', 'Esbonio', serverOptions, clientOptions)
+        client.start()
+    }).catch(err => {
 
-    let exe: Executable = {
-        command: python,
-        args: ['-m', 'esbonio']
-    }
-    let serverOptions: ServerOptions = exe
+        logger.error(err)
+        let message = "Unable to start language server.\n" +
+            "See output window for more details"
+        window.showErrorMessage(message, { title: "Show Output" }).then(opt => {
+            if (opt.title === "Show Output") {
+                logger.show()
+            }
+        })
+    })
 
-    let clientOptions: LanguageClientOptions = {
-        documentSelector: [{ scheme: 'file', language: 'rst' }]
-    }
-    client = new LanguageClient('esbonio', 'Esbonio', serverOptions, clientOptions)
-    client.start()
+    registerCommands(context)
 }
 
 export function deactivate(): Thenable<void> | undefined {
