@@ -1,2 +1,0 @@
-Update build pipeline to use ``towncrier`` to autogenerate release notes and changelog
-entries
