@@ -1,0 +1,2 @@
+If the language server is not installed, the extension will now prompt to install it.
+It will also prompt to update it when new versions are available.

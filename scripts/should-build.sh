@@ -4,7 +4,7 @@
 # File patterns to check for each component, if there's a match a build will be
 # triggered
 VSCODE="^code"
-PYTHON="^lib/esbonio"
+PYTHON="^lib/esbonio/.*\.py"
 
 # Determine which files have changed
 git diff --name-only ${BASE}..HEAD -- >> changes
