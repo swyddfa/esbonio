@@ -5,6 +5,9 @@
             80
         ]
     },
+    "[typescript]": {
+        "editor.tabSize": 2
+    },
     "files.associations": {
         "setup.cfg": "ini",
         "pyproject.toml": "ini"
