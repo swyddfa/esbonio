@@ -1,3 +1,15 @@
+v0.2.0 - 2020-11-27
+-------------------
+
+Features
+^^^^^^^^
+
+- If there is no Python interpreter configured and the
+  `Python extension <https://marketplace.visualstudio.com/items?itemName=ms-python.python>`_
+  is available, then esbonio will now use the interpreter that's been configured for the
+  Python extension (`#9 <https://github.com/swyddfa/esbonio/issues/9>`_)
+
+
 v0.1.0 - 2020-11-23
 -------------------
 
