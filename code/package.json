@@ -54,7 +54,7 @@
                     "scope": "window",
                     "type": "string",
                     "default": "",
-                    "description": "The path to the python interpreter used to build your docs."
+                    "description": "The path to the python interpreter used to build your docs.\nIf not set and the Python extension is available, this will fall back to using the interpreter configured there."
                 }
             }
         },
