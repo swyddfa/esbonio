@@ -1,0 +1,4 @@
+If there is no Python interpreter configured and the
+`Python extension <https://marketplace.visualstudio.com/items?itemName=ms-python.python>`_
+is available, then esbonio will now use the interpreter that's been configured for the
+Python extension

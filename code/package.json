@@ -46,6 +46,28 @@
                 "title": "Esbonio: Restart Language Server"
             }
         ],
+        "configuration": {
+            "type": "object",
+            "title": "Esbonio",
+            "properties": {
+                "esbonio.pythonPath": {
+                    "scope": "window",
+                    "type": "string",
+                    "default": "",
+                    "description": "The path to the python interpreter used to build your docs."
+                }
+            }
+        },
+        "grammars": [
+            {
+                "language": "rst",
+                "scopeName": "source.rst",
+                "path": "./syntaxes/rst.tmLanguage.json",
+                "embeddedLanguages": {
+                    "source.python": "python"
+                }
+            }
+        ],
         "languages": [
             {
                 "id": "rst",
@@ -57,28 +79,6 @@
                 ],
                 "configuration": "./rst-language-configuration.json"
             }
-        ],
-        "grammars": [
-            {
-                "language": "rst",
-                "scopeName": "source.rst",
-                "path": "./syntaxes/rst.tmLanguage.json",
-                "embeddedLanguages": {
-                    "source.python": "python"
-                }
-            }
-        ],
-        "configuration": {
-            "type": "object",
-            "title": "Esbonio",
-            "properties": {
-                "esbonio.python.path": {
-                    "scope": "window",
-                    "type": "string",
-                    "default": "python3",
-                    "description": "The path to the python interpreter used to build your docs."
-                }
-            }
-        }
+        ]
     }
 }
