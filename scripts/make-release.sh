@@ -116,6 +116,9 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     git push origin release
     git push origin --tags
 
+    # Create a markdown copy of the Changelog, needed for the VSCode marketplace.
+    pandoc CHANGES.rst -f rst -t gfm -o CHANGELOG.md
+
     # Export info that can be picked up in later steps.
     echo "::set-output name=VERSION::${VERSION}"
     echo "::set-output name=TAG::${TAG}"
