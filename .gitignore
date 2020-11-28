@@ -10,3 +10,4 @@ node_modules
 dist
 
 .changes.html
+CHANGELOG.md

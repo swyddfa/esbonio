@@ -122,3 +122,6 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     echo "::set-output name=DATE::${DATE}"
 
 fi
+
+# Create a markdown copy of the Changelog, needed for the VSCode marketplace.
+pandoc CHANGES.rst -f rst -t gfm -o CHANGELOG.md

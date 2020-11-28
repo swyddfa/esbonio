@@ -65,9 +65,13 @@ jobs:
         python-version: 3.8
 
     - run: |
+        sudo apt update
+        sudo apt install pandoc
+
         python --version
         python -m pip install --upgrade pip
         python -m pip install --upgrade tox bump2version towncrier docutils
+
       name: Install Build Tools
 
     - run: |
