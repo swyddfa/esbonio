@@ -1,0 +1,9 @@
+changes
+node_modules
+src/**
+dist/**/*.map
+.bumpversion.cfg
+CHANGES.rst
+pyproject.toml
+tsconfig.json
+webpack.config.js
