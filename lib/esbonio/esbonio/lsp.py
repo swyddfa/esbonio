@@ -16,6 +16,7 @@ from pygls.types import (
     CompletionItemKind,
     CompletionList,
     CompletionParams,
+    InsertTextFormat,
     MessageType,
 )
 
@@ -40,12 +41,19 @@ def completion_from_directive(name, directive) -> CompletionItem:
         kind=CompletionItemKind.Class,
         detail="directive",
         documentation=documentation,
+        insert_text=" {}:: ".format(name),
     )
 
 
 def completion_from_role(name, role) -> CompletionItem:
     """Convert an rst directive to a completion item we can return to the client."""
-    return CompletionItem(name, kind=CompletionItemKind.Function, detail="role")
+    return CompletionItem(
+        name,
+        kind=CompletionItemKind.Function,
+        detail="role",
+        insert_text="{}:`$1`".format(name),
+        insert_text_format=InsertTextFormat.Snippet,
+    )
 
 
 class RstLanguageServer(LanguageServer):
@@ -81,8 +89,6 @@ def on_initialized(rst: RstLanguageServer, params):
         )
 
     else:
-        # TODO: #1 Multi root workspaces?
-        # TODO: Multi sphinx projects?
         src = candidates[0].parent
         rst.logger.debug("Found config dir %s", src)
         build = appdirs.user_cache_dir("esbonio", "swyddfa")
@@ -102,13 +108,16 @@ NEW_DIRECTIVE = re.compile("\\s*\\.\\.\\s+([\\w-]+)?")
 NEW_ROLE = re.compile("(^|\\s+):([\\w-]+)?")
 
 
-@server.feature(COMPLETION, trigger_characters=["."])
+@server.feature(COMPLETION, trigger_characters=[".", ":"])
 def completions(rst: RstLanguageServer, params: CompletionParams):
     uri = params.textDocument.uri
     pos = params.position
 
     doc = rst.workspace.get_document(uri)
-    line = doc.lines[pos.line]
+    try:
+        line = doc.lines[pos.line]
+    except IndexError:
+        line = ""
 
     if NEW_DIRECTIVE.match(line):
         candidates = list(rst.directives.values())
@@ -117,6 +126,6 @@ def completions(rst: RstLanguageServer, params: CompletionParams):
         candidates = list(rst.roles.values())
 
     else:
-        candidates = [*rst.directives.values(), *rst.roles.values()]
+        candidates = []
 
     return CompletionList(False, candidates)
