@@ -1,3 +1,15 @@
+v0.2.1 - 2020-11-28
+-------------------
+
+Misc
+^^^^
+
+- The published ``vsix`` now contains a changelog in a format that's compatible with the
+  VSCode marketplace. (`#16 <https://github.com/swyddfa/esbonio/issues/16>`_)
+- The published ``vsix`` package now only contains the files that are necessary. (`#17 <https://github.com/swyddfa/esbonio/issues/17>`_)
+- The extension is now bundled into a single file using webpack (`#18 <https://github.com/swyddfa/esbonio/issues/18>`_)
+
+
 v0.2.0 - 2020-11-27
 -------------------
 

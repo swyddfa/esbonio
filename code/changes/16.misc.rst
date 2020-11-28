@@ -1,2 +1,0 @@
-The published ``vsix`` now contains a changelog in a format that's compatible with the
-VSCode marketplace.

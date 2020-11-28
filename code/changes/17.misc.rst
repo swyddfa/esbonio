@@ -1,1 +1,0 @@
-The published ``vsix`` package now only contains the files that are necessary.
