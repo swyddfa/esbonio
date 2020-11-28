@@ -3,8 +3,8 @@
     "tasks": [
         {
             "type": "npm",
-            "script": "watch",
-            "isBackground": true,
+            "script": "webpack",
+            "isBackground": false,
             "options": {
                 "cwd": "${workspaceRoot}/code"
             },
