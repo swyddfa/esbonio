@@ -52,7 +52,7 @@ jobs:
     name: VSCode
     needs: trigger
     if: ${{ needs.trigger.outputs.vscode }}
-    runs-on: ubuntu-latest # TODO: Enable windows, macOS builds.
+    runs-on: ubuntu-20.04 # TODO: Enable windows, macOS builds.
     steps:
     - uses: 'actions/checkout@v2'
 
