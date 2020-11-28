@@ -1,0 +1,1 @@
+The extension is now bundled into a single file using webpack

@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "module": "commonjs",
+        "moduleResolution": "node",
         "target": "es2019",
         "lib": [
             "ES2019"
@@ -13,7 +14,6 @@
         "src"
     ],
     "exclude": [
-        "node_modules",
         ".vscode-test"
     ]
 }
