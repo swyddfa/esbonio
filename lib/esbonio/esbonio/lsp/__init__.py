@@ -18,7 +18,9 @@ from pygls.types import (
     CompletionParams,
     InsertTextFormat,
     MessageType,
+    Position,
 )
+from pygls.workspace import Document
 
 from sphinx.application import Sphinx
 
@@ -102,10 +104,19 @@ def on_initialized(rst: RstLanguageServer, params):
     rst.roles = {k: completion_from_role(k, v) for k, v in role_s.items()}
 
 
-import re
-
-NEW_DIRECTIVE = re.compile("\\s*\\.\\.\\s+([\\w-]+)?")
+NEW_DIRECTIVE = re.compile(r"^\s*\.\.[ ]*([\w-]+)?$")
 NEW_ROLE = re.compile("(^|\\s+):([\\w-]+)?")
+
+
+def get_line_til_position(doc: Document, position: Position) -> str:
+    """Return the line up until the position of the cursor."""
+
+    try:
+        line = doc.lines[position.line]
+    except IndexError:
+        return ""
+
+    return line[: position.character]
 
 
 @server.feature(COMPLETION, trigger_characters=[".", ":"])
@@ -114,10 +125,8 @@ def completions(rst: RstLanguageServer, params: CompletionParams):
     pos = params.position
 
     doc = rst.workspace.get_document(uri)
-    try:
-        line = doc.lines[pos.line]
-    except IndexError:
-        line = ""
+    line = get_line_til_position(doc, pos)
+    print("Line: '{}'".format(line))
 
     if NEW_DIRECTIVE.match(line):
         candidates = list(rst.directives.values())
