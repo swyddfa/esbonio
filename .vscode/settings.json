@@ -21,7 +21,9 @@
         "**/.pyc": true,
         "**/__pycache__": true,
         "**/*.egg-info": true,
-        "**/.tox": true
+        "**/.tox": true,
+        "**/.pytest_cache": true,
+        "**/.ipynb_checkpoints": true,
     },
     "python.pythonPath": ".env/bin/python3",
     "python.formatting.provider": "black",
