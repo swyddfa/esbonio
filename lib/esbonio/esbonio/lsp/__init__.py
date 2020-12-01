@@ -3,7 +3,6 @@ import importlib
 import logging
 import pathlib
 import re
-from typing import Dict, Optional
 
 import appdirs
 import docutils.parsers.rst.directives as directives
@@ -16,8 +15,11 @@ from pygls.types import (
     CompletionItemKind,
     CompletionList,
     CompletionParams,
+    InsertTextFormat,
     MessageType,
+    Position,
 )
+from pygls.workspace import Document
 
 from sphinx.application import Sphinx
 
@@ -40,12 +42,19 @@ def completion_from_directive(name, directive) -> CompletionItem:
         kind=CompletionItemKind.Class,
         detail="directive",
         documentation=documentation,
+        insert_text=" {}:: ".format(name),
     )
 
 
 def completion_from_role(name, role) -> CompletionItem:
     """Convert an rst directive to a completion item we can return to the client."""
-    return CompletionItem(name, kind=CompletionItemKind.Function, detail="role")
+    return CompletionItem(
+        name,
+        kind=CompletionItemKind.Function,
+        detail="role",
+        insert_text="{}:`$1`".format(name),
+        insert_text_format=InsertTextFormat.Snippet,
+    )
 
 
 class RstLanguageServer(LanguageServer):
@@ -56,10 +65,10 @@ class RstLanguageServer(LanguageServer):
         self.app = None
         """Sphinx application instance configured for the current project."""
 
-        self.directives: Optional[Dict[str, CompletionItem]] = None
+        self.directives = {}
         """Dictionary holding the directives that have been registered."""
 
-        self.roles: Optional[Dict[str, CompletionItem]] = None
+        self.roles = {}
         """Dictionary holding the roles that have been registered."""
 
 
@@ -81,8 +90,6 @@ def on_initialized(rst: RstLanguageServer, params):
         )
 
     else:
-        # TODO: #1 Multi root workspaces?
-        # TODO: Multi sphinx projects?
         src = candidates[0].parent
         rst.logger.debug("Found config dir %s", src)
         build = appdirs.user_cache_dir("esbonio", "swyddfa")
@@ -96,19 +103,29 @@ def on_initialized(rst: RstLanguageServer, params):
     rst.roles = {k: completion_from_role(k, v) for k, v in role_s.items()}
 
 
-import re
-
-NEW_DIRECTIVE = re.compile("\\s*\\.\\.\\s+([\\w-]+)?")
-NEW_ROLE = re.compile("(^|\\s+):([\\w-]+)?")
+NEW_DIRECTIVE = re.compile(r"^\s*\.\.[ ]*([\w-]+)?$")
+NEW_ROLE = re.compile(r".*(?<!:):(?!:)[\w-]*")
 
 
-@server.feature(COMPLETION, trigger_characters=["."])
+def get_line_til_position(doc: Document, position: Position) -> str:
+    """Return the line up until the position of the cursor."""
+
+    try:
+        line = doc.lines[position.line]
+    except IndexError:
+        return ""
+
+    return line[: position.character]
+
+
+@server.feature(COMPLETION, trigger_characters=[".", ":"])
 def completions(rst: RstLanguageServer, params: CompletionParams):
     uri = params.textDocument.uri
     pos = params.position
 
     doc = rst.workspace.get_document(uri)
-    line = doc.lines[pos.line]
+    line = get_line_til_position(doc, pos)
+    rst.logger.debug("Line: '{}'".format(line))
 
     if NEW_DIRECTIVE.match(line):
         candidates = list(rst.directives.values())
@@ -117,6 +134,6 @@ def completions(rst: RstLanguageServer, params: CompletionParams):
         candidates = list(rst.roles.values())
 
     else:
-        candidates = [*rst.directives.values(), *rst.roles.values()]
+        candidates = []
 
     return CompletionList(False, candidates)
