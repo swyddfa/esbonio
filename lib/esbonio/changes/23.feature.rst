@@ -1,2 +1,0 @@
-The language server can now offer completion suggestions for ``directives`` and
-``roles``

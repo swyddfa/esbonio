@@ -1,3 +1,13 @@
+v0.1.0 - 2020-12-01
+-------------------
+
+Features
+^^^^^^^^
+
+- The language server can now offer completion suggestions for ``directives`` and
+  ``roles`` (`#23 <https://github.com/swyddfa/esbonio/issues/23>`_)
+
+
 0.0.6 - 2020-11-21
 ------------------
 
