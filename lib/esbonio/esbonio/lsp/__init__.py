@@ -3,7 +3,6 @@ import importlib
 import logging
 import pathlib
 import re
-from typing import Dict, Optional
 
 import appdirs
 import docutils.parsers.rst.directives as directives
@@ -66,10 +65,10 @@ class RstLanguageServer(LanguageServer):
         self.app = None
         """Sphinx application instance configured for the current project."""
 
-        self.directives: Optional[Dict[str, CompletionItem]] = None
+        self.directives = {}
         """Dictionary holding the directives that have been registered."""
 
-        self.roles: Optional[Dict[str, CompletionItem]] = None
+        self.roles = {}
         """Dictionary holding the roles that have been registered."""
 
 
