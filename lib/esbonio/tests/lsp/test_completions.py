@@ -8,6 +8,7 @@ These tests rely heavily on mocking, it might be better to replace them with mor
 integration style tests once the end-to-end picture is better understood.
 """
 from typing import Optional
+import logging
 import py.test
 
 from mock import Mock
@@ -50,6 +51,7 @@ def make_params(
 
 
 EXAMPLE_DIRECTIVES = [CompletionItem("doctest", kind=CompletionItemKind.Class)]
+EXAMPLE_ROLES = [CompletionItem("ref", kind=CompletionItemKind.Function)]
 
 
 @py.test.fixture()
@@ -69,8 +71,11 @@ def rst():
     server.show_message = Mock()
     server.show_message_log = Mock()
 
+    server.logger = logging.getLogger(__name__)
+
     # Mock the data that is used to provide the completions.
     server.directives = {c.label: c for c in EXAMPLE_DIRECTIVES}
+    server.roles = {c.label: c for c in EXAMPLE_ROLES}
 
     return server
 
@@ -78,6 +83,7 @@ def rst():
 @py.test.mark.parametrize(
     "doc,params,expected",
     [
+        # Directive Suggestions.
         (".", make_params(character=1, trigger="."), []),
         ("..", make_params(character=2, trigger="."), EXAMPLE_DIRECTIVES),
         (".. ", make_params(character=3), EXAMPLE_DIRECTIVES),
@@ -92,6 +98,13 @@ def rst():
         ("   .. code-b", make_params(character=12), EXAMPLE_DIRECTIVES),
         ("   .. doctest:: ", make_params(character=16), []),
         ("   .. code-block:: ", make_params(character=19), []),
+        # Role Suggestions
+        (":", make_params(character=1, trigger=":"), EXAMPLE_ROLES),
+        (":r", make_params(character=2), EXAMPLE_ROLES),
+        ("   :", make_params(character=4), EXAMPLE_ROLES),
+        ("   :r", make_params(character=5), EXAMPLE_ROLES),
+        ("some text :", make_params(character=11), EXAMPLE_ROLES),
+        ("   some text :", make_params(character=14), EXAMPLE_ROLES),
     ],
 )
 def test_completion_suggestions(rst, doc, params, expected):

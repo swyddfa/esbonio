@@ -105,7 +105,7 @@ def on_initialized(rst: RstLanguageServer, params):
 
 
 NEW_DIRECTIVE = re.compile(r"^\s*\.\.[ ]*([\w-]+)?$")
-NEW_ROLE = re.compile("(^|\\s+):([\\w-]+)?")
+NEW_ROLE = re.compile(r".*(?<!:):(?!:)[\w-]*")
 
 
 def get_line_til_position(doc: Document, position: Position) -> str:
@@ -126,7 +126,7 @@ def completions(rst: RstLanguageServer, params: CompletionParams):
 
     doc = rst.workspace.get_document(uri)
     line = get_line_til_position(doc, pos)
-    print("Line: '{}'".format(line))
+    rst.logger.debug("Line: '{}'".format(line))
 
     if NEW_DIRECTIVE.match(line):
         candidates = list(rst.directives.values())
