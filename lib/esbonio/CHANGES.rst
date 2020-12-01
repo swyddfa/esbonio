@@ -1,3 +1,13 @@
+v0.1.2 - 2020-12-01
+-------------------
+
+Misc
+^^^^
+
+- Use ``ubuntu-20.04`` for Python builds so that the correct version of ``pandoc`` is
+  available (`#25 <https://github.com/swyddfa/esbonio/issues/25>`_)
+
+
 v0.1.1 - 2020-12-01
 -------------------
 
