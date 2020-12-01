@@ -15,7 +15,7 @@ COMPONENT=$1
 case $1 in
     vscode)
         SRC="code"
-        TAG_PREFIX="esbonio-vscode"
+        TAG_PREFIX="esbonio-vscode-v"
         COMMIT_MSG="Esbonio VSCode Ext Release v"
         ;;
     python)
