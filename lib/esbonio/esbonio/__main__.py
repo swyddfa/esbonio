@@ -34,7 +34,7 @@ def start_server(verbose):
     lsp.server.start_io()
 
 
-cli = argparse.ArgumentParser(prog="esbonio", description="Your one true lsp.")
+cli = argparse.ArgumentParser(prog="esbonio", description="The Esbonio language server")
 cli.add_argument(
     "--version", action="store_true", help="print the current version and exit"
 )
