@@ -120,6 +120,7 @@ def get_line_til_position(doc: Document, position: Position) -> str:
 
 @server.feature(COMPLETION, trigger_characters=[".", ":"])
 def completions(rst: RstLanguageServer, params: CompletionParams):
+    """Suggest completions based on the current context"""
     uri = params.textDocument.uri
     pos = params.position
 
