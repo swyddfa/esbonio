@@ -1,0 +1,2 @@
+Use ``ubuntu-20.04`` for Python builds so that the correct version of ``pandoc`` is
+available
