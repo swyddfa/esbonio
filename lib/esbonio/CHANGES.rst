@@ -1,3 +1,12 @@
+v0.1.1 - 2020-12-01
+-------------------
+
+Misc
+^^^^
+
+- Ensure ``pandoc`` is installed to fix the Python release builds (`#24 <https://github.com/swyddfa/esbonio/issues/24>`_)
+
+
 v0.1.0 - 2020-12-01
 -------------------
 
