@@ -48,6 +48,7 @@ isolated_build = True
 deps =
     mock
     pytest
+extras = lsp
 commands =
     pytest
 
