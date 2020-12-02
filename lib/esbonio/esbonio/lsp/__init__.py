@@ -118,7 +118,11 @@ def on_initialized(rst: RstLanguageServer, params):
     # Lookup the directives and roles that have been registered
     dirs = {**directives._directive_registry, **directives._directives}
     rst.directives = {k: completion_from_directive(k, v) for k, v in dirs.items()}
-    rst.roles = {k: completion_from_role(k, v) for k, v in discover_roles(rst.app)}
+
+    rst.roles = {
+        k: completion_from_role(k, v) for k, v in discover_roles(rst.app).items()
+    }
+    rst.logger.debug("Discovered %s roles", len(rst.roles))
 
 
 NEW_DIRECTIVE = re.compile(r"^\s*\.\.[ ]*([\w-]+)?$")
