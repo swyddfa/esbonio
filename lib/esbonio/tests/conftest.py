@@ -7,6 +7,8 @@ from docutils.io import StringInput
 from docutils.parsers.rst import Parser
 from docutils.parsers.rst import directives
 from docutils.readers.standalone import Reader
+
+from sphinx.application import Sphinx
 from sphinx.ext.doctest import DoctestDirective
 
 from esbonio.tutorial import SolutionDirective
@@ -30,6 +32,21 @@ def testdata():
 
         with filepath.open("rb") as f:
             return f.read()
+
+    return loader
+
+
+@py.test.fixture(scope="session")
+def sphinx():
+    """Return a Sphinx application instance pointed at the given project."""
+
+    basepath = pathlib.Path(__file__).parent / "data"
+
+    def loader(project):
+        src = basepath / project
+        build = src / "_build"
+
+        return Sphinx(src, src, build, build, "html", status=None, warning=None)
 
     return loader
 
