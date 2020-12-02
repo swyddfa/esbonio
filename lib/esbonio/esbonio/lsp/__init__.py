@@ -57,6 +57,26 @@ def completion_from_role(name, role) -> CompletionItem:
     )
 
 
+def discover_roles(app: Sphinx):
+    """Discover roles that we can offer as autocomplete suggestions."""
+    # Pull out the roles that are available via docutils.
+    local_roles = {
+        k: v for k, v in roles._roles.items() if v != roles.unimplemented_role
+    }
+
+    role_registry = {
+        k: v for k, v in roles._role_registry.items() if v != roles.unimplemented_role
+    }
+
+    # Don't forget to include the roles that are stored under Sphinx domains.
+    # TODO: Implement proper domain handling, focus on std + python for now.
+    domains = app.registry.domains
+    std_roles = domains["std"].roles
+    py_roles = domains["py"].roles
+
+    return {**local_roles, **role_registry, **py_roles, **std_roles}
+
+
 class RstLanguageServer(LanguageServer):
     def __init__(self):
         super().__init__()
@@ -98,9 +118,7 @@ def on_initialized(rst: RstLanguageServer, params):
     # Lookup the directives and roles that have been registered
     dirs = {**directives._directive_registry, **directives._directives}
     rst.directives = {k: completion_from_directive(k, v) for k, v in dirs.items()}
-
-    role_s = {**roles._roles, **roles._role_registry}
-    rst.roles = {k: completion_from_role(k, v) for k, v in role_s.items()}
+    rst.roles = {k: completion_from_role(k, v) for k, v in discover_roles(rst.app)}
 
 
 NEW_DIRECTIVE = re.compile(r"^\s*\.\.[ ]*([\w-]+)?$")
