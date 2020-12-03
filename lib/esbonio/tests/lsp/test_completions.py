@@ -23,7 +23,7 @@ from pygls.types import (
 )
 from pygls.workspace import Document, Workspace
 
-from esbonio.lsp import completions
+from esbonio.lsp import completions, discover_roles
 
 
 def make_document(contents) -> Document:
@@ -116,3 +116,36 @@ def test_completion_suggestions(rst, doc, params, expected):
 
     actual = completions(rst, params).items
     assert actual == expected
+
+
+@py.test.mark.parametrize(
+    "project,expected,unexpected",
+    [
+        (
+            "sphinx-default",
+            [
+                "emphasis",
+                "subscript",
+                "raw",
+                "func",
+                "meth",
+                "class",
+                "ref",
+                "doc",
+                "term",
+            ],
+            ["named-reference", "restructuredtext-unimplemented-role"],
+        )
+    ],
+)
+def test_role_discovery(sphinx, project, expected, unexpected):
+    """Ensure that we can discover the roles from the various places they are stored."""
+
+    app = sphinx(project)
+    roles = discover_roles(app)
+
+    for name in expected:
+        assert name in roles.keys(), "Missing expected role '{}'".format(name)
+
+    for name in unexpected:
+        assert name not in roles.keys(), "Unexpected role '{}'".format(name)
