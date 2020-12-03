@@ -43,8 +43,8 @@ def sphinx():
     basepath = pathlib.Path(__file__).parent / "data"
 
     def loader(project):
-        src = basepath / project
-        build = src / "_build"
+        src = str(basepath / project)
+        build = str(basepath / project / "_build")
 
         return Sphinx(src, src, build, build, "html", status=None, warning=None)
 
