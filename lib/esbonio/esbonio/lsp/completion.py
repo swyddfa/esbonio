@@ -6,19 +6,15 @@ from pygls.workspace import Document
 
 from esbonio.lsp.server import RstLanguageServer
 
-NEW_DIRECTIVE = re.compile(r"^\s*\.\.[ ]*([\w-]+)?$")
-NEW_ROLE = re.compile(r".*(?<!:):(?!:)[\w-]*")
-
-
-def get_line_til_position(doc: Document, position: Position) -> str:
-    """Return the line up until the position of the cursor."""
-
-    try:
-        line = doc.lines[position.line]
-    except IndexError:
-        return ""
-
-    return line[: position.character]
+DIRECTIVE = re.compile(r"^\s*\.\.[ ]*([\w-]+)?$")
+ROLE = re.compile(
+    r"""(^|.*[ ]) # roles must be preceeded by a space, or start the line
+        :         # roles start with the ':' character
+        (?!:)     # make sure the next character is not ':'
+        [\w-]*    # match the role name
+    """,
+    re.MULTILINE | re.VERBOSE,
+)
 
 
 def completions(rst: RstLanguageServer, params: CompletionParams):
@@ -30,13 +26,24 @@ def completions(rst: RstLanguageServer, params: CompletionParams):
     line = get_line_til_position(doc, pos)
     rst.logger.debug("Line: '{}'".format(line))
 
-    if NEW_DIRECTIVE.match(line):
+    if DIRECTIVE.match(line):
         candidates = list(rst.directives.values())
 
-    elif NEW_ROLE.match(line):
+    elif ROLE.match(line):
         candidates = list(rst.roles.values())
 
     else:
         candidates = []
 
     return CompletionList(False, candidates)
+
+
+def get_line_til_position(doc: Document, position: Position) -> str:
+    """Return the line up until the position of the cursor."""
+
+    try:
+        line = doc.lines[position.line]
+    except IndexError:
+        return ""
+
+    return line[: position.character]

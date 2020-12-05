@@ -106,6 +106,8 @@ def rst():
         ("   :r", make_params(character=5), EXAMPLE_ROLES),
         ("some text :", make_params(character=11), EXAMPLE_ROLES),
         ("   some text :", make_params(character=14), EXAMPLE_ROLES),
+        (".. _some_target:", make_params(character=16), []),
+        ("   .. _some_target:", make_params(character=19), []),
     ],
 )
 def test_completion_suggestions(rst, doc, params, expected):
