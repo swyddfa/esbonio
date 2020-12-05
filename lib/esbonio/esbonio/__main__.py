@@ -17,15 +17,25 @@ def configure_logging(verbose, server):
     except IndexError:
         level = LOG_LEVELS[-1]
 
-    logger = logging.getLogger("esbonio")
-    logger.setLevel(level)
+    lsp_logger = logging.getLogger("esbonio.lsp")
+    lsp_logger.setLevel(level)
 
-    handler = LspHandler(server)
-    handler.setLevel(level)
+    lsp_handler = LspHandler(server)
+    lsp_handler.setLevel(level)
 
     formatter = logging.Formatter("[%(name)s] %(message)s")
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
+    lsp_handler.setFormatter(formatter)
+    lsp_logger.addHandler(lsp_handler)
+
+    sphinx_logger = logging.getLogger("esbonio.sphinx")
+    sphinx_logger.setLevel(level)
+
+    sphinx_handler = LspHandler(server)
+    sphinx_handler.setLevel(level)
+
+    formatter = logging.Formatter("%(message)s")
+    sphinx_handler.setFormatter(formatter)
+    sphinx_logger.addHandler(sphinx_handler)
 
 
 def start_server(verbose):
