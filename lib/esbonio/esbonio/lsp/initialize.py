@@ -17,9 +17,9 @@ from pygls.types import (
     MessageType,
 )
 from sphinx.application import Sphinx
+from sphinx.domains import Domain
 
 from esbonio.lsp.server import RstLanguageServer
-from esbonio.lsp.logger import LspHandler
 
 
 def initialized(rst: RstLanguageServer, params: InitializeParams):
@@ -27,6 +27,8 @@ def initialized(rst: RstLanguageServer, params: InitializeParams):
 
     init_sphinx(rst)
     discover_completion_items(rst)
+    discover_target_types(rst)
+    discover_targets(rst)
 
 
 def discover_completion_items(rst: RstLanguageServer):
@@ -70,6 +72,65 @@ def discover_roles(app: Sphinx):
     return {**local_roles, **role_registry, **py_roles, **std_roles}
 
 
+def discover_target_types(rst: RstLanguageServer):
+    """Discover all the target types we could complete on.
+
+    This returns a dictionary of the form {'rolename': 'objecttype'} which will allow
+    us to determine which kind of completions we should suggest when someone starts
+    typing out a role.
+
+    This is unlikely to change much during a session, so it's probably safe to compute
+    this once on startup.
+    """
+
+    # TODO: Implement proper domain handling, focus on 'py' and 'std' for now.
+    domains = rst.app.env.domains
+    py = domains["py"]
+    std = domains["std"]
+
+    def make_map(domain: Domain):
+        return {
+            role: name
+            for name, obj in domain.object_types.items()
+            for role in obj.roles
+        }
+
+    rst.target_types = {**make_map(py), **make_map(std)}
+    rst.logger.debug("Discovered %s target types", len(rst.target_types))
+
+
+def discover_targets(rst: RstLanguageServer):
+    """Discover all the targets we can offer as suggestions.
+
+    This returns a dictionary of the form {'objecttype': [CompletionItems]}
+
+    These are likely to change over the course of an editing session, so this should
+    also be called when the client notifies us of a file->save event.
+    """
+
+    domains = rst.app.env.domains
+
+    def find_targets(domain: Domain):
+        items = {}
+
+        for (name, disp, type_, _, _, _) in domain.get_objects():
+            list = items.get(type_, None)
+
+            if list is None:
+                list = []
+
+            list.append(completion_from_target(name, disp, type_))
+            items[type_] = list
+
+        return items
+
+    # TODO: Implement proper domain handling, focus on 'py' and 'std' for now
+    py = find_targets(domains["py"])
+    std = find_targets(domains["std"])
+
+    rst.targets = {**py, **std}
+
+
 def completion_from_directive(name, directive) -> CompletionItem:
     """Convert an rst directive to a completion item we can return to the client."""
 
@@ -92,13 +153,18 @@ def completion_from_directive(name, directive) -> CompletionItem:
     )
 
 
+def completion_from_target(name, display, type_) -> CompletionItem:
+    """Convert a target into a completion item we can return to the client"""
+    return CompletionItem(name, kind=CompletionItemKind.Variable, detail=display)
+
+
 def completion_from_role(name, role) -> CompletionItem:
     """Convert an rst directive to a completion item we can return to the client."""
     return CompletionItem(
         name,
         kind=CompletionItemKind.Function,
         detail="role",
-        insert_text="{}:`$1`".format(name),
+        insert_text="{}:`$0`".format(name),
         insert_text_format=InsertTextFormat.Snippet,
     )
 
