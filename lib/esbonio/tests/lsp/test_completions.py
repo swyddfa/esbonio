@@ -23,7 +23,8 @@ from pygls.types import (
 )
 from pygls.workspace import Document, Workspace
 
-from esbonio.lsp import completions, discover_roles
+from esbonio.lsp.completion import completions
+from esbonio.lsp.initialize import discover_roles
 
 
 def make_document(contents) -> Document:

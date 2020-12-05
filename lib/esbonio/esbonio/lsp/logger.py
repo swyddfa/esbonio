@@ -30,5 +30,5 @@ class LspHandler(logging.Handler):
         if "pygls" in record.name:
             return
 
-        log = self.format(record)
-        self.server.show_message_log(log, msg_type=_LOG_LEVELS[record.levelno])
+        log = self.format(record).strip()
+        self.server.show_message_log(log)
