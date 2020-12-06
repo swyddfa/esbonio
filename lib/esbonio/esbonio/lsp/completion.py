@@ -79,12 +79,15 @@ def suggest_targets(rst: RstLanguageServer, match: re.Match) -> List[CompletionI
 
     # Look up the kind of item we need to suggest.
     name = match.group("name")
-    type_ = rst.target_types.get(name, None)
+    types = rst.target_types.get(name, None)
 
-    if type_ is None:
+    if types is None:
         return []
 
-    targets = rst.targets.get(type_, [])
+    targets = []
+    for type_ in types:
+        targets += rst.targets.get(type_, [])
+
     return targets
 
 

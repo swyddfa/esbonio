@@ -90,11 +90,19 @@ def discover_target_types(app: Sphinx):
     std = domains["std"]
 
     def make_map(domain: Domain):
-        return {
-            role: name
-            for name, obj in domain.object_types.items()
-            for role in obj.roles
-        }
+        types = {}
+
+        for name, obj in domain.object_types.items():
+            for role in obj.roles:
+                objs = types.get(role, None)
+
+                if objs is None:
+                    objs = []
+
+                objs.append(name)
+                types[role] = objs
+
+        return types
 
     return {**make_map(py), **make_map(std)}
 
