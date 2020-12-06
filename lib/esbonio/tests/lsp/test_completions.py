@@ -175,6 +175,38 @@ def test_role_discovery(sphinx, project, expected, unexpected):
     [
         (
             "sphinx-default",
+            "attribute",
+            CompletionItemKind.Field,
+            {"pythagoras.Triangle.a", "pythagoras.Triangle.b", "pythagoras.Triangle.c"},
+        ),
+        ("sphinx-default", "class", CompletionItemKind.Class, {"pythagoras.Triangle"}),
+        (
+            "sphinx-default",
+            "doc",
+            CompletionItemKind.File,
+            {"glossary", "index", "theorems/index", "theorems/pythagoras"},
+        ),
+        (
+            "sphinx-default",
+            "envvar",
+            CompletionItemKind.Variable,
+            {"ANGLE_UNIT", "PRECISION"},
+        ),
+        (
+            "sphinx-default",
+            "function",
+            CompletionItemKind.Function,
+            {"pythagoras.calc_side", "pythagoras.calc_hypotenuse"},
+        ),
+        (
+            "sphinx-default",
+            "method",
+            CompletionItemKind.Method,
+            {"pythagoras.Triangle.is_right_angled"},
+        ),
+        ("sphinx-default", "module", CompletionItemKind.Module, {"pythagoras"}),
+        (
+            "sphinx-default",
             "label",
             CompletionItemKind.Reference,
             {
@@ -188,9 +220,9 @@ def test_role_discovery(sphinx, project, expected, unexpected):
         ),
         (
             "sphinx-default",
-            "doc",
-            CompletionItemKind.File,
-            {"glossary", "index", "theorems/index", "theorems/pythagoras"},
+            "term",
+            CompletionItemKind.Text,
+            {"hypotenuse", "right angle"},
         ),
     ],
 )

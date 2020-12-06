@@ -15,9 +15,18 @@ Welcome to Defaults's documentation!
    theorems/index
    glossary
 
-Indices and tables
-==================
+Setup
+=====
 
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+In order to run the program you need a few environment variables set.
+
+.. envvar:: ANGLE_UNIT
+
+   Use this environment variable to set the unit used when describing angles. Valid
+   values are ``degress``, ``radians`` or ``gradians``.
+
+.. envvar:: PRECISION
+
+   Use this to set the level of precision used when manipulating floating point numbers.
+   Its value is an integer which represents the number of decimal places to use, default
+   value is ``2``

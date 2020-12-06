@@ -153,7 +153,17 @@ def completion_from_directive(name, directive) -> CompletionItem:
     )
 
 
-TARGET_KINDS = {"doc": CompletionItemKind.File}
+TARGET_KINDS = {
+    "attribute": CompletionItemKind.Field,
+    "doc": CompletionItemKind.File,
+    "class": CompletionItemKind.Class,
+    # "const": CompletionItemKind.Value,
+    "envvar": CompletionItemKind.Variable,
+    "function": CompletionItemKind.Function,
+    "method": CompletionItemKind.Method,
+    "module": CompletionItemKind.Module,
+    "term": CompletionItemKind.Text,
+}
 
 
 def completion_from_target(name, display, type_) -> CompletionItem:
