@@ -1,0 +1,4 @@
+**Language Server** Suggest completions for targets for a number of roles from the
+`std <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#the-standard-domain>`_
+and `py <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#the-python-domain>`_
+domains including ``ref``, ``doc``, ``func``, ``meth``, ``class`` and more.

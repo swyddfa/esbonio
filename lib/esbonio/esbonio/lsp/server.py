@@ -17,5 +17,11 @@ class RstLanguageServer(LanguageServer):
         self.roles = {}
         """Dictionary holding the roles that have been registered."""
 
+        self.targets = {}
+        """Dictionary holding objects that may be referenced by a role."""
+
+        self.target_types = {}
+        """Dictionary holding role names and the object types they can reference."""
+
 
 server = RstLanguageServer()

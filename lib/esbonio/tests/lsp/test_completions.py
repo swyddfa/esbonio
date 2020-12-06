@@ -24,7 +24,11 @@ from pygls.types import (
 from pygls.workspace import Document, Workspace
 
 from esbonio.lsp.completion import completions
-from esbonio.lsp.initialize import discover_roles
+from esbonio.lsp.initialize import (
+    discover_roles,
+    discover_target_types,
+    discover_targets,
+)
 
 
 def make_document(contents) -> Document:
@@ -54,6 +58,11 @@ def make_params(
 EXAMPLE_DIRECTIVES = [CompletionItem("doctest", kind=CompletionItemKind.Class)]
 EXAMPLE_ROLES = [CompletionItem("ref", kind=CompletionItemKind.Function)]
 
+EXAMPLE_CLASSES = [CompletionItem("pythagoras.Triangle", kind=CompletionItemKind.Class)]
+EXAMPLE_DOCS = [CompletionItem("reference/index", kind=CompletionItemKind.Reference)]
+EXAMPLE_EXC = [CompletionItem("FloatingPointError", kind=CompletionItemKind.Class)]
+EXAMPLE_REFS = [CompletionItem("search", kind=CompletionItemKind.Reference)]
+
 
 @py.test.fixture()
 def rst():
@@ -77,6 +86,18 @@ def rst():
     # Mock the data that is used to provide the completions.
     server.directives = {c.label: c for c in EXAMPLE_DIRECTIVES}
     server.roles = {c.label: c for c in EXAMPLE_ROLES}
+
+    server.target_types = {
+        "class": ["class", "exception"],
+        "ref": ["label"],
+        "doc": ["doc"],
+    }
+    server.targets = {
+        "class": EXAMPLE_CLASSES,
+        "doc": EXAMPLE_DOCS,
+        "exception": EXAMPLE_EXC,
+        "label": EXAMPLE_REFS,
+    }
 
     return server
 
@@ -106,6 +127,22 @@ def rst():
         ("   :r", make_params(character=5), EXAMPLE_ROLES),
         ("some text :", make_params(character=11), EXAMPLE_ROLES),
         ("   some text :", make_params(character=14), EXAMPLE_ROLES),
+        (".. _some_target:", make_params(character=16), []),
+        ("   .. _some_target:", make_params(character=19), []),
+        (":ref:", make_params(character=5), []),
+        # Role Target Suggestions
+        (":doc:`", make_params(character=6), EXAMPLE_DOCS),
+        (":doc:``", make_params(character=6), EXAMPLE_DOCS),
+        ("   :doc:`", make_params(character=9), EXAMPLE_DOCS),
+        ("   :doc:``", make_params(character=9), EXAMPLE_DOCS),
+        (":class:`", make_params(character=8), EXAMPLE_CLASSES + EXAMPLE_EXC),
+        (":class:``", make_params(character=8), EXAMPLE_CLASSES + EXAMPLE_EXC),
+        ("   :class:`", make_params(character=12), EXAMPLE_CLASSES + EXAMPLE_EXC),
+        ("   :class:``", make_params(character=12), EXAMPLE_CLASSES + EXAMPLE_EXC),
+        (":ref:`", make_params(character=6), EXAMPLE_REFS),
+        (":ref:``", make_params(character=6), EXAMPLE_REFS),
+        ("   :ref:`", make_params(character=9), EXAMPLE_REFS),
+        ("   :ref:``", make_params(character=9), EXAMPLE_REFS),
     ],
 )
 def test_completion_suggestions(rst, doc, params, expected):
@@ -150,3 +187,109 @@ def test_role_discovery(sphinx, project, expected, unexpected):
 
     for name in unexpected:
         assert name not in roles.keys(), "Unexpected role '{}'".format(name)
+
+
+@py.test.mark.parametrize(
+    "project,type,kind,expected",
+    [
+        (
+            "sphinx-default",
+            "attribute",
+            CompletionItemKind.Field,
+            {"pythagoras.Triangle.a", "pythagoras.Triangle.b", "pythagoras.Triangle.c"},
+        ),
+        ("sphinx-default", "class", CompletionItemKind.Class, {"pythagoras.Triangle"}),
+        (
+            "sphinx-default",
+            "doc",
+            CompletionItemKind.File,
+            {"glossary", "index", "theorems/index", "theorems/pythagoras"},
+        ),
+        (
+            "sphinx-default",
+            "envvar",
+            CompletionItemKind.Variable,
+            {"ANGLE_UNIT", "PRECISION"},
+        ),
+        (
+            "sphinx-default",
+            "function",
+            CompletionItemKind.Function,
+            {"pythagoras.calc_side", "pythagoras.calc_hypotenuse"},
+        ),
+        (
+            "sphinx-default",
+            "method",
+            CompletionItemKind.Method,
+            {"pythagoras.Triangle.is_right_angled"},
+        ),
+        ("sphinx-default", "module", CompletionItemKind.Module, {"pythagoras"}),
+        (
+            "sphinx-default",
+            "label",
+            CompletionItemKind.Reference,
+            {
+                "genindex",
+                "modindex",
+                "py-modindex",
+                "pythagoras_theorem",
+                "search",
+                "welcome",
+            },
+        ),
+        (
+            "sphinx-default",
+            "term",
+            CompletionItemKind.Text,
+            {"hypotenuse", "right angle"},
+        ),
+    ],
+)
+def test_target_discovery(sphinx, project, type, kind, expected):
+    """Ensure that we can discover the appropriate targets to complete on."""
+
+    app = sphinx(project)
+    app.builder.read()
+    targets = discover_targets(app)
+
+    assert type in targets
+    assert expected == {item.label for item in targets[type]}
+    assert kind == targets[type][0].kind
+
+
+@py.test.mark.parametrize(
+    "role,objects",
+    [
+        ("attr", {"attribute"}),
+        ("class", {"class", "exception"}),
+        ("data", {"data"}),
+        ("doc", {"doc"}),
+        ("envvar", {"envvar"}),
+        ("exc", {"class", "exception"}),
+        ("func", {"function"}),
+        ("meth", {"method", "classmethod", "staticmethod"}),
+        (
+            "obj",
+            {
+                "attribute",
+                "class",
+                "classmethod",
+                "data",
+                "exception",
+                "function",
+                "method",
+                "module",
+                "staticmethod",
+            },
+        ),
+        ("ref", {"label"}),
+        ("term", {"term"}),
+    ],
+)
+def test_target_type_discovery(sphinx, role, objects):
+    """Ensure that we can discover target types correctly."""
+
+    app = sphinx("sphinx-default")
+    types = discover_target_types(app)
+
+    assert {*types[role]} == objects
