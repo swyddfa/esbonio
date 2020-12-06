@@ -1,3 +1,25 @@
+v0.2.0 - 2020-12-06
+-------------------
+
+Features
+^^^^^^^^
+
+- **Language Server:** Python log events can now published to Language Clients (`#27 <https://github.com/swyddfa/esbonio/issues/27>`_)
+- **Language Server** Sphinx's build output is now redirected to the LSP client as log
+  messages. (`#28 <https://github.com/swyddfa/esbonio/issues/28>`_)
+- **Language Server** Suggest completions for targets for a number of roles from the
+  `std <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#the-standard-domain>`_
+  and `py <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#the-python-domain>`_
+  domains including ``ref``, ``doc``, ``func``, ``meth``, ``class`` and more. (`#29 <https://github.com/swyddfa/esbonio/issues/29>`_)
+
+
+Fixes
+^^^^^
+
+- **Language Server:** Fix discovery of roles so that roles in Sphinx domains are used and
+  that unimplemented ``docutils`` roles are not surfaced. (`#26 <https://github.com/swyddfa/esbonio/issues/26>`_)
+
+
 v0.1.2 - 2020-12-01
 -------------------
 
