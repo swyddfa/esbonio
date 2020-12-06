@@ -71,7 +71,7 @@ def completions(rst: RstLanguageServer, params: CompletionParams):
     return CompletionList(False, [])
 
 
-def suggest_targets(rst: RstLanguageServer, match: re.Match) -> List[CompletionItem]:
+def suggest_targets(rst: RstLanguageServer, match) -> List[CompletionItem]:
     """Suggest targets based on the current role."""
 
     if match is None:
