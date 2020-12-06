@@ -24,7 +24,7 @@ from pygls.types import (
 from pygls.workspace import Document, Workspace
 
 from esbonio.lsp.completion import completions
-from esbonio.lsp.initialize import discover_roles
+from esbonio.lsp.initialize import discover_roles, discover_targets
 
 
 def make_document(contents) -> Document:
@@ -54,6 +54,9 @@ def make_params(
 EXAMPLE_DIRECTIVES = [CompletionItem("doctest", kind=CompletionItemKind.Class)]
 EXAMPLE_ROLES = [CompletionItem("ref", kind=CompletionItemKind.Function)]
 
+EXAMPLE_DOCS = [CompletionItem("reference/index", kind=CompletionItemKind.Reference)]
+EXAMPLE_REFS = [CompletionItem("search", kind=CompletionItemKind.Reference)]
+
 
 @py.test.fixture()
 def rst():
@@ -77,6 +80,9 @@ def rst():
     # Mock the data that is used to provide the completions.
     server.directives = {c.label: c for c in EXAMPLE_DIRECTIVES}
     server.roles = {c.label: c for c in EXAMPLE_ROLES}
+
+    server.target_types = {"ref": "label", "doc": "doc"}
+    server.targets = {"label": EXAMPLE_REFS, "doc": EXAMPLE_DOCS}
 
     return server
 
@@ -108,6 +114,16 @@ def rst():
         ("   some text :", make_params(character=14), EXAMPLE_ROLES),
         (".. _some_target:", make_params(character=16), []),
         ("   .. _some_target:", make_params(character=19), []),
+        (":ref:", make_params(character=5), []),
+        # Role Target Suggestions
+        (":ref:`", make_params(character=6), EXAMPLE_REFS),
+        (":ref:``", make_params(character=6), EXAMPLE_REFS),
+        ("   :ref:`", make_params(character=9), EXAMPLE_REFS),
+        ("   :ref:``", make_params(character=9), EXAMPLE_REFS),
+        (":doc:`", make_params(character=6), EXAMPLE_DOCS),
+        (":doc:``", make_params(character=6), EXAMPLE_DOCS),
+        ("   :doc:`", make_params(character=9), EXAMPLE_DOCS),
+        ("   :doc:``", make_params(character=9), EXAMPLE_DOCS),
     ],
 )
 def test_completion_suggestions(rst, doc, params, expected):
@@ -152,3 +168,39 @@ def test_role_discovery(sphinx, project, expected, unexpected):
 
     for name in unexpected:
         assert name not in roles.keys(), "Unexpected role '{}'".format(name)
+
+
+@py.test.mark.parametrize(
+    "project,type,kind,expected",
+    [
+        (
+            "sphinx-default",
+            "label",
+            CompletionItemKind.Reference,
+            {
+                "genindex",
+                "modindex",
+                "py-modindex",
+                "pythagoras_theorem",
+                "search",
+                "welcome",
+            },
+        ),
+        (
+            "sphinx-default",
+            "doc",
+            CompletionItemKind.File,
+            {"glossary", "index", "theorems/index", "theorems/pythagoras"},
+        ),
+    ],
+)
+def test_target_discovery(sphinx, project, type, kind, expected):
+    """Ensure that we can discover the appropriate targets to complete on."""
+
+    app = sphinx(project)
+    app.builder.read()
+    targets = discover_targets(app)
+
+    assert type in targets
+    assert expected == {item.label for item in targets[type]}
+    assert kind == targets[type][0].kind

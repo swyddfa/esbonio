@@ -21,5 +21,5 @@ def _(rst: RstLanguageServer, params: CompletionParams):
 def _(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
     """Re-read sources on save so we get the latest completion targets."""
     rst.app.builder.read()
-    discover_targets(rst)
+    rst.targets = discover_targets(rst.app)
     return

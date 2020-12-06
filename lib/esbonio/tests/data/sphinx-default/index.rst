@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. _welcome:
+
 Welcome to Defaults's documentation!
 ====================================
 
@@ -10,7 +12,8 @@ Welcome to Defaults's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-
+   theorems/index
+   glossary
 
 Indices and tables
 ==================

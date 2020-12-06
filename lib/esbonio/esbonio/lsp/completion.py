@@ -3,7 +3,13 @@ import re
 
 from typing import List
 
-from pygls.types import CompletionList, CompletionItem, CompletionParams, Position
+from pygls.types import (
+    CompletionList,
+    CompletionItem,
+    CompletionItemKind,
+    CompletionParams,
+    Position,
+)
 from pygls.workspace import Document
 
 from esbonio.lsp.server import RstLanguageServer
@@ -26,6 +32,7 @@ ROLE = re.compile(
         :          # roles start with the ':' character
         (?!:)      # make sure the next character is not ':'
         [\w-]*     # match the role name
+        $          # ensure pattern only matches incomplete roles
     """,
     re.MULTILINE | re.VERBOSE,
 )
@@ -34,7 +41,6 @@ ROLE = re.compile(
 ROLE_TARGET = re.compile(
     r"""(^|.*[ ])          # roles must be preveeded by a space, or start the line
         :                 # roles start with the ':' character
-        #(?!:)             # make sure the next character is not ':'
         (?P<name>[\w-]+)  # capture the role name, suggestions will change based on it
         :                 # the role name ends with a ':'
         `                 # the target begins with a '`'`

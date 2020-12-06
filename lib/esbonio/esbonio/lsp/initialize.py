@@ -3,6 +3,7 @@ import inspect
 import importlib
 import logging
 import pathlib
+from typing import Dict, List
 
 import appdirs
 import sphinx.util.console as console
@@ -25,10 +26,10 @@ from esbonio.lsp.server import RstLanguageServer
 def initialized(rst: RstLanguageServer, params: InitializeParams):
     """Do set up once the initial handshake has been completed."""
 
-    init_sphinx(rst)
+    rst.app = init_sphinx(rst)
     discover_completion_items(rst)
-    discover_target_types(rst)
-    discover_targets(rst)
+    rst.target_types = discover_target_types(rst.app)
+    rst.targets = discover_targets(rst.app)
 
 
 def discover_completion_items(rst: RstLanguageServer):
@@ -72,7 +73,7 @@ def discover_roles(app: Sphinx):
     return {**local_roles, **role_registry, **py_roles, **std_roles}
 
 
-def discover_target_types(rst: RstLanguageServer):
+def discover_target_types(app: Sphinx):
     """Discover all the target types we could complete on.
 
     This returns a dictionary of the form {'rolename': 'objecttype'} which will allow
@@ -84,7 +85,7 @@ def discover_target_types(rst: RstLanguageServer):
     """
 
     # TODO: Implement proper domain handling, focus on 'py' and 'std' for now.
-    domains = rst.app.env.domains
+    domains = app.env.domains
     py = domains["py"]
     std = domains["std"]
 
@@ -95,11 +96,10 @@ def discover_target_types(rst: RstLanguageServer):
             for role in obj.roles
         }
 
-    rst.target_types = {**make_map(py), **make_map(std)}
-    rst.logger.debug("Discovered %s target types", len(rst.target_types))
+    return {**make_map(py), **make_map(std)}
 
 
-def discover_targets(rst: RstLanguageServer):
+def discover_targets(app: Sphinx) -> Dict[str, List[CompletionItem]]:
     """Discover all the targets we can offer as suggestions.
 
     This returns a dictionary of the form {'objecttype': [CompletionItems]}
@@ -108,7 +108,7 @@ def discover_targets(rst: RstLanguageServer):
     also be called when the client notifies us of a file->save event.
     """
 
-    domains = rst.app.env.domains
+    domains = app.env.domains
 
     def find_targets(domain: Domain):
         items = {}
@@ -128,7 +128,7 @@ def discover_targets(rst: RstLanguageServer):
     py = find_targets(domains["py"])
     std = find_targets(domains["std"])
 
-    rst.targets = {**py, **std}
+    return {**py, **std}
 
 
 def completion_from_directive(name, directive) -> CompletionItem:
@@ -153,9 +153,14 @@ def completion_from_directive(name, directive) -> CompletionItem:
     )
 
 
+TARGET_KINDS = {"doc": CompletionItemKind.File}
+
+
 def completion_from_target(name, display, type_) -> CompletionItem:
     """Convert a target into a completion item we can return to the client"""
-    return CompletionItem(name, kind=CompletionItemKind.Variable, detail=display)
+
+    kind = TARGET_KINDS.get(type_, CompletionItemKind.Reference)
+    return CompletionItem(name, kind=kind, detail=display, insert_text=name)
 
 
 def completion_from_role(name, role) -> CompletionItem:
@@ -177,7 +182,7 @@ class LogIO:
         self.logger.info(line)
 
 
-def init_sphinx(rst: RstLanguageServer):
+def init_sphinx(rst: RstLanguageServer) -> Sphinx:
     """Initialise a Sphinx application instance."""
     rst.logger.debug("Workspace root %s", rst.workspace.root_uri)
 
@@ -205,7 +210,8 @@ def init_sphinx(rst: RstLanguageServer):
 
     # Create a 'LogIO' object which we use to redirect Sphinx's output to the LSP Client
     log = LogIO()
-    rst.app = Sphinx(src, src, build, doctrees, "html", status=log, warning=log)
+    app = Sphinx(src, src, build, doctrees, "html", status=log, warning=log)
 
     # Do a read of all the sources to populate the environment with completion targets
-    rst.app.builder.read()
+    app.builder.read()
+    return app
