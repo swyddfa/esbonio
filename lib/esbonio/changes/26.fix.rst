@@ -1,0 +1,2 @@
+**Language Server:** Fix discovery of roles so that roles in Sphinx domains are used and
+that unimplemented ``docutils`` roles are not surfaced.

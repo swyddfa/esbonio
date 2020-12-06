@@ -1,0 +1,2 @@
+**Language Server** Sphinx's build output is now redirected to the LSP client as log
+messages.

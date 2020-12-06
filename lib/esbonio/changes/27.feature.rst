@@ -1,0 +1,1 @@
+**Language Server:** Python log events can now published to Language Clients
