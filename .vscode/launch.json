@@ -4,10 +4,11 @@
         {
             "type": "extensionHost",
             "request": "launch",
-            "name": "VSCode Extension",
+            "name": "Esbonio VSCode",
             "runtimeExecutable": "${execPath}",
             "args": [
-                "--extensionDevelopmentPath=${workspaceRoot}/code"
+                "--extensionDevelopmentPath=${workspaceRoot}/code",
+                "--folder-uri=${workspaceRoot}/lib/esbonio/tests/data/sphinx-default"
             ],
             "outFiles": [
                 "${workspaceRoot}/code/dist/**/*.js"
