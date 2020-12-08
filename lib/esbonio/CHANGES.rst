@@ -1,3 +1,13 @@
+v0.2.1 - 2020-12-08
+-------------------
+
+Fixes
+^^^^^
+
+- **Language Server** Directives that are part of the ``std`` or ``py`` Sphinx domains
+  will now be included in completion suggestions (`#31 <https://github.com/swyddfa/esbonio/issues/31>`_)
+
+
 v0.2.0 - 2020-12-06
 -------------------
 

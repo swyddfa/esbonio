@@ -1,2 +1,0 @@
-**Language Server** Directives that are part of the ``std`` or ``py`` Sphinx domains
-will now be included in completion suggestions
