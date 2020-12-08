@@ -25,6 +25,7 @@ from pygls.workspace import Document, Workspace
 
 from esbonio.lsp.completion import completions
 from esbonio.lsp.initialize import (
+    discover_directives,
     discover_roles,
     discover_target_types,
     discover_targets,
@@ -187,6 +188,37 @@ def test_role_discovery(sphinx, project, expected, unexpected):
 
     for name in unexpected:
         assert name not in roles.keys(), "Unexpected role '{}'".format(name)
+
+
+@py.test.mark.parametrize(
+    "project,expected,unexpected",
+    [
+        (
+            "sphinx-default",
+            [
+                "figure",
+                "function",
+                "glossary",
+                "image",
+                "list-table",
+                "module",
+                "toctree",
+            ],
+            ["testcode", "autoclass", "automodule"],
+        )
+    ],
+)
+def test_directive_discovery(sphinx, project, expected, unexpected):
+    """Ensure that we can discover directives to offer as completion suggestions."""
+
+    app = sphinx(project)
+    directives = discover_directives(app)
+
+    for name in expected:
+        assert name in directives.keys(), "Missing expected directive '{}'".format(name)
+
+    for name in unexpected:
+        assert name not in directives.keys(), "Unexpected directive '{}'".format(name)
 
 
 @py.test.mark.parametrize(

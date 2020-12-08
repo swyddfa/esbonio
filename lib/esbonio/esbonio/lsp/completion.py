@@ -6,7 +6,6 @@ from typing import List
 from pygls.types import (
     CompletionList,
     CompletionItem,
-    CompletionItemKind,
     CompletionParams,
     Position,
 )

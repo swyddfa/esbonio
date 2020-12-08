@@ -41,9 +41,11 @@ def discover_completion_items(rst: RstLanguageServer):
     - roles
     - directives
     """
-    # Lookup the directives and roles that have been registered
-    dirs = {**directives._directive_registry, **directives._directives}
-    rst.directives = {k: completion_from_directive(k, v) for k, v in dirs.items()}
+
+    rst.directives = {
+        k: completion_from_directive(k, v)
+        for k, v in discover_directives(rst.app).items()
+    }
 
     rst.roles = {
         k: completion_from_role(k, v) for k, v in discover_roles(rst.app).items()
@@ -51,6 +53,20 @@ def discover_completion_items(rst: RstLanguageServer):
 
     rst.logger.debug("Discovered %s directives", len(rst.directives))
     rst.logger.debug("Discovered %s roles", len(rst.roles))
+
+
+def discover_directives(app: Sphinx):
+    """Discover directives that we can offer as autocomplete suggestions."""
+    # Lookup the directives and roles that have been registered
+    dirs = {**directives._directive_registry, **directives._directives}
+
+    # Don't forget to include the directives that are stored under Sphinx domains.
+    # TODO: Implement proper domain handling, focus on std + python for now.
+    domains = app.registry.domains
+    std_directives = domains["std"].directives
+    py_directives = domains["py"].directives
+
+    return {**dirs, **std_directives, **py_directives}
 
 
 def discover_roles(app: Sphinx):
