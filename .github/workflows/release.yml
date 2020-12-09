@@ -15,8 +15,9 @@ jobs:
     name: Trigger
     runs-on: ubuntu-latest
     outputs:
-      vscode: ${{steps.check-vscode.outputs.build}}
+      docs: ${{steps.check-docs.outputs.build}}
       python: ${{steps.check-python.outputs.build}}
+      vscode: ${{steps.check-vscode.outputs.build}}
     steps:
     - uses: actions/checkout@v2
       with:
@@ -47,6 +48,14 @@ jobs:
 
         ./scripts/should-build.sh python
       name: "Build Python?"
+
+    - id: check-docs
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh docs
+      name: "Build Docs?"
 
   vscode:
     name: VSCode
@@ -232,3 +241,50 @@ jobs:
         asset_name: ${{ steps.assets.outputs.SRC }}
         asset_content_type: application/octet-stream
       if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+
+  docs:
+    name: Documentation
+    needs: trigger
+    if: ${{ needs.trigger.outputs.docs }}
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: 'actions/checkout@v2'
+      with:
+        persist-credentials: false
+
+    - uses: 'actions/setup-python@v1'
+      with:
+        python-version: 3.8
+
+    - run: |
+        set -e
+        cd docs
+
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install -r requirements.txt
+
+      name: Setup Environment
+
+    - run: |
+        set - e
+
+        cd docs
+        make html
+      name: Build Docs
+
+    - name: 'Upload Aritfact'
+      uses: 'actions/upload-artifact@v1.0.0'
+      with:
+        name: 'docs'
+        path: 'docs/_build/html'
+
+    - name: 'Publish Docs'
+      uses: JamesIves/github-pages-deploy-action@releases/v3
+      with:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        BRANCH: gh-pages
+        FOLDER: docs/_build/html
+        TARGET_FOLDER: docs/
+        CLEAN: true
+      if: success() && startsWith(github.ref, 'refs/heads/release')
