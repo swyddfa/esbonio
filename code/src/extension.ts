@@ -4,6 +4,8 @@ import { getPython, registerCommands } from "./commands";
 import { bootstrapLanguageServer } from "./languageServer";
 import { getOutputLogger } from "./log";
 
+export const RESTART_LANGUAGE_SERVER = 'esbonio.languageServer.restart'
+
 let client: LanguageClient
 
 export function activate(context: vscode.ExtensionContext) {
@@ -25,12 +27,33 @@ export function activate(context: vscode.ExtensionContext) {
             let clientOptions: LanguageClientOptions = {
                 documentSelector: [{ scheme: 'file', language: 'rst' }]
             }
-            client = new LanguageClient('esbonio', 'Esbonio', serverOptions, clientOptions)
+            client = new LanguageClient('esbonio', 'Esbonio Language Server', serverOptions, clientOptions)
             client.start()
         }).catch(err => showError(err))
     }).catch(err => showError(err))
 
+    context.subscriptions.push(vscode.commands.registerCommand(RESTART_LANGUAGE_SERVER, restartLanguageServer))
     registerCommands(context)
+}
+
+export function deactivate(): Thenable<void> | undefined {
+    if (!client) {
+        return undefined
+    }
+    return client.stop()
+}
+
+function restartLanguageServer(): Promise<null> {
+    let logger = getOutputLogger();
+
+    return new Promise((resolve, reject) => {
+        logger.info("Stopping Language Server")
+        client.stop().then(_ => {
+            logger.info("Starting Language Server")
+            client.start()
+            resolve()
+        }).catch(err => reject(err))
+    })
 }
 
 function showError(error) {
@@ -43,11 +66,4 @@ function showError(error) {
             logger.show()
         }
     })
-}
-
-export function deactivate(): Thenable<void> | undefined {
-    if (!client) {
-        return undefined
-    }
-    return client.stop()
 }

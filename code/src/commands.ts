@@ -5,7 +5,6 @@ const PYTHON_EXT = "ms-python.python"
 
 export const INSTALL_LANGUAGE_SERVER = 'esbonio.languageServer.install'
 export const UPDATE_LANGUAGE_SERVER = 'esbonio.languageServer.update'
-export const RESTART_LANGUAGE_SERVER = 'esbonio.languageServer.restart'
 
 function installLanguageServer(): Promise<null> {
   let logger = getOutputLogger()
@@ -55,14 +54,6 @@ function updateLanguageServer(): Promise<null> {
   })
 
   return promise
-}
-
-function restartLanguageServer() {
-  getPython().then(python => {
-    vscode.window.showInformationMessage(python)
-  }).catch(err => {
-    vscode.window.showErrorMessage(err)
-  })
 }
 
 /**
@@ -134,5 +125,4 @@ function getPythonExtension(): Promise<vscode.Extension<any>> {
 export function registerCommands(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.commands.registerCommand(INSTALL_LANGUAGE_SERVER, installLanguageServer))
   context.subscriptions.push(vscode.commands.registerCommand(UPDATE_LANGUAGE_SERVER, updateLanguageServer))
-  context.subscriptions.push(vscode.commands.registerCommand(RESTART_LANGUAGE_SERVER, restartLanguageServer))
 }
