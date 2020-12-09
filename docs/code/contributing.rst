@@ -14,7 +14,7 @@ to ensure you have `VSCode`_ and `npm`_ available on your system.
 Next open a terminal in the ``code/`` directory of the repository and run the
 following::
 
-   npm install
+   $ npm install
 
 This will download all the dependencies required to work on the extension. Once
 completed open the root of the repository in VSCode and hit :kbd:`F5`, this will
