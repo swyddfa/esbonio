@@ -3,8 +3,9 @@
 
 # File patterns to check for each component, if there's a match a build will be
 # triggered
-VSCODE="^code"
+DOCS="^docs"
 PYTHON="^lib/esbonio/.*\.py"
+VSCODE="^code"
 
 # Determine which files have changed
 git diff --name-only ${BASE}..HEAD -- >> changes
@@ -12,11 +13,14 @@ echo -e "Files Changed:\n"
 cat changes
 
 case $1 in
-    vscode)
-        PATTERN=${VSCODE}
+    docs)
+        PATTERN=${DOCS}
         ;;
     python)
         PATTERN=${PYTHON}
+        ;;
+    vscode)
+        PATTERN=${VSCODE}
         ;;
     *)
         echo "Unknown component ${1}"
