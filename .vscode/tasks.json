@@ -19,6 +19,15 @@
             "problemMatcher": [
                 "$tsc-watch"
             ]
+        },
+        {
+            "label": "Build Docs",
+            "type": "shell",
+            "command": "source ${workspaceRoot}/.env/bin/activate && make html",
+            "problemMatcher": [],
+            "options": {
+                "cwd": "${workspaceRoot}/docs"
+            }
         }
     ]
 }
