@@ -3,6 +3,8 @@ import { getOutputLogger } from "./log";
 
 const PYTHON_EXT = "ms-python.python"
 
+export const INSERT_LINK = 'esbonio.insert.link'
+export const INSERT_INLINE_LINK = 'esbonio.insert.inlineLink'
 export const INSTALL_LANGUAGE_SERVER = 'esbonio.languageServer.install'
 export const UPDATE_LANGUAGE_SERVER = 'esbonio.languageServer.update'
 
@@ -120,9 +122,71 @@ function getPythonExtension(): Promise<vscode.Extension<any>> {
 }
 
 /**
+ * Insert inline link.
+ *
+ */
+async function insertInlineLink(editor: vscode.TextEditor) {
+
+  let link = await getLinkComponents(editor)
+  let selection = editor.selection
+
+  let inlineLink = `\`${link.text} <${link.url}>\`_`
+
+  await editor.edit(edit => {
+    edit.replace(selection, inlineLink)
+  })
+
+  // Clear the selection.
+  let position = editor.selection.end
+  editor.selection = new vscode.Selection(position, position)
+}
+
+/**
+ * Insert a link.
+ */
+async function insertLink(editor: vscode.TextEditor) {
+
+  let link = await getLinkComponents(editor)
+  let selection = editor.selection
+
+  let linkRef = `\`${link.text}\`_`
+  let linkDef = `.. _${link.text}: ${link.url}\n`
+
+  let lastLine = editor.document.lineAt(editor.document.lineCount - 1)
+
+  await editor.edit(edit => {
+    edit.replace(selection, linkRef)
+    edit.insert(lastLine.range.end, linkDef)
+  })
+
+  // Clear the selection.
+  let position = editor.selection.end
+  editor.selection = new vscode.Selection(position, position)
+}
+
+async function getLinkComponents(editor: vscode.TextEditor) {
+  let logger = getOutputLogger()
+  let text: string;
+
+  let url = await vscode.window.showInputBox({ prompt: "Link URL", placeHolder: "https://..." })
+
+  let selection = editor.selection
+  if (selection.isEmpty) {
+    text = await vscode.window.showInputBox({ prompt: "Link Text", placeHolder: "Link Text" })
+  } else {
+    text = editor.document.getText(selection)
+  }
+
+  return { text: text, url: url }
+}
+
+/**
  * Register all the commands we contribute to VSCode.
  */
 export function registerCommands(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.commands.registerCommand(INSTALL_LANGUAGE_SERVER, installLanguageServer))
   context.subscriptions.push(vscode.commands.registerCommand(UPDATE_LANGUAGE_SERVER, updateLanguageServer))
+
+  context.subscriptions.push(vscode.commands.registerTextEditorCommand(INSERT_INLINE_LINK, insertInlineLink))
+  context.subscriptions.push(vscode.commands.registerTextEditorCommand(INSERT_LINK, insertLink))
 }

@@ -39,6 +39,16 @@
     "contributes": {
         "commands": [
             {
+                "command": "esbonio.insert.link",
+                "title": "Insert Link",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.insert.inlineLink",
+                "title": "Insert Inline Link",
+                "category": "Esbonio"
+            },
+            {
                 "command": "esbonio.languageServer.install",
                 "title": "Install Language Server",
                 "category": "Esbonio"
