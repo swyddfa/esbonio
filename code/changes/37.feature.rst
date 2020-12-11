@@ -1,2 +1,2 @@
 Add 2 commands that can be used to insert links. One that uses the inline syntax
-for inserting links, the other, the named reference syntax.
+:kbd:`Alt+L`, the other, the named reference syntax :kbd:`Alt+Shift+L`

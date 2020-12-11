@@ -86,6 +86,18 @@
                 }
             }
         ],
+        "keybindings": [
+            {
+                "command": "esbonio.insert.inlineLink",
+                "key": "alt+l",
+                "when": "editorTextFocus"
+            },
+            {
+                "command": "esbonio.insert.link",
+                "key": "alt+shift+l",
+                "when": "editorTextFocus"
+            }
+        ],
         "languages": [
             {
                 "id": "rst",
