@@ -95,7 +95,7 @@ jobs:
         npm install
 
         mkdir dist
-        npm run test
+        xvfb-run -a npm test
       name: Test Extension
 
     - run: |
