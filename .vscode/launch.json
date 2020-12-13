@@ -2,9 +2,9 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Esbonio VSCode",
             "type": "extensionHost",
             "request": "launch",
-            "name": "Esbonio VSCode",
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceRoot}/code",
@@ -14,6 +14,20 @@
                 "${workspaceRoot}/code/dist/**/*.js"
             ],
             "preLaunchTask": "${defaultBuildTask}"
+        },
+        {
+            "name": "Esbonio VSCode Tests",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}/code",
+                "--extensionTestsPath=${workspaceFolder}/code/dist/test/suite/index"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/code/dist/test/**/*.js"
+            ],
+            "preLaunchTask": "Build Tests",
         }
     ]
 }

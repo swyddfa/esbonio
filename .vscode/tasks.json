@@ -21,6 +21,23 @@
             ]
         },
         {
+            "label": "Build Tests",
+            "type": "npm",
+            "script": "compile-test",
+            "isBackground": false,
+            "options": {
+                "cwd": "${workspaceRoot}/code"
+            },
+            "group": "build",
+            "presentation": {
+                "panel": "dedicated",
+                "reveal": "never",
+            },
+            "problemMatcher": [
+                "$tsc-watch"
+            ]
+        },
+        {
             "label": "Build Docs",
             "type": "shell",
             "command": "source ${workspaceRoot}/.env/bin/activate && make html",
