@@ -176,6 +176,10 @@ export class EditorCommands {
   async insertInlineLink(editor: vscode.TextEditor) {
 
     let link = await this.getLinkInfo(editor)
+    if (!link.url || !link.label) {
+      return
+    }
+
     let selection = editor.selection
 
     let inlineLink = `\`${link.label} <${link.url}>\`_`

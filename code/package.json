@@ -10,9 +10,10 @@
     "version": "0.2.1",
     "scripts": {
         "compile": "webpack --mode production",
+        "compile-test": "npm run clean && tsc -p ./",
         "webpack": "webpack --mode development",
         "webpack-dev": "webpack --mode development --watch",
-        "test": "tsc -p ./ && node ./dist/test/runTests.js",
+        "test": "npm run compile-test && node ./dist/test/runTests.js",
         "clean": "rm -r dist",
         "deploy": "vsce publish",
         "package": "vsce package",

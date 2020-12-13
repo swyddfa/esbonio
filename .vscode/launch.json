@@ -26,7 +26,8 @@
             ],
             "outFiles": [
                 "${workspaceFolder}/code/dist/test/**/*.js"
-            ]
+            ],
+            "preLaunchTask": "Build Tests",
         }
     ]
 }
