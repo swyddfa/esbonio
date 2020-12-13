@@ -3,8 +3,6 @@ import { getOutputLogger } from "./log";
 
 const PYTHON_EXT = "ms-python.python"
 
-export const INSERT_LINK = 'esbonio.insert.link'
-export const INSERT_INLINE_LINK = 'esbonio.insert.inlineLink'
 export const INSTALL_LANGUAGE_SERVER = 'esbonio.languageServer.install'
 export const UPDATE_LANGUAGE_SERVER = 'esbonio.languageServer.update'
 
@@ -122,63 +120,101 @@ function getPythonExtension(): Promise<vscode.Extension<any>> {
 }
 
 /**
- * Insert inline link.
- *
+ * Iterface that allows us to mock out various user input commands.
  */
-async function insertInlineLink(editor: vscode.TextEditor) {
-
-  let link = await getLinkComponents(editor)
-  let selection = editor.selection
-
-  let inlineLink = `\`${link.text} <${link.url}>\`_`
-
-  await editor.edit(edit => {
-    edit.replace(selection, inlineLink)
-  })
-
-  // Clear the selection.
-  let position = editor.selection.end
-  editor.selection = new vscode.Selection(position, position)
+export interface UserInput {
+  /**
+   * Exposes VSCode `showInputBox` function.
+   */
+  inputBox(label: string, placeholder: string): Thenable<string | undefined>
 }
 
 /**
- * Insert a link.
+ * Implementation of UserInput that uses VSCode's APIs
  */
-async function insertLink(editor: vscode.TextEditor) {
+class VSCodeInput implements UserInput {
 
-  let link = await getLinkComponents(editor)
-  let selection = editor.selection
-
-  let linkRef = `\`${link.text}\`_`
-  let linkDef = `.. _${link.text}: ${link.url}\n`
-
-  let lastLine = editor.document.lineAt(editor.document.lineCount - 1)
-
-  await editor.edit(edit => {
-    edit.replace(selection, linkRef)
-    edit.insert(lastLine.range.end, linkDef)
-  })
-
-  // Clear the selection.
-  let position = editor.selection.end
-  editor.selection = new vscode.Selection(position, position)
-}
-
-async function getLinkComponents(editor: vscode.TextEditor) {
-  let logger = getOutputLogger()
-  let text: string;
-
-  let url = await vscode.window.showInputBox({ prompt: "Link URL", placeHolder: "https://..." })
-
-  let selection = editor.selection
-  if (selection.isEmpty) {
-    text = await vscode.window.showInputBox({ prompt: "Link Text", placeHolder: "Link Text" })
-  } else {
-    text = editor.document.getText(selection)
+  inputBox(label: string, placeholder: string): Thenable<string> {
+    return vscode.window.showInputBox({ prompt: label, placeHolder: placeholder })
   }
 
-  return { text: text, url: url }
 }
+
+/**
+ * Class that holds all the text editor commands.
+ */
+export class EditorCommands {
+
+  public static INSERT_LINK = 'esbonio.insert.link'
+  public static INSERT_INLINE_LINK = 'esbonio.insert.inlineLink'
+
+  constructor(public userInput: UserInput) { }
+
+  async insertLink(editor: vscode.TextEditor) {
+    let link = await this.getLinkInfo(editor)
+    let selection = editor.selection
+
+    let linkRef = `\`${link.label}\``
+    let linkDef = `.. _${link.label}: ${link.url}\n`
+
+    let lastLine = editor.document.lineAt(editor.document.lineCount - 1)
+
+    await editor.edit(edit => {
+      edit.replace(selection, linkRef)
+      edit.insert(lastLine.range.end, linkDef)
+    })
+
+    // Clear the selection
+    let position = editor.selection.end
+    editor.selection = new vscode.Selection(position, position)
+  }
+
+  /**
+ * Insert inline link.
+ *
+ */
+  async insertInlineLink(editor: vscode.TextEditor) {
+
+    let link = await this.getLinkInfo(editor)
+    let selection = editor.selection
+
+    let inlineLink = `\`${link.label} <${link.url}>\`_`
+
+    await editor.edit(edit => {
+      edit.replace(selection, inlineLink)
+    })
+
+    // Clear the selection.
+    let position = editor.selection.end
+    editor.selection = new vscode.Selection(position, position)
+  }
+
+  /**
+   * Register all the commands this class provides
+   */
+  register(context: vscode.ExtensionContext) {
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand(EditorCommands.INSERT_INLINE_LINK, this.insertInlineLink, this))
+    context.subscriptions.push(vscode.commands.registerTextEditorCommand(EditorCommands.INSERT_LINK, this.insertLink, this))
+  }
+
+  /**
+   * Helper function that returns the url to be linked and its label
+   */
+  private async getLinkInfo(editor: vscode.TextEditor) {
+    let label: string;
+    let url = await this.userInput.inputBox("Link URL", "https://...")
+
+    let selection = editor.selection
+    if (selection.isEmpty) {
+      label = await this.userInput.inputBox("Link Text", "Link Text")
+    } else {
+      label = editor.document.getText(selection)
+    }
+
+    return { label: label, url: url }
+  }
+}
+
 
 /**
  * Register all the commands we contribute to VSCode.
@@ -187,6 +223,6 @@ export function registerCommands(context: vscode.ExtensionContext) {
   context.subscriptions.push(vscode.commands.registerCommand(INSTALL_LANGUAGE_SERVER, installLanguageServer))
   context.subscriptions.push(vscode.commands.registerCommand(UPDATE_LANGUAGE_SERVER, updateLanguageServer))
 
-  context.subscriptions.push(vscode.commands.registerTextEditorCommand(INSERT_INLINE_LINK, insertInlineLink))
-  context.subscriptions.push(vscode.commands.registerTextEditorCommand(INSERT_LINK, insertLink))
+  let editorCommands = new EditorCommands(new VSCodeInput())
+  editorCommands.register(context)
 }

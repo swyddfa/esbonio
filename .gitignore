@@ -1,8 +1,11 @@
 .env
 .tox
+.vscode-test
+
 *.pyc
 *.egg-info
 *.log
+
 __pycache__
 _build
 build
