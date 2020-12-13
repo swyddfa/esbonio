@@ -93,6 +93,8 @@ jobs:
     - run: |
         cd code
         npm install
+
+        mkdir dist
         npm run test
       name: Test Extension
 
