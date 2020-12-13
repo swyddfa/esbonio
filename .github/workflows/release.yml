@@ -93,6 +93,11 @@ jobs:
     - run: |
         cd code
         npm install
+        npm run test
+      name: Test Extension
+
+    - run: |
+        cd code
         npm run compile
       name: Build Extension
 
