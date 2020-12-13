@@ -141,6 +141,20 @@ class VSCodeInput implements UserInput {
 }
 
 /**
+ * Get the corresponding end of line sequence for the given enum..
+ *
+ * Is there a built-in way to get this??
+ */
+function getEOLSequence(eol: vscode.EndOfLine): string {
+  switch (eol) {
+    case vscode.EndOfLine.LF:
+      return "\n"
+    case vscode.EndOfLine.CRLF:
+      return "\r\n"
+  }
+}
+
+/**
  * Class that holds all the text editor commands.
  */
 export class EditorCommands {
@@ -148,16 +162,38 @@ export class EditorCommands {
   public static INSERT_LINK = 'esbonio.insert.link'
   public static INSERT_INLINE_LINK = 'esbonio.insert.inlineLink'
 
+  LINK_PATTERN = /\.\.[ ]_\S+:[ ]\S+\n/
+
   constructor(public userInput: UserInput) { }
 
   async insertLink(editor: vscode.TextEditor) {
     let link = await this.getLinkInfo(editor)
-    let selection = editor.selection
+    if (!link.url || !link.label) {
+      return
+    }
 
-    let linkRef = `\`${link.label}\``
-    let linkDef = `.. _${link.label}: ${link.url}\n`
+    let selection = editor.selection
+    let eol = getEOLSequence(editor.document.eol)
 
     let lastLine = editor.document.lineAt(editor.document.lineCount - 1)
+    let lineText = editor.document.getText(lastLine.rangeIncludingLineBreak)
+
+    let prefix = ''
+    if (lineText.length === 0) {
+      let line = editor.document.lineAt(editor.document.lineCount - 2)
+      lineText = editor.document.getText(line.rangeIncludingLineBreak)
+    } else {
+      prefix = eol
+    }
+
+    // If the text at the bottom of the page is not a set of links, insert an
+    // extra new line to start a separate block.
+    if (!this.LINK_PATTERN.test(lineText)) {
+      prefix += eol
+    }
+
+    let linkRef = `\`${link.label}\`_`
+    let linkDef = `${prefix}.. _${link.label}: ${link.url}${eol}`
 
     await editor.edit(edit => {
       edit.replace(selection, linkRef)
