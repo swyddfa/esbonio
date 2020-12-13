@@ -100,6 +100,8 @@ jobs:
 
     - run: |
         cd code
+
+        rm -r dist
         npm run compile
       name: Build Extension
 
