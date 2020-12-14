@@ -45,6 +45,40 @@
             "options": {
                 "cwd": "${workspaceRoot}/docs"
             }
+        },
+        {
+            "label": "Grammar Tests",
+            "type": "shell",
+            "command": "npx vscode-tmgrammar-test -c -s source.rst -g rst.tmLanguage.json -t \"**/*.rst\"",
+            "group": "test",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            },
+            "options": {
+                "cwd": "${workspaceRoot}/code/syntaxes"
+            },
+            "problemMatcher": {
+                "fileLocation": [
+                    "relative",
+                    "${workspaceRoot}/code/syntaxes"
+                ],
+                "pattern": [
+                    {
+                        "regexp": "^(ERROR)\\s([^:]+):(\\d+):(\\d+):(\\d+)\\s(.*)$",
+                        "severity": 1,
+                        "file": 2,
+                        "line": 3,
+                        "column": 4,
+                        "endColumn": 5,
+                        "message": 6
+                    }
+                ]
+            }
         }
     ]
 }

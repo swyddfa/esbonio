@@ -48,7 +48,7 @@
             ]
         },
         "section": {
-            "match": "^[=-]+",
+            "match": "^[=^'\"*+~-]+",
             "name": "keyword.control"
         },
         "comment": {
