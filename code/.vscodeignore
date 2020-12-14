@@ -2,6 +2,7 @@ changes
 node_modules
 src/**
 dist/**/*.map
+syntaxes/tests
 .bumpversion.cfg
 CHANGES.rst
 pyproject.toml
