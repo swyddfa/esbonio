@@ -1,0 +1,14 @@
+{
+    "scopeName": "source.python",
+    "patterns": [
+        {
+            "include": "#code"
+        }
+    ],
+    "repository": {
+        "code": {
+            "match": ".*",
+            "name": "invalid"
+        }
+    }
+}

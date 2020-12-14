@@ -93,6 +93,16 @@ jobs:
     - run: |
         cd code
         npm install
+
+        mkdir dist
+        npm run test-grammar
+        xvfb-run -a npm test
+      name: Test Extension
+
+    - run: |
+        cd code
+
+        rm -r dist
         npm run compile
       name: Build Extension
 

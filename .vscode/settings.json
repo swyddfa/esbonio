@@ -1,9 +1,6 @@
 {
     "[rst]": {
         "editor.tabSize": 3,
-        "editor.rulers": [
-            80
-        ]
     },
     "[typescript]": {
         "editor.tabSize": 2
