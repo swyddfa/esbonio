@@ -19,19 +19,6 @@ class MockInput implements UserInput {
   }
 }
 
-/**
- * Open a new document with the given text.
- */
-async function editorWithText(text: string): Promise<vscode.TextEditor> {
-  const document = await vscode.workspace.openTextDocument({ language: 'rst' })
-  const editor = await vscode.window.showTextDocument(document)
-  await editor.edit(edit => {
-    edit.insert(new vscode.Position(0, 0), text)
-  })
-
-  return editor
-}
-
 suite('EditorCommands', () => {
 
   let editor: vscode.TextEditor
