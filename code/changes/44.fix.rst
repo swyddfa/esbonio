@@ -1,0 +1,1 @@
+Fix ``vsix`` packaging so that grammar tests are not included.
