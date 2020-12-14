@@ -1,2 +1,0 @@
-Support syntax highligting for more header styles. Support highligting python code
-under directives from Sphinx's ``sphinx.ext.doctest`` extension

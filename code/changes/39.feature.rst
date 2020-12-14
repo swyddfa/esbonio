@@ -1,1 +1,0 @@
-Add command that will restart the language server

@@ -1,3 +1,21 @@
+v0.3.0 - 2020-12-14
+-------------------
+
+Features
+^^^^^^^^
+
+- Add 2 commands that can be used to insert links. One that uses the inline syntax
+  :kbd:`Alt+L`, the other, the named reference syntax :kbd:`Alt+Shift+L` (`#37 <https://github.com/swyddfa/esbonio/issues/37>`_)
+- Add command that will restart the language server (`#39 <https://github.com/swyddfa/esbonio/issues/39>`_)
+
+
+Fixes
+^^^^^
+
+- Support syntax highligting for more header styles. Support highligting python code
+  under directives from Sphinx's ``sphinx.ext.doctest`` extension (`#42 <https://github.com/swyddfa/esbonio/issues/42>`_)
+
+
 v0.2.1 - 2020-11-28
 -------------------
 
