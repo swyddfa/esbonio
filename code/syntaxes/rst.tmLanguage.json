@@ -73,7 +73,25 @@
                     "include": "#python-code-block"
                 },
                 {
+                    "include": "#doctest-directive"
+                },
+                {
                     "include": "#generic-directive"
+                }
+            ]
+        },
+        "doctest-directive": {
+            "begin": "(\\s*)\\.\\.\\s+(doctest|testcode|testsetup|testcleanup)::",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.type"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "doctest.directive",
+            "patterns": [
+                {
+                    "include": "#python-code"
                 }
             ]
         },

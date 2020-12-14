@@ -14,7 +14,7 @@
         "webpack": "webpack --mode development",
         "webpack-dev": "webpack --mode development --watch",
         "test": "npm run compile-test && node ./dist/test/runTests.js",
-        "test-grammar": "vscode-tmgrammar-test -s source.rst -g syntaxes/rst.tmLanguage.json -t \"syntaxes/**/*.rst\"",
+        "test-grammar": "vscode-tmgrammar-test -s source.rst -g syntaxes/rst.tmLanguage.json -g syntaxes/tests/python.tmLanguage.json -t \"syntaxes/**/*.rst\"",
         "clean": "rm -r dist",
         "deploy": "vsce publish",
         "package": "vsce package",

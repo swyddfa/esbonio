@@ -49,7 +49,7 @@
         {
             "label": "Grammar Tests",
             "type": "shell",
-            "command": "npx vscode-tmgrammar-test -c -s source.rst -g rst.tmLanguage.json -t \"**/*.rst\"",
+            "command": "npx vscode-tmgrammar-test -c -s source.rst -g rst.tmLanguage.json -g tests/python.tmLanguage.json -t \"**/*.rst\"",
             "group": "test",
             "presentation": {
                 "echo": true,
