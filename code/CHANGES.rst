@@ -1,3 +1,12 @@
+v0.3.1 - 2020-12-14
+-------------------
+
+Misc
+^^^^
+
+- Fix ``vsix`` packaging so that grammar tests are not included. (`#44 <https://github.com/swyddfa/esbonio/issues/44>`_)
+
+
 v0.3.0 - 2020-12-14
 -------------------
 
