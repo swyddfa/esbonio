@@ -24,5 +24,8 @@ def _(rst: RstLanguageServer, params: CompletionParams):
 def _(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
     """Re-read sources on save so we get the latest completion targets."""
 
+    # TODO: Reload everything is a modification to conf.py is made.
+    # init_sphinx(rst)
+
     update(rst)
     return

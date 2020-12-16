@@ -25,15 +25,16 @@ from esbonio.lsp.server import RstLanguageServer
 def initialized(rst: RstLanguageServer, params: InitializeParams):
     """Do set up once the initial handshake has been completed."""
 
-    rst.app = init_sphinx(rst)
-    discover_completion_items(rst)
-    rst.target_types = discover_target_types(rst.app)
-
+    init_sphinx(rst)
     update(rst)
 
 
 def update(rst: RstLanguageServer):
     """Do everything we need to refresh references etc."""
+
+    if rst.app is None:
+        return
+
     rst.reset_diagnostics()
 
     rst.app.builder.read()
@@ -71,6 +72,9 @@ def discover_directives(app: Sphinx):
     # Lookup the directives and roles that have been registered
     dirs = {**directives._directive_registry, **directives._directives}
 
+    if app is None:
+        return dirs
+
     # Don't forget to include the directives that are stored under Sphinx domains.
     # TODO: Implement proper domain handling, focus on std + python for now.
     domains = app.registry.domains
@@ -91,6 +95,9 @@ def discover_roles(app: Sphinx):
         k: v for k, v in roles._role_registry.items() if v != roles.unimplemented_role
     }
 
+    if app is None:
+        return {**local_roles, **role_registry}
+
     # Don't forget to include the roles that are stored under Sphinx domains.
     # TODO: Implement proper domain handling, focus on std + python for now.
     domains = app.registry.domains
@@ -100,7 +107,7 @@ def discover_roles(app: Sphinx):
     return {**local_roles, **role_registry, **py_roles, **std_roles}
 
 
-def discover_target_types(app: Sphinx):
+def discover_target_types(rst: RstLanguageServer):
     """Discover all the target types we could complete on.
 
     This returns a dictionary of the form {'rolename': 'objecttype'} which will allow
@@ -111,8 +118,11 @@ def discover_target_types(app: Sphinx):
     this once on startup.
     """
 
+    if rst.app is None:
+        return
+
     # TODO: Implement proper domain handling, focus on 'py' and 'std' for now.
-    domains = app.env.domains
+    domains = rst.app.env.domains
     py = domains["py"]
     std = domains["std"]
 
@@ -131,7 +141,7 @@ def discover_target_types(app: Sphinx):
 
         return types
 
-    return {**make_map(py), **make_map(std)}
+    rst.target_types = {**make_map(py), **make_map(std)}
 
 
 def discover_targets(app: Sphinx) -> Dict[str, List[CompletionItem]]:
@@ -244,8 +254,15 @@ def init_sphinx(rst: RstLanguageServer) -> Sphinx:
 
     # Disable color codes in Sphinx's log messages.
     console.nocolor()
-    app = Sphinx(src, src, build, doctrees, "html", status=rst, warning=rst)
 
-    # Do a read of all the sources to populate the environment with completion targets
-    app.builder.read()
-    return app
+    try:
+        rst.app = Sphinx(src, src, build, doctrees, "html", status=rst, warning=rst)
+    except Exception as exc:
+        rst.sphinx_log.error(exc)
+        rst.show_message(
+            "There was an error initializing Sphinx, see output window for details.",
+            msg_type=MessageType.Error,
+        )
+
+    discover_completion_items(rst)
+    discover_target_types(rst)

@@ -277,12 +277,12 @@ def test_directive_discovery(sphinx, project, expected, unexpected):
         ),
     ],
 )
-def test_target_discovery(sphinx, project, type, kind, expected):
+def test_target_discovery(rst, sphinx, project, type, kind, expected):
     """Ensure that we can discover the appropriate targets to complete on."""
 
-    app = sphinx(project)
-    app.builder.read()
-    targets = discover_targets(app)
+    rst.app = sphinx(project)
+    rst.app.builder.read()
+    targets = discover_targets(rst.app)
 
     assert type in targets
     assert expected == {item.label for item in targets[type]}
@@ -318,10 +318,10 @@ def test_target_discovery(sphinx, project, type, kind, expected):
         ("term", {"term"}),
     ],
 )
-def test_target_type_discovery(sphinx, role, objects):
+def test_target_type_discovery(rst, sphinx, role, objects):
     """Ensure that we can discover target types correctly."""
 
-    app = sphinx("sphinx-default")
-    types = discover_target_types(app)
+    rst.app = sphinx("sphinx-default")
+    types = discover_target_types(rst)
 
-    assert {*types[role]} == objects
+    assert {*rst.target_types[role]} == objects
