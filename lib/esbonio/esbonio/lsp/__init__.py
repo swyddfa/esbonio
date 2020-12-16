@@ -15,7 +15,7 @@ def _(rst: RstLanguageServer, params: InitializeParams):
     return initialized(rst, params)
 
 
-@server.feature(COMPLETION, trigger_characters=[".", ":", "`"])
+@server.feature(COMPLETION, trigger_characters=[".", ":", "`", "<"])
 def _(rst: RstLanguageServer, params: CompletionParams):
     return completions(rst, params)
 

@@ -215,7 +215,7 @@ def completion_from_target(name, display, type_) -> CompletionItem:
     """Convert a target into a completion item we can return to the client"""
 
     kind = TARGET_KINDS.get(type_, CompletionItemKind.Reference)
-    return CompletionItem(name, kind=kind, detail=display, insert_text=name)
+    return CompletionItem(name, kind=kind, detail=str(display), insert_text=name)
 
 
 def completion_from_role(name, role) -> CompletionItem:
@@ -224,8 +224,7 @@ def completion_from_role(name, role) -> CompletionItem:
         name,
         kind=CompletionItemKind.Function,
         detail="role",
-        insert_text="{}:`$0`".format(name),
-        insert_text_format=InsertTextFormat.Snippet,
+        insert_text="{}:".format(name),
     )
 
 
