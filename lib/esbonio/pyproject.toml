@@ -50,7 +50,7 @@ deps =
     pytest
 extras = lsp
 commands =
-    pytest
+    pytest --cov=esbonio
 
 [testenv:pkg]
 deps =
