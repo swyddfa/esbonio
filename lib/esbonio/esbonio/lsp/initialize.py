@@ -224,8 +224,7 @@ def completion_from_role(name, role) -> CompletionItem:
         name,
         kind=CompletionItemKind.Function,
         detail="role",
-        insert_text="{}:`$0`".format(name),
-        insert_text_format=InsertTextFormat.Snippet,
+        insert_text="{}:".format(name),
     )
 
 
