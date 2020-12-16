@@ -48,9 +48,10 @@ isolated_build = True
 deps =
     mock
     pytest
+    pytest-cov
 extras = lsp
 commands =
-    pytest
+    pytest --cov=esbonio
 
 [testenv:pkg]
 deps =

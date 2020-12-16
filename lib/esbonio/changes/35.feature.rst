@@ -1,0 +1,2 @@
+**Language Server** Errors in Sphinx's build output are now parsed and published
+to the LSP client as diagnostics

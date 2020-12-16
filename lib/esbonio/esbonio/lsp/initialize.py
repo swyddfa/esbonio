@@ -1,7 +1,6 @@
 """Server initialization logic."""
 import inspect
 import importlib
-import logging
 import pathlib
 from typing import Dict, List
 
@@ -29,7 +28,19 @@ def initialized(rst: RstLanguageServer, params: InitializeParams):
     rst.app = init_sphinx(rst)
     discover_completion_items(rst)
     rst.target_types = discover_target_types(rst.app)
+
+    update(rst)
+
+
+def update(rst: RstLanguageServer):
+    """Do everything we need to refresh references etc."""
+    rst.reset_diagnostics()
+
+    rst.app.builder.read()
     rst.targets = discover_targets(rst.app)
+
+    for doc, diagnostics in rst.diagnostics.items():
+        rst.publish_diagnostics(doc, diagnostics)
 
 
 def discover_completion_items(rst: RstLanguageServer):
@@ -208,14 +219,6 @@ def completion_from_role(name, role) -> CompletionItem:
     )
 
 
-class LogIO:
-    def __init__(self):
-        self.logger = logging.getLogger("esbonio.sphinx")
-
-    def write(self, line):
-        self.logger.info(line)
-
-
 def init_sphinx(rst: RstLanguageServer) -> Sphinx:
     """Initialise a Sphinx application instance."""
     rst.logger.debug("Workspace root %s", rst.workspace.root_uri)
@@ -241,10 +244,7 @@ def init_sphinx(rst: RstLanguageServer) -> Sphinx:
 
     # Disable color codes in Sphinx's log messages.
     console.nocolor()
-
-    # Create a 'LogIO' object which we use to redirect Sphinx's output to the LSP Client
-    log = LogIO()
-    app = Sphinx(src, src, build, doctrees, "html", status=log, warning=log)
+    app = Sphinx(src, src, build, doctrees, "html", status=rst, warning=rst)
 
     # Do a read of all the sources to populate the environment with completion targets
     app.builder.read()

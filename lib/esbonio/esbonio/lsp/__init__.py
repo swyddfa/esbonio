@@ -1,9 +1,12 @@
 from pygls.features import COMPLETION, INITIALIZED, TEXT_DOCUMENT_DID_SAVE
-
-from pygls.types import CompletionParams, InitializeParams, DidSaveTextDocumentParams
+from pygls.types import (
+    CompletionParams,
+    DidSaveTextDocumentParams,
+    InitializeParams,
+)
 
 from esbonio.lsp.completion import completions
-from esbonio.lsp.initialize import initialized, discover_targets
+from esbonio.lsp.initialize import initialized, update
 from esbonio.lsp.server import RstLanguageServer, server
 
 
@@ -20,6 +23,6 @@ def _(rst: RstLanguageServer, params: CompletionParams):
 @server.feature(TEXT_DOCUMENT_DID_SAVE)
 def _(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
     """Re-read sources on save so we get the latest completion targets."""
-    rst.app.builder.read()
-    rst.targets = discover_targets(rst.app)
+
+    update(rst)
     return
