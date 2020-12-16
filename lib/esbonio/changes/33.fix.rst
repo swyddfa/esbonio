@@ -1,0 +1,2 @@
+Errors encountered when initialising Sphinx are now caught and the language
+client is notified of an issue.
