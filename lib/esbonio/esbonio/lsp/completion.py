@@ -56,11 +56,10 @@ def completions(rst: RstLanguageServer, params: CompletionParams):
     doc = rst.workspace.get_document(uri)
     line = get_line_til_position(doc, pos)
 
-    target_match = ROLE_TARGET.match(line)
-
     if DIRECTIVE.match(line):
         return CompletionList(False, list(rst.directives.values()))
 
+    target_match = ROLE_TARGET.match(line)
     if target_match:
         return CompletionList(False, suggest_targets(rst, target_match))
 
