@@ -189,12 +189,19 @@ def completion_from_directive(name, directive) -> CompletionItem:
         directive = getattr(module, cls)
 
     documentation = inspect.getdoc(directive)
+
+    args = " ".join(
+        "${{{0}:arg{0}}}".format(i) for i in range(1, directive.required_arguments + 1)
+    )
+    snippet = " {}:: {}$0".format(name, args)
+
     return CompletionItem(
         name,
         kind=CompletionItemKind.Class,
         detail="directive",
         documentation=documentation,
-        insert_text=" {}:: ".format(name),
+        insert_text=snippet,
+        insert_text_format=InsertTextFormat.Snippet,
     )
 
 
