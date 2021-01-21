@@ -79,9 +79,7 @@ class DirectiveHandler(CompletionHandler):
         self.directives = {k: to_completion_item(k, v) for k, v in dirs.items()}
 
     def suggest(self, rst, match, line, doc):
-        items = list(self.directives.values())
-        rst.logger.debug(items)
-        return items
+        return list(self.directives.values())
 
 
 def init(rst: RstLanguageServer):

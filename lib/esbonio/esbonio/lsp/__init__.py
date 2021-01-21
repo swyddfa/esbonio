@@ -142,7 +142,7 @@ def initalize_sphinx(rst: RstLanguageServer):
 
 
 server = RstLanguageServer()
-builtin_modules = ["esbonio.lsp.completion.directives"]
+builtin_modules = ["esbonio.lsp.completion.directives", "esbonio.lsp.completion.roles"]
 
 
 @server.feature(INITIALIZED)
