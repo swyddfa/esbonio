@@ -132,7 +132,6 @@ class RoleTargetCompletion:
     """Completion handler for role targets."""
 
     def __init__(self, rst: RstLanguageServer):
-
         self.rst = rst
 
     def initialize(self):
