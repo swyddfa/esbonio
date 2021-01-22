@@ -6,35 +6,10 @@ import re
 from typing import Dict, List
 
 from docutils.parsers.rst import roles
-from pygls.types import CompletionItem, CompletionItemKind
-from sphinx.application import Sphinx
+from pygls.types import CompletionItem, CompletionItemKind, DidSaveTextDocumentParams
 from sphinx.domains import Domain
 
-from esbonio.lsp.completion import CompletionHandler
-
-# This should match someone typing out a new role e.g. :re|
-ROLE = re.compile(
-    r"""(^|.*[ ])  # roles must be preceeded by a space, or start the line
-        :          # roles start with the ':' character
-        (?!:)      # make sure the next character is not ':'
-        [\w-]*     # match the role name
-        $          # ensure pattern only matches incomplete roles
-    """,
-    re.MULTILINE | re.VERBOSE,
-)
-
-
-# This should match someone typing out a role target e.g. :ref:`ti|
-#                                                         :ref:`more info <ti|
-ROLE_TARGET = re.compile(
-    r"""(^|.*[ ])          # roles must be preveeded by a space, or start the line
-        :                 # roles start with the ':' character
-        (?P<name>[\w-]+)  # capture the role name, suggestions will change based on it
-        :                 # the role name ends with a ':'
-        `                 # the target begins with a '`'`
-    """,
-    re.MULTILINE | re.VERBOSE,
-)
+from esbonio.lsp import RstLanguageServer
 
 
 def role_to_completion_item(name, role) -> CompletionItem:
@@ -63,10 +38,16 @@ def target_to_completion_item(name, display, type_) -> CompletionItem:
     return CompletionItem(name, kind=kind, detail=str(display), insert_text=name)
 
 
-class RoleHandler(CompletionHandler):
+class RoleCompletion:
     """Completion handler for roles."""
 
-    def __init__(self, app: Sphinx):
+    def __init__(self, rst: RstLanguageServer):
+        self.rst = rst
+
+    def initialize(self):
+        self.discover()
+
+    def discover(self):
 
         # Find roles that have been registered directly with docutils
         local_roles = {
@@ -80,18 +61,31 @@ class RoleHandler(CompletionHandler):
         std_roles = {}
         py_roles = {}
 
-        if app is not None:
+        if self.rst.app is not None:
 
             # Find roles that are held in a Sphinx domain.
             # TODO: Implement proper domain handling, will focus on std+python for now
-            domains = app.registry.domains
+            domains = self.rst.app.registry.domains
             std_roles = domains["std"].roles
             py_roles = domains["py"].roles
 
         rs = {**local_roles, **role_registry, **std_roles, **py_roles}
-        self.roles = {k: role_to_completion_item(k, v) for k, v in rs.items()}
 
-    def suggest(self, rst, match, line, doc):
+        self.roles = {k: role_to_completion_item(k, v) for k, v in rs.items()}
+        self.rst.logger.debug("Discovered %s roles", len(self.roles))
+
+    suggest_trigger = re.compile(
+        r"""
+        (^|.*[ ])  # roles must be preceeded by a space, or start the line
+        :          # roles start with the ':' character
+        (?!:)      # make sure the next character is not ':'
+        [\w-]*     # match the role name
+        $          # ensure pattern only matches incomplete roles
+        """,
+        re.MULTILINE | re.VERBOSE,
+    )
+
+    def suggest(self, match, line, doc) -> List[CompletionItem]:
         return list(self.roles.values())
 
 
@@ -134,37 +128,32 @@ def build_target_map(domain: Domain) -> Dict[str, List[CompletionItem]]:
     return completion_items
 
 
-class RoleTargetHandler(CompletionHandler):
+class RoleTargetCompletion:
     """Completion handler for role targets."""
 
-    def __init__(self, app: Sphinx):
+    def __init__(self, rst: RstLanguageServer):
 
-        if app is None:
-            return
+        self.rst = rst
 
-        # TODO: Implement proper domain handling, will focus on std+python for now
-        domains = app.env.domains
-        py = domains["py"]
-        std = domains["std"]
+    def initialize(self):
+        self.discover_target_types()
+        self.discover_targets()
 
-        self.target_types = {**build_role_target_map(py), **build_role_target_map(std)}
-        self.discover_targets(app)
+    def save(self, params: DidSaveTextDocumentParams):
+        self.discover_targets()
 
-    def discover_targets(self, app: Sphinx):
-        """Discover possible completion targets given an application instance."""
+    suggest_trigger = re.compile(
+        r"""
+        (^|.*[ ])          # roles must be preveeded by a space, or start the line
+        :                 # roles start with the ':' character
+        (?P<name>[\w-]+)  # capture the role name, suggestions will change based on it
+        :                 # the role name ends with a ':'
+        `                 # the target begins with a '`'`
+        """,
+        re.MULTILINE | re.VERBOSE,
+    )
 
-        if app is None:
-            self.targets = {}
-            return
-
-        # TODO: Implement proper domain handling, will focus on std+python for now
-        domains = app.env.domains
-        py = domains["py"]
-        std = domains["std"]
-
-        self.targets = {**build_target_map(py), **build_target_map(std)}
-
-    def suggest(self, rst, match, line, doc) -> List[CompletionItem]:
+    def suggest(self, match, line, doc) -> List[CompletionItem]:
         # TODO: Detect if we're in an angle bracket e.g. :ref:`More Info <|` in that
         # situation, add the closing '>' to the completion item insert text.
 
@@ -183,11 +172,35 @@ class RoleTargetHandler(CompletionHandler):
 
         return targets
 
+    def discover_target_types(self):
 
-def init(rst: RstLanguageServer):
-    role_handler = RoleHandler(rst.app)
-    role_target_handler = RoleTargetHandler(rst.app)
+        if self.rst.app is None:
+            return
 
-    rst.logger.debug("Discovered %s roles", len(role_handler.roles))
-    rst.add_completion_handler(ROLE, role_handler)
-    rst.add_completion_handler(ROLE_TARGET, role_target_handler)
+        # TODO: Implement proper domain handling, will focus on std+python for now
+        domains = self.rst.app.env.domains
+        py = domains["py"]
+        std = domains["std"]
+
+        self.target_types = {**build_role_target_map(py), **build_role_target_map(std)}
+
+    def discover_targets(self):
+
+        if self.rst.app is None:
+            self.targets = {}
+            return
+
+        # TODO: Implement proper domain handling, will focus on std+python for now
+        domains = self.rst.app.env.domains
+        py = domains["py"]
+        std = domains["std"]
+
+        self.targets = {**build_target_map(py), **build_target_map(std)}
+
+
+def setup(rst: RstLanguageServer):
+    role_completion = RoleCompletion(rst)
+    role_target_completion = RoleTargetCompletion(rst)
+
+    rst.add_feature(role_completion)
+    rst.add_feature(role_target_completion)

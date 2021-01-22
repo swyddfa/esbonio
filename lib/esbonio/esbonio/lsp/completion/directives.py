@@ -1,17 +1,14 @@
 """Logic around directive completions goes here."""
-from __future__ import annotations
-
 import importlib
 import inspect
 import re
 
-from typing import Dict
+from typing import List
 
-from docutils.parsers.rst import Directive, directives
+from docutils.parsers.rst import directives
 from pygls.types import CompletionItem, CompletionItemKind, InsertTextFormat
-from sphinx.application import Sphinx
 
-from esbonio.lsp.completion import CompletionHandler
+from esbonio.lsp import RstLanguageServer
 
 
 def to_completion_item(name: str, directive) -> CompletionItem:
@@ -44,47 +41,50 @@ def to_completion_item(name: str, directive) -> CompletionItem:
     )
 
 
-DIRECTIVE = re.compile(
-    r"""
-    ^\s*        # directives may be indented
-    \.\.        # they start with an rst comment
-    [ ]*        # followed by a space
-    ([\w-]+)?$  # with an optional name
-
-    """,
-    re.VERBOSE,
-)
-
-
-class DirectiveHandler(CompletionHandler):
+class DirectiveCompletion:
     """A completion handler for directives."""
 
-    def __init__(self, app: Sphinx):
+    def __init__(self, rst: RstLanguageServer):
+        self.rst = rst
 
+    def initialize(self):
+        self.discover()
+
+    def discover(self):
         std_directives = {}
         py_directives = {}
 
         # Find directives that have been registered directly with docutils.
         dirs = {**directives._directive_registry, **directives._directives}
 
-        if app is not None:
+        if self.rst.app is not None:
 
             # Find directives that are held in a Sphinx domain.
             # TODO: Implement proper domain handling, will focus on std + python for now
-            domains = app.registry.domains
+            domains = self.rst.app.registry.domains
             std_directives = domains["std"].directives
             py_directives = domains["py"].directives
 
         dirs = {**dirs, **std_directives, **py_directives}
-        self.directives = {k: to_completion_item(k, v) for k, v in dirs.items()}
 
-    def suggest(self, rst, match, line, doc):
+        self.directives = {k: to_completion_item(k, v) for k, v in dirs.items()}
+        self.rst.logger.debug("Discovered %s directives", len(self.directives))
+
+    suggest_trigger = re.compile(
+        r"""
+        ^\s*        # directives may be indented
+        \.\.        # they start with an rst comment
+        [ ]*        # followed by a space
+        ([\w-]+)?$  # with an optional name
+        """,
+        re.VERBOSE,
+    )
+
+    def suggest(self, match, line, doc) -> List[CompletionItem]:
         return list(self.directives.values())
 
 
-def init(rst: RstLanguageServer):
+def setup(rst: RstLanguageServer):
 
-    handler = DirectiveHandler(rst.app)
-
-    rst.logger.debug("Discovered %s directives", len(handler.directives))
-    rst.add_completion_handler(DIRECTIVE, handler)
+    directive_completion = DirectiveCompletion(rst)
+    rst.add_feature(directive_completion)
