@@ -67,7 +67,11 @@ class DirectiveCompletion:
 
         dirs = {**dirs, **std_directives, **py_directives}
 
-        self.directives = {k: to_completion_item(k, v) for k, v in dirs.items()}
+        self.directives = {
+            k: to_completion_item(k, v)
+            for k, v in dirs.items()
+            if k != "restructuredtext-test-directive"
+        }
         self.rst.logger.debug("Discovered %s directives", len(self.directives))
 
     suggest_trigger = re.compile(
