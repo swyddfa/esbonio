@@ -1,12 +1,13 @@
+import unittest.mock as mock
+
 import py.test
 
 from pygls.types import Diagnostic, DiagnosticSeverity, Position, Range
 
-from esbonio.lsp.server import RstLanguageServer
+from esbonio.lsp.sphinx import SphinxManagement
 
 
 def line(linum: int) -> Range:
-    """Helper that returns a range targeting a given line."""
     return Range(Position(linum - 1, 0), Position(linum, 0))
 
 
@@ -56,19 +57,19 @@ def line(linum: int) -> Range:
     ],
 )
 def test_parse_diagnostics(text, expected):
-    """Ensure that the language server can parse errors out of sphinx's output."""
+    """Ensure that the language server can parse errors from sphinx's output."""
 
-    server = RstLanguageServer()
-    server.write(text)
+    management = SphinxManagement(mock.Mock())
+    management.write(text)
 
-    # Unfortunately, Diagnostic is just a Python class without an __eq__ implementation
+    # Unfortunately, 'Diagnostic' is just a Python class without an __eq__ implementation
     # so we need to take a more manual approach to verifying the expected result.
-    assert server.diagnostics.keys() == expected.keys()
+    assert management.diagnostics.keys() == expected.keys()
 
-    for file in server.diagnostics.keys():
+    for file in management.diagnostics.keys():
 
         expect = expected[file]
-        actual = server.diagnostics[file]
+        actual = management.diagnostics[file]
         assert len(expect) == len(actual)
 
         for a, b in zip(expect, actual):
@@ -77,6 +78,6 @@ def test_parse_diagnostics(text, expected):
             assert a.severity == b.severity
             assert a.source == b.source
 
-    # Ensure that we rest the diagnostics correctly.
-    server.reset_diagnostics()
-    assert server.diagnostics == {file: [] for file in expected.keys()}
+    # Ensure that can correctly reset diagnostics
+    management.reset_diagnostics()
+    assert management.diagnostics == {file: [] for file in expected.keys()}
