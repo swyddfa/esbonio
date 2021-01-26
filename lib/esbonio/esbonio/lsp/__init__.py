@@ -1,7 +1,9 @@
 import importlib
 import logging
 
-from pygls.features import COMPLETION, INITIALIZED, TEXT_DOCUMENT_DID_SAVE
+from typing import List
+
+from pygls.features import COMPLETION, INITIALIZE, TEXT_DOCUMENT_DID_SAVE
 from pygls.server import LanguageServer
 from pygls.types import (
     CompletionList,
@@ -13,9 +15,16 @@ from pygls.types import (
 from pygls.workspace import Document
 
 
+BUILTIN_MODULES = [
+    "esbonio.lsp.sphinx",
+    "esbonio.lsp.completion.directives",
+    "esbonio.lsp.completion.roles",
+]
+
+
 class RstLanguageServer(LanguageServer):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.logger = logging.getLogger(__name__)
         """The logger that should be used for all Language Server log entries"""
@@ -58,27 +67,6 @@ class RstLanguageServer(LanguageServer):
         module.setup(self)
 
 
-# TODO: Rethink how we do startup, should esbonio.__main__ be doing this?
-server = RstLanguageServer()
-builtin_modules = [
-    "esbonio.lsp.sphinx",
-    "esbonio.lsp.completion.directives",
-    "esbonio.lsp.completion.roles",
-]
-
-
-@server.feature(INITIALIZED)
-def on_initialized(rst: RstLanguageServer, params: InitializeParams):
-
-    for mod in builtin_modules:
-        rst.load_module(mod)
-
-    for init_hook in rst.on_init_hooks:
-        init_hook()
-
-    rst.logger.info("LSP Server Initialized")
-
-
 def get_line_til_position(doc: Document, position: Position) -> str:
     """Return the line up until the position of the cursor."""
 
@@ -90,27 +78,51 @@ def get_line_til_position(doc: Document, position: Position) -> str:
     return line[: position.character]
 
 
-@server.feature(COMPLETION, trigger_characters=[".", ":", "`", "<"])
-def on_completion(rst: RstLanguageServer, params: CompletionParams):
-    """Suggest completions based on the current context."""
-    uri = params.textDocument.uri
-    pos = params.position
+def create_language_server(modules: List[str]) -> RstLanguageServer:
+    """Create a new language server instance.
 
-    doc = rst.workspace.get_document(uri)
-    line = get_line_til_position(doc, pos)
+    Parameters
+    ----------
+    modules:
+        The list of modules that should be loaded.
+    """
+    import asyncio
 
-    items = []
+    server = RstLanguageServer(asyncio.new_event_loop())
 
-    for pattern, handler in rst.completion_handlers.items():
-        match = pattern.match(line)
-        if match:
-            items += handler(match, line, doc)
+    for mod in modules:
+        server.load_module(mod)
 
-    return CompletionList(False, items)
+    @server.feature(INITIALIZE)
+    def on_initialize(rst: RstLanguageServer, params: InitializeParams):
 
+        for init_hook in rst.on_init_hooks:
+            init_hook()
 
-@server.feature(TEXT_DOCUMENT_DID_SAVE)
-def on_save(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
+        rst.logger.info("LSP Server Initialized")
 
-    for on_save_hook in rst.on_save_hooks:
-        on_save_hook(params)
+    @server.feature(COMPLETION, trigger_characters=[".", ":", "`", "<"])
+    def on_completion(rst: RstLanguageServer, params: CompletionParams):
+        """Suggest completions based on the current context."""
+        uri = params.textDocument.uri
+        pos = params.position
+
+        doc = rst.workspace.get_document(uri)
+        line = get_line_til_position(doc, pos)
+
+        items = []
+
+        for pattern, handler in rst.completion_handlers.items():
+            match = pattern.match(line)
+            if match:
+                items += handler(match, line, doc)
+
+        return CompletionList(False, items)
+
+    @server.feature(TEXT_DOCUMENT_DID_SAVE)
+    def on_save(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
+
+        for on_save_hook in rst.on_save_hooks:
+            on_save_hook(params)
+
+    return server
