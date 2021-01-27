@@ -161,7 +161,7 @@ class RoleTargetCompletion:
         types = self.target_types.get(rolename, None)
 
         if types is None:
-            return None
+            return []
 
         targets = []
         for type_ in types:
