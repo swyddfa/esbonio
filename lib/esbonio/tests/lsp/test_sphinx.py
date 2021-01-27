@@ -4,11 +4,46 @@ import py.test
 
 from pygls.types import Diagnostic, DiagnosticSeverity, Position, Range
 
-from esbonio.lsp.sphinx import SphinxManagement
+from esbonio.lsp.sphinx import SphinxManagement, find_conf_py
 
 
 def line(linum: int) -> Range:
     return Range(Position(linum - 1, 0), Position(linum, 0))
+
+
+@py.test.mark.parametrize(
+    "root,expected,candidates",
+    [
+        ("/home/user/Project", None, []),
+        (
+            "/home/user/Project/",
+            "/home/user/Project/conf.py",
+            ["/home/user/Project/conf.py"],
+        ),
+        (
+            "/home/user/Project",
+            "/home/user/Project/conf.py",
+            ["/home/user/Project/.tox/conf.py", "/home/user/Project/conf.py"],
+        ),
+        (
+            "/home/user/Project",
+            "/home/user/Project/conf.py",
+            [
+                "/home/user/Project/.env/lib/site-packages/pkg/conf.py",
+                "/home/user/Project/conf.py",
+            ],
+        ),
+    ],
+)
+def test_find_conf_py(root, candidates, expected):
+    """Ensure that we can correctly find a project's conf.py"""
+
+    with mock.patch("esbonio.lsp.sphinx.pathlib.Path") as MockPath:
+        instance = MockPath.return_value
+        instance.glob.return_value = candidates
+
+        conf_py = find_conf_py(f"file://{root}")
+        assert conf_py == expected
 
 
 @py.test.mark.parametrize(

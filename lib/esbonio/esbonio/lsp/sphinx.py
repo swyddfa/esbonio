@@ -3,6 +3,9 @@ import logging
 import pathlib
 import re
 
+from typing import Optional
+from urllib.parse import urlparse, unquote
+
 import appdirs
 
 from pygls.types import (
@@ -33,6 +36,29 @@ PROBLEM_SEVERITY = {
 }
 
 
+def find_conf_py(root_uri: str) -> Optional[pathlib.Path]:
+    """Attempt to find Sphinx's configuration file in the given workspace."""
+
+    uri = urlparse(root_uri)
+    root = pathlib.Path(unquote(uri.path))
+
+    # Strangely for windows paths, there's an extra leading slash which we have to
+    # remove ourselves.
+    if isinstance(root, pathlib.WindowsPath) and str(root).startswith("\\"):
+        root = pathlib.Path(str(root)[1:])
+
+    # Try and find Sphinx's conf.py file
+    ignore_paths = [".tox", "site-packages"]
+
+    for candidate in root.glob("**/conf.py"):
+
+        # Skip files that obviously aren't part of the project
+        if any(path in str(candidate) for path in ignore_paths):
+            continue
+
+        return candidate
+
+
 class SphinxManagement:
     """A LSP Server feature that manages the Sphinx application instance for the
     project."""
@@ -57,17 +83,17 @@ class SphinxManagement:
         """Initialize a Sphinx application instance for the current workspace."""
         self.rst.logger.debug("Workspace root %s", self.rst.workspace.root_uri)
 
-        root = pathlib.Path(self.rst.workspace.root_uri.replace("file://", ""))
-        candidates = list(root.glob("**/conf.py"))
+        conf_py = find_conf_py(self.rst.workspace.root_uri)
 
-        if len(candidates) == 0:
+        if conf_py is None:
             self.rst.show_message(
                 'Unable to find your project\'s "conf.py", features wil be limited',
                 msg_type=MessageType.Warning,
             )
             return
 
-        src = candidates[0].parent
+        src = conf_py.parent
+
         # TODO: Create a unique scratch space based on the project.
         build = appdirs.user_cache_dir("esbonio", "swyddfa")
         doctrees = pathlib.Path(build) / "doctrees"

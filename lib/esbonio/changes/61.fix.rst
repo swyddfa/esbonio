@@ -1,0 +1,2 @@
+**Language Server** Server no longer chooses ``conf.py`` files that
+ are located under a ``.tox`` or ``site-packages`` directory
