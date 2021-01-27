@@ -1,0 +1,2 @@
+**Language Server** Directive completions now include a snippet that
+ prompts for any required arguments

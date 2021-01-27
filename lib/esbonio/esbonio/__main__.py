@@ -41,8 +41,9 @@ def configure_logging(verbose, server):
 def start_server(verbose):
     """Start the language server."""
 
-    configure_logging(verbose, lsp.server)
-    lsp.server.start_io()
+    server = lsp.create_language_server(lsp.BUILTIN_MODULES)
+    configure_logging(verbose, server)
+    server.start_io()
 
 
 cli = argparse.ArgumentParser(prog="esbonio", description="The Esbonio language server")

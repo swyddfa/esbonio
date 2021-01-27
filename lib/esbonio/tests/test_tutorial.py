@@ -30,13 +30,21 @@ def test_notebook_translator(testdata, parse_rst, name):
 
     rst = testdata(pathlib.Path("tutorial", name + ".rst")).decode("utf8")
     json = testdata(pathlib.Path("tutorial", name + ".ipynb")).decode("utf8")
+
     nb = nbformat.reads(json)
+
+    # Don't worry about different minor version numbers
+    nb.nbformat_minor = None
 
     doctree = parse_rst(rst)
 
     translator = tutorial.NotebookTranslator(doctree)
     doctree.walkabout(translator)
 
-    actual = nbformat.writes(translator.asnotebook())
+    notebook = translator.asnotebook()
+    notebook.nbformat_minor = None
+
+    actual = nbformat.writes(notebook)
     expected = nbformat.writes(nb)
+
     assert expected == actual
