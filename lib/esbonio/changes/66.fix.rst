@@ -1,0 +1,3 @@
+**Language Server** Regex that catches diagnostics from Sphinx's
+ output can now handle windows paths. Diagnostic reporting now sends a
+ proper URI

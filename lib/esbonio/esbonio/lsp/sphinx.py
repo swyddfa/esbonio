@@ -24,7 +24,7 @@ from esbonio.lsp import RstLanguageServer
 
 PROBLEM_PATTERN = re.compile(
     r"""
-    (?P<file>[^:]*):(?P<line>\d+):\s(?P<type>[^:]*):(\s+)?(?P<message>.*)
+    (?P<file>(.*:\\)?[^:]*):(?P<line>\d+):\s(?P<type>[^:]*):(\s+)?(?P<message>.*)
     """,
     re.VERBOSE,
 )
@@ -130,7 +130,12 @@ class SphinxManagement:
         self.rst.app.builder.read()
 
         for doc, diagnostics in self.diagnostics.items():
-            self.rst.publish_diagnostics(doc, diagnostics)
+
+            if not doc.startswith("/"):
+                doc = "/" + doc
+
+            uri = f"file://{doc}"
+            self.rst.publish_diagnostics(uri, diagnostics)
 
     def reset_diagnostics(self):
         """Reset the list of diagnostics."""
