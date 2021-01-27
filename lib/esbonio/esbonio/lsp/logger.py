@@ -4,15 +4,6 @@ client."""
 import logging
 
 from pygls.server import LanguageServer
-from pygls.types import MessageType
-
-_LOG_LEVELS = {
-    logging.DEBUG: MessageType.Info,
-    logging.INFO: MessageType.Info,
-    logging.WARNING: MessageType.Warning,
-    logging.ERROR: MessageType.Error,
-    logging.CRITICAL: MessageType.Error,
-}
 
 
 class LspHandler(logging.Handler):

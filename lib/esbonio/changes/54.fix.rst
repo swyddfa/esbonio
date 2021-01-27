@@ -1,0 +1,2 @@
+**Language Server** Fix issue where some malformed ``CompletionItem``s were
+preventing completion suggestions from being shown.
