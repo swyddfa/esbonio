@@ -1,3 +1,27 @@
+v0.3.0 - 2021-01-27
+-------------------
+
+Features
+^^^^^^^^
+
+- **Language Server** Errors in Sphinx's build output are now parsed and published
+  to the LSP client as diagnostics (`#35 <https://github.com/swyddfa/esbonio/issues/35>`_)
+- **Language Server** Directive completions now include a snippet that
+   prompts for any required arguments (`#58 <https://github.com/swyddfa/esbonio/issues/58>`_)
+
+
+Fixes
+^^^^^
+
+- Errors encountered when initialising Sphinx are now caught and the language
+  client is notified of an issue. (`#33 <https://github.com/swyddfa/esbonio/issues/33>`_)
+- **Language Server** Fix issue where some malformed ``CompletionItem``s were
+  preventing completion suggestions from being shown. (`#54 <https://github.com/swyddfa/esbonio/issues/54>`_)
+- **Language Server** Windows paths are now handled correctly (`#60 <https://github.com/swyddfa/esbonio/issues/60>`_)
+- **Language Server** Server no longer chooses ``conf.py`` files that
+   are located under a ``.tox`` or ``site-packages`` directory (`#61 <https://github.com/swyddfa/esbonio/issues/61>`_)
+
+
 v0.2.1 - 2020-12-08
 -------------------
 
