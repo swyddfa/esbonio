@@ -25,137 +25,9 @@ from pygls.types import (
 
 WAIT = 0.1
 
-# Expected directive suggestions (not exhaustive)
-DIRECTIVES = {
-    "admonition",
-    "attention",
-    "attribute",
-    "classmethod",
-    "code-block",
-    "envvar",
-    "figure",
-    "glossary",
-    "hlist",
-    "image",
-    "include",
-    "index",
-    "line-block",
-    "list-table",
-    "literalinclude",
-    "toctree",
-}
 
-# Expected role suggestions (not exhaustive)
-ROLES = {"class", "doc", "func", "ref", "term"}
-
-
-# Expected (:py):class: target suggestions
-CLASS_TARGETS = {"pythagoras.Triangle"}
-
-# Expected :doc: target suggestions
-DOC_TARGETS = {"index", "glossary", "theorems/index", "theorems/pythagoras"}
-
-# Expected (:py):func: target suggestions
-FUNC_TARGETS = {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"}
-
-# Expected (:py):meth: target suggestions
-METH_TARGETS = {"pythagoras.Triangle.is_right_angled"}
-
-# Expected :ref: target suggestions
-REF_TARGETS = {
-    "genindex",
-    "modindex",
-    "py-modindex",
-    "pythagoras_theorem",
-    "search",
-    "welcome",
-}
-
-
-def role_target_examples(rolename):
-    return [
-        s.format(rolename)
-        for s in [
-            ":{}:`",
-            ":{}:`More Info <",
-            "   :{}:`",
-            "   :{}:`Some Label <",
-        ]
-    ]
-
-
-@py.test.mark.integration
-@py.test.mark.parametrize(
-    "text,expected",
-    [
-        *itertools.product(
-            [
-                ".",
-                ".. doctest::",
-                ".. code-block::",
-                "   .",
-                "   .. doctest::",
-                "   .. code-block::",
-                ".. _some_label:",
-                "   .. _some_label:",
-            ],
-            [set()],
-        ),
-        *itertools.product(
-            [
-                "..",
-                ".. ",
-                ".. d",
-                ".. code-b",
-                "   ..",
-                "   .. ",
-                "   .. d",
-                "   .. code-b",
-            ],
-            [DIRECTIVES],
-        ),
-        *itertools.product(
-            [
-                ":",
-                ":r",
-                "some text :",
-                "   :",
-                "   :r",
-                "   some text :",
-            ],
-            [ROLES],
-        ),
-        *itertools.product(
-            role_target_examples("class"),
-            [CLASS_TARGETS],
-        ),
-        *itertools.product(
-            role_target_examples("doc"),
-            [DOC_TARGETS],
-        ),
-        *itertools.product(
-            role_target_examples("func"),
-            [FUNC_TARGETS],
-        ),
-        *itertools.product(
-            role_target_examples("meth"),
-            [METH_TARGETS],
-        ),
-        *itertools.product(
-            role_target_examples("obj"),
-            [CLASS_TARGETS, FUNC_TARGETS, METH_TARGETS],
-        ),
-        *itertools.product(
-            role_target_examples("ref"),
-            [REF_TARGETS],
-        ),
-    ],
-)
-def test_completion(client_server, testdata, text, expected):
-    """Ensure that we can offer the correct completion suggestions."""
-
-    client, server = client_server
-    root = testdata("sphinx-default", path_only=True)
+def do_completion_test(client, server, root, text, expected):
+    """The actual implementation of the completion test"""
 
     # Initialize the language server.
     response = client.lsp.send_request(
@@ -218,3 +90,189 @@ def test_completion(client_server, testdata, text, expected):
     missing = expected - actual
 
     assert len(missing) == 0, "Missing expected items, {}".format(missing)
+
+
+def role_target_patterns(rolename):
+    return [
+        s.format(rolename)
+        for s in [
+            ":{}:`",
+            ":{}:`More Info <",
+            "   :{}:`",
+            "   :{}:`Some Label <",
+        ]
+    ]
+
+
+@py.test.mark.integration
+@py.test.mark.parametrize(
+    "text,setup",
+    [
+        *itertools.product(
+            [
+                ".",
+                ".. doctest::",
+                ".. code-block::",
+                "   .",
+                "   .. doctest::",
+                "   .. code-block::",
+                ".. _some_label:",
+                "   .. _some_label:",
+            ],
+            [("sphinx-default", set())],
+        ),
+        *itertools.product(
+            [
+                "..",
+                ".. ",
+                ".. d",
+                ".. code-b",
+                "   ..",
+                "   .. ",
+                "   .. d",
+                "   .. code-b",
+            ],
+            [
+                (
+                    "sphinx-default",
+                    {"admonition", "classmethod", "code-block", "image", "toctree"},
+                ),
+                (
+                    "sphinx-extensions",
+                    {
+                        "admonition",
+                        "classmethod",
+                        "code-block",
+                        "doctest",
+                        "image",
+                        "testsetup",
+                        "toctree",
+                    },
+                ),
+            ],
+        ),
+        *itertools.product(
+            [":", ":r", "some text :", "   :", "   :r", "   some text :"],
+            [
+                ("sphinx-default", {"class", "doc", "func", "ref", "term"}),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("class"),
+            [
+                ("sphinx-default", {"pythagoras.Triangle"}),
+                ("sphinx-extensions", {"pythagoras.Triangle", "python", "sphinx"}),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("doc"),
+            [
+                (
+                    "sphinx-default",
+                    {"index", "glossary", "theorems/index", "theorems/pythagoras"},
+                ),
+                (
+                    "sphinx-extensions",
+                    {
+                        "index",
+                        "glossary",
+                        "python",
+                        "sphinx",
+                        "theorems/index",
+                        "theorems/pythagoras",
+                    },
+                ),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("func"),
+            [
+                (
+                    "sphinx-default",
+                    {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
+                ),
+                (
+                    "sphinx-extensions",
+                    {
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                        "python",
+                        "sphinx",
+                    },
+                ),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("meth"),
+            [
+                ("sphinx-default", {"pythagoras.Triangle.is_right_angled"}),
+                (
+                    "sphinx-extensions",
+                    {"pythagoras.Triangle.is_right_angled", "python", "sphinx"},
+                ),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("obj"),
+            [
+                (
+                    "sphinx-default",
+                    {
+                        "pythagoras.Triangle",
+                        "pythagoras.Triangle.is_right_angled",
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                    },
+                ),
+                (
+                    "sphinx-extensions",
+                    {
+                        "pythagoras.Triangle",
+                        "pythagoras.Triangle.is_right_angled",
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                        "python",
+                        "sphinx",
+                    },
+                ),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("ref"),
+            [
+                (
+                    "sphinx-default",
+                    {
+                        "genindex",
+                        "modindex",
+                        "py-modindex",
+                        "pythagoras_theorem",
+                        "search",
+                        "welcome",
+                    },
+                ),
+                (
+                    "sphinx-extensions",
+                    {
+                        "genindex",
+                        "modindex",
+                        "py-modindex",
+                        "pythagoras_theorem",
+                        "python",
+                        "sphinx",
+                        "search",
+                        "welcome",
+                    },
+                ),
+            ],
+        ),
+    ],
+)
+def test_expected_completions(client_server, testdata, text, setup):
+    """Ensure that we can offer the correct completion suggestions."""
+
+    client, server = client_server
+    project, expected = setup
+    root = testdata(project, path_only=True)
+
+    do_completion_test(client, server, root, text, expected)

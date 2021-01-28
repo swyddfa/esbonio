@@ -228,6 +228,7 @@ class InterSphinxNamespaceCompletion:
 
     def __init__(self, rst: RstLanguageServer):
         self.rst = rst
+        self.namespaces = {}
 
     def initialize(self):
 
@@ -239,16 +240,7 @@ class InterSphinxNamespaceCompletion:
                 "Discovered %s intersphinx namespaces", len(self.namespaces)
             )
 
-    suggest_trigger = re.compile(
-        r"""
-        (^|.*[ ])         # roles must be preceeded by a space, or start the line
-        :                 # roles start with the ':' character
-        (?P<name>[\w-]+)  # capture the role name, suggestions will change based on it
-        :                 # the role name ends with a ':'
-        `                 # the target begins with a '`'`
-        """,
-        re.MULTILINE | re.VERBOSE,
-    )
+    suggest_triggers = RoleTargetCompletion.suggest_triggers
 
     def suggest(self, match, line, doc) -> List[CompletionItem]:
         return list(self.namespaces.values())
@@ -257,11 +249,8 @@ class InterSphinxNamespaceCompletion:
 def setup(rst: RstLanguageServer):
     role_completion = RoleCompletion(rst)
     role_target_completion = RoleTargetCompletion(rst)
-
     intersphinx_namespaces = InterSphinxNamespaceCompletion(rst)
 
     rst.add_feature(role_completion)
     rst.add_feature(role_target_completion)
-
-
-#    rst.add_feature(intersphinx_namespaces)
+    rst.add_feature(intersphinx_namespaces)
