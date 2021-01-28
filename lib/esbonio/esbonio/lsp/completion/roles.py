@@ -10,6 +10,14 @@ from sphinx.domains import Domain
 from esbonio.lsp import RstLanguageServer
 
 
+def namespace_to_completion_item(namespace: str) -> CompletionItem:
+    return CompletionItem(
+        namespace,
+        detail="intersphinx namespace",
+        kind=CompletionItemKind.Module,
+    )
+
+
 def role_to_completion_item(name, role) -> CompletionItem:
     return CompletionItem(
         name,
@@ -72,16 +80,18 @@ class RoleCompletion:
         self.roles = {k: role_to_completion_item(k, v) for k, v in rs.items()}
         self.rst.logger.debug("Discovered %s roles", len(self.roles))
 
-    suggest_trigger = re.compile(
-        r"""
-        (^|.*[ ])  # roles must be preceeded by a space, or start the line
-        :          # roles start with the ':' character
-        (?!:)      # make sure the next character is not ':'
-        [\w-]*     # match the role name
-        $          # ensure pattern only matches incomplete roles
-        """,
-        re.MULTILINE | re.VERBOSE,
-    )
+    suggest_triggers = [
+        re.compile(
+            r"""
+            (^|.*[ ])  # roles must be preceeded by a space, or start the line
+            :          # roles start with the ':' character
+            (?!:)      # make sure the next character is not ':'
+            [\w-]*     # match the role name
+            $          # ensure pattern only matches incomplete roles
+            """,
+            re.MULTILINE | re.VERBOSE,
+        )
+    ]
 
     def suggest(self, match, line, doc) -> List[CompletionItem]:
         return list(self.roles.values())
@@ -139,20 +149,38 @@ class RoleTargetCompletion:
     def save(self, params: DidSaveTextDocumentParams):
         self.discover_targets()
 
-    suggest_trigger = re.compile(
-        r"""
-        (^|.*[ ])          # roles must be preveeded by a space, or start the line
-        :                 # roles start with the ':' character
-        (?P<name>[\w-]+)  # capture the role name, suggestions will change based on it
-        :                 # the role name ends with a ':'
-        `                 # the target begins with a '`'`
-        """,
-        re.MULTILINE | re.VERBOSE,
-    )
+    suggest_triggers = [
+        re.compile(
+            r"""
+            (^|.*[ ])           # roles must be preceeded by a space, or start the line
+            :                   # roles start with the ':' character
+            (?P<name>[\w-]+)    # capture the role name, suggestions will change based on it
+            :                   # the role name ends with a ':'
+            `                   # the target begins with a '`'`
+            (?P<target>[^<:]*)  # match "plain link" targets
+            $
+            """,
+            re.MULTILINE | re.VERBOSE,
+        ),
+        re.compile(
+            r"""
+            (^|.*[ ])           # roles must be preceeded by a space, or start the line
+            :                   # roles start with the ':' character
+            (?P<name>[\w-]+)    # capture the role name, suggestions will change based on it
+            :                   # the role name ends with a ':'
+            `                   # the target begins with a '`'`
+            .*<                 # the actual target name starts after a '<'
+            (?P<target>[^:]*)   # match "aliased" targets
+            $
+            """,
+            re.MULTILINE | re.VERBOSE,
+        ),
+    ]
 
     def suggest(self, match, line, doc) -> List[CompletionItem]:
         # TODO: Detect if we're in an angle bracket e.g. :ref:`More Info <|` in that
         # situation, add the closing '>' to the completion item insert text.
+        self.rst.logger.debug(line)
 
         if match is None:
             return []
@@ -195,9 +223,45 @@ class RoleTargetCompletion:
         self.targets = {**build_target_map(py), **build_target_map(std)}
 
 
+class InterSphinxNamespaceCompletion:
+    """Completion handler for intersphinx namespaces."""
+
+    def __init__(self, rst: RstLanguageServer):
+        self.rst = rst
+
+    def initialize(self):
+
+        if self.rst.app and hasattr(self.rst.app.env, "intersphinx_named_inventory"):
+            inv = self.rst.app.env.intersphinx_named_inventory
+            self.namespaces = {v: namespace_to_completion_item(v) for v in inv.keys()}
+
+            self.rst.logger.debug(
+                "Discovered %s intersphinx namespaces", len(self.namespaces)
+            )
+
+    suggest_trigger = re.compile(
+        r"""
+        (^|.*[ ])         # roles must be preceeded by a space, or start the line
+        :                 # roles start with the ':' character
+        (?P<name>[\w-]+)  # capture the role name, suggestions will change based on it
+        :                 # the role name ends with a ':'
+        `                 # the target begins with a '`'`
+        """,
+        re.MULTILINE | re.VERBOSE,
+    )
+
+    def suggest(self, match, line, doc) -> List[CompletionItem]:
+        return list(self.namespaces.values())
+
+
 def setup(rst: RstLanguageServer):
     role_completion = RoleCompletion(rst)
     role_target_completion = RoleTargetCompletion(rst)
 
+    intersphinx_namespaces = InterSphinxNamespaceCompletion(rst)
+
     rst.add_feature(role_completion)
     rst.add_feature(role_target_completion)
+
+
+#    rst.add_feature(intersphinx_namespaces)

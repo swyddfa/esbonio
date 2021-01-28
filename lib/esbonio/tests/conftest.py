@@ -1,9 +1,7 @@
 import asyncio
-import logging
 import os
 import pathlib
 import threading
-import time
 import unittest.mock as mock
 
 import py.test
@@ -26,7 +24,7 @@ from esbonio.tutorial import SolutionDirective, TutorialDirective
 def client_server():
     """A fixture that sets up an LSP server + client.
 
-    Originally based on https://github.com/openlawlibrary/pygls/blob/59f3056baa4de4c4fb374d3657194f2669c174bc/tests/conftest.py
+    Originally based on https://github.com/openlawlibrary/pygls/blob/59f3056baa4de4c4fb374d3657194f2669c174bc/tests/conftest.py  # noqa: E501
     """
 
     # Pipes so that client + server can communicate
