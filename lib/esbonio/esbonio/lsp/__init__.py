@@ -3,7 +3,7 @@ import logging
 
 from typing import List
 
-from pygls.features import COMPLETION, INITIALIZE, TEXT_DOCUMENT_DID_SAVE
+from pygls.features import COMPLETION, INITIALIZE, INITIALIZED, TEXT_DOCUMENT_DID_SAVE
 from pygls.server import LanguageServer
 from pygls.types import (
     CompletionList,
@@ -35,6 +35,10 @@ class RstLanguageServer(LanguageServer):
         self.on_init_hooks = []
         """A list of functions to run on initialization"""
 
+        self.on_initialized_hooks = []
+        """A list of functions to run after receiving the initialized notification from the
+        client"""
+
         self.on_save_hooks = []
         """A list of hooks to run on document save."""
 
@@ -46,6 +50,9 @@ class RstLanguageServer(LanguageServer):
 
         if hasattr(feature, "initialize"):
             self.on_init_hooks.append(feature.initialize)
+
+        if hasattr(feature, "initialized"):
+            self.on_initialized_hooks.append(feature.initialized)
 
         if hasattr(feature, "save"):
             self.on_save_hooks.append(feature.save)
@@ -100,6 +107,12 @@ def create_language_server(modules: List[str]) -> RstLanguageServer:
             init_hook()
 
         rst.logger.info("LSP Server Initialized")
+
+    @server.feature(INITIALIZED)
+    def on_initialized(rst: RstLanguageServer, params):
+
+        for initialized_hook in rst.on_initialized_hooks:
+            initialized_hook()
 
     @server.feature(COMPLETION, trigger_characters=[".", ":", "`", "<"])
     def on_completion(rst: RstLanguageServer, params: CompletionParams):

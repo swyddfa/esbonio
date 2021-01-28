@@ -172,7 +172,7 @@ def test_report_diagnostics():
     }
 
     manager.reset_diagnostics = mock.Mock()
-    manager.refresh_app()
+    manager.save(None)
 
     expected = [
         mock.call("file:///c:\\Users\\username\\Project\\file.rst", (1, 2, 3)),
