@@ -175,25 +175,25 @@ class RoleTargetCompletion:
     suggest_triggers = [
         re.compile(
             r"""
-            (^|.*[ ])           # roles must be preceeded by a space, or start the line
-            :                   # roles start with the ':' character
-            (?P<name>[\w-]+)    # capture the role name, suggestions will change based on it
-            :                   # the role name ends with a ':'
-            `                   # the target begins with a '`'`
-            (?P<target>[^<:]*)  # match "plain link" targets
+            (^|.*[ ])            # roles must be preceeded by a space, or start the line
+            :                    # roles start with the ':' character
+            (?P<name>[\w-]+)     # capture the role name, suggestions will change based on it
+            :                    # the role name ends with a ':'
+            `                    # the target begins with a '`'
+            (?P<target>[^<:`]*)  # match "plain link" targets
             $
             """,
             re.MULTILINE | re.VERBOSE,
         ),
         re.compile(
             r"""
-            (^|.*[ ])           # roles must be preceeded by a space, or start the line
-            :                   # roles start with the ':' character
-            (?P<name>[\w-]+)    # capture the role name, suggestions will change based on it
-            :                   # the role name ends with a ':'
-            `                   # the target begins with a '`'`
-            .*<                 # the actual target name starts after a '<'
-            (?P<target>[^:]*)   # match "aliased" targets
+            (^|.*[ ])            # roles must be preceeded by a space, or start the line
+            :                    # roles start with the ':' character
+            (?P<name>[\w-]+)     # capture the role name, suggestions will change based on it
+            :                    # the role name ends with a ':'
+            `                    # the target begins with a '`'`
+            .*<                  # the actual target name starts after a '<'
+            (?P<target>[^`:]*)   # match "aliased" targets
             $
             """,
             re.MULTILINE | re.VERBOSE,
@@ -321,6 +321,7 @@ class InterSphinxTargetCompletion:
             `                      # the target begins with a '`'
             (?P<namespace>[^<:]*)  # match "plain link" targets
             :                      # namespaces end with a ':'
+            $
             """,
             re.MULTILINE | re.VERBOSE,
         ),
@@ -334,6 +335,7 @@ class InterSphinxTargetCompletion:
             .*<                    # the actual target name starts after a '<'
             (?P<namespace>[^:]*)   # match "aliased" targets
             :                      # namespaces end with a ':'
+            $
             """,
             re.MULTILINE | re.VERBOSE,
         ),

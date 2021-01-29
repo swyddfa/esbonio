@@ -52,8 +52,6 @@ different role types.
 
    Completing role targets
 
-
-
 Currently supported roles include
 
 .. hlist::
@@ -73,3 +71,16 @@ Currently supported roles include
    * :rst:role:`sphinx:py:obj`
    * :rst:role:`sphinx:term`
    * :rst:role:`sphinx:token`
+
+Inter Sphinx
+^^^^^^^^^^^^
+
+The :doc:`intersphinx <sphinx:usage/extensions/intersphinx>` extension that
+comes bundled with Sphinx makes it easy to link to other Sphinx projects. If
+configured for your project, the language server will offer autocomplete
+suggestions when appropriate.
+
+.. figure:: ../../resources/images/complete-intersphinx-demo.gif
+   :align: center
+
+   Completing references to the Python documentation.
