@@ -104,6 +104,18 @@ def role_target_patterns(rolename):
     ]
 
 
+def intersphinx_patterns(rolename, namespace):
+    return [
+        s.format(rolename, namespace)
+        for s in [
+            ":{}:`{}:",
+            ":{}:`More Info <{}:",
+            "   :{}:`{}:",
+            "   :{}:`Some Label <{}:`",
+        ]
+    ]
+
+
 @py.test.mark.integration
 @py.test.mark.parametrize(
     "text,setup",
@@ -262,6 +274,54 @@ def role_target_patterns(rolename):
                         "sphinx",
                         "search",
                         "welcome",
+                    },
+                ),
+            ],
+        ),
+        *itertools.product(
+            intersphinx_patterns("ref", "python"),
+            [
+                ("sphinx-default", set()),
+                (
+                    "sphinx-extensions",
+                    {"configparser-objects", "types", "whatsnew-index"},
+                ),
+            ],
+        ),
+        *itertools.product(
+            intersphinx_patterns("class", "python"),
+            [
+                ("sphinx-default", set()),
+                (
+                    "sphinx-extensions",
+                    {"abc.ABCMeta", "logging.StreamHandler", "zipfile.ZipInfo"},
+                ),
+            ],
+        ),
+        *itertools.product(
+            intersphinx_patterns("ref", "sphinx"),
+            [
+                ("sphinx-default", set()),
+                (
+                    "sphinx-extensions",
+                    {
+                        "basic-domain-markup",
+                        "extension-tutorials-index",
+                        "writing-builders",
+                    },
+                ),
+            ],
+        ),
+        *itertools.product(
+            intersphinx_patterns("class", "sphinx"),
+            [
+                ("sphinx-default", set()),
+                (
+                    "sphinx-extensions",
+                    {
+                        "sphinx.addnodes.desc",
+                        "sphinx.builders.Builder",
+                        "sphinxcontrib.websupport.WebSupport",
                     },
                 ),
             ],
