@@ -17,7 +17,8 @@ Welcome to the documentation
    :hidden:
    :maxdepth: 2
 
-   lsp/*
+   lsp/features
+   lsp/contributing
    changelog
 
 .. toctree::

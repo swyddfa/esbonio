@@ -74,15 +74,17 @@ class DirectiveCompletion:
         }
         self.rst.logger.debug("Discovered %s directives", len(self.directives))
 
-    suggest_trigger = re.compile(
-        r"""
-        ^\s*        # directives may be indented
-        \.\.        # they start with an rst comment
-        [ ]*        # followed by a space
-        ([\w-]+)?$  # with an optional name
-        """,
-        re.VERBOSE,
-    )
+    suggest_triggers = [
+        re.compile(
+            r"""
+            ^\s*        # directives may be indented
+            \.\.        # they start with an rst comment
+            [ ]*        # followed by a space
+            ([\w-]+)?$  # with an optional name
+            """,
+            re.VERBOSE,
+        )
+    ]
 
     def suggest(self, match, line, doc) -> List[CompletionItem]:
         return list(self.directives.values())

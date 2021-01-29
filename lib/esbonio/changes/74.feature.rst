@@ -1,0 +1,2 @@
+**Language Server** For projects that use ``interpshinx`` completions
+ for intersphinx targets are now suggested when available

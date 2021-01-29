@@ -57,12 +57,15 @@ class RstLanguageServer(LanguageServer):
         if hasattr(feature, "save"):
             self.on_save_hooks.append(feature.save)
 
-        # TODO: Add support for mutltiple handlers using the same trigger.
-        if hasattr(feature, "suggest") and hasattr(feature, "suggest_trigger"):
-            trigger = feature.suggest_trigger
-            handler = feature.suggest
+        if hasattr(feature, "suggest") and hasattr(feature, "suggest_triggers"):
 
-            self.completion_handlers[trigger] = handler
+            for trigger in feature.suggest_triggers:
+                handler = feature.suggest
+
+                if trigger in self.completion_handlers:
+                    self.completion_handlers[trigger].append(handler)
+                else:
+                    self.completion_handlers[trigger] = [handler]
 
     def load_module(self, mod: str):
         # TODO: Handle failures.
@@ -125,10 +128,11 @@ def create_language_server(modules: List[str]) -> RstLanguageServer:
 
         items = []
 
-        for pattern, handler in rst.completion_handlers.items():
+        for pattern, handlers in rst.completion_handlers.items():
             match = pattern.match(line)
             if match:
-                items += handler(match, line, doc)
+                for handler in handlers:
+                    items += handler(match, line, doc)
 
         return CompletionList(False, items)
 
