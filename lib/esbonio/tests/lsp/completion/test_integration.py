@@ -111,7 +111,7 @@ def intersphinx_patterns(rolename, namespace):
             ":{}:`{}:",
             ":{}:`More Info <{}:",
             "   :{}:`{}:",
-            "   :{}:`Some Label <{}:`",
+            "   :{}:`Some Label <{}:",
         ]
     ]
 
