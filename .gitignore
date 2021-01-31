@@ -1,5 +1,6 @@
 .coverage
 .env
+.ipynb_checkpoints
 .tox
 .vscode-test
 

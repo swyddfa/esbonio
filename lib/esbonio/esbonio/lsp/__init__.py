@@ -132,7 +132,7 @@ def create_language_server(modules: List[str]) -> RstLanguageServer:
             match = pattern.match(line)
             if match:
                 for handler in handlers:
-                    items += handler(match, line, doc)
+                    items += handler(match, doc, pos)
 
         return CompletionList(False, items)
 

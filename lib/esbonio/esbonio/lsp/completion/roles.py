@@ -116,7 +116,29 @@ class RoleCompletion:
         )
     ]
 
-    def suggest(self, match, line, doc) -> List[CompletionItem]:
+    def suggest(self, match, doc, position) -> List[CompletionItem]:
+        indent = match.group(1)
+
+        # If there's no indent, then this can only be a role defn
+        if indent == "":
+            return list(self.roles.values())
+
+        # Otherwise, search backwards until we find a blank line or an unindent
+        # so that we can determine the appropriate context.
+        linum = position.line - 1
+        line = doc.lines[linum]
+
+        while line.startswith(indent):
+            linum -= 1
+            line = doc.lines[linum]
+
+        self.rst.logger.debug("Context line: %s", line)
+
+        # Unless we are within a directive's options block, we should offer role
+        # suggestions
+        if re.match(r"\s*\.\.[ ]*([\w-]+)::", line):
+            return []
+
         return list(self.roles.values())
 
 
@@ -200,7 +222,7 @@ class RoleTargetCompletion:
         ),
     ]
 
-    def suggest(self, match, line, doc) -> List[CompletionItem]:
+    def suggest(self, match, doc, position) -> List[CompletionItem]:
         # TODO: Detect if we're in an angle bracket e.g. :ref:`More Info <|` in that
         # situation, add the closing '>' to the completion item insert text.
 
@@ -264,7 +286,7 @@ class InterSphinxNamespaceCompletion:
 
     suggest_triggers = RoleTargetCompletion.suggest_triggers
 
-    def suggest(self, match, line, doc) -> List[CompletionItem]:
+    def suggest(self, match, doc, position) -> List[CompletionItem]:
         return list(self.namespaces.values())
 
 
@@ -341,7 +363,7 @@ class InterSphinxTargetCompletion:
         ),
     ]
 
-    def suggest(self, match, line, doc) -> List[CompletionItem]:
+    def suggest(self, match, doc, position) -> List[CompletionItem]:
         # TODO: Detect if we're in an angle bracket e.g. :ref:`More Info <|` in that
         # situation, add the closing '>' to the completion item insert text.
 
