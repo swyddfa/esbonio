@@ -101,7 +101,13 @@ def test_target_type_discovery(sphinx, role, objects):
             "sphinx-default",
             "doc",
             CompletionItemKind.File,
-            {"glossary", "index", "theorems/index", "theorems/pythagoras"},
+            {
+                "glossary",
+                "index",
+                "theorems/index",
+                "theorems/pythagoras",
+                "directive_options",
+            },
         ),
         (
             "sphinx-default",

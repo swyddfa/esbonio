@@ -11,8 +11,7 @@ from pygls.types import CompletionItem, CompletionItemKind, InsertTextFormat
 from esbonio.lsp import RstLanguageServer
 
 
-def to_completion_item(name: str, directive) -> CompletionItem:
-    """Convert an rst directive to its CompletionItem representation."""
+def resolve_directive(directive):
 
     # 'Core' docutils directives are returned as tuples (modulename, ClassName)
     # so its up to us to resolve the reference
@@ -23,6 +22,13 @@ def to_completion_item(name: str, directive) -> CompletionItem:
         module = importlib.import_module(modulename)
         directive = getattr(module, cls)
 
+    return directive
+
+
+def directive_to_completion_item(name: str, directive) -> CompletionItem:
+    """Convert an rst directive to its CompletionItem representation."""
+
+    directive = resolve_directive(directive)
     documentation = inspect.getdoc(directive)
 
     # TODO: Give better names to arguments based on what they represent.
@@ -39,6 +45,23 @@ def to_completion_item(name: str, directive) -> CompletionItem:
         insert_text=snippet,
         insert_text_format=InsertTextFormat.Snippet,
     )
+
+
+def options_to_completion_items(directive) -> List[CompletionItem]:
+    """Convert a directive's options to a list of completion items."""
+
+    directive = resolve_directive(directive)
+    options = directive.option_spec
+
+    if options is None:
+        return []
+
+    return [
+        CompletionItem(
+            opt, detail="option", kind=CompletionItemKind.Field, insert_text=f"{opt}:"
+        )
+        for opt in options
+    ]
 
 
 class DirectiveCompletion:
@@ -68,26 +91,61 @@ class DirectiveCompletion:
         dirs = {**dirs, **std_directives, **py_directives}
 
         self.directives = {
-            k: to_completion_item(k, v)
+            k: directive_to_completion_item(k, v)
             for k, v in dirs.items()
             if k != "restructuredtext-test-directive"
         }
+
+        self.options = {
+            k: options_to_completion_items(v)
+            for k, v in dirs.items()
+            if k in self.directives
+        }
+
         self.rst.logger.debug("Discovered %s directives", len(self.directives))
 
     suggest_triggers = [
         re.compile(
             r"""
-            ^\s*        # directives may be indented
-            \.\.        # they start with an rst comment
-            [ ]*        # followed by a space
-            ([\w-]+)?$  # with an optional name
+            ^\s*                # directives may be indented
+            \.\.                # they start with an rst comment
+            [ ]*                # followed by a space
+            (?P<name>[\w-]+)?$  # with an optional name
             """,
             re.VERBOSE,
-        )
+        ),
+        re.compile(
+            r"""
+            (?P<indent>\s+)   # directive options must only be preceeded by whitespace
+            :                 # they start with a ':'
+            (?P<name>[\w-]*)  # they have a name
+            $
+            """,
+            re.VERBOSE,
+        ),
     ]
 
-    def suggest(self, match, line, doc) -> List[CompletionItem]:
-        return list(self.directives.values())
+    def suggest(self, match, doc, position) -> List[CompletionItem]:
+        groups = match.groupdict()
+
+        if "indent" not in groups:
+            return list(self.directives.values())
+
+        # Search backwards so that we can determine the context for our completion
+        indent = groups["indent"]
+        linum = position.line - 1
+        line = doc.lines[linum]
+
+        while line.startswith(indent):
+            linum -= 1
+            line = doc.lines[linum]
+
+        # Only offer completions if we're within a directive's option block
+        match = re.match(r"\s*\.\.[ ]*(?P<name>[\w-]+)::", line)
+        if not match:
+            return []
+
+        return self.options.get(match.group("name"), [])
 
 
 def setup(rst: RstLanguageServer):

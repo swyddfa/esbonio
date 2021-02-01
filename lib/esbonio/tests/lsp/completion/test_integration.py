@@ -1,5 +1,9 @@
+import logging
 import itertools
+import pathlib
 import time
+
+from typing import Set
 
 import py.test
 
@@ -9,6 +13,7 @@ from pygls.features import (
     TEXT_DOCUMENT_DID_CHANGE,
     TEXT_DOCUMENT_DID_OPEN,
 )
+from pygls.server import LanguageServer
 from pygls.types import (
     CompletionContext,
     CompletionParams,
@@ -23,11 +28,55 @@ from pygls.types import (
     VersionedTextDocumentIdentifier,
 )
 
-WAIT = 0.1
+WAIT = 0.1  # How long should we sleep after an lsp.notify(...)
 
 
-def do_completion_test(client, server, root, text, expected):
-    """The actual implementation of the completion test"""
+def do_completion_test(
+    client: LanguageServer,
+    server: LanguageServer,
+    root: pathlib.Path,
+    filename: str,
+    text: str,
+    expected: Set[str],
+    insert_newline: bool = True,
+):
+    """A generic helper for performing completion tests.
+
+    Being an integration test, it is quite involved as it has to use the protocol to
+    take the server to a point where it can provide completion suggestions. As part of
+    the setup, this helper
+
+    - Sends an 'initialize' request to the server, setting the workspace root.
+    - Sends a 'textDocument/didOpen' notification, loading the specified document in the
+      server's workspace
+    - Sends a 'textDocument/didChange' notification, inserting the text we want
+      suggestions for
+    - Sends a 'completion' request, and ensures that the expected completed items are in
+      the response
+
+    Currently this method is only capable of ensuring that item labels are as expected,
+    none of the other CompletionItem fields are inspected. This method is also not capable
+    of ensuring particular items are NOT suggested.
+
+    Parameters
+    ----------
+    client:
+        The client LanguageServer instance
+    server:
+        The server LanguageServer instance
+    root:
+        The directory to use as the workspace root
+    filename:
+        The file to open for the test, relative to the workspace root
+    text:
+        The text to insert, this is the text this method requests completions for.
+        Note this CANNOT contain any newlines.
+    expected:
+        The CompletionItem labels that should be returned. This does not have to be
+        exhaustive.
+    insert_newline:
+        Flag to indicate if a newline should be inserted before the given ``text``
+    """
 
     # Initialize the language server.
     response = client.lsp.send_request(
@@ -46,7 +95,7 @@ def do_completion_test(client, server, root, text, expected):
     #    time.sleep(WAIT)
 
     # Let's open a file to edit.
-    testfile = root / "index.rst"
+    testfile = root / filename
     testuri = testfile.as_uri()
     content = testfile.read_text()
 
@@ -60,7 +109,8 @@ def do_completion_test(client, server, root, text, expected):
 
     # With the setup out of the way, let's type the text we want completion suggestions
     # for
-    start = len(content.splitlines()) + 1
+    start = len(content.splitlines()) + insert_newline
+    text = "\n" + text if insert_newline else text
 
     client.lsp.notify(
         TEXT_DOCUMENT_DID_CHANGE,
@@ -68,7 +118,7 @@ def do_completion_test(client, server, root, text, expected):
             VersionedTextDocumentIdentifier(testuri, 2),
             [
                 TextDocumentContentChangeEvent(
-                    Range(Position(start, 0), Position(start, 0)), text="\n" + text
+                    Range(Position(start, 0), Position(start, 0)), text=text
                 )
             ],
         ),
@@ -335,4 +385,24 @@ def test_expected_completions(client_server, testdata, text, setup):
     project, expected = setup
     root = testdata(project, path_only=True)
 
-    do_completion_test(client, server, root, text, expected)
+    do_completion_test(client, server, root, "index.rst", text, expected)
+
+
+def test_expected_directive_option_completions(client_server, testdata, caplog):
+    """Ensure that we can handle directive option completions."""
+
+    caplog.set_level(logging.INFO)
+
+    client, server = client_server
+    root = testdata("sphinx-default", path_only=True)
+    expected = {"align", "alt", "class", "height", "name", "scale", "target", "width"}
+
+    do_completion_test(
+        client,
+        server,
+        root,
+        "directive_options.rst",
+        "   :a",
+        expected,
+        insert_newline=False,
+    )
