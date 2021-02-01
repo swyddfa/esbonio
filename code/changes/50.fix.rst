@@ -1,0 +1,2 @@
+The language client now also listens to changes in Python files so that we can
+pick up changes in the project's ``conf.py```
