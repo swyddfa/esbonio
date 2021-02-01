@@ -25,7 +25,10 @@ export function activate(context: vscode.ExtensionContext) {
             let serverOptions: ServerOptions = exe
 
             let clientOptions: LanguageClientOptions = {
-                documentSelector: [{ scheme: 'file', language: 'rst' }]
+                documentSelector: [
+                    { scheme: 'file', language: 'rst' },
+                    { scheme: 'file', language: 'python' }
+                ]
             }
             client = new LanguageClient('esbonio', 'Esbonio Language Server', serverOptions, clientOptions)
             client.start()
@@ -51,7 +54,7 @@ function restartLanguageServer(): Promise<null> {
         client.stop().then(_ => {
             logger.info("Starting Language Server")
             client.start()
-            resolve()
+            resolve(null)
         }).catch(err => reject(err))
     })
 }
