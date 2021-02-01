@@ -43,7 +43,8 @@
         "vscode": "^1.43.0"
     },
     "activationEvents": [
-        "onLanguage:rst"
+        "onLanguage:rst",
+        "workspaceContains:**/conf.py"
     ],
     "contributes": {
         "commands": [
