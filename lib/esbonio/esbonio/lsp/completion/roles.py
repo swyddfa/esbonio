@@ -132,8 +132,6 @@ class RoleCompletion:
             linum -= 1
             line = doc.lines[linum]
 
-        self.rst.logger.debug("Context line: %s", line)
-
         # Unless we are within a directive's options block, we should offer role
         # suggestions
         if re.match(r"\s*\.\.[ ]*([\w-]+)::", line):

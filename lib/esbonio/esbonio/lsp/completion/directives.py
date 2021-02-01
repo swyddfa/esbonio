@@ -140,8 +140,6 @@ class DirectiveCompletion:
             linum -= 1
             line = doc.lines[linum]
 
-        self.rst.logger.debug("Context line: %s", line)
-
         # Only offer completions if we're within a directive's option block
         match = re.match(r"\s*\.\.[ ]*(?P<name>[\w-]+)::", line)
         if not match:
