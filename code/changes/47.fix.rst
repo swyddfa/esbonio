@@ -1,0 +1,1 @@
+Fix edge cases around syntax highlighting bold/italic elements.
