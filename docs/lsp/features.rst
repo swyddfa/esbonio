@@ -15,7 +15,7 @@ Directives
 .. figure:: ../../resources/images/complete-directive-demo.gif
    :align: center
 
-   Completing directive targets
+   Completing directive names
 
 .. note::
 
@@ -24,6 +24,14 @@ Directives
    domains exist.
 
    Support for additional domains will come in a future release
+
+Directive Options
+^^^^^^^^^^^^^^^^^
+
+.. figure:: ../../resources/images/complete-directive-options-demo.gif
+   :align: center
+
+   Completing a directive's options
 
 Roles
 ^^^^^
