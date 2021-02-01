@@ -1,0 +1,2 @@
+**Language Server** Directive option completions are now provided
+ within a directive's options block

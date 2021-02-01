@@ -64,6 +64,19 @@ def test_find_conf_py(root, candidates, expected):
             },
         ),
         (
+            "c:\\path\\to\\file.rst:4: WARNING: toctree contains reference to nonexisting document 'changelog'",
+            {
+                "c:\\path\\to\\file.rst": [
+                    Diagnostic(
+                        line(4),
+                        "toctree contains reference to nonexisting document 'changelog'",
+                        severity=DiagnosticSeverity.Warning,
+                        source="sphinx",
+                    )
+                ]
+            },
+        ),
+        (
             "/path/to/file.rst:120: ERROR: unable to build docs",
             {
                 "/path/to/file.rst": [
@@ -77,9 +90,35 @@ def test_find_conf_py(root, candidates, expected):
             },
         ),
         (
+            "c:\\path\\to\\file.rst:120: ERROR: unable to build docs",
+            {
+                "c:\\path\\to\\file.rst": [
+                    Diagnostic(
+                        line(120),
+                        "unable to build docs",
+                        severity=DiagnosticSeverity.Error,
+                        source="sphinx",
+                    )
+                ]
+            },
+        ),
+        (
             "/path/to/file.rst:71: WARNING: duplicate label: _setup",
             {
                 "/path/to/file.rst": [
+                    Diagnostic(
+                        line(71),
+                        "duplicate label: _setup",
+                        severity=DiagnosticSeverity.Warning,
+                        source="sphinx",
+                    )
+                ]
+            },
+        ),
+        (
+            "c:\\path\\to\\file.rst:71: WARNING: duplicate label: _setup",
+            {
+                "c:\\path\\to\\file.rst": [
                     Diagnostic(
                         line(71),
                         "duplicate label: _setup",
@@ -116,3 +155,27 @@ def test_parse_diagnostics(text, expected):
     # Ensure that can correctly reset diagnostics
     management.reset_diagnostics()
     assert management.diagnostics == {file: [] for file in expected.keys()}
+
+
+def test_report_diagnostics():
+    """Ensure that diagnostic, filepaths are correctly transformed into uris."""
+
+    publish_diagnostics = mock.Mock()
+
+    rst = mock.Mock()
+    rst.publish_diagnostics = publish_diagnostics
+
+    manager = SphinxManagement(rst)
+    manager.diagnostics = {
+        "c:\\Users\\username\\Project\\file.rst": (1, 2, 3),
+        "/home/username/Project/file.rst": (4, 5, 6),
+    }
+
+    manager.reset_diagnostics = mock.Mock()
+    manager.save(None)
+
+    expected = [
+        mock.call("file:///c:\\Users\\username\\Project\\file.rst", (1, 2, 3)),
+        mock.call("file:///home/username/Project/file.rst", (4, 5, 6)),
+    ]
+    assert publish_diagnostics.call_args_list == expected

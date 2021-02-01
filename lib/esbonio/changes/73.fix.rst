@@ -1,0 +1,2 @@
+**Language Server** Fix exception that was thrown when trying to find
+ completions for an unknown role type

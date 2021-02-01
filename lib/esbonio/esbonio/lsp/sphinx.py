@@ -24,7 +24,7 @@ from esbonio.lsp import RstLanguageServer
 
 PROBLEM_PATTERN = re.compile(
     r"""
-    (?P<file>[^:]*):(?P<line>\d+):\s(?P<type>[^:]*):(\s+)?(?P<message>.*)
+    (?P<file>(.*:\\)?[^:]*):(?P<line>\d+):\s(?P<type>[^:]*):(\s+)?(?P<message>.*)
     """,
     re.VERBOSE,
 )
@@ -74,10 +74,21 @@ class SphinxManagement:
 
     def initialize(self):
         self.create_app()
-        self.refresh_app()
+
+        if self.rst.app is not None:
+            self.rst.app.builder.read()
+
+    def initialized(self):
+        self.report_diagnostics()
 
     def save(self, params: DidSaveTextDocumentParams):
-        self.refresh_app()
+
+        if self.rst.app is None:
+            return
+
+        self.reset_diagnostics()
+        self.rst.app.builder.read()
+        self.report_diagnostics()
 
     def create_app(self):
         """Initialize a Sphinx application instance for the current workspace."""
@@ -122,15 +133,16 @@ class SphinxManagement:
                 msg_type=MessageType.Error,
             )
 
-    def refresh_app(self):
-        if self.rst.app is None:
-            return
-
-        self.reset_diagnostics()
-        self.rst.app.builder.read()
+    def report_diagnostics(self):
+        """Publish the current set of diagnostics to the client."""
 
         for doc, diagnostics in self.diagnostics.items():
-            self.rst.publish_diagnostics(doc, diagnostics)
+
+            if not doc.startswith("/"):
+                doc = "/" + doc
+
+            uri = f"file://{doc}"
+            self.rst.publish_diagnostics(uri, diagnostics)
 
     def reset_diagnostics(self):
         """Reset the list of diagnostics."""
