@@ -1,3 +1,28 @@
+v0.4.0 - 2021-02-01
+-------------------
+
+Features
+^^^^^^^^
+
+- **Language Server** Directive option completions are now provided
+   within a directive's options block (`#36 <https://github.com/swyddfa/esbonio/issues/36>`_)
+- **Language Server** For projects that use ``interpshinx`` completions
+   for intersphinx targets are now suggested when available (`#74 <https://github.com/swyddfa/esbonio/issues/74>`_)
+
+
+Fixes
+^^^^^
+
+- **Language Server** Regex that catches diagnostics from Sphinx's
+   output can now handle windows paths. Diagnostic reporting now sends a
+   proper URI (`#66 <https://github.com/swyddfa/esbonio/issues/66>`_)
+- **Language Server** Diagnostics are now reported on first startup (`#68 <https://github.com/swyddfa/esbonio/issues/68>`_)
+- **Language Server** Fix exception that was thrown when trying to find
+   completions for an unknown role type (`#73 <https://github.com/swyddfa/esbonio/issues/73>`_)
+- **Language Server** The server will not offer completion suggestions outside of
+  a role target (`#77 <https://github.com/swyddfa/esbonio/issues/77>`_)
+
+
 v0.3.0 - 2021-01-27
 -------------------
 

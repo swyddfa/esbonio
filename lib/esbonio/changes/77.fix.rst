@@ -1,2 +1,0 @@
-**Language Server** The server will not offer completion suggestions outside of
-a role target

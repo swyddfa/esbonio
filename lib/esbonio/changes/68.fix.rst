@@ -1,1 +1,0 @@
-**Language Server** Diagnostics are now reported on first startup
