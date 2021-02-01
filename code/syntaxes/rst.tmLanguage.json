@@ -48,7 +48,7 @@
             ]
         },
         "section": {
-            "match": "^[=^'\"*+~-]+",
+            "match": "^[=^'\"*+~-]+$",
             "name": "keyword.control"
         },
         "comment": {
@@ -161,7 +161,7 @@
             "name": "markup.italic"
         },
         "code": {
-            "match": "``.*``",
+            "match": "``([^`]|`(?!`))+``",
             "name": "string"
         },
         "link-definition": {

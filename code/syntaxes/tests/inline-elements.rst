@@ -3,11 +3,27 @@
 This line has **bold** text
 ..            ^^^^^^^^ markup.bold
 
+**Note** this should be bold
+.. <-------- markup.bold
+
 This line has *italic* text
 ..            ^^^^^^^^ markup.italic
 
+*Note* this should be italic
+.. <------ markup.italic
+
 This line has ``inline`` code
 ..            ^^^^^^^^^^ string
+
+Here is ``some`` inline ``code``
+..      ^^^^^^^^ string
+..              ^^^^^^^^ -string
+..                      ^^^^^^^^ string
+
+Here is ``some`thing`` tricky to ``handle``
+..      ^^^^^^^^^^^^^^ string
+..                    ^^^^^^^^^^^ -string
+..                               ^^^^^^^^^^ string
 
 This line contains a :ref:`reference_label`
 ..                   ^^^^^^^^^^^^^^^^^^^^^^ meta.role.rst
