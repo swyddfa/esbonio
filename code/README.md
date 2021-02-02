@@ -2,8 +2,25 @@
 
 **This extension is in early development**
 
-Esbonio is an extension that provides a language server for editing
-[Sphinx](https://www.sphinx-doc.org/en/master/) projects.
+Esbonio is an extension that provides a language server for working with
+[Sphinx](https://www.sphinx-doc.org/en/master/) documentation projects.
+
+## Setup
+
+So that the language server can be updated independently of this extension, it is not
+currently bundled with it. Instead it is distributed as a package on
+[PyPi](https://pypi.org/project/esbonio/) that must be installed into the same Python
+environment as the one you use to build your Sphinx project. This is so that the server is
+able to wrap an instance of Sphinx as per your project's config, inspect it, and expose it via the LSP Protocol.
+
+The extension does its best to automate this process, installing the server into the python
+environment you have configured in the
+[Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) by
+default. If however, you don't have the Python extension installed or you want to use a
+different Python environment for your documentation there is a configuration option
+`esbonio.pythonPath` that you can use to set the environment.
+
+![Setup Demo](../resources/images/vscode-setup-demo.gif)
 
 ## Features
 
@@ -12,21 +29,17 @@ Esbonio is an extension that provides a language server for editing
 The language server can provide completion suggestions in various contexts
 #### Directives
 
+Completion suggestions are offered for the directives themselves, as well as any options
+that they expose.
+
 ![Directive Completions](../resources/images/complete-directive-demo.gif)
-
-#### Directive Options
-
-![Directive Option Completions](../resources/images/complete-directive-options-demo.gif)
 
 #### Roles
 
+In the case of roles, completions can also be offered for the targets of certain
+[supported](https://swyddfa.github.io/esbonio/docs/lsp/features.html#roles) role types
+
 ![Role Completions](../resources/images/complete-role-demo.gif)
-
-#### Role Targets
-
-For some supported role types
-
-![Role Target Completions](../resources/images/complete-role-target-demo.gif)
 
 #### Inter Sphinx
 
