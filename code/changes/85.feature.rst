@@ -1,0 +1,2 @@
+Expose an ``esbonio.log.level`` config option that allows the level of logging
+output to be configured
