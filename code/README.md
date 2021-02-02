@@ -1,4 +1,4 @@
-# Esbonio
+# Esbonio ![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/swyddfa.esbonio?style=flat-square)
 
 **This extension is in early development**
 
