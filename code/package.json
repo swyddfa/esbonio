@@ -29,6 +29,7 @@
         "@types/glob": "^7.1.3",
         "@types/mocha": "^8.2.0",
         "@types/node": "^14.14.7",
+        "@types/semver": "^7.3.4",
         "@types/vscode": "^1.43.0",
         "mocha": "^8.2.1",
         "ts-loader": "^8.0.11",
@@ -78,22 +79,56 @@
             "type": "object",
             "title": "Esbonio",
             "properties": {
-                "esbonio.pythonPath": {
-                    "scope": "window",
-                    "type": "string",
-                    "default": "",
-                    "markdownDescription": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the `#python.pythonPath#` option in the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
-                },
                 "esbonio.log.level": {
-                    "scope": "window",
-                    "default": "error",
+                    "scope": "application",
                     "type": "string",
+                    "default": "error",
                     "enum": [
                         "debug",
                         "info",
                         "error"
                     ],
                     "description": "The level of log message to show in the log"
+                },
+                "esbonio.server.pythonPath": {
+                    "scope": "window",
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the `#python.pythonPath#` option in the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
+                },
+                "esbonio.server.updateBehavior": {
+                    "scope": "application",
+                    "type": "string",
+                    "default": "promptMajor",
+                    "enum": [
+                        "promptAlways",
+                        "promptMajor",
+                        "automatic"
+                    ],
+                    "enumDescriptions": [
+                        "Always ask for confirmation when applying updates.",
+                        "Only ask for confirmation on major updates, minor versions will be installed automatically",
+                        "Never ask for confirmation, updates will always be installed automatically"
+                    ],
+                    "description": "When an update to the Language Server is detected, how should the extension handle it"
+                },
+                "esbonio.server.updateFrequency": {
+                    "scope": "application",
+                    "type": "string",
+                    "default": "weekly",
+                    "enum": [
+                        "never",
+                        "monthly",
+                        "weekly",
+                        "daily"
+                    ],
+                    "enumDescriptions": [
+                        "Never check for updates. Updates can still be triggered manually through the command palette.",
+                        "Check for updates monthly",
+                        "Check for updates weekly",
+                        "Check for updates daily"
+                    ],
+                    "description": "How often should the extension check for updates to the Language Server"
                 }
             }
         },

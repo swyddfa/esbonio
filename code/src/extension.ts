@@ -1,42 +1,50 @@
 import * as vscode from "vscode";
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
 import { getPython, registerCommands } from "./commands";
-import { bootstrapLanguageServer } from "./languageServer";
+import { LanguageServerBootstrap } from "./languageServer";
 import { getOutputLogger } from "./log";
 
 export const RESTART_LANGUAGE_SERVER = 'esbonio.languageServer.restart'
 
 let client: LanguageClient
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 
     let logger = getOutputLogger()
     logger.debug("Extension activated.")
-    getPython().then(python => {
-        bootstrapLanguageServer(python).then(res => {
-            if (!res) {
-                logger.debug("Unable to bootstrap language server, will not attempt to start")
-                return
-            }
-            let exe: Executable = {
-                command: python,
-                args: ['-m', 'esbonio']
-            }
-            let serverOptions: ServerOptions = exe
-
-            let clientOptions: LanguageClientOptions = {
-                documentSelector: [
-                    { scheme: 'file', language: 'rst' },
-                    { scheme: 'file', language: 'python' }
-                ]
-            }
-            client = new LanguageClient('esbonio', 'Esbonio Language Server', serverOptions, clientOptions)
-            client.start()
-        }).catch(err => showError(err))
-    }).catch(err => showError(err))
 
     context.subscriptions.push(vscode.commands.registerCommand(RESTART_LANGUAGE_SERVER, restartLanguageServer))
     registerCommands(context)
+
+    try {
+        let python = await getPython()
+        let bootstrap = new LanguageServerBootstrap(python, context)
+
+        let version = await bootstrap.ensureLanguageServer()
+        if (!version) {
+            logger.error("Language Server is not available")
+            return
+        }
+        logger.info(`Starting Language Server v${version}`)
+
+        let exe: Executable = {
+            command: python,
+            args: ['-m', 'esbonio']
+        }
+        let serverOptions: ServerOptions = exe
+
+        let clientOptions: LanguageClientOptions = {
+            documentSelector: [
+                { scheme: 'file', language: 'rst' },
+                { scheme: 'file', language: 'python' }
+            ]
+        }
+        client = new LanguageClient('esbonio', 'Esbonio Language Server', serverOptions, clientOptions)
+        client.start()
+
+    } catch (err) {
+        showError(err)
+    }
 }
 
 export function deactivate(): Thenable<void> | undefined {
