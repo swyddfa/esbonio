@@ -16,8 +16,8 @@
         "test": "npm run compile-test && node ./dist/test/runTests.js",
         "test-grammar": "vscode-tmgrammar-test -s source.rst -g syntaxes/rst.tmLanguage.json -g syntaxes/tests/python.tmLanguage.json -t \"syntaxes/**/*.rst\"",
         "clean": "rm -r dist",
-        "deploy": "vsce publish --githubBranch release",
-        "package": "vsce package --githubBranch release",
+        "deploy": "vsce publish --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
+        "package": "vsce package --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "vscode:prepublish": "webpack --mode production"
     },
     "main": "dist/extension",
