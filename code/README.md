@@ -29,7 +29,9 @@ is a configuration option `esbonio.pythonPath` that you can use to configure the
 environment.
 
 There are a number of configuration options that allow you to control exactly how
-installation and updates are handled. See the [documentation]() for more details.
+installation and updates are handled. See the
+[documentation](https://swyddfa.github.io/esbonio/docs/lsp/editors/vscode.html#configuration)
+for more details.
 
 ![Setup Demo](../resources/images/vscode-setup-demo.gif)
 
@@ -48,9 +50,9 @@ either through the
 [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 or through the `esbonio.pythonPath` configuration option.
 
-To also manage updates manually, be sure to look at the [documentation]() for options
-on how to disable automatic updates.
-
+To also manage updates manually, be sure to look at the
+[documentation](https://swyddfa.github.io/esbonio/docs/lsp/editors/vscode.html#configuration)
+for options on how to disable automatic updates.
 
 ## Features
 
