@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
 import { getPython, registerCommands } from "./commands";
-import { LanguageServerBootstrap } from "./languageServer";
+import { LanguageServerBootstrap } from "./language-server";
 import { getOutputLogger } from "./log";
 
 export const RESTART_LANGUAGE_SERVER = 'esbonio.languageServer.restart'

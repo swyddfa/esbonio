@@ -172,7 +172,7 @@ async function getInstalledVersion(python: string): Promise<string> {
 }
 
 
-function shouldPromptUpdate(updateBehavior: string, currentVersion: string, latestVersion: string) {
+export function shouldPromptUpdate(updateBehavior: string, currentVersion: string, latestVersion: string) {
   if (updateBehavior === "automatic") {
     return false
   }
@@ -181,12 +181,13 @@ function shouldPromptUpdate(updateBehavior: string, currentVersion: string, late
     return true
   }
 
+  // promptMajor -- only prompt if the next release is a major version bump.
   let version = semver.parse(currentVersion)
-  return !semver.satisfies(latestVersion, `^${version.compareMain}.0.0`)
+  return !semver.satisfies(latestVersion, `<${version.major + 1}`)
 }
 
 
-function shouldUpdate(frequency: string, today: Date, lastUpdate: Date): boolean {
+export function shouldUpdate(frequency: string, today: Date, lastUpdate: Date): boolean {
 
   /*
     Yes, taking the difference of dates like this is not an accurate way of determining
@@ -200,9 +201,9 @@ function shouldUpdate(frequency: string, today: Date, lastUpdate: Date): boolean
   let month = day * 30
 
   let conds = [
-    frequency === 'daily' && timeDelta > day,
-    frequency === 'weekly' && timeDelta > week,
-    frequency === 'monthly' && timeDelta > month
+    frequency === 'daily' && timeDelta >= day,
+    frequency === 'weekly' && timeDelta >= week,
+    frequency === 'monthly' && timeDelta >= month
   ]
 
   return conds.some(i => i)
