@@ -7,20 +7,50 @@ Esbonio is an extension that provides a language server for working with
 
 ## Setup
 
-So that the language server can be updated independently of this extension, it is not
-currently bundled with it. Instead it is distributed as a package on
-[PyPi](https://pypi.org/project/esbonio/) that must be installed into the same Python
-environment as the one you use to build your Sphinx project. This is so that the server is
-able to wrap an instance of Sphinx as per your project's config, inspect it, and expose it via the LSP Protocol.
+The language server works by wrapping an instance of Sphinx's application object,
+inspecting it and exposing the results over the Language Service Protocol. As Sphinx is
+a Python application this also dictates thats the Language Server is written in Python
+and distributed as a package on [PyPi](https://pypi.org/project/esbonio/).
 
-The extension does its best to automate this process, installing the server into the python
-environment you have configured in the
-[Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) by
-default. If however, you don't have the Python extension installed or you want to use a
-different Python environment for your documentation there is a configuration option
-`esbonio.pythonPath` that you can use to set the environment.
+In order to correctly wrap your Sphinx application this requires the Language Server be
+installed into the same environment as the one that you use to build your
+documentation.
+
+There are a number of ways this can be accomplished.
+
+### Automatically
+
+The extension does its best to automate the installation and application of updates to the
+Language Server. By default Esbonio will use the Python environment you have configured
+[Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+when installing and running the server. If however, you don't have the Python extension
+installed or you want to use a different Python environment for your documentation there
+is a configuration option `esbonio.pythonPath` that you can use to configure the
+environment.
+
+There are a number of configuration options that allow you to control exactly how
+installation and updates are handled. See the [documentation]() for more details.
 
 ![Setup Demo](../resources/images/vscode-setup-demo.gif)
+
+### Manually
+
+Alternatively you can opt to manage the installation of the language server entirely
+yourself. To install the Lanaguage Server open the terminal in your desired Python
+environment and run
+
+```
+(env) $ pip install esbonio[lsp]
+```
+
+Then all you have to ensure is that Esbonio is configured to use the same environment,
+either through the
+[Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
+or through the `esbonio.pythonPath` configuration option.
+
+To also manage updates manually, be sure to look at the [documentation]() for options
+on how to disable automatic updates.
+
 
 ## Features
 
