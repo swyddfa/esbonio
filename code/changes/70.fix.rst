@@ -1,1 +1,0 @@
-Fix edge cases around syntax highlighting inline code snippets

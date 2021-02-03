@@ -1,1 +1,0 @@
-The extension now activates when it detects a sphinx project

@@ -1,3 +1,28 @@
+v0.4.0 - 2021-02-03
+-------------------
+
+Features
+^^^^^^^^
+
+- Expose an ``esbonio.log.level`` config option that allows the level of logging
+  output to be configured (`#85 <https://github.com/swyddfa/esbonio/issues/85>`_)
+- Add ``esbonio.server.updateFrequency`` option that controls how often the
+  extension should check for updates. Valid values are ``daily``, ``weekly``,
+  ``monthly`` and ``never``` (`#88 <https://github.com/swyddfa/esbonio/issues/88>`_)
+- Add ``esbonio.server.updateBehavior`` option that controls how updates should be
+  applied. Valid values are ``promptAlways``, ``promptMajor`` and ``automatic`` (`#89 <https://github.com/swyddfa/esbonio/issues/89>`_)
+
+
+Fixes
+^^^^^
+
+- Fix edge cases around syntax highlighting bold/italic elements. (`#47 <https://github.com/swyddfa/esbonio/issues/47>`_)
+- The extension now activates when it detects a sphinx project (`#49 <https://github.com/swyddfa/esbonio/issues/49>`_)
+- The language client now also listens to changes in Python files so that we can
+  pick up changes in the project's ``conf.py``` (`#50 <https://github.com/swyddfa/esbonio/issues/50>`_)
+- Fix edge cases around syntax highlighting inline code snippets (`#70 <https://github.com/swyddfa/esbonio/issues/70>`_)
+
+
 v0.3.1 - 2020-12-14
 -------------------
 
