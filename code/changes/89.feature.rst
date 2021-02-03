@@ -1,0 +1,2 @@
+Add ``esbonio.server.updateBehavior`` option that controls how updates should be
+applied. Valid values are ``promptAlways``, ``promptMajor`` and ``automatic``
