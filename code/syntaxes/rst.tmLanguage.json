@@ -48,7 +48,7 @@
             ]
         },
         "section": {
-            "match": "^[=^'\"*+~-]+",
+            "match": "^[=^'\"*+~-]+$",
             "name": "keyword.control"
         },
         "comment": {
@@ -153,15 +153,15 @@
             ]
         },
         "bold": {
-            "match": "\\*\\*.*\\*\\*",
+            "match": "\\*\\*([^*]|\\*(?!\\*))+\\*\\*",
             "name": "markup.bold"
         },
         "italic": {
-            "match": "\\*.*\\*",
+            "match": "\\*[^*]+\\*",
             "name": "markup.italic"
         },
         "code": {
-            "match": "``.*``",
+            "match": "``([^`]|`(?!`))+``",
             "name": "string"
         },
         "link-definition": {

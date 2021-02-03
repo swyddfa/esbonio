@@ -17,14 +17,14 @@ Welcome to the documentation
    :hidden:
    :maxdepth: 2
 
-   lsp/features
-   lsp/contributing
+   lsp/*
+   lsp/editors/index
    changelog
 
 .. toctree::
    :glob:
    :maxdepth: 2
    :hidden:
-   :caption: VSCode Extension
+   :caption: Contributing
 
-   code/*
+   contributing/*

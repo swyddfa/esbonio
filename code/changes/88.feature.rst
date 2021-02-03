@@ -1,0 +1,3 @@
+Add ``esbonio.server.updateFrequency`` option that controls how often the
+extension should check for updates. Valid values are ``daily``, ``weekly``,
+``monthly`` and ``never```

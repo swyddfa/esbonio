@@ -4,22 +4,22 @@ v0.4.0 - 2021-02-01
 Features
 ^^^^^^^^
 
-- **Language Server** Directive option completions are now provided
-   within a directive's options block (`#36 <https://github.com/swyddfa/esbonio/issues/36>`_)
-- **Language Server** For projects that use ``interpshinx`` completions
-   for intersphinx targets are now suggested when available (`#74 <https://github.com/swyddfa/esbonio/issues/74>`_)
+- Directive option completions are now provided
+  within a directive's options block (`#36 <https://github.com/swyddfa/esbonio/issues/36>`_)
+- For projects that use ``interpshinx`` completions
+  for intersphinx targets are now suggested when available (`#74 <https://github.com/swyddfa/esbonio/issues/74>`_)
 
 
 Fixes
 ^^^^^
 
-- **Language Server** Regex that catches diagnostics from Sphinx's
-   output can now handle windows paths. Diagnostic reporting now sends a
-   proper URI (`#66 <https://github.com/swyddfa/esbonio/issues/66>`_)
-- **Language Server** Diagnostics are now reported on first startup (`#68 <https://github.com/swyddfa/esbonio/issues/68>`_)
-- **Language Server** Fix exception that was thrown when trying to find
-   completions for an unknown role type (`#73 <https://github.com/swyddfa/esbonio/issues/73>`_)
-- **Language Server** The server will not offer completion suggestions outside of
+- Regex that catches diagnostics from Sphinx's
+  output can now handle windows paths. Diagnostic reporting now sends a
+  proper URI (`#66 <https://github.com/swyddfa/esbonio/issues/66>`_)
+- Diagnostics are now reported on first startup (`#68 <https://github.com/swyddfa/esbonio/issues/68>`_)
+- Fix exception that was thrown when trying to find
+  completions for an unknown role type (`#73 <https://github.com/swyddfa/esbonio/issues/73>`_)
+- The server will not offer completion suggestions outside of
   a role target (`#77 <https://github.com/swyddfa/esbonio/issues/77>`_)
 
 
@@ -29,10 +29,10 @@ v0.3.0 - 2021-01-27
 Features
 ^^^^^^^^
 
-- **Language Server** Errors in Sphinx's build output are now parsed and published
+- Errors in Sphinx's build output are now parsed and published
   to the LSP client as diagnostics (`#35 <https://github.com/swyddfa/esbonio/issues/35>`_)
-- **Language Server** Directive completions now include a snippet that
-   prompts for any required arguments (`#58 <https://github.com/swyddfa/esbonio/issues/58>`_)
+- Directive completions now include a snippet that
+  prompts for any required arguments (`#58 <https://github.com/swyddfa/esbonio/issues/58>`_)
 
 
 Fixes
@@ -40,11 +40,11 @@ Fixes
 
 - Errors encountered when initialising Sphinx are now caught and the language
   client is notified of an issue. (`#33 <https://github.com/swyddfa/esbonio/issues/33>`_)
-- **Language Server** Fix issue where some malformed ``CompletionItem`` objects were
+- Fix issue where some malformed ``CompletionItem`` objects were
   preventing completion suggestions from being shown. (`#54 <https://github.com/swyddfa/esbonio/issues/54>`_)
-- **Language Server** Windows paths are now handled correctly (`#60 <https://github.com/swyddfa/esbonio/issues/60>`_)
-- **Language Server** Server no longer chooses ``conf.py`` files that
-   are located under a ``.tox`` or ``site-packages`` directory (`#61 <https://github.com/swyddfa/esbonio/issues/61>`_)
+- Windows paths are now handled correctly (`#60 <https://github.com/swyddfa/esbonio/issues/60>`_)
+- Server no longer chooses ``conf.py`` files that
+  are located under a ``.tox`` or ``site-packages`` directory (`#61 <https://github.com/swyddfa/esbonio/issues/61>`_)
 
 
 v0.2.1 - 2020-12-08
@@ -53,7 +53,7 @@ v0.2.1 - 2020-12-08
 Fixes
 ^^^^^
 
-- **Language Server** Directives that are part of the ``std`` or ``py`` Sphinx domains
+- Directives that are part of the ``std`` or ``py`` Sphinx domains
   will now be included in completion suggestions (`#31 <https://github.com/swyddfa/esbonio/issues/31>`_)
 
 
@@ -63,10 +63,10 @@ v0.2.0 - 2020-12-06
 Features
 ^^^^^^^^
 
-- **Language Server:** Python log events can now published to Language Clients (`#27 <https://github.com/swyddfa/esbonio/issues/27>`_)
-- **Language Server** Sphinx's build output is now redirected to the LSP client as log
+- Python log events can now published to Language Clients (`#27 <https://github.com/swyddfa/esbonio/issues/27>`_)
+- Sphinx's build output is now redirected to the LSP client as log
   messages. (`#28 <https://github.com/swyddfa/esbonio/issues/28>`_)
-- **Language Server** Suggest completions for targets for a number of roles from the
+- Suggest completions for targets for a number of roles from the
   `std <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#the-standard-domain>`_
   and `py <https://www.sphinx-doc.org/en/master/usage/restructuredtext/domains.html#the-python-domain>`_
   domains including ``ref``, ``doc``, ``func``, ``meth``, ``class`` and more. (`#29 <https://github.com/swyddfa/esbonio/issues/29>`_)
@@ -75,7 +75,7 @@ Features
 Fixes
 ^^^^^
 
-- **Language Server:** Fix discovery of roles so that roles in Sphinx domains are used and
+- Fix discovery of roles so that roles in Sphinx domains are used and
   that unimplemented ``docutils`` roles are not surfaced. (`#26 <https://github.com/swyddfa/esbonio/issues/26>`_)
 
 

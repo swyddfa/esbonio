@@ -65,7 +65,7 @@ function updateLanguageServer(): Promise<null> {
  */
 export function getPython(): Promise<string> {
   let logger = getOutputLogger()
-  let python = vscode.workspace.getConfiguration('esbonio').get<string>('pythonPath')
+  let python = vscode.workspace.getConfiguration('esbonio').get<string>('server.pythonPath')
 
   // If the user has set a value, use that.
   //

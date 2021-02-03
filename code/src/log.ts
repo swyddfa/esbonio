@@ -1,4 +1,4 @@
-import { OutputChannel, window } from "vscode"
+import * as vscode from "vscode";
 
 export enum LogLevel {
   DEBUG = 0,
@@ -33,11 +33,11 @@ abstract class Logger {
 }
 
 export class OutputChannelLogger extends Logger {
-  private channel: OutputChannel
+  private channel: vscode.OutputChannel
 
   constructor(name: string, level: LogLevel) {
     super(level)
-    this.channel = window.createOutputChannel(name)
+    this.channel = vscode.window.createOutputChannel(name)
   }
 
   log(message: string): void {
@@ -54,8 +54,22 @@ export class OutputChannelLogger extends Logger {
  */
 export function getOutputLogger() {
   if (!channelLogger) {
-    // TODO: Make this configurable?
-    channelLogger = new OutputChannelLogger('Esbonio', LogLevel.DEBUG)
+    let logLevel: LogLevel
+
+    let level = vscode.workspace.getConfiguration('esbonio').get<string>('log.level')
+    switch (level) {
+      case 'debug':
+        logLevel = LogLevel.DEBUG
+        break
+      case 'info':
+        logLevel = LogLevel.INFO
+        break
+      case 'error':
+        logLevel = LogLevel.ERROR
+        break
+    }
+
+    channelLogger = new OutputChannelLogger('Esbonio', logLevel)
   }
 
   return channelLogger
