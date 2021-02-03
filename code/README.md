@@ -25,7 +25,7 @@ Language Server. By default Esbonio will use the Python environment you have con
 [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
 when installing and running the server. If however, you don't have the Python extension
 installed or you want to use a different Python environment for your documentation there
-is a configuration option `esbonio.pythonPath` that you can use to configure the
+is a configuration option `esbonio.server.pythonPath` that you can use to configure the
 environment.
 
 There are a number of configuration options that allow you to control exactly how
@@ -48,7 +48,7 @@ environment and run
 Then all you have to ensure is that Esbonio is configured to use the same environment,
 either through the
 [Python extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
-or through the `esbonio.pythonPath` configuration option.
+or through the `esbonio.server.pythonPath` configuration option.
 
 To also manage updates manually, be sure to look at the
 [documentation](https://swyddfa.github.io/esbonio/docs/lsp/editors/vscode.html#configuration)
