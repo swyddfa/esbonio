@@ -21,8 +21,9 @@
         "**/.tox": true,
         "**/.pytest_cache": true,
         "**/.ipynb_checkpoints": true,
-        "**/.coverage": true
+        "**/.coverage": true,
+        "**/.vscode-test": true
     },
     "python.pythonPath": ".env/bin/python",
-    "python.formatting.provider": "black"
+    "python.formatting.provider": "black",
 }
