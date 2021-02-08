@@ -114,7 +114,7 @@ class Directives(LanguageFeature):
     suggestions for."""
 
     def suggest(
-        self, match: re.Match, doc: Document, position: Position
+        self, match: "re.Match", doc: Document, position: Position
     ) -> List[CompletionItem]:
         self.logger.debug("Trigger match: %s", match)
         groups = match.groupdict()
@@ -141,7 +141,7 @@ class Directives(LanguageFeature):
         return items
 
     def suggest_options(
-        self, match: re.Match, doc: Document, position: Position
+        self, match: "re.Match", doc: Document, position: Position
     ) -> List[CompletionItem]:
 
         groups = match.groupdict()
@@ -175,7 +175,7 @@ class Directives(LanguageFeature):
         return self.options.get(name, [])
 
     def directive_to_completion_item(
-        self, name: str, directive: Directive, match: re.Match, position: Position
+        self, name: str, directive: Directive, match: "re.Match", position: Position
     ) -> CompletionItem:
         """Convert an rst directive to its CompletionItem representation.
 
