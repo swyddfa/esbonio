@@ -88,13 +88,22 @@ def testdata():
 def sphinx():
     """Return a Sphinx application instance pointed at the given project."""
 
+    # Since extensions like intersphinx need to hit the network, let's cache
+    # app instances so we only incur this cost once.
+    cache = {}
+
     basepath = pathlib.Path(__file__).parent / "data"
 
     def loader(project):
         src = str(basepath / project)
+
+        if src in cache:
+            return cache[src]
+
         build = str(basepath / project / "_build")
 
-        return Sphinx(src, src, build, build, "html", status=None, warning=None)
+        cache[src] = Sphinx(src, src, build, build, "html", status=None, warning=None)
+        return cache[src]
 
     return loader
 
