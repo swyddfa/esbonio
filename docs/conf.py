@@ -30,7 +30,20 @@ release = esbonio.__version__
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.intersphinx", "esbonio.tutorial"]
+extensions = [
+    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
+    "sphinx.ext.napoleon",
+    "sphinx.ext.viewcode",
+    "esbonio.tutorial",
+]
+
+autodoc_default_options = {
+    "members": True,
+    "member-order": "bysource",
+    "undoc-members": True,
+}
+autodoc_typehints = "description"
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
@@ -52,7 +65,13 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # a list of builtin themes.
 #
 html_theme = "sphinx_rtd_theme"
-
+html_context = {
+    "conf_py_path": "/docs/",
+    "display_github": True,
+    "github_repo": "esbonio",
+    "github_user": "swyddfa",
+    "github_version": "release",
+}
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
