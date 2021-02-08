@@ -1,7 +1,9 @@
+# from __future__ import annotations
+
 import importlib
 import logging
 
-from typing import List
+from typing import List, Optional
 
 from pygls.features import COMPLETION, INITIALIZE, INITIALIZED, TEXT_DOCUMENT_DID_SAVE
 from pygls.server import LanguageServer
@@ -13,13 +15,22 @@ from pygls.types import (
     Position,
 )
 from pygls.workspace import Document
+from sphinx.application import Sphinx
 
 
 BUILTIN_MODULES = [
     "esbonio.lsp.sphinx",
-    "esbonio.lsp.completion.directives",
-    "esbonio.lsp.completion.roles",
+    "esbonio.lsp.directives",
+    "esbonio.lsp.roles",
 ]
+
+
+class LanguageFeature:
+    """Base class for language features."""
+
+    def __init__(self, rst: "RstLanguageServer"):
+        self.rst = rst
+        self.logger = rst.logger.getChild(self.__class__.__name__)
 
 
 class RstLanguageServer(LanguageServer):
@@ -29,7 +40,7 @@ class RstLanguageServer(LanguageServer):
         self.logger = logging.getLogger(__name__)
         """The logger that should be used for all Language Server log entries"""
 
-        self.app = None
+        self.app: Optional[Sphinx] = None
         """Sphinx application instance configured for the current project."""
 
         self.on_init_hooks = []
@@ -96,9 +107,7 @@ def create_language_server(modules: List[str]) -> RstLanguageServer:
     modules:
         The list of modules that should be loaded.
     """
-    import asyncio
-
-    server = RstLanguageServer(asyncio.new_event_loop())
+    server = RstLanguageServer()
 
     for mod in modules:
         server.load_module(mod)

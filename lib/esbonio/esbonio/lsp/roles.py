@@ -8,13 +8,12 @@ from pygls.types import CompletionItem, CompletionItemKind, DidSaveTextDocumentP
 from sphinx.domains import Domain
 
 from esbonio.lsp import RstLanguageServer
+from esbonio.lsp.directives import DIRECTIVE
 
 
 def namespace_to_completion_item(namespace: str) -> CompletionItem:
     return CompletionItem(
-        namespace,
-        detail="intersphinx namespace",
-        kind=CompletionItemKind.Module,
+        namespace, detail="intersphinx namespace", kind=CompletionItemKind.Module,
     )
 
 
@@ -134,7 +133,7 @@ class RoleCompletion:
 
         # Unless we are within a directive's options block, we should offer role
         # suggestions
-        if re.match(r"\s*\.\.[ ]*([\w-]+)::", line):
+        if DIRECTIVE.match(line):
             return []
 
         return list(self.roles.values())

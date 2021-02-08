@@ -4,7 +4,7 @@ import py.test
 
 from pygls.types import CompletionItemKind
 
-from esbonio.lsp.completion.roles import RoleCompletion, RoleTargetCompletion
+from esbonio.lsp.roles import RoleCompletion, RoleTargetCompletion
 
 
 @py.test.mark.parametrize(
