@@ -171,49 +171,6 @@ def intersphinx_patterns(rolename, namespace):
     "text,setup",
     [
         *itertools.product(
-            [
-                ".",
-                ".. doctest::",
-                ".. code-block::",
-                "   .",
-                "   .. doctest::",
-                "   .. code-block::",
-                ".. _some_label:",
-                "   .. _some_label:",
-            ],
-            [("sphinx-default", set())],
-        ),
-        *itertools.product(
-            [
-                "..",
-                ".. ",
-                ".. d",
-                ".. code-b",
-                "   ..",
-                "   .. ",
-                "   .. d",
-                "   .. code-b",
-            ],
-            [
-                (
-                    "sphinx-default",
-                    {"admonition", "classmethod", "code-block", "image", "toctree"},
-                ),
-                (
-                    "sphinx-extensions",
-                    {
-                        "admonition",
-                        "classmethod",
-                        "code-block",
-                        "doctest",
-                        "image",
-                        "testsetup",
-                        "toctree",
-                    },
-                ),
-            ],
-        ),
-        *itertools.product(
             [":", ":r", "some text :", "   :", "   :r", "   some text :"],
             [
                 ("sphinx-default", {"class", "doc", "func", "ref", "term"}),
