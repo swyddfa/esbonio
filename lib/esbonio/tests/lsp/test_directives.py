@@ -172,12 +172,8 @@ C_FUNC_OPTS = {"noindexentry"}
         ),
     ],
 )
-def test_directive_option_completions(
-    sphinx, project, text, expected, unexpected, caplog
-):
+def test_directive_option_completions(sphinx, project, text, expected, unexpected):
     """Ensure that we can provide the correct completions for directive options."""
-
-    caplog.set_level(logging.DEBUG)
 
     rst = mock.Mock()
     rst.app = sphinx(project)

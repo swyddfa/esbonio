@@ -145,12 +145,7 @@ def do_completion_test(
 def role_target_patterns(rolename):
     return [
         s.format(rolename)
-        for s in [
-            ":{}:`",
-            ":{}:`More Info <",
-            "   :{}:`",
-            "   :{}:`Some Label <",
-        ]
+        for s in [":{}:`", ":{}:`More Info <", "   :{}:`", "   :{}:`Some Label <"]
     ]
 
 
@@ -172,9 +167,7 @@ def intersphinx_patterns(rolename, namespace):
     [
         *itertools.product(
             [":", ":r", "some text :", "   :", "   :r", "   some text :"],
-            [
-                ("sphinx-default", {"class", "doc", "func", "ref", "term"}),
-            ],
+            [("sphinx-default", {"class", "doc", "func", "ref", "term"}),],
         ),
         *itertools.product(
             role_target_patterns("class"),
@@ -343,23 +336,3 @@ def test_expected_completions(client_server, testdata, text, setup):
     root = testdata(project, path_only=True)
 
     do_completion_test(client, server, root, "index.rst", text, expected)
-
-
-def test_expected_directive_option_completions(client_server, testdata, caplog):
-    """Ensure that we can handle directive option completions."""
-
-    caplog.set_level(logging.INFO)
-
-    client, server = client_server
-    root = testdata("sphinx-default", path_only=True)
-    expected = {"align", "alt", "class", "height", "name", "scale", "target", "width"}
-
-    do_completion_test(
-        client,
-        server,
-        root,
-        "directive_options.rst",
-        "   :a",
-        expected,
-        insert_newline=False,
-    )
