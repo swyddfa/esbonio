@@ -47,6 +47,13 @@
             }
         },
         {
+            "label": "pytest file",
+            "type": "shell",
+            "command": "source ${workspaceRoot}/.env/bin/activate && pytest ${file}",
+            "group": "test",
+            "problemMatcher": [],
+        },
+        {
             "label": "Grammar Tests",
             "type": "shell",
             "command": "npx vscode-tmgrammar-test -c -s source.rst -g rst.tmLanguage.json -g tests/python.tmLanguage.json -t \"**/*.rst\"",
