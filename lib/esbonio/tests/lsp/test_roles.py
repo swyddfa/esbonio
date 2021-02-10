@@ -1,49 +1,78 @@
-from mock import Mock
+import logging
+import unittest.mock as mock
 
 import py.test
 
 from pygls.types import CompletionItemKind
 
-from esbonio.lsp.roles import RoleCompletion, RoleTargetCompletion
+from esbonio.lsp.roles import Roles, RoleTargetCompletion
+from esbonio.lsp.testing import completion_test
+
+C_EXPECTED = {"c:func", "c:macro"}
+C_UNEXPECTED = {"ref", "doc", "py:func", "py:mod"}
+
+DEFAULT_EXPECTED = {"doc", "func", "mod", "ref", "c:func"}
+DEFAULT_UNEXPECTED = {"py:func", "py:mod", "restructuredtext-unimplemented-role"}
+
+EXT_EXPECTED = {"doc", "py:func", "py:mod", "ref", "func"}
+EXT_UNEXPECTED = {"c:func", "c:macro", "restructuredtext-unimplemented-role"}
+
+PY_EXPECTED = {"py:func", "py:mod"}
+PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
 
 
 @py.test.mark.parametrize(
-    "project,expected,unexpected",
+    "project,text,expected,unexpected",
     [
-        (
-            "sphinx-default",
-            [
-                "emphasis",
-                "subscript",
-                "raw",
-                "func",
-                "meth",
-                "class",
-                "ref",
-                "doc",
-                "term",
-            ],
-            ["named-reference", "restructuredtext-unimplemented-role"],
-        )
+        ("sphinx-default", ":", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", ":r", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", ":ref:", None, None),
+        ("sphinx-default", ":py:", None, None),
+        ("sphinx-default", ":c:", C_EXPECTED, C_UNEXPECTED),
+        ("sphinx-default", "some text :", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", "some text :ref:", None, None),
+        ("sphinx-default", "some text :py:", None, None),
+        ("sphinx-default", "some text :c:", C_EXPECTED, C_UNEXPECTED),
+        ("sphinx-default", "   :", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", "   :r", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", "   :ref:", None, None),
+        ("sphinx-default", "   :py:", None, None),
+        ("sphinx-default", "   :c:", C_EXPECTED, C_UNEXPECTED),
+        ("sphinx-default", "   some text :", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", "   some text :ref:", None, None),
+        ("sphinx-default", "   some text :py:", None, None),
+        ("sphinx-default", "   some text :c:", C_EXPECTED, C_UNEXPECTED),
+        ("sphinx-extensions", ":", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", ":r", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", ":ref:", None, None),
+        ("sphinx-extensions", ":py:", PY_EXPECTED, PY_UNEXPECTED),
+        ("sphinx-extensions", ":c:", None, None),
+        ("sphinx-extensions", "some text :", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", "some text :ref:", None, None),
+        ("sphinx-extensions", "some text :py:", PY_EXPECTED, PY_UNEXPECTED),
+        ("sphinx-extensions", "some text :c:", None, None),
+        ("sphinx-extensions", "   :", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", "   :r", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", "   :ref:", None, None),
+        ("sphinx-extensions", "   :py:", PY_EXPECTED, PY_UNEXPECTED),
+        ("sphinx-extensions", "   :c:", None, None),
+        ("sphinx-extensions", "   some text :", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", "   some text :ref:", None, None),
+        ("sphinx-extensions", "   some text :py:", PY_EXPECTED, PY_UNEXPECTED),
+        ("sphinx-extensions", "   some text :c:", None, None),
     ],
 )
-def test_role_discovery(sphinx, project, expected, unexpected):
-    """Ensure that we can correctly discover role definitions to offer as
-    suggestions."""
+def test_role_completions(sphinx, project, text, expected, unexpected):
+    """Ensure that we can offer correct role suggestions."""
 
-    rst = Mock()
+    rst = mock.Mock()
     rst.app = sphinx(project)
+    rst.logger = logging.getLogger("rst")
 
-    completion = RoleCompletion(rst)
-    completion.discover()
+    feature = Roles(rst)
+    feature.initialize()
 
-    for name in expected:
-        message = "Missing expected role '{}'"
-        assert name in completion.roles.keys(), message.format(name)
-
-    for name in unexpected:
-        message = "Unexpected role '{}'"
-        assert name not in completion.roles.keys(), message.format(name)
+    completion_test(feature, text, expected, unexpected)
 
 
 @py.test.mark.parametrize(
@@ -78,7 +107,7 @@ def test_role_discovery(sphinx, project, expected, unexpected):
 def test_target_type_discovery(sphinx, role, objects):
     """Ensure that we can correctly map roles to their correspondig object types."""
 
-    rst = Mock()
+    rst = mock.Mock()
     rst.app = sphinx("sphinx-default")
 
     completion = RoleTargetCompletion(rst)
@@ -152,7 +181,7 @@ def test_target_type_discovery(sphinx, role, objects):
 def test_target_discovery(sphinx, project, type, kind, expected):
     """Ensure that we can correctly discover role targets to suggest."""
 
-    rst = Mock()
+    rst = mock.Mock()
     rst.app = sphinx(project)
     rst.app.builder.read()
 

@@ -1,28 +1,42 @@
-"""Role completions."""
+"""Role support."""
 import re
 
 from typing import Dict, List
 
 from docutils.parsers.rst import roles
-from pygls.types import CompletionItem, CompletionItemKind, DidSaveTextDocumentParams
+from pygls.types import (
+    CompletionItem,
+    CompletionItemKind,
+    DidSaveTextDocumentParams,
+    Position,
+    Range,
+    TextEdit,
+)
+from pygls.workspace import Document
 from sphinx.domains import Domain
 
-from esbonio.lsp import RstLanguageServer
+from esbonio.lsp import RstLanguageServer, LanguageFeature, dump
 from esbonio.lsp.directives import DIRECTIVE
+
+
+PARTIAL_ROLE = re.compile(
+    r"""
+    (^|.*[ ])            # roles must be preceeded by a space, or start the line
+    (?P<role>:                    # roles start with the ':' character
+    (?!:)                # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?  # there may be a domain namespace
+    (?P<name>[\w-]*))     # match the role name
+    $                    # ensure pattern only matches incomplete roles
+    """,
+    re.MULTILINE | re.VERBOSE,
+)
+"""A regular expression that matches a partial role. Used when generating auto complete
+suggestions."""
 
 
 def namespace_to_completion_item(namespace: str) -> CompletionItem:
     return CompletionItem(
         namespace, detail="intersphinx namespace", kind=CompletionItemKind.Module,
-    )
-
-
-def role_to_completion_item(name, role) -> CompletionItem:
-    return CompletionItem(
-        name,
-        kind=CompletionItemKind.Function,
-        detail="role",
-        insert_text="{}:".format(name),
     )
 
 
@@ -66,11 +80,8 @@ def intersphinx_target_to_completion_item(label, item, type_) -> CompletionItem:
     return CompletionItem(label, kind=kind, detail=detail, insert_text=label)
 
 
-class RoleCompletion:
-    """Completion handler for roles."""
-
-    def __init__(self, rst: RstLanguageServer):
-        self.rst = rst
+class Roles(LanguageFeature):
+    """Role support for the language server."""
 
     def initialize(self):
         self.discover()
@@ -78,54 +89,55 @@ class RoleCompletion:
     def discover(self):
 
         # Find roles that have been registered directly with docutils
-        local_roles = {
-            k: v for k, v in roles._roles.items() if v != roles.unimplemented_role
-        }
-        role_registry = {
-            k: v
-            for k, v in roles._role_registry.items()
-            if v != roles.unimplemented_role
-        }
-        std_roles = {}
-        py_roles = {}
+        found_roles = {**roles._roles, **roles._role_registry}
 
+        # Find roles under Sphinx domains
         if self.rst.app is not None:
 
-            # Find roles that are held in a Sphinx domain.
-            # TODO: Implement proper domain handling, will focus on std+python for now
             domains = self.rst.app.registry.domains
-            std_roles = domains["std"].roles
-            py_roles = domains["py"].roles
+            primary_domain = self.rst.app.config.primary_domain
 
-        rs = {**local_roles, **role_registry, **std_roles, **py_roles}
+            for name, domain in domains.items():
+                namefmt = "{name}:{rolename}"
 
-        self.roles = {k: role_to_completion_item(k, v) for k, v in rs.items()}
-        self.rst.logger.debug("Discovered %s roles", len(self.roles))
+                # The "standard" domain and the "primary_domain" do not require
+                # the namespace prefix
+                if name == "std" or name == primary_domain:
+                    namefmt = "{rolename}"
 
-    suggest_triggers = [
-        re.compile(
-            r"""
-            (^|.*[ ])  # roles must be preceeded by a space, or start the line
-            :          # roles start with the ':' character
-            (?!:)      # make sure the next character is not ':'
-            [\w-]*     # match the role name
-            $          # ensure pattern only matches incomplete roles
-            """,
-            re.MULTILINE | re.VERBOSE,
-        )
-    ]
+                found_roles.update(
+                    {
+                        namefmt.format(name=name, rolename=rolename): role
+                        for rolename, role in domain.roles.items()
+                    }
+                )
 
-    def suggest(self, match, doc, position) -> List[CompletionItem]:
+        self.roles = {
+            k: v for k, v in found_roles.items() if v != roles.unimplemented_role
+        }
+
+        self.logger.info("Discovered %s roles", len(self.roles))
+        self.logger.debug(self.roles.keys())
+
+    suggest_triggers = [PARTIAL_ROLE]
+
+    def suggest(
+        self, match: "re.Match", doc: Document, position: Position
+    ) -> List[CompletionItem]:
         indent = match.group(1)
 
         # If there's no indent, then this can only be a role defn
         if indent == "":
-            return list(self.roles.values())
+            return self.suggest_roles(match, position)
 
         # Otherwise, search backwards until we find a blank line or an unindent
         # so that we can determine the appropriate context.
         linum = position.line - 1
-        line = doc.lines[linum]
+
+        try:
+            line = doc.lines[linum]
+        except IndexError:
+            return self.suggest_roles(match, position)
 
         while line.startswith(indent):
             linum -= 1
@@ -136,7 +148,74 @@ class RoleCompletion:
         if DIRECTIVE.match(line):
             return []
 
-        return list(self.roles.values())
+        return self.suggest_roles(match, position)
+
+    def suggest_roles(
+        self, match: "re.Match", position: Position
+    ) -> List[CompletionItem]:
+        self.logger.info("Suggesting roles")
+
+        domain = match.groupdict()["domain"] or ""
+        items = []
+
+        for name, role in self.roles.items():
+
+            if not name.startswith(domain):
+                continue
+
+            item = self.role_to_completion_item(name, role, match, position)
+            items.append(item)
+
+        return items
+
+    def role_to_completion_item(
+        self, name: str, role, match: "re.Match", position: Position
+    ) -> CompletionItem:
+        """Convert an rst role to its CompletionItem representation.
+
+        With domain support it's necessary to compute the CompletionItem representation
+        specifically for each completion site. See
+        :meth:`~esbonio.lsp.directives.Directives.directive_to_completion_item` for
+        more historical information.
+
+        For some reason, even though these completion items are constructed in the same
+        manner as the ones for directives using them in VSCode does not feel as nice....
+
+        Parameters
+        ----------
+        name:
+           The name of the role as a user would type into an reStructuredText document.
+        role:
+           The implementation of the role.
+        match:
+           The regular expression match object that represents the line we are providing
+           the autocomplete suggestions for.
+        position:
+           The position in the source code where the autocompletion request was sent
+           from.
+        """
+
+        groups = match.groupdict()
+
+        line = position.line
+        start = position.character - len(groups["role"])
+        end = position.character
+
+        insert_text = f":{name}:"
+
+        item = CompletionItem(
+            name,
+            kind=CompletionItemKind.Function,
+            filter_text=insert_text,
+            detail="role",
+            text_edit=TextEdit(
+                range=Range(Position(line, start), Position(line, end)),
+                new_text=insert_text,
+            ),
+        )
+
+        self.logger.debug("Item %s", dump(item))
+        return item
 
 
 def build_role_target_map(domain: Domain) -> Dict[str, List[str]]:
@@ -384,7 +463,7 @@ class InterSphinxTargetCompletion:
 
 
 def setup(rst: RstLanguageServer):
-    role_completion = RoleCompletion(rst)
+    role_completion = Roles(rst)
     role_target_completion = RoleTargetCompletion(rst)
     intersphinx_namespaces = InterSphinxNamespaceCompletion(rst)
     intersphinx_targets = InterSphinxTargetCompletion(rst)

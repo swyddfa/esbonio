@@ -1,4 +1,3 @@
-import logging
 import itertools
 import pathlib
 import time
@@ -165,10 +164,6 @@ def intersphinx_patterns(rolename, namespace):
 @py.test.mark.parametrize(
     "text,setup",
     [
-        *itertools.product(
-            [":", ":r", "some text :", "   :", "   :r", "   some text :"],
-            [("sphinx-default", {"class", "doc", "func", "ref", "term"}),],
-        ),
         *itertools.product(
             role_target_patterns("class"),
             [
