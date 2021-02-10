@@ -72,7 +72,7 @@ class Directives(LanguageFeature):
                 namefmt = "{name}:{dirname}"
 
                 # The "standard" domain and the "primary_domain" do not require
-                # the prefix
+                # the namespace prefix
                 if name == "std" or name == primary_domain:
                     namefmt = "{dirname}"
 
@@ -146,7 +146,7 @@ class Directives(LanguageFeature):
 
         groups = match.groupdict()
 
-        self.logger.debug("Suggesting options")
+        self.logger.info("Suggesting options")
         self.logger.debug("Match groups: %s", groups)
 
         indent = groups["indent"]
@@ -171,7 +171,6 @@ class Directives(LanguageFeature):
         domain = match.group("domain") or ""
         name = f"{domain}{match.group('name')}"
 
-        self.logger.debug("Returning options for directive: %s", name)
         return self.options.get(name, [])
 
     def directive_to_completion_item(
@@ -225,7 +224,8 @@ class Directives(LanguageFeature):
         Parameters
         ----------
         name:
-           The name of the directive as a user would type in an rst document
+           The name of the directive as a user would type in an reStructuredText
+           document
         directive:
            The class definition that implements the Directive's behavior
         match:
