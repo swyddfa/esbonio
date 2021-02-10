@@ -1,6 +1,6 @@
-# from __future__ import annotations
-
+import enum
 import importlib
+import json
 import logging
 
 from typing import List, Optional
@@ -97,6 +97,18 @@ def get_line_til_position(doc: Document, position: Position) -> str:
         return ""
 
     return line[: position.character]
+
+
+def dump(obj) -> str:
+    """Debug helper function that converts an object to JSON."""
+
+    def default(obj):
+        if isinstance(obj, enum.Enum):
+            return obj.value
+
+        return {k: v for k, v in obj.__dict__.items() if v is not None}
+
+    return json.dumps(obj, default=default)
 
 
 def create_language_server(modules: List[str]) -> RstLanguageServer:
