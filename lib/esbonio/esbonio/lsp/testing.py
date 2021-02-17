@@ -76,6 +76,10 @@ def completion_test(
 
     items = {item.label for item in results}
 
+    logger.debug("Results:    %s", items)
+    logger.debug("Expected:   %s", expected)
+    logger.debug("Unexpected: %s", unexpected)
+
     if expected is None:
         assert len(items) == 0
     else:
