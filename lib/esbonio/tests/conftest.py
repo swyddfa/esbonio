@@ -102,7 +102,10 @@ def sphinx():
 
         build = str(basepath / project / "_build")
 
-        cache[src] = Sphinx(src, src, build, build, "html", status=None, warning=None)
+        app = Sphinx(src, src, build, build, "html", status=None, warning=None)
+        app.builder.read()
+
+        cache[src] = app
         return cache[src]
 
     return loader

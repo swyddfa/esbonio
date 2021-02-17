@@ -1,4 +1,3 @@
-import logging
 import itertools
 import pathlib
 import time
@@ -142,13 +141,6 @@ def do_completion_test(
     assert len(missing) == 0, "Missing expected items, {}".format(missing)
 
 
-def role_target_patterns(rolename):
-    return [
-        s.format(rolename)
-        for s in [":{}:`", ":{}:`More Info <", "   :{}:`", "   :{}:`Some Label <"]
-    ]
-
-
 def intersphinx_patterns(rolename, namespace):
     return [
         s.format(rolename, namespace)
@@ -161,123 +153,10 @@ def intersphinx_patterns(rolename, namespace):
     ]
 
 
-@py.test.mark.integration
+@py.test.mark.skip
 @py.test.mark.parametrize(
     "text,setup",
     [
-        *itertools.product(
-            [":", ":r", "some text :", "   :", "   :r", "   some text :"],
-            [("sphinx-default", {"class", "doc", "func", "ref", "term"}),],
-        ),
-        *itertools.product(
-            role_target_patterns("class"),
-            [
-                ("sphinx-default", {"pythagoras.Triangle"}),
-                ("sphinx-extensions", {"pythagoras.Triangle", "python", "sphinx"}),
-            ],
-        ),
-        *itertools.product(
-            role_target_patterns("doc"),
-            [
-                (
-                    "sphinx-default",
-                    {"index", "glossary", "theorems/index", "theorems/pythagoras"},
-                ),
-                (
-                    "sphinx-extensions",
-                    {
-                        "index",
-                        "glossary",
-                        "python",
-                        "sphinx",
-                        "theorems/index",
-                        "theorems/pythagoras",
-                    },
-                ),
-            ],
-        ),
-        *itertools.product(
-            role_target_patterns("func"),
-            [
-                (
-                    "sphinx-default",
-                    {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
-                ),
-                (
-                    "sphinx-extensions",
-                    {
-                        "pythagoras.calc_hypotenuse",
-                        "pythagoras.calc_side",
-                        "python",
-                        "sphinx",
-                    },
-                ),
-            ],
-        ),
-        *itertools.product(
-            role_target_patterns("meth"),
-            [
-                ("sphinx-default", {"pythagoras.Triangle.is_right_angled"}),
-                (
-                    "sphinx-extensions",
-                    {"pythagoras.Triangle.is_right_angled", "python", "sphinx"},
-                ),
-            ],
-        ),
-        *itertools.product(
-            role_target_patterns("obj"),
-            [
-                (
-                    "sphinx-default",
-                    {
-                        "pythagoras.Triangle",
-                        "pythagoras.Triangle.is_right_angled",
-                        "pythagoras.calc_hypotenuse",
-                        "pythagoras.calc_side",
-                    },
-                ),
-                (
-                    "sphinx-extensions",
-                    {
-                        "pythagoras.Triangle",
-                        "pythagoras.Triangle.is_right_angled",
-                        "pythagoras.calc_hypotenuse",
-                        "pythagoras.calc_side",
-                        "python",
-                        "sphinx",
-                    },
-                ),
-            ],
-        ),
-        *itertools.product(
-            role_target_patterns("ref"),
-            [
-                (
-                    "sphinx-default",
-                    {
-                        "genindex",
-                        "modindex",
-                        "py-modindex",
-                        "pythagoras_theorem",
-                        "search",
-                        "welcome",
-                    },
-                ),
-                (
-                    "sphinx-extensions",
-                    {
-                        "genindex",
-                        "modindex",
-                        "py-modindex",
-                        "pythagoras_theorem",
-                        "python",
-                        "sphinx",
-                        "search",
-                        "welcome",
-                    },
-                ),
-            ],
-        ),
         *itertools.product(
             intersphinx_patterns("ref", "python"),
             [

@@ -25,6 +25,7 @@ DEFAULT_UNEXPECTED = {
     "py:module",
     "std:program",
     "std:option",
+    "restructuredtext-test-directive",
 }
 
 EXTENSIONS_EXPECTED = {
@@ -45,6 +46,7 @@ EXTENSIONS_UNEXPECTED = {
     "module",
     "std:program",
     "std:option",
+    "restructuredtext-test-directive",
 }
 
 

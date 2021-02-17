@@ -1,164 +1,265 @@
-from mock import Mock
+import itertools
+import logging
+import unittest.mock as mock
 
 import py.test
 
 from pygls.types import CompletionItemKind
 
-from esbonio.lsp.roles import RoleCompletion, RoleTargetCompletion
+from esbonio.lsp.roles import Roles
+from esbonio.lsp.testing import completion_test
+
+C_EXPECTED = {"c:func", "c:macro"}
+C_UNEXPECTED = {"ref", "doc", "py:func", "py:mod"}
+
+DEFAULT_EXPECTED = {"doc", "func", "mod", "ref", "c:func"}
+DEFAULT_UNEXPECTED = {"py:func", "py:mod", "restructuredtext-unimplemented-role"}
+
+EXT_EXPECTED = {"doc", "py:func", "py:mod", "ref", "func"}
+EXT_UNEXPECTED = {"c:func", "c:macro", "restructuredtext-unimplemented-role"}
+
+PY_EXPECTED = {"py:func", "py:mod"}
+PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
 
 
 @py.test.mark.parametrize(
-    "project,expected,unexpected",
+    "project,text,expected,unexpected",
     [
-        (
-            "sphinx-default",
+        ("sphinx-default", ":", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", ":r", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", ":ref:", None, None),
+        ("sphinx-default", ":py:", None, None),
+        ("sphinx-default", ":c:", C_EXPECTED, C_UNEXPECTED),
+        ("sphinx-default", "some text :", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", "some text :ref:", None, None),
+        ("sphinx-default", "some text :py:", None, None),
+        ("sphinx-default", "some text :c:", C_EXPECTED, C_UNEXPECTED),
+        ("sphinx-default", "   :", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", "   :r", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", "   :ref:", None, None),
+        ("sphinx-default", "   :py:", None, None),
+        ("sphinx-default", "   :c:", C_EXPECTED, C_UNEXPECTED),
+        ("sphinx-default", "   some text :", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+        ("sphinx-default", "   some text :ref:", None, None),
+        ("sphinx-default", "   some text :py:", None, None),
+        ("sphinx-default", "   some text :c:", C_EXPECTED, C_UNEXPECTED),
+        ("sphinx-extensions", ":", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", ":r", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", ":ref:", None, None),
+        ("sphinx-extensions", ":py:", PY_EXPECTED, PY_UNEXPECTED),
+        ("sphinx-extensions", ":c:", None, None),
+        ("sphinx-extensions", "some text :", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", "some text :ref:", None, None),
+        ("sphinx-extensions", "some text :py:", PY_EXPECTED, PY_UNEXPECTED),
+        ("sphinx-extensions", "some text :c:", None, None),
+        ("sphinx-extensions", "   :", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", "   :r", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", "   :ref:", None, None),
+        ("sphinx-extensions", "   :py:", PY_EXPECTED, PY_UNEXPECTED),
+        ("sphinx-extensions", "   :c:", None, None),
+        ("sphinx-extensions", "   some text :", EXT_EXPECTED, EXT_UNEXPECTED),
+        ("sphinx-extensions", "   some text :ref:", None, None),
+        ("sphinx-extensions", "   some text :py:", PY_EXPECTED, PY_UNEXPECTED),
+        ("sphinx-extensions", "   some text :c:", None, None),
+    ],
+)
+def test_role_completions(sphinx, project, text, expected, unexpected):
+    """Ensure that we can offer correct role suggestions."""
+
+    rst = mock.Mock()
+    rst.app = sphinx(project)
+    rst.logger = logging.getLogger("rst")
+
+    feature = Roles(rst)
+    feature.initialize()
+
+    completion_test(feature, text, expected, unexpected)
+
+
+def role_target_patterns(name):
+    return [
+        s.format(name)
+        for s in [":{}:`", ":{}:`More Info <", "   :{}:`", "   :{}:`Some Label <"]
+    ]
+
+
+@py.test.mark.parametrize(
+    "text,setup",
+    [
+        # Standard domain
+        *itertools.product(
+            role_target_patterns("doc"),
             [
-                "emphasis",
-                "subscript",
-                "raw",
-                "func",
-                "meth",
-                "class",
-                "ref",
-                "doc",
-                "term",
+                (
+                    "sphinx-default",
+                    {"index", "glossary", "theorems/index", "theorems/pythagoras"},
+                    set(),
+                )
             ],
-            ["named-reference", "restructuredtext-unimplemented-role"],
-        )
+        ),
+        *itertools.product(
+            role_target_patterns("ref"),
+            [
+                (
+                    "sphinx-default",
+                    {
+                        "genindex",
+                        "modindex",
+                        "py-modindex",
+                        "pythagoras_theorem",
+                        "search",
+                        "welcome",
+                    },
+                    set(),
+                )
+            ],
+        ),
+        # Python Domain
+        *itertools.product(
+            role_target_patterns("class"),
+            [
+                ("sphinx-default", {"pythagoras.Triangle"}, set()),
+                ("sphinx-extensions", set(), {"pythagoras.Triangle"}),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("py:class"),
+            [
+                ("sphinx-default", set(), {"pythagoras.Triangle"}),
+                ("sphinx-extensions", {"pythagoras.Triangle"}, set()),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("func"),
+            [
+                (
+                    "sphinx-default",
+                    {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
+                    set(),
+                ),
+                (
+                    "sphinx-extensions",
+                    set(),
+                    {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
+                ),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("py:func"),
+            [
+                (
+                    "sphinx-default",
+                    set(),
+                    {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
+                ),
+                (
+                    "sphinx-extensions",
+                    {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
+                    set(),
+                ),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("meth"),
+            [
+                ("sphinx-default", {"pythagoras.Triangle.is_right_angled"}, set()),
+                ("sphinx-extensions", set(), {"pythagoras.Triangle.is_right_angled"}),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("py:meth"),
+            [
+                ("sphinx-default", set(), {"pythagoras.Triangle.is_right_angled"}),
+                ("sphinx-extensions", {"pythagoras.Triangle.is_right_angled"}, set()),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("obj"),
+            [
+                (
+                    "sphinx-default",
+                    {
+                        "pythagoras",
+                        "pythagoras.PI",
+                        "pythagoras.UNKNOWN",
+                        "pythagoras.Triangle",
+                        "pythagoras.Triangle.a",
+                        "pythagoras.Triangle.b",
+                        "pythagoras.Triangle.c",
+                        "pythagoras.Triangle.is_right_angled",
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                    },
+                    set(),
+                ),
+                (
+                    "sphinx-extensions",
+                    set(),
+                    {
+                        "pythagoras",
+                        "pythagoras.PI",
+                        "pythagoras.UNKNOWN",
+                        "pythagoras.Triangle",
+                        "pythagoras.Triangle.a",
+                        "pythagoras.Triangle.b",
+                        "pythagoras.Triangle.c",
+                        "pythagoras.Triangle.is_right_angled",
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                    },
+                ),
+            ],
+        ),
+        *itertools.product(
+            role_target_patterns("py:obj"),
+            [
+                (
+                    "sphinx-extensions",
+                    {
+                        "pythagoras",
+                        "pythagoras.PI",
+                        "pythagoras.UNKNOWN",
+                        "pythagoras.Triangle",
+                        "pythagoras.Triangle.a",
+                        "pythagoras.Triangle.b",
+                        "pythagoras.Triangle.c",
+                        "pythagoras.Triangle.is_right_angled",
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                    },
+                    set(),
+                ),
+                (
+                    "sphinx-default",
+                    set(),
+                    {
+                        "pythagoras",
+                        "pythagoras.PI",
+                        "pythagoras.UNKNOWN",
+                        "pythagoras.Triangle",
+                        "pythagoras.Triangle.a",
+                        "pythagoras.Triangle.b",
+                        "pythagoras.Triangle.c",
+                        "pythagoras.Triangle.is_right_angled",
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                    },
+                ),
+            ],
+        ),
     ],
 )
-def test_role_discovery(sphinx, project, expected, unexpected):
-    """Ensure that we can correctly discover role definitions to offer as
-    suggestions."""
+def test_role_target_completions(sphinx, text, setup, caplog):
+    """Ensure that we can offer correct role target suggestions."""
 
-    rst = Mock()
+    caplog.set_level(logging.DEBUG)
+    project, expected, unexpected = setup
+
+    rst = mock.Mock()
     rst.app = sphinx(project)
+    rst.logger = logging.getLogger("rst")
 
-    completion = RoleCompletion(rst)
-    completion.discover()
+    feature = Roles(rst)
+    feature.initialize()
 
-    for name in expected:
-        message = "Missing expected role '{}'"
-        assert name in completion.roles.keys(), message.format(name)
-
-    for name in unexpected:
-        message = "Unexpected role '{}'"
-        assert name not in completion.roles.keys(), message.format(name)
-
-
-@py.test.mark.parametrize(
-    "role,objects",
-    [
-        ("attr", {"attribute"}),
-        ("class", {"class", "exception"}),
-        ("data", {"data"}),
-        ("doc", {"doc"}),
-        ("envvar", {"envvar"}),
-        ("exc", {"class", "exception"}),
-        ("func", {"function"}),
-        ("meth", {"method", "classmethod", "staticmethod"}),
-        (
-            "obj",
-            {
-                "attribute",
-                "class",
-                "classmethod",
-                "data",
-                "exception",
-                "function",
-                "method",
-                "module",
-                "staticmethod",
-            },
-        ),
-        ("ref", {"label"}),
-        ("term", {"term"}),
-    ],
-)
-def test_target_type_discovery(sphinx, role, objects):
-    """Ensure that we can correctly map roles to their correspondig object types."""
-
-    rst = Mock()
-    rst.app = sphinx("sphinx-default")
-
-    completion = RoleTargetCompletion(rst)
-    completion.discover_target_types()
-
-    assert {*completion.target_types[role]} == objects
-
-
-@py.test.mark.parametrize(
-    "project,type,kind,expected",
-    [
-        (
-            "sphinx-default",
-            "attribute",
-            CompletionItemKind.Field,
-            {"pythagoras.Triangle.a", "pythagoras.Triangle.b", "pythagoras.Triangle.c"},
-        ),
-        ("sphinx-default", "class", CompletionItemKind.Class, {"pythagoras.Triangle"}),
-        (
-            "sphinx-default",
-            "doc",
-            CompletionItemKind.File,
-            {
-                "glossary",
-                "index",
-                "theorems/index",
-                "theorems/pythagoras",
-                "directive_options",
-            },
-        ),
-        (
-            "sphinx-default",
-            "envvar",
-            CompletionItemKind.Variable,
-            {"ANGLE_UNIT", "PRECISION"},
-        ),
-        (
-            "sphinx-default",
-            "function",
-            CompletionItemKind.Function,
-            {"pythagoras.calc_side", "pythagoras.calc_hypotenuse"},
-        ),
-        (
-            "sphinx-default",
-            "method",
-            CompletionItemKind.Method,
-            {"pythagoras.Triangle.is_right_angled"},
-        ),
-        ("sphinx-default", "module", CompletionItemKind.Module, {"pythagoras"}),
-        (
-            "sphinx-default",
-            "label",
-            CompletionItemKind.Reference,
-            {
-                "genindex",
-                "modindex",
-                "py-modindex",
-                "pythagoras_theorem",
-                "search",
-                "welcome",
-            },
-        ),
-        (
-            "sphinx-default",
-            "term",
-            CompletionItemKind.Text,
-            {"hypotenuse", "right angle"},
-        ),
-    ],
-)
-def test_target_discovery(sphinx, project, type, kind, expected):
-    """Ensure that we can correctly discover role targets to suggest."""
-
-    rst = Mock()
-    rst.app = sphinx(project)
-    rst.app.builder.read()
-
-    completion = RoleTargetCompletion(rst)
-    completion.discover_targets()
-
-    assert type in completion.targets
-    assert expected == {item.label for item in completion.targets[type]}
-    assert kind == completion.targets[type][0].kind
+    completion_test(feature, text, expected, unexpected)
