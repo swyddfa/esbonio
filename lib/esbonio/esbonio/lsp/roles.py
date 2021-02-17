@@ -17,26 +17,83 @@ from sphinx.domains import Domain
 
 from esbonio.lsp import RstLanguageServer, LanguageFeature, dump
 from esbonio.lsp.directives import DIRECTIVE
+from esbonio.lsp.sphinx import get_domains
 
 
 PARTIAL_ROLE = re.compile(
     r"""
     (^|.*[ ])            # roles must be preceeded by a space, or start the line
-    (?P<role>:                    # roles start with the ':' character
+    (?P<role>:           # roles start with the ':' character
     (?!:)                # make sure the next character is not ':'
     (?P<domain>[\w]+:)?  # there may be a domain namespace
-    (?P<name>[\w-]*))     # match the role name
+    (?P<name>[\w-]*))    # match the role name
     $                    # ensure pattern only matches incomplete roles
     """,
     re.MULTILINE | re.VERBOSE,
 )
-"""A regular expression that matches a partial role. Used when generating auto complete
-suggestions."""
+"""A regular expression that matches a partial role.
+
+For example::
+
+   :re
+
+Used when generating auto complete suggestions.
+"""
+
+
+PARTIAL_PLAIN_TARGET = re.compile(
+    r"""
+    (^|.*[ ])            # roles must be preceeded by a space, or start the line
+    (?P<role>:           # roles start with the ':' character
+    (?!:)                # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?  # there may be a domain namespace
+    (?P<name>[\w-]*)     # followed by the role name
+    :)                   # the role name ends with a ':'
+    `                    # the target begins with a '`'
+    (?P<target>[^<:`]*)  # match "plain link" targets
+    $
+    """,
+    re.MULTILINE | re.VERBOSE,
+)
+"""A regular expression that matches a partial "plain" role target.
+
+For example::
+
+   :ref:`som
+
+Used when generating auto complete suggestions.
+"""
+
+PARTIAL_ALIASED_TARGET = re.compile(
+    r"""
+    (^|.*[ ])            # roles must be preceeded by a space, or start the line
+    (?P<role>:           # roles start with the ':' character
+    (?!:)                # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?  # there may be a domain namespace
+    (?P<name>[\w-]*)     # followed by the role name
+    :)                   # the role name ends with a ':'
+    `                    # the target begins with a '`'`
+    .*<                  # the actual target name starts after a '<'
+    (?P<target>[^`:]*)   # match "aliased" targets
+    $
+    """,
+    re.MULTILINE | re.VERBOSE,
+)
+"""A regular expression that matches an "aliased" role target.
+
+For example::
+
+   :ref:`More info <som
+
+Used when generating auto complete suggestions.
+"""
 
 
 def namespace_to_completion_item(namespace: str) -> CompletionItem:
     return CompletionItem(
-        namespace, detail="intersphinx namespace", kind=CompletionItemKind.Module,
+        namespace,
+        detail="intersphinx namespace",
+        kind=CompletionItemKind.Module,
     )
 
 
@@ -60,11 +117,6 @@ TARGET_KINDS = {
 }
 
 
-def target_to_completion_item(name, display, type_) -> CompletionItem:
-    kind = TARGET_KINDS.get(type_, CompletionItemKind.Reference)
-    return CompletionItem(name, kind=kind, detail=str(display), insert_text=name)
-
-
 def intersphinx_target_to_completion_item(label, item, type_) -> CompletionItem:
     kind = TARGET_KINDS.get(type_, CompletionItemKind.Reference)
     source, version, _, display = item
@@ -84,47 +136,104 @@ class Roles(LanguageFeature):
     """Role support for the language server."""
 
     def initialize(self):
-        self.discover()
+        self.discover_roles()
+        self.discover_targets()
 
-    def discover(self):
+    def save(self, params: DidSaveTextDocumentParams):
+        self.discover_targets()
+
+    def discover_roles(self):
+        """Look up for valid role defintions to to offer as autocomplete suggestions.
+
+        *This method only needs to be called once per application instance.*
+
+        This will look for all the roles registered with docutils as well as the
+        roles that are stored on a Sphinx domain object.
+
+        Additionally, while we are looping through the domain objects, we construct
+        the ``target_types`` dictionary. This is used when providing role target
+        completions by giving the list of object types the current role is able to
+        link with.
+
+        For example, consider the :rst:role:`sphinx:py:func` and
+        :rst:role:`sphinx:py:class` roles from the Python domain. As the ``func`` role
+        links to Python functions and the ``class`` role links to Python classes *and*
+        exceptions we would end up with
+
+        .. code-block:: python
+
+           {
+             "func": ["py:function"],
+             "class": ["py:class", "py:exception"]
+           }
+
+        """
 
         # Find roles that have been registered directly with docutils
+        self.target_types = {}
         found_roles = {**roles._roles, **roles._role_registry}
 
         # Find roles under Sphinx domains
-        if self.rst.app is not None:
+        for prefix, domain in get_domains(self.rst.app):
+            fmt = "{prefix}:{name}" if prefix else "{name}"
 
-            domains = self.rst.app.registry.domains
-            primary_domain = self.rst.app.config.primary_domain
+            for name, role in domain.roles.items():
+                key = fmt.format(name=name, prefix=prefix)
+                found_roles[key] = role
 
-            for name, domain in domains.items():
-                namefmt = "{name}:{rolename}"
+            # Also build a map we can use when looking up target completions.
+            for name, item_type in domain.object_types.items():
+                for role in item_type.roles:
+                    key = fmt.format(name=role, prefix=prefix)
+                    target_types = self.target_types.get(key, None)
 
-                # The "standard" domain and the "primary_domain" do not require
-                # the namespace prefix
-                if name == "std" or name == primary_domain:
-                    namefmt = "{rolename}"
+                    if target_types is None:
+                        target_types = []
 
-                found_roles.update(
-                    {
-                        namefmt.format(name=name, rolename=rolename): role
-                        for rolename, role in domain.roles.items()
-                    }
-                )
+                    target_types.append(fmt.format(name=name, prefix=prefix))
+                    self.target_types[key] = target_types
 
         self.roles = {
             k: v for k, v in found_roles.items() if v != roles.unimplemented_role
         }
 
         self.logger.info("Discovered %s roles", len(self.roles))
-        self.logger.debug(self.roles.keys())
+        self.logger.info("Discovered %s target types", len(self.target_types))
 
-    suggest_triggers = [PARTIAL_ROLE]
+        self.logger.debug(self.roles.keys())
+        self.logger.debug(self.target_types)
+
+    def discover_targets(self):
+        """Look up all the targets we can offer as autocomplete suggestions.
+
+        *This method needs to be called each time a document has been saved.*
+        """
+        self.target_objects = {}
+
+        for prefix, domain in get_domains(self.rst.app):
+            fmt = "{prefix}:{name}" if prefix else "{name}"
+
+            for (name, display_name, obj_type, _, _, _) in domain.get_objects():
+                key = fmt.format(name=obj_type, prefix=prefix)
+                items = self.target_objects.get(key, None)
+
+                if items is None:
+                    items = []
+                    self.target_objects[key] = items
+
+                items.append(
+                    self.target_object_to_completion_item(name, display_name, obj_type)
+                )
+
+    suggest_triggers = [PARTIAL_ROLE, PARTIAL_PLAIN_TARGET, PARTIAL_ALIASED_TARGET]
 
     def suggest(
         self, match: "re.Match", doc: Document, position: Position
     ) -> List[CompletionItem]:
         indent = match.group(1)
+
+        if "target" in match.groupdict():
+            return self.suggest_targets(match, position)
 
         # If there's no indent, then this can only be a role defn
         if indent == "":
@@ -167,6 +276,30 @@ class Roles(LanguageFeature):
             items.append(item)
 
         return items
+
+    def suggest_targets(
+        self, match: "re.Match", position: Position
+    ) -> List[CompletionItem]:
+
+        self.logger.info("Suggesting targets")
+
+        groups = match.groupdict()
+        domain = groups["domain"] or ""
+        key = f"{domain}{groups['name']}"
+
+        object_types = self.target_types.get(key, None)
+
+        self.logger.debug("Getting suggestions for '%s'", key)
+        self.logger.debug("Role targets object types: %s", object_types)
+
+        if object_types is None:
+            return []
+
+        targets = []
+        for type_ in object_types:
+            targets += self.target_objects.get(type_, [])
+
+        return targets
 
     def role_to_completion_item(
         self, name: str, role, match: "re.Match", position: Position
@@ -217,86 +350,23 @@ class Roles(LanguageFeature):
         self.logger.debug("Item %s", dump(item))
         return item
 
+    def target_object_to_completion_item(
+        self, name: str, display_name: str, obj_type: str
+    ) -> CompletionItem:
+        """Convert a target object to its CompletionItem representation."""
 
-def build_role_target_map(domain: Domain) -> Dict[str, List[str]]:
-    """Return a map of role names to the objects they link to.
+        kind = TARGET_KINDS.get(obj_type, CompletionItemKind.Reference)
 
-    Parameters
-    ----------
-    domain:
-        The Sphinx domain to build the target map for.
-    """
-    types = {}
-
-    for name, obj in domain.object_types.items():
-        for role in obj.roles:
-            objs = types.get(role, None)
-
-            if objs is None:
-                objs = []
-
-            objs.append(name)
-            types[role] = objs
-
-    return types
+        return CompletionItem(
+            name, kind=kind, detail=str(display_name), insert_text=name
+        )
 
 
-def build_target_map(domain: Domain) -> Dict[str, List[CompletionItem]]:
-    """Return a map of object types to a list of completion items."""
-    completion_items = {}
-
-    for (name, disp, type_, _, _, _) in domain.get_objects():
-        items = completion_items.get(type_, None)
-
-        if items is None:
-            items = []
-            completion_items[type_] = items
-
-        items.append(target_to_completion_item(name, disp, type_))
-
-    return completion_items
-
-
-class RoleTargetCompletion:
-    """Completion handler for role targets."""
+class RoleTargets:
+    """Role target support for the language server."""
 
     def __init__(self, rst: RstLanguageServer):
         self.rst = rst
-
-    def initialize(self):
-        self.discover_target_types()
-        self.discover_targets()
-
-    def save(self, params: DidSaveTextDocumentParams):
-        self.discover_targets()
-
-    suggest_triggers = [
-        re.compile(
-            r"""
-            (^|.*[ ])            # roles must be preceeded by a space, or start the line
-            :                    # roles start with the ':' character
-            (?P<name>[\w-]+)     # capture the role name, suggestions will change based on it
-            :                    # the role name ends with a ':'
-            `                    # the target begins with a '`'
-            (?P<target>[^<:`]*)  # match "plain link" targets
-            $
-            """,
-            re.MULTILINE | re.VERBOSE,
-        ),
-        re.compile(
-            r"""
-            (^|.*[ ])            # roles must be preceeded by a space, or start the line
-            :                    # roles start with the ':' character
-            (?P<name>[\w-]+)     # capture the role name, suggestions will change based on it
-            :                    # the role name ends with a ':'
-            `                    # the target begins with a '`'`
-            .*<                  # the actual target name starts after a '<'
-            (?P<target>[^`:]*)   # match "aliased" targets
-            $
-            """,
-            re.MULTILINE | re.VERBOSE,
-        ),
-    ]
 
     def suggest(self, match, doc, position) -> List[CompletionItem]:
         # TODO: Detect if we're in an angle bracket e.g. :ref:`More Info <|` in that
@@ -317,31 +387,6 @@ class RoleTargetCompletion:
 
         return targets
 
-    def discover_target_types(self):
-
-        if self.rst.app is None:
-            return
-
-        # TODO: Implement proper domain handling, will focus on std+python for now
-        domains = self.rst.app.env.domains
-        py = domains["py"]
-        std = domains["std"]
-
-        self.target_types = {**build_role_target_map(py), **build_role_target_map(std)}
-
-    def discover_targets(self):
-
-        if self.rst.app is None:
-            self.targets = {}
-            return
-
-        # TODO: Implement proper domain handling, will focus on std+python for now
-        domains = self.rst.app.env.domains
-        py = domains["py"]
-        std = domains["std"]
-
-        self.targets = {**build_target_map(py), **build_target_map(std)}
-
 
 class InterSphinxNamespaceCompletion:
     """Completion handler for intersphinx namespaces."""
@@ -360,7 +405,7 @@ class InterSphinxNamespaceCompletion:
                 "Discovered %s intersphinx namespaces", len(self.namespaces)
             )
 
-    suggest_triggers = RoleTargetCompletion.suggest_triggers
+    # suggest_triggers = RoleTargetCompletion.suggest_triggers
 
     def suggest(self, match, doc, position) -> List[CompletionItem]:
         return list(self.namespaces.values())
@@ -464,11 +509,4 @@ class InterSphinxTargetCompletion:
 
 def setup(rst: RstLanguageServer):
     role_completion = Roles(rst)
-    role_target_completion = RoleTargetCompletion(rst)
-    intersphinx_namespaces = InterSphinxNamespaceCompletion(rst)
-    intersphinx_targets = InterSphinxTargetCompletion(rst)
-
     rst.add_feature(role_completion)
-    rst.add_feature(role_target_completion)
-    rst.add_feature(intersphinx_namespaces)
-    rst.add_feature(intersphinx_targets)

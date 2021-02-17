@@ -17,10 +17,13 @@ from pygls.types import (
 from pygls.workspace import Document
 
 from esbonio.lsp import RstLanguageServer, LanguageFeature
+from esbonio.lsp.sphinx import get_domains
+
 
 DIRECTIVE = re.compile(r"\s*\.\.[ ](?P<domain>[\w]+:)?(?P<name>[\w-]+)::")
 """A regular expression that matches a complete, valid directive declaration. Not
 including the arguments or options."""
+
 
 PARTIAL_DIRECTIVE = re.compile(
     r"""
@@ -35,6 +38,7 @@ PARTIAL_DIRECTIVE = re.compile(
 )
 """A regular expression that matches a partial directive declaraiton. Used when
 generating auto complete suggestions."""
+
 
 PARTIAL_DIRECTIVE_OPTION = re.compile(
     r"""
@@ -60,32 +64,19 @@ class Directives(LanguageFeature):
         ignored_directives = ["restructuredtext-test-directive"]
 
         # Find directives that have been registered directly with docutils.
-        dirs = {**directives._directive_registry, **directives._directives}
+        found_directives = {**directives._directive_registry, **directives._directives}
 
         # Find directives under Sphinx domains
-        if self.rst.app is not None:
+        for prefix, domain in get_domains(self.rst.app):
+            fmt = "{prefix}:{name}" if prefix else "{name}"
 
-            domains = self.rst.app.registry.domains
-            primary_domain = self.rst.app.config.primary_domain
-
-            for name, domain in domains.items():
-                namefmt = "{name}:{dirname}"
-
-                # The "standard" domain and the "primary_domain" do not require
-                # the namespace prefix
-                if name == "std" or name == primary_domain:
-                    namefmt = "{dirname}"
-
-                dirs.update(
-                    {
-                        namefmt.format(name=name, dirname=dirname): directive
-                        for dirname, directive in domain.directives.items()
-                    }
-                )
+            for name, directive in domain.directives.items():
+                key = fmt.format(name=name, prefix=prefix)
+                found_directives[key] = directive
 
         self.directives = {
             k: self.resolve_directive(v)
-            for k, v in dirs.items()
+            for k, v in found_directives.items()
             if k not in ignored_directives
         }
 

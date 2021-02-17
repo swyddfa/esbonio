@@ -3,7 +3,7 @@ import logging
 import pathlib
 import re
 
-from typing import Optional
+from typing import Iterator, Optional, Tuple
 from urllib.parse import urlparse, unquote
 
 import appdirs
@@ -17,6 +17,7 @@ from pygls.types import (
     Range,
 )
 from sphinx.application import Sphinx
+from sphinx.domains import Domain
 from sphinx.util import console
 
 from esbonio.lsp import RstLanguageServer
@@ -30,10 +31,39 @@ PROBLEM_PATTERN = re.compile(
 )
 """Regular Expression used to identify warnings/errors in Sphinx's output."""
 
+
 PROBLEM_SEVERITY = {
     "WARNING": DiagnosticSeverity.Warning,
     "ERROR": DiagnosticSeverity.Error,
 }
+
+
+def get_domains(app: Sphinx) -> Iterator[Tuple[str, Domain]]:
+    """Get all the domains registered with an applications.
+
+    Returns a generator that iterates through all of an application's domains,
+    taking into account configuration variables such as ``primary_domain``.
+    Yielded values will be a tuple of the form ``(prefix, domain)`` where
+
+    - ``prefix`` is the namespace that should be used when referencing items
+      in the domain
+    - ``domain`` is the domain object itself.
+    """
+
+    if app is None:
+        return []
+
+    domains = app.env.domains
+    primary_domain = app.config.primary_domain
+
+    for name, domain in domains.items():
+        prefix = name
+
+        # Items from the standard and primary domains don't require the namespace prefix
+        if name == "std" or name == primary_domain:
+            prefix = ""
+
+        yield prefix, domain
 
 
 def find_conf_py(root_uri: str) -> Optional[pathlib.Path]:
