@@ -4,8 +4,6 @@ import unittest.mock as mock
 
 import py.test
 
-from pygls.types import CompletionItemKind
-
 from esbonio.lsp.roles import Roles
 from esbonio.lsp.testing import completion_test
 

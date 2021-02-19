@@ -22,6 +22,7 @@ BUILTIN_MODULES = [
     "esbonio.lsp.sphinx",
     "esbonio.lsp.directives",
     "esbonio.lsp.roles",
+    "esbonio.lsp.intersphinx",
 ]
 
 
