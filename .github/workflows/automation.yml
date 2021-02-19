@@ -1,0 +1,14 @@
+name: Automation
+
+on:
+  issues:
+    types:
+    - labeled
+
+jobs:
+  issues:
+    runs-on: ubuntu-latest
+    steps:
+    - run: |
+        echo "${{ event.payload.issue }}"
+        echo "${{ event.payload.label }}"
