@@ -8,8 +8,15 @@ on:
 jobs:
   issues:
     runs-on: ubuntu-latest
+    name: Issue Automation
     steps:
-    - run: |
-        echo "${{ github.event.payload.issue }}"
-        echo "${{ github.event.payload.label }}"
+    - name: Debug Info
+      env: 
+        ISSUE: ${{ github.event.payload.issue }}
+        LABEL: ${{ github.event.payload.label }}
+      run: |
+        echo "Event Name: ${{ github.event_name }}"
+        echo "${ISSUE}"
+        echo "${LABEL}"
+        echo "${{ github.event }}"
       
