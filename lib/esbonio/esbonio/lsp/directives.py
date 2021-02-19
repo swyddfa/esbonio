@@ -85,7 +85,7 @@ class Directives(LanguageFeature):
         }
 
         self.logger.info("Discovered %s directives", len(self.directives))
-        self.logger.debug(self.directives.keys())
+        self.logger.debug("Directives: %s", list(self.directives.keys()))
 
     def resolve_directive(self, directive: Union[Directive, Tuple[str]]):
 

@@ -1,13 +1,12 @@
+"""Utilities and helpers for writing tests around the Language Server."""
 import itertools
 import logging
 import unittest.mock as mock
 
 import py.test
 
-from pygls.types import CompletionItemKind
-
 from esbonio.lsp.roles import Roles
-from esbonio.lsp.testing import completion_test
+from esbonio.lsp.testing import completion_test, role_target_patterns
 
 C_EXPECTED = {"c:func", "c:macro"}
 C_UNEXPECTED = {"ref", "doc", "py:func", "py:mod"}
@@ -74,13 +73,6 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
     feature.initialize()
 
     completion_test(feature, text, expected, unexpected)
-
-
-def role_target_patterns(name):
-    return [
-        s.format(name)
-        for s in [":{}:`", ":{}:`More Info <", "   :{}:`", "   :{}:`Some Label <"]
-    ]
 
 
 @py.test.mark.parametrize(
@@ -249,10 +241,9 @@ def role_target_patterns(name):
         ),
     ],
 )
-def test_role_target_completions(sphinx, text, setup, caplog):
+def test_role_target_completions(sphinx, text, setup):
     """Ensure that we can offer correct role target suggestions."""
 
-    caplog.set_level(logging.DEBUG)
     project, expected, unexpected = setup
 
     rst = mock.Mock()
