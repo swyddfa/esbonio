@@ -1,12 +1,51 @@
 """Utility functions to help with testing Language Server features."""
 import logging
 
-from typing import Optional, Set
+from typing import List, Optional, Set
 
 from pygls.types import Position
 from pygls.workspace import Document
 
 logger = logging.getLogger(__name__)
+
+
+def role_target_patterns(name: str) -> List[str]:
+    """Return a number of example role target patterns.
+
+    These correspond to cases where role target completions may be generated.
+
+    Parameters
+    ----------
+    name:
+       The name of the role to generate examples for
+    """
+    return [
+        s.format(name)
+        for s in [":{}:`", ":{}:`More Info <", "   :{}:`", "   :{}:`Some Label <"]
+    ]
+
+
+def intersphinx_target_patterns(name: str, project: str) -> List[str]:
+    """Return a number of example intersphinx target patterns.
+
+    These correspond to cases where target completions may be generated
+
+    Parameters
+    ----------
+    name: str
+       The name of the role to generate examples for
+    project: str
+       The name of the project to generate examples for
+    """
+    return [
+        s.format(name, project)
+        for s in [
+            ":{}:`{}:",
+            ":{}:`More Info <{}:",
+            "   :{}:`{}:",
+            "   :{}:`Some Label <{}:",
+        ]
+    ]
 
 
 def completion_test(
