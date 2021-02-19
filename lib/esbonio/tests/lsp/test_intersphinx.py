@@ -14,7 +14,7 @@ from esbonio.lsp.testing import (
 
 @py.test.fixture(scope="session")
 def intersphinx(sphinx):
-    """ "Fixture that returns the ``InterSphinx`` feature for a given project.
+    """Fixture that returns the ``InterSphinx`` feature for a given project.
 
     Indexing the inventories for every test case adds a noticable overhead
     to the test suite and we don't really gain much from it. This caches instances
@@ -156,10 +156,8 @@ def test_project_completions(intersphinx, text, setup):
         ),
     ],
 )
-def test_target_completions(intersphinx, text, setup, caplog):
+def test_target_completions(intersphinx, text, setup):
     """Ensure that we can offer the correct target completions."""
-
-    caplog.set_level(logging.DEBUG)
     project, expected, unexpected = setup
     feature = intersphinx(project)
 
