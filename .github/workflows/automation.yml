@@ -10,5 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - run: |
-        echo "${{ event.payload.issue }}"
-        echo "${{ event.payload.label }}"
+        echo "${{ github.event.payload.issue }}"
+        echo "${{ github.event.payload.label }}"
+      
