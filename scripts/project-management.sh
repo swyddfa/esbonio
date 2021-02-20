@@ -32,6 +32,7 @@ add_to_project () {
             ;;
         vscode)
             column_id=$VSCODE_BACKLOG
+            ;;
         *)
             echo "Unknown label '${label_name}', doing nothing"
             return
