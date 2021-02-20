@@ -148,6 +148,11 @@ echo
 
 case "$action" in
     assigned)
+        echo
+        echo "Looking for project label"
+        label_name=$(echo "${EVENT}" | jq -r '.issue.labels[].name' | grep -E "lsp|vscode")
+        echo "Label Name: ${label_name}"
+
         card_in_progress "${issue_number}" "${label_name}"
         ;;
     labeled)
