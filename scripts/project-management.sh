@@ -107,7 +107,7 @@ card_in_progress () {
     esac
 
     # Need to look to see which card corresponds to the issue
-    echo "Looking for issue in column '${column_id}'"
+    echo "Looking for issue in column '${old_column_id}'"
     card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${old_column_id}/cards" \
          -H "Accept: ${PREVIEW_HEADER}" \
          -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq --arg issue "${issue_number}" -r '.[] | select(.content_url | test(".*/" + $issue)) | .id')
@@ -117,7 +117,7 @@ card_in_progress () {
         return
     fi
 
-    echo "Moving card '${card_id}' to column '${column_id}'"
+    echo "Moving card '${card_id}' to column '${new_column_id}'"
     curl -s -X POST 'https://api.github.com/projects/columns/cards/${card_id}/moves' \
          -H 'Accept: ${PREVIEW_HEADER}' \
          -H 'Authorization: Bearer ${GITHUB_TOKEN}' \
