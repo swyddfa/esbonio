@@ -4,6 +4,7 @@
 # It expects to be called in a GitHub actions workflow with the following setup
 #
 # EVENT = github.event
+# GITHUB_TOKEN = secrets.GITHUB_TOKEN
 
 # Configuration
 #
@@ -12,6 +13,8 @@
 LSP_PROJECT=11250171
 LSP_BACKLOG=12653773
 
+VSCODE_PROJECT=11250281
+VSCODE_BACKLOG=12653879
 
 PREVIEW_HEADER="application/vnd.github.inertia-preview+json"
 
@@ -27,6 +30,8 @@ add_to_project () {
         lsp)
             column_id=$LSP_BACKLOG
             ;;
+        vscode)
+            column_id=$VSCODE_BACKLOG
         *)
             echo "Unknown label '${label_name}', doing nothing"
             return
