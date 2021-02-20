@@ -12,9 +12,11 @@
 # objects we're insterested in.
 LSP_PROJECT=11250171
 LSP_BACKLOG=12653773
+LSP_PROGRESS=12653764
 
 VSCODE_PROJECT=11250281
 VSCODE_BACKLOG=12653879
+VSCODE_PROGRESS=12653872
 
 PREVIEW_HEADER="application/vnd.github.inertia-preview+json"
 
@@ -84,6 +86,44 @@ remove_from_project () {
 }
 
 
+card_in_progress () {
+
+    issue_number=$1
+    label_name=$2
+
+    case "${label_name}" in
+        lsp)
+            column_id=$LSP_PROGRESS
+            ;;
+        vscode)
+            column_id=$VSCODE_PROGRESS
+            ;;
+        *)
+            echo "Unknown label '${label_name}', doing nothing"
+            return
+            ;;
+    esac
+
+    # Need to look to see which card corresponds to the issue
+    echo "Looking for issue in column '${column_id}'"
+    card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${column_id}/cards" \
+         -H "Accept: ${PREVIEW_HEADER}" \
+         -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq --arg issue "${issue_number}" -r '.[] | select(.content_url | test(".*/" + $issue)) | .id')
+
+    if [ -z "${card_id}" ]; then
+        echo "Couldn't find card for issue '${issue_number}', doing nothing"
+        return
+    fi
+
+    echo "Moving card '${card_id}' to column '${column_id}'"
+    curl -s -X POST 'https://api.github.com/projects/columns/cards/${card_id}/moves' \
+         -H 'Accept: ${PREVIEW_HEADER}' \
+         -H 'Authorization: Bearer ${GITHUB_TOKEN}' \
+         -H 'Content-Type: application/json' \
+         -d '{"column_id": ${column_id}, "position": "top"}'
+}
+
+
 #
 # Script start.
 #
@@ -107,6 +147,9 @@ echo "Issue Number: ${issue_number}"
 echo
 
 case "$action" in
+    assigned)
+        card_in_progress "${issue_number}" "${label_name}"
+        ;;
     labeled)
         add_to_project "${issue}" "${label_name}"
         ;;

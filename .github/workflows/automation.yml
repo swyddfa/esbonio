@@ -3,6 +3,7 @@ name: Automation
 on:
   issues:
     types:
+    - assigned
     - labeled
     - unlabeled
 
