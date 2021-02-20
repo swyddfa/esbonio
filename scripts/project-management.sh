@@ -68,6 +68,14 @@ remove_from_project () {
 
     # Need to look to see which card corresponds to the issue.
     echo "Looking for issue in column '${column_id}'"
+    curl -s -X GET "https://api.github.com/projects/columns/${column_id}/cards" \
+         -H "Accept: ${PREVIEW_HEADER}" \
+         -H "Authorization: Bearer ${GITHUB_TOKEN}"
+
+    curl -s -X GET "https://api.github.com/projects/columns/${column_id}/cards" \
+         -H "Accept: ${PREVIEW_HEADER}" \
+         -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq --arg issue "${issue_number}" -r '.[] | select(.content_url | test(".*/$issue")) | .id'
+
     card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${column_id}/cards" \
          -H "Accept: ${PREVIEW_HEADER}" \
          -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq --arg issue "${issue_number}" -r '.[] | select(.content_url | test(".*/$issue")) | .id')
