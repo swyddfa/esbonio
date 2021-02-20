@@ -15,6 +15,7 @@ LSP_BACKLOG=12653773
 
 PREVIEW_HEADER="application/vnd.github.inertia-preview+json"
 
+
 add_to_project () {
 
     issue_id=$1
@@ -33,13 +34,23 @@ add_to_project () {
     esac
 
     echo "Adding issue '${issue_id}' to column '${column_id}'"
-    curl -X POST "https://api.github.com/projects/columns/${column_id}/cards" \
+    curl -s -X POST "https://api.github.com/projects/columns/${column_id}/cards" \
          -H "Accept: ${PREVIEW_HEADER}" \
-         -H "Authorization: ${GITHUB_TOKEN}" \
+         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
          -H "Content-Type: application/json" \
          -d "{\"content_id\": ${issue_id}, \"content_type\": \"Issue\"}"
 }
 
+
+#
+# Script start.
+#
+
+
+if [ -z "${GITHUB_TOKEN}" ] ;
+   echo "Github token is not set."
+   exit 1
+fi
 
 action=$(echo "${EVENT}" | jq -r .action)
 label_name=$(echo "${EVENT}" | jq -r .label.name)
