@@ -93,10 +93,12 @@ card_in_progress () {
 
     case "${label_name}" in
         lsp)
-            column_id=$LSP_PROGRESS
+            new_column_id=$LSP_PROGRESS
+            old_column_id=$LSP_BACKLOG
             ;;
         vscode)
-            column_id=$VSCODE_PROGRESS
+            new_column_id=$VSCODE_PROGRESS
+            old_column_id=$VSCODE_BACKLOG
             ;;
         *)
             echo "Unknown label '${label_name}', doing nothing"
@@ -106,7 +108,7 @@ card_in_progress () {
 
     # Need to look to see which card corresponds to the issue
     echo "Looking for issue in column '${column_id}'"
-    card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${column_id}/cards" \
+    card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${old_column_id}/cards" \
          -H "Accept: ${PREVIEW_HEADER}" \
          -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq --arg issue "${issue_number}" -r '.[] | select(.content_url | test(".*/" + $issue)) | .id')
 
@@ -120,7 +122,7 @@ card_in_progress () {
          -H 'Accept: ${PREVIEW_HEADER}' \
          -H 'Authorization: Bearer ${GITHUB_TOKEN}' \
          -H 'Content-Type: application/json' \
-         -d '{"column_id": ${column_id}, "position": "top"}'
+         -d '{"column_id": ${new_column_id}, "position": "top"}'
 }
 
 
