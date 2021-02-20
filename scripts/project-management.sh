@@ -48,6 +48,42 @@ add_to_project () {
 }
 
 
+remove_from_project () {
+
+    issue_number=$1
+    label_name=$2
+
+    case "${label_name}" in
+        lsp)
+            column_id=$LSP_BACKLOG
+            ;;
+        vscode)
+            column_id=$VSCODE_BACKLOG
+            ;;
+        *)
+            echo "Unknown label '${label_name}', doing nothing"
+            return
+            ;;
+    esac
+
+    # Need to look to see which card corresponds to the issue.
+    echo "Looking for issue in column '${column_id}'"
+    card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${column_id}/cards" \
+         -H "Accept: ${PREVIEW_HEADER}" \
+         -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq -r ".[] | select(.content_url | test(\".*/${issue_number}\") | .id")
+
+    if [ -z "${card_id}" ]; then
+        echo "Couldn't find card for issue '${issue_number}', doing nothing"
+        return
+    fi
+
+    echo "Removing card '${card_id}' from column '${column_id}'"
+    curl -s -X DELETE "https://api.github.com/projects/columns/cards/${card_id}" \
+         -H "Accept: ${PREVIEW_HEADER}" \
+         -H "Authorization: Bearer ${GITHUB_TOKEN}"
+}
+
+
 #
 # Script start.
 #
@@ -61,15 +97,20 @@ fi
 action=$(echo "${EVENT}" | jq -r .action)
 label_name=$(echo "${EVENT}" | jq -r .label.name)
 issue=$(echo "${EVENT}" | jq -r .issue.id )
+issue_number=$(echo "${EVENT}" | jq -r .issue.number)
 
-echo "Action:   ${action}"
-echo "Label:    ${label_name}"
-echo "Issue Id: ${issue}"
+echo "Action:       ${action}"
+echo "Label:        ${label_name}"
+echo "Issue Id:     ${issue}"
+echo "Issue Number: ${issue_number}"
 
 case "$action" in
     labeled)
         add_to_project "${issue}" "${label_name}"
-    ;;
+        ;;
+    unlabeled)
+        remove_from_project "${issue_number}" "${label_name}"
+        ;;
     *)
         echo "Unknown action '${action}', doing nothing"
 esac
