@@ -70,7 +70,7 @@ remove_from_project () {
     echo "Looking for issue in column '${column_id}'"
     card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${column_id}/cards" \
          -H "Accept: ${PREVIEW_HEADER}" \
-         -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq -r "'.[] | select(.content_url | test(\".*/${issue_number}\") | .id'")
+         -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq -r --arg issue "${issue_number}"'.[] | select(.content_url | test(\".*/$issue\") | .id')
 
     if [ -z "${card_id}" ]; then
         echo "Couldn't find card for issue '${issue_number}', doing nothing"
@@ -99,10 +99,12 @@ label_name=$(echo "${EVENT}" | jq -r .label.name)
 issue=$(echo "${EVENT}" | jq -r .issue.id )
 issue_number=$(echo "${EVENT}" | jq -r .issue.number)
 
+echo
 echo "Action:       ${action}"
 echo "Label:        ${label_name}"
 echo "Issue Id:     ${issue}"
 echo "Issue Number: ${issue_number}"
+echo
 
 case "$action" in
     labeled)
