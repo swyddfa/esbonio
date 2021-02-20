@@ -74,7 +74,7 @@ remove_from_project () {
 
     curl -s -X GET "https://api.github.com/projects/columns/${column_id}/cards" \
          -H "Accept: ${PREVIEW_HEADER}" \
-         -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq --arg issue "${issue_number}" -r '.[] | select(.content_url | test(".*/$issue")) | .id'
+         -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq --arg issue "${issue_number}" -r '.[] | select(.content_url | test(".*/" + $issue)) | .id'
 
     card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${column_id}/cards" \
          -H "Accept: ${PREVIEW_HEADER}" \
