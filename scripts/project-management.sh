@@ -70,7 +70,7 @@ remove_from_project () {
     echo "Looking for issue in column '${column_id}'"
     card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${column_id}/cards" \
          -H "Accept: ${PREVIEW_HEADER}" \
-         -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq -r ".[] | select(.content_url | test(\".*/${issue_number}\") | .id")
+         -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq -r "'.[] | select(.content_url | test(\".*/${issue_number}\") | .id'")
 
     if [ -z "${card_id}" ]; then
         echo "Couldn't find card for issue '${issue_number}', doing nothing"
