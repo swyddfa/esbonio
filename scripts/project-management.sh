@@ -47,7 +47,7 @@ add_to_project () {
 #
 
 
-if [ -z "${GITHUB_TOKEN}" ] ;
+if [ -z "${GITHUB_TOKEN}" ]; then
    echo "Github token is not set."
    exit 1
 fi
