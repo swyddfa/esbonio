@@ -119,8 +119,8 @@ card_in_progress () {
 
     echo "Moving card '${card_id}' to column '${new_column_id}'"
     curl -s -X POST 'https://api.github.com/projects/columns/cards/${card_id}/moves' \
-         -H 'Accept: ${PREVIEW_HEADER}' \
-         -H 'Authorization: Bearer ${GITHUB_TOKEN}' \
+         -H "Accept: ${PREVIEW_HEADER}" \
+         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
          -H 'Content-Type: application/json' \
          -d '{"column_id": ${new_column_id}, "position": "top"}'
 }
