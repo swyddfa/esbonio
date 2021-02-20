@@ -122,7 +122,7 @@ card_in_progress () {
          -H "Accept: ${PREVIEW_HEADER}" \
          -H "Authorization: Bearer ${GITHUB_TOKEN}" \
          -H 'Content-Type: application/json' \
-         -d '{"column_id": ${new_column_id}, "position": "top"}'
+         -d "{\"column_id\": ${new_column_id}, \"position\": \"top\"}"
 }
 
 
