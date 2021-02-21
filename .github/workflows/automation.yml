@@ -5,6 +5,7 @@ on:
     types:
     - assigned
     - labeled
+    - unassigned
     - unlabeled
 
 jobs:
@@ -14,7 +15,7 @@ jobs:
     steps:
     - uses: 'actions/checkout@v2'
 
-    - name: Debug Info
+    - name: Run Script
       env:
         EVENT: ${{ toJSON(github.event) }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

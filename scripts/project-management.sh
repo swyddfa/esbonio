@@ -135,6 +135,45 @@ card_in_progress () {
 }
 
 
+card_to_backlog () {
+
+    issue_number=$1
+    label_name=$2
+
+    case "${label_name}" in
+        lsp)
+            new_column_id=$LSP_BACKLOG
+            old_column_id=$LSP_PROGRESS
+            ;;
+        vscode)
+            new_column_id=$VSCODE_BACKLOG
+            old_column_id=$VSCODE_PROGRESS
+            ;;
+        *)
+            echo "Unknown label '${label_name}', doing nothing"
+            return
+            ;;
+    esac
+
+    # Need to look to see which card corresponds to the issue
+    echo "Looking for issue in column '${old_column_id}'"
+    card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${old_column_id}/cards" \
+                   -H "Accept: ${PREVIEW_HEADER}" \
+                   -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq --arg issue "${issue_number}" -r '.[] | select(.content_url | test(".*/" + $issue)) | .id')
+
+    if [ -z "${card_id}" ]; then
+        echo "Couldn't find card for issue '${issue_number}', doing nothing"
+        return
+    fi
+
+    echo "Moving card '${card_id}' to column '${new_column_id}'"
+    curl -s -X POST "https://api.github.com/projects/columns/cards/${card_id}/moves" \
+         -H "Accept: ${PREVIEW_HEADER}" \
+         -H "Authorization: Bearer ${GITHUB_TOKEN}" \
+         -H 'Content-Type: application/json' \
+         -d "{\"column_id\": ${new_column_id}, \"position\": \"top\"}"
+}
+
 #
 # Script start.
 #
@@ -168,6 +207,14 @@ case "$action" in
         ;;
     labeled)
         add_to_project "${issue}" "${label_name}"
+        ;;
+    unassigned)
+        echo
+        echo "Looking for project label"
+        label_name=$(echo "${EVENT}" | jq -r '.issue.labels[].name' | grep -E "lsp|vscode")
+        echo "Label Name: ${label_name}"
+
+        card_to_backlog "${issue_number}" "${label_name}"
         ;;
     unlabeled)
         remove_from_project "${issue_number}" "${label_name}"
