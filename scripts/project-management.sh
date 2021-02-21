@@ -12,10 +12,12 @@
 # objects we're insterested in.
 LSP_PROJECT=11250171
 LSP_BACKLOG=12653773
+LSP_TODO=12653763
 LSP_PROGRESS=12653764
 
 VSCODE_PROJECT=11250281
 VSCODE_BACKLOG=12653879
+VSCODE_TODO=12653871
 VSCODE_PROGRESS=12653872
 
 PREVIEW_HEADER="application/vnd.github.inertia-preview+json"
@@ -94,11 +96,11 @@ card_in_progress () {
     case "${label_name}" in
         lsp)
             new_column_id=$LSP_PROGRESS
-            old_column_id=$LSP_BACKLOG
+            old_column_ids=($LSP_BACKLOG $LSP_TODO)
             ;;
         vscode)
             new_column_id=$VSCODE_PROGRESS
-            old_column_id=$VSCODE_BACKLOG
+            old_column_ids=($VSCODE_BACKLOG $VSCODE_TODO)
             ;;
         *)
             echo "Unknown label '${label_name}', doing nothing"
@@ -107,10 +109,17 @@ card_in_progress () {
     esac
 
     # Need to look to see which card corresponds to the issue
-    echo "Looking for issue in column '${old_column_id}'"
-    card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${old_column_id}/cards" \
-         -H "Accept: ${PREVIEW_HEADER}" \
-         -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq --arg issue "${issue_number}" -r '.[] | select(.content_url | test(".*/" + $issue)) | .id')
+    for old_column_id in ${old_column_ids[@]}; do
+        echo "Looking for issue in column '${old_column_id}'"
+        card_id=$(curl -s -X GET "https://api.github.com/projects/columns/${old_column_id}/cards" \
+                       -H "Accept: ${PREVIEW_HEADER}" \
+                       -H "Authorization: Bearer ${GITHUB_TOKEN}" | jq --arg issue "${issue_number}" -r '.[] | select(.content_url | test(".*/" + $issue)) | .id')
+
+        if [ -n "${card_id}" ]; then
+            echo "Found card '${card_id}' in column '${old_column_id}'"
+            break
+        fi
+    done
 
     if [ -z "${card_id}" ]; then
         echo "Couldn't find card for issue '${issue_number}', doing nothing"
