@@ -5,6 +5,8 @@ import unittest.mock as mock
 
 import py.test
 
+from pygls.types import CompletionItemKind
+
 from esbonio.lsp.roles import Roles
 from esbonio.lsp.testing import completion_test, role_target_patterns
 
@@ -254,3 +256,20 @@ def test_role_target_completions(sphinx, text, setup):
     feature.initialize()
 
     completion_test(feature, text, expected, unexpected)
+
+
+@py.test.mark.parametrize("obj_type", ["doc", "std:doc"])
+def test_doc_target_completion_items(sphinx, obj_type):
+    """Ensure that we represent ``:doc:`` completion items correctly."""
+
+    rst = mock.Mock()
+    rst.app = sphinx("sphinx-default")
+    rst.logger = logging.getLogger("rst")
+
+    roles = Roles(rst)
+    item = roles.target_object_to_completion_item("index/example", "Example", obj_type)
+
+    assert item.label == "index/example"
+    assert item.kind == CompletionItemKind.File
+    assert item.detail == "Example"
+    assert item.insertText == "/index/example"
