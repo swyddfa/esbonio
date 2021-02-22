@@ -1,4 +1,5 @@
 """Role support."""
+import collections
 import re
 
 from typing import List
@@ -88,23 +89,18 @@ Used when generating auto complete suggestions.
 """
 
 
-TARGET_KINDS = {
-    "attribute": CompletionItemKind.Field,
-    "doc": CompletionItemKind.File,
-    "class": CompletionItemKind.Class,
-    "envvar": CompletionItemKind.Variable,
-    "function": CompletionItemKind.Function,
-    "method": CompletionItemKind.Method,
-    "module": CompletionItemKind.Module,
-    "py:attribute": CompletionItemKind.Field,
-    "py:class": CompletionItemKind.Class,
-    "py:function": CompletionItemKind.Function,
-    "py:method": CompletionItemKind.Method,
-    "py:module": CompletionItemKind.Module,
-    "std:doc": CompletionItemKind.File,
-    "std:envvar": CompletionItemKind.Variable,
-    "std:term": CompletionItemKind.Text,
-    "term": CompletionItemKind.Text,
+CompletionTarget = collections.namedtuple("CompletionTarget", "kind,insert_fmt")
+
+DEFAULT_TARGET = CompletionTarget(CompletionItemKind.Reference, "{name}")
+COMPLETION_TARGETS = {
+    "attribute": CompletionTarget(CompletionItemKind.Field, "{name}"),
+    "doc": CompletionTarget(CompletionItemKind.File, "/{name}"),
+    "class": CompletionTarget(CompletionItemKind.Class, "{name}"),
+    "envvar": CompletionTarget(CompletionItemKind.Variable, "{name}"),
+    "function": CompletionTarget(CompletionItemKind.Function, "{name}"),
+    "method": CompletionTarget(CompletionItemKind.Method, "{name}"),
+    "module": CompletionTarget(CompletionItemKind.Module, "{name}"),
+    "term": CompletionTarget(CompletionItemKind.Text, "{name}"),
 }
 
 
@@ -331,10 +327,18 @@ class Roles(LanguageFeature):
     ) -> CompletionItem:
         """Convert a target object to its CompletionItem representation."""
 
-        kind = TARGET_KINDS.get(obj_type, CompletionItemKind.Reference)
+        key = obj_type
+
+        if ":" in key:
+            _, key = key.split(":")
+
+        target_type = COMPLETION_TARGETS.get(key, DEFAULT_TARGET)
 
         return CompletionItem(
-            name, kind=kind, detail=str(display_name), insert_text=name
+            name,
+            kind=target_type.kind,
+            detail=str(display_name),
+            insert_text=target_type.insert_fmt.format(name=name),
         )
 
 

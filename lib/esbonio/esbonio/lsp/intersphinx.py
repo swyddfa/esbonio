@@ -10,7 +10,12 @@ from pygls.types import (
 from pygls.workspace import Document
 
 from esbonio.lsp import RstLanguageServer, LanguageFeature
-from esbonio.lsp.roles import PARTIAL_PLAIN_TARGET, PARTIAL_ALIASED_TARGET, TARGET_KINDS
+from esbonio.lsp.roles import (
+    COMPLETION_TARGETS,
+    DEFAULT_TARGET,
+    PARTIAL_PLAIN_TARGET,
+    PARTIAL_ALIASED_TARGET,
+)
 from esbonio.lsp.sphinx import get_domains
 
 
@@ -208,7 +213,13 @@ class InterSphinx(LanguageFeature):
     def target_to_completion_item(
         self, label: str, target, target_type: str
     ) -> CompletionItem:
-        kind = TARGET_KINDS.get(target_type, CompletionItemKind.Reference)
+
+        key = target_type
+
+        if ":" in key:
+            key = ":".join(key.split(":")[1:])
+
+        completion_type = COMPLETION_TARGETS.get(key, DEFAULT_TARGET)
         source, version, _, display = target
 
         if display == "-":
@@ -219,7 +230,9 @@ class InterSphinx(LanguageFeature):
 
         detail = f"{display} - {source}{version}"
 
-        return CompletionItem(label, kind=kind, detail=detail, insert_text=label)
+        return CompletionItem(
+            label, kind=completion_type.kind, detail=detail, insert_text=label
+        )
 
 
 def setup(rst: RstLanguageServer):

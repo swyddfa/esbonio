@@ -1,0 +1,1 @@
+Ensure ``:doc:`` completions are specified relative to the project root.
