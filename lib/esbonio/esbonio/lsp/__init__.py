@@ -2,8 +2,10 @@ import enum
 import importlib
 import json
 import logging
+import pathlib
 
 from typing import List, Optional
+from urllib.parse import urlparse, unquote
 
 from pygls.features import COMPLETION, INITIALIZE, INITIALIZED, TEXT_DOCUMENT_DID_SAVE
 from pygls.server import LanguageServer
@@ -88,6 +90,13 @@ class RstLanguageServer(LanguageServer):
 
         module.setup(self)
 
+    def run_hooks(self, kind: str, *args):
+        """Run each hook registered of the given kind."""
+
+        hooks = getattr(self, f"on_{kind}_hooks")
+        for hook in hooks:
+            hook(*args)
+
 
 def get_line_til_position(doc: Document, position: Position) -> str:
     """Return the line up until the position of the cursor."""
@@ -128,16 +137,12 @@ def create_language_server(modules: List[str]) -> RstLanguageServer:
     @server.feature(INITIALIZE)
     def on_initialize(rst: RstLanguageServer, params: InitializeParams):
 
-        for init_hook in rst.on_init_hooks:
-            init_hook()
-
+        rst.run_hooks("init")
         rst.logger.info("LSP Server Initialized")
 
     @server.feature(INITIALIZED)
     def on_initialized(rst: RstLanguageServer, params):
-
-        for initialized_hook in rst.on_initialized_hooks:
-            initialized_hook()
+        rst.run_hooks("initialized")
 
     @server.feature(COMPLETION, trigger_characters=[".", ":", "`", "<"])
     def on_completion(rst: RstLanguageServer, params: CompletionParams):
@@ -160,8 +165,16 @@ def create_language_server(modules: List[str]) -> RstLanguageServer:
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
+        rst.logger.debug("DidSave: %s", params)
 
-        for on_save_hook in rst.on_save_hooks:
-            on_save_hook(params)
+        uri = urlparse(params.textDocument.uri)
+        filepath = pathlib.Path(unquote(uri.path))
+        conf_py = pathlib.Path(rst.app.confdir, "conf.py")
+
+        # Re-initialize everything if the app's config has changed.
+        if filepath == conf_py:
+            rst.run_hooks("init")
+        else:
+            rst.run_hooks("save", params)
 
     return server
