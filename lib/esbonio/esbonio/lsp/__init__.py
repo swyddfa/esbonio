@@ -177,4 +177,9 @@ def create_language_server(modules: List[str]) -> RstLanguageServer:
         else:
             rst.run_hooks("save", params)
 
+    @server.feature("$/setTraceNotification")
+    def vscode_set_trace(rst: RstLanguageServer, params):
+        """Dummy implementation, stops JsonRpcMethodNotFound exceptions."""
+        rst.logger.debug("VSCode set trace: %s", params)
+
     return server
