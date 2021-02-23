@@ -25,7 +25,7 @@ author = "Sphinx"
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ["sphinx.ext.doctest", "sphinx.ext.intersphinx"]
+extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest", "sphinx.ext.intersphinx"]
 
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3", None),

@@ -81,7 +81,8 @@ class Directives(LanguageFeature):
         }
 
         self.options = {
-            k: self.options_to_completion_items(v) for k, v in self.directives.items()
+            k: self.options_to_completion_items(k, v)
+            for k, v in self.directives.items()
         }
 
         self.logger.info("Discovered %s directives", len(self.directives))
@@ -258,16 +259,38 @@ class Directives(LanguageFeature):
             ),
         )
 
-    def options_to_completion_items(self, directive: Directive) -> List[CompletionItem]:
+    def options_to_completion_items(
+        self, name: str, directive: Directive
+    ) -> List[CompletionItem]:
         """Convert a directive's options to a list of completion items.
+
+        Unfortunately, the ``autoxxx`` family of directives are a little different.
+        Each ``autoxxxx`` directive name resolves to the same ``AutodocDirective`` class.
+        That paricular directive does not have any options, instead the options are
+        held on the particular Documenter that documents that object type.
+
+        This method does the lookup in order to determine what those options are.
 
         Parameters
         ----------
+        name:
+           The name of the directive as it appears in an rst file.
         directive:
            The directive whose options we are creating completions for.
         """
 
         options = directive.option_spec
+
+        # autoxxx directives require special handlng.
+        if name.startswith("auto") and self.rst.app:
+            self.logger.debug("Processing options for '%s' directive", name)
+            name = name.replace("auto", "")
+
+            self.logger.debug("Documenter name is '%s'", name)
+            documenter = self.rst.app.registry.documenters.get(name, None)
+
+            if documenter is not None:
+                options = documenter.option_spec
 
         if options is None:
             return []

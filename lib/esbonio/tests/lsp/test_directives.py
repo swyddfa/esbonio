@@ -29,6 +29,8 @@ DEFAULT_UNEXPECTED = {
 }
 
 EXTENSIONS_EXPECTED = {
+    "autoclass",
+    "automodule",
     "py:function",
     "py:module",
     "option",
@@ -40,8 +42,6 @@ EXTENSIONS_EXPECTED = {
 }
 
 EXTENSIONS_UNEXPECTED = {
-    "autoclass",
-    "automodule",
     "c:macro",
     "module",
     "std:program",
@@ -131,6 +131,17 @@ def test_directive_completions(sphinx, project, text, expected, unexpected):
     completion_test(feature, text, expected, unexpected)
 
 
+AUTOCLASS_OPTS = {
+    "members",
+    "undoc-members",
+    "noindex",
+    "inherited-members",
+    "show-inheritance",
+    "member-order",
+    "exclude-members",
+    "private-members",
+    "special-members",
+}
 IMAGE_OPTS = {"align", "alt", "class", "height", "scale", "target", "width"}
 PY_FUNC_OPTS = {"annotation", "async", "module", "noindex", "noindexentry"}
 C_FUNC_OPTS = {"noindexentry"}
@@ -143,6 +154,12 @@ C_FUNC_OPTS = {"noindexentry"}
         ("sphinx-default", ".. function:: foo\n\f   :", PY_FUNC_OPTS, {"ref", "func"}),
         (
             "sphinx-default",
+            ".. autoclass:: x.y.A\n\f   :",
+            set(),
+            {"ref", "func"} | AUTOCLASS_OPTS,
+        ),
+        (
+            "sphinx-default",
             "   .. image:: f.png\n\f      :",
             IMAGE_OPTS,
             {"ref", "func"},
@@ -153,11 +170,23 @@ C_FUNC_OPTS = {"noindexentry"}
             PY_FUNC_OPTS,
             {"ref", "func"},
         ),
+        (
+            "sphinx-default",
+            "   .. autoclass:: x.y.A\n\f      :",
+            set(),
+            {"ref", "func"} | AUTOCLASS_OPTS,
+        ),
         ("sphinx-extensions", ".. image:: f.png\n\f   :", IMAGE_OPTS, {"ref", "func"}),
         (
             "sphinx-extensions",
             ".. function:: foo\n\f   :",
             C_FUNC_OPTS,
+            {"ref", "func"},
+        ),
+        (
+            "sphinx-extensions",
+            ".. autoclass:: x.y.A\n\f   :",
+            AUTOCLASS_OPTS,
             {"ref", "func"},
         ),
         (
@@ -170,6 +199,12 @@ C_FUNC_OPTS = {"noindexentry"}
             "sphinx-extensions",
             "   .. function:: foo\n\f      :",
             C_FUNC_OPTS,
+            {"ref", "func"},
+        ),
+        (
+            "sphinx-extensions",
+            "   .. autoclass:: x.y.A\n\f      :",
+            AUTOCLASS_OPTS,
             {"ref", "func"},
         ),
     ],
