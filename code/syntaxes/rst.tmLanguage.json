@@ -60,7 +60,7 @@
             "begin": "(\\s*):([\\w-]+):([ ]|$)",
             "beginCaptures": {
                 "2": {
-                    "name": "entity.name.type"
+                    "name": "storage.modifier"
                 }
             },
             "end": "^(?!\\1\\s+)(?!\\s*$)",
@@ -84,7 +84,7 @@
             "begin": "(\\s*)\\.\\.\\s+(doctest|testcode|testsetup|testcleanup)::",
             "beginCaptures": {
                 "2": {
-                    "name": "entity.name.type"
+                    "name": "entity.name.function"
                 }
             },
             "end": "^(?!\\1\\s+)(?!\\s*$)",
@@ -99,7 +99,7 @@
             "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+python",
             "beginCaptures": {
                 "2": {
-                    "name": "entity.name.type"
+                    "name": "entity.name.function"
                 }
             },
             "end": "^(?!\\1\\s+)(?!\\s*$)",
@@ -111,10 +111,13 @@
             ]
         },
         "generic-directive": {
-            "begin": "(\\s*)\\.\\.\\s+([\\w-]+)::.*",
+            "begin": "(\\s*)\\.\\.\\s+(([\\w]+):)?([\\w-]+)::.*",
             "beginCaptures": {
-                "2": {
-                    "name": "entity.name.type"
+                "3": {
+                    "name": "storage.type.namespace"
+                },
+                "4": {
+                    "name": "entity.name.function"
                 }
             },
             "end": "^(?!\\1\\s+)(?!\\s*$)",
@@ -127,11 +130,14 @@
         },
         "role": {
             "name": "meta.role.rst",
-            "begin": ":([\\w-]+):`",
+            "begin": ":(([\\w]+):)?([\\w-]+):`",
             "end": "`",
             "beginCaptures": {
-                "1": {
-                    "name": "keyword.letter"
+                "2": {
+                    "name": "storage.type.namespace"
+                },
+                "3": {
+                    "name": "entity.name.function"
                 }
             },
             "patterns": [
@@ -142,13 +148,13 @@
                             "name": "string"
                         },
                         "2": {
-                            "name": "entity.name.function"
+                            "name": "support.constant"
                         }
                     }
                 },
                 {
                     "match": "[^`]+",
-                    "name": "string"
+                    "name": "support.constant"
                 }
             ]
         },
@@ -187,7 +193,7 @@
                             "name": "string"
                         },
                         "2": {
-                            "name": "entity.name.function"
+                            "name": "support.constant"
                         }
                     }
                 },

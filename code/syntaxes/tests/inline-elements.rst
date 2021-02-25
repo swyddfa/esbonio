@@ -37,15 +37,27 @@ Here is ``some`thing`` tricky to ``handle``
 
 This line contains a :ref:`reference_label`
 ..                   ^^^^^^^^^^^^^^^^^^^^^^ meta.role.rst
-..                    ^^^ keyword.letter
-..                         ^^^^^^^^^^^^^^^ string
+..                    ^^^ entity.name.function
+..                         ^^^^^^^^^^^^^^^ support.constant
+
+This line contains a :cpp:func:`reference_label`
+..                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.role.rst
+..                        ^^^^ entity.name.function
+..                    ^^^ storage.type.namespace
+..                              ^^^^^^^^^^^^^^^ support.constant
 
 This line contains a :ref:`reference <reference_label>`
 ..                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.role.rst
-..                    ^^^ keyword.letter
-..                                   ^^^^^^^^^^^^^^^^^ entity.name.function
+..                    ^^^ entity.name.function
+..                                   ^^^^^^^^^^^^^^^^^ support.constant
+
+This line contains a :cpp:ref:`reference <reference_label>`
+..                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.role.rst
+..                        ^^^ entity.name.function
+..                    ^^^ storage.type.namespace
+..                                       ^^^^^^^^^^^^^^^^^ support.constant
 
 This line has an `inline <https://github.com>`_ link
 ..               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.link.rst
 ..                ^^^^^^ string
-..                       ^^^^^^^^^^^^^^^^^^^^ entity.name.function
+..                       ^^^^^^^^^^^^^^^^^^^^ support.constant
