@@ -1,0 +1,1 @@
+Directive completions are now domain aware.

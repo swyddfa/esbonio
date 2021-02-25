@@ -12,40 +12,40 @@ Implementation
 This project provides some functions which use Pythagoras' Theorem to calculate the
 length of a missing side of a right angled triangle when the other two are known.
 
-.. module:: pythagoras
+.. py:module:: pythagoras
 
-.. currentmodule:: pythagoras
+.. py:currentmodule:: pythagoras
 
-.. data:: PI
+.. py:data:: PI
 
    The value of the constant pi.
 
-.. data:: UNKNOWN
+.. py:data:: UNKNOWN
 
    Used to represent an unknown value.
 
-.. class:: Triangle(a: float, b: float, c: float)
+.. py:class:: Triangle(a: float, b: float, c: float)
 
    Represents a triangle
 
-   .. attribute:: a
+   .. py:attribute:: a
 
       The length of the side labelled ``a``
 
-   .. attribute:: b
+   .. py:attribute:: b
 
-      The length of the side labelled ``b```
+      The length of the side labelled ``b``
 
-   .. attribute:: c
+   .. py:attribute:: c
 
       The length of the side labelled ``c``
 
-   .. method:: is_right_angled() -> bool
+   .. py:method:: is_right_angled() -> bool
 
       :return: :code:`True` if the triangle is right angled.
       :rtype: bool
 
-.. function:: calc_hypotenuse(a: float, b: float) -> float
+.. py:function:: calc_hypotenuse(a: float, b: float) -> float
 
    Calculates the length of the hypotenuse of a right angled triangle.
 
@@ -54,7 +54,7 @@ length of a missing side of a right angled triangle when the other two are known
    :return: Then length of the side ``c`` (the triangle's hypotenuse)
    :rtype: float
 
-.. function:: calc_side(c: float, b: float) -> float
+.. py:function:: calc_side(c: float, b: float) -> float
 
    Calculates the length of a side of a right angled triangle.
 

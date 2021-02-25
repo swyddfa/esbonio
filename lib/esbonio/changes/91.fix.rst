@@ -1,0 +1,2 @@
+``$/setTraceNotification`` notifications from VSCode no longer cause exceptions to be thrown
+in the Language Server.

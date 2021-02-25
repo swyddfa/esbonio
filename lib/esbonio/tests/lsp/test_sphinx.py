@@ -1,10 +1,18 @@
+import logging
 import unittest.mock as mock
 
 import py.test
 
-from pygls.types import Diagnostic, DiagnosticSeverity, Position, Range
+from pygls.types import (
+    Diagnostic,
+    DiagnosticSeverity,
+    DidSaveTextDocumentParams,
+    Position,
+    Range,
+    TextDocumentIdentifier,
+)
 
-from esbonio.lsp.sphinx import SphinxManagement, find_conf_py
+from esbonio.lsp.sphinx import DiagnosticList, SphinxManagement, find_conf_py
 
 
 def line(linum: int) -> Range:
@@ -128,12 +136,42 @@ def test_find_conf_py(root, candidates, expected):
                 ]
             },
         ),
+        (
+            "/path/to/file.rst: WARNING: document isn't included in any toctree",
+            {
+                "/path/to/file.rst": [
+                    Diagnostic(
+                        line(1),
+                        "document isn't included in any toctree",
+                        severity=DiagnosticSeverity.Warning,
+                        source="sphinx",
+                    )
+                ]
+            },
+        ),
+        (
+            "c:\\path\\to\\file.rst: WARNING: document isn't included in any toctree",
+            {
+                "c:\\path\\to\\file.rst": [
+                    Diagnostic(
+                        line(1),
+                        "document isn't included in any toctree",
+                        severity=DiagnosticSeverity.Warning,
+                        source="sphinx",
+                    )
+                ]
+            },
+        ),
     ],
 )
 def test_parse_diagnostics(text, expected):
     """Ensure that the language server can parse errors from sphinx's output."""
 
-    management = SphinxManagement(mock.Mock())
+    rst = mock.Mock()
+    rst.logger = logging.getLogger("rst")
+
+    file = ""
+    management = SphinxManagement(rst)
     management.write(text)
 
     # Unfortunately, 'Diagnostic' is just a Python class without an __eq__ implementation
@@ -153,8 +191,8 @@ def test_parse_diagnostics(text, expected):
             assert a.source == b.source
 
     # Ensure that can correctly reset diagnostics
-    management.reset_diagnostics()
-    assert management.diagnostics == {file: [] for file in expected.keys()}
+    management.reset_diagnostics(file)
+    assert len(management.diagnostics[file]) == 0
 
 
 def test_report_diagnostics():
@@ -167,15 +205,20 @@ def test_report_diagnostics():
 
     manager = SphinxManagement(rst)
     manager.diagnostics = {
-        "c:\\Users\\username\\Project\\file.rst": (1, 2, 3),
-        "/home/username/Project/file.rst": (4, 5, 6),
+        "c:\\Users\\username\\Project\\file.rst": DiagnosticList([1, 2, 3]),
+        "/home/username/Project/file.rst": DiagnosticList([4, 5, 6]),
     }
 
+    doc = TextDocumentIdentifier(uri="/some/file.rst")
+    params = DidSaveTextDocumentParams(text_document=doc, text="")
+
     manager.reset_diagnostics = mock.Mock()
-    manager.save(None)
+    manager.save(params)
 
     expected = [
-        mock.call("file:///c:\\Users\\username\\Project\\file.rst", (1, 2, 3)),
-        mock.call("file:///home/username/Project/file.rst", (4, 5, 6)),
+        mock.call(
+            "file:///c:\\Users\\username\\Project\\file.rst", DiagnosticList([1, 2, 3])
+        ),
+        mock.call("file:///home/username/Project/file.rst", DiagnosticList([4, 5, 6])),
     ]
     assert publish_diagnostics.call_args_list == expected

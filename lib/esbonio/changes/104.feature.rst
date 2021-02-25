@@ -1,0 +1,1 @@
+Role and role target completions are now domain aware.

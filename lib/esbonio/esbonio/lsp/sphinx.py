@@ -1,9 +1,11 @@
 """Code for managing sphinx applications."""
+import collections
+import hashlib
 import logging
 import pathlib
 import re
 
-from typing import Optional
+from typing import Iterator, Optional, Tuple
 from urllib.parse import urlparse, unquote
 
 import appdirs
@@ -17,18 +19,30 @@ from pygls.types import (
     Range,
 )
 from sphinx.application import Sphinx
+from sphinx.domains import Domain
 from sphinx.util import console
 
-from esbonio.lsp import RstLanguageServer
+from esbonio.lsp import LanguageFeature, RstLanguageServer
 
 
 PROBLEM_PATTERN = re.compile(
     r"""
-    (?P<file>(.*:\\)?[^:]*):(?P<line>\d+):\s(?P<type>[^:]*):(\s+)?(?P<message>.*)
+    (?P<file>(.*:\\)?[^:]*):   # Capture the path to the file containing the problem
+    ((?P<line>\d+):)?          # Some errors may specify a line number.
+    \s(?P<type>[^:]*):         # Capture the type of error
+    (\s+)?(?P<message>.*)      # Capture the error message
     """,
     re.VERBOSE,
 )
-"""Regular Expression used to identify warnings/errors in Sphinx's output."""
+"""Regular Expression used to identify warnings/errors in Sphinx's output.
+
+For example::
+
+   /path/to/file.rst: WARNING: document isn't included in any toctree
+   /path/to/file.rst:4: WARNING: toctree contains reference to nonexisting document 'changelog',
+
+"""
+
 
 PROBLEM_SEVERITY = {
     "WARNING": DiagnosticSeverity.Warning,
@@ -36,11 +50,45 @@ PROBLEM_SEVERITY = {
 }
 
 
+def get_filepath(uri: str) -> pathlib.Path:
+    """Given a uri, return the filepath component."""
+
+    uri = urlparse(uri)
+    return pathlib.Path(unquote(uri.path))
+
+
+def get_domains(app: Sphinx) -> Iterator[Tuple[str, Domain]]:
+    """Get all the domains registered with an applications.
+
+    Returns a generator that iterates through all of an application's domains,
+    taking into account configuration variables such as ``primary_domain``.
+    Yielded values will be a tuple of the form ``(prefix, domain)`` where
+
+    - ``prefix`` is the namespace that should be used when referencing items
+      in the domain
+    - ``domain`` is the domain object itself.
+    """
+
+    if app is None:
+        return []
+
+    domains = app.env.domains
+    primary_domain = app.config.primary_domain
+
+    for name, domain in domains.items():
+        prefix = name
+
+        # Items from the standard and primary domains don't require the namespace prefix
+        if name == "std" or name == primary_domain:
+            prefix = ""
+
+        yield prefix, domain
+
+
 def find_conf_py(root_uri: str) -> Optional[pathlib.Path]:
     """Attempt to find Sphinx's configuration file in the given workspace."""
 
-    uri = urlparse(root_uri)
-    root = pathlib.Path(unquote(uri.path))
+    root = get_filepath(root_uri)
 
     # Strangely for windows paths, there's an extra leading slash which we have to
     # remove ourselves.
@@ -59,12 +107,40 @@ def find_conf_py(root_uri: str) -> Optional[pathlib.Path]:
         return candidate
 
 
-class SphinxManagement:
+class DiagnosticList(collections.UserList):
+    """A list type dedicated to holding diagnostics.
+
+    This is mainly to ensure that only one instance of a diagnostic ever gets
+    reported.
+    """
+
+    def append(self, item: Diagnostic):
+
+        if not isinstance(item, Diagnostic):
+            raise TypeError("Expected Diagnostic")
+
+        for existing in self.data:
+            fields = [
+                existing.range == item.range,
+                existing.message == item.message,
+                existing.severity == item.severity,
+                existing.code == item.code,
+                existing.source == item.source,
+            ]
+
+            if all(fields):
+                # Item already added, nothing to do.
+                return
+
+        self.data.append(item)
+
+
+class SphinxManagement(LanguageFeature):
     """A LSP Server feature that manages the Sphinx application instance for the
     project."""
 
-    def __init__(self, rst: RstLanguageServer):
-        self.rst = rst
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
         self.diagnostics = {}
         """A place to keep track of diagnostics we can publish to the client."""
@@ -76,7 +152,7 @@ class SphinxManagement:
         self.create_app()
 
         if self.rst.app is not None:
-            self.rst.app.builder.read()
+            self.rst.app.build()
 
     def initialized(self):
         self.report_diagnostics()
@@ -86,8 +162,10 @@ class SphinxManagement:
         if self.rst.app is None:
             return
 
-        self.reset_diagnostics()
-        self.rst.app.builder.read()
+        filepath = get_filepath(params.textDocument.uri)
+
+        self.reset_diagnostics(str(filepath))
+        self.rst.app.build()
         self.report_diagnostics()
 
     def create_app(self):
@@ -105,8 +183,14 @@ class SphinxManagement:
 
         src = conf_py.parent
 
-        # TODO: Create a unique scratch space based on the project.
-        build = appdirs.user_cache_dir("esbonio", "swyddfa")
+        if self.rst.cache_dir is not None:
+            build = self.rst.cache_dir
+        else:
+            # Try to pick a sensible dir based on the project's location
+            cache = appdirs.user_cache_dir("esbonio", "swyddfa")
+            project = hashlib.md5(str(src).encode()).hexdigest()
+            build = pathlib.Path(cache) / project
+
         doctrees = pathlib.Path(build) / "doctrees"
 
         self.rst.logger.debug("Config dir %s", src)
@@ -142,11 +226,17 @@ class SphinxManagement:
                 doc = "/" + doc
 
             uri = f"file://{doc}"
-            self.rst.publish_diagnostics(uri, diagnostics)
+            self.rst.publish_diagnostics(uri, diagnostics.data)
 
-    def reset_diagnostics(self):
-        """Reset the list of diagnostics."""
-        self.diagnostics = {filepath: [] for filepath in self.diagnostics.keys()}
+    def reset_diagnostics(self, filepath: str):
+        """Reset the list of diagnostics for the given file.
+
+        Parameters
+        ----------
+        filepath:
+           The filepath that the diagnostics should be reset for.
+        """
+        self.diagnostics[filepath] = DiagnosticList()
 
     def write(self, line):
         """This method lets us catch output from Sphinx."""
@@ -160,12 +250,16 @@ class SphinxManagement:
             diagnostics = self.diagnostics.get(filepath, None)
 
             if diagnostics is None:
-                diagnostics = []
+                diagnostics = DiagnosticList()
 
             try:
                 line_number = int(match.group("line"))
-            except ValueError as exc:
-                self.logger.error("Unable to parse line number", exc)
+            except (TypeError, ValueError) as exc:
+                self.logger.debug(
+                    "Unable to parse line number: '%s'", match.group("line")
+                )
+                self.logger.debug(exc)
+
                 line_number = 1
 
             range_ = Range(Position(line_number - 1, 0), Position(line_number, 0))
