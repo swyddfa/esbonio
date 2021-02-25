@@ -1,0 +1,2 @@
+Add ``--log-level`` cli argument that allows Language Clients to
+control the verbosity of the Language Server's log output.
