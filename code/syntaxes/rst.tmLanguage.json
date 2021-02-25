@@ -40,10 +40,10 @@
                     "include": "#italic"
                 },
                 {
-                    "include": "#link-reference"
+                    "include": "#code"
                 },
                 {
-                    "include": "#code"
+                    "include": "#link-reference"
                 }
             ]
         },
@@ -167,7 +167,7 @@
             "name": "markup.italic"
         },
         "code": {
-            "match": "``([^`]|`(?!`))+``",
+            "match": "``(?! ).*?(?<! )``",
             "name": "string"
         },
         "link-definition": {
@@ -182,26 +182,16 @@
             }
         },
         "link-reference": {
-            "begin": "`(?!`)",
+            "match": "`(.*?)(<.*>)?`_",
             "name": "meta.link.rst",
-            "end": "`_",
-            "patterns": [
-                {
-                    "match": "([^`]+)(<.*>)",
-                    "captures": {
-                        "1": {
-                            "name": "string"
-                        },
-                        "2": {
-                            "name": "support.constant"
-                        }
-                    }
-                },
-                {
-                    "match": "[^`]+",
+            "captures": {
+                "1": {
                     "name": "string"
+                },
+                "2": {
+                    "name": "support.constant"
                 }
-            ]
+            }
         },
         "python-code": {
             "begin": "(\\s*)",

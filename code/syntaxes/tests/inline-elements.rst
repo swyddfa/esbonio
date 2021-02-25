@@ -25,6 +25,12 @@ Here are *multiple* italic *texts* on one line
 This line has ``inline`` code
 ..            ^^^^^^^^^^ string
 
+This `` literal`` is invalid
+..   ^^^^^^^^^^^^ -string
+
+This ``literal `` is also invalid
+..   ^^^^^^^^^^^^ -string
+
 Here is ``some`` inline ``code``
 ..      ^^^^^^^^ string
 ..              ^^^^^^^^ -string
@@ -61,3 +67,7 @@ This line has an `inline <https://github.com>`_ link
 ..               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.link.rst
 ..                ^^^^^^ string
 ..                       ^^^^^^^^^^^^^^^^^^^^ support.constant
+
+This is a `named`_ link
+..        ^^^^^^^^ meta.link.rst
+..         ^^^^^ string
