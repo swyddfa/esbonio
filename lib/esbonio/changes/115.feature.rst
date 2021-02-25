@@ -1,0 +1,2 @@
+Add ``--cache-dir`` cli argument that allows Language Clients to
+specify where cached data should be stored e.g. Sphinx's build output.

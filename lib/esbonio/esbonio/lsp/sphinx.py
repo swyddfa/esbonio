@@ -1,5 +1,6 @@
 """Code for managing sphinx applications."""
 import collections
+import hashlib
 import logging
 import pathlib
 import re
@@ -182,8 +183,14 @@ class SphinxManagement(LanguageFeature):
 
         src = conf_py.parent
 
-        # TODO: Create a unique scratch space based on the project.
-        build = appdirs.user_cache_dir("esbonio", "swyddfa")
+        if self.rst.cache_dir is not None:
+            build = self.rst.cache_dir
+        else:
+            # Try to pick a sensible dir based on the project's location
+            cache = appdirs.user_cache_dir("esbonio", "swyddfa")
+            project = hashlib.md5(str(src).encode()).hexdigest()
+            build = pathlib.Path(cache) / project
+
         doctrees = pathlib.Path(build) / "doctrees"
 
         self.rst.logger.debug("Config dir %s", src)

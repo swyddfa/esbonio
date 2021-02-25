@@ -37,8 +37,11 @@ class LanguageFeature:
 
 
 class RstLanguageServer(LanguageServer):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, cache_dir=None, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.cache_dir = cache_dir
+        """The folder to store cached data in."""
 
         self.logger = logging.getLogger(__name__)
         """The logger that should be used for all Language Server log entries"""
@@ -121,15 +124,19 @@ def dump(obj) -> str:
     return json.dumps(obj, default=default)
 
 
-def create_language_server(modules: List[str]) -> RstLanguageServer:
+def create_language_server(
+    modules: List[str], cache_dir: Optional[str] = None
+) -> RstLanguageServer:
     """Create a new language server instance.
 
     Parameters
     ----------
     modules:
         The list of modules that should be loaded.
+    cache_dir:
+        The folder to use for cached data.
     """
-    server = RstLanguageServer()
+    server = RstLanguageServer(cache_dir)
 
     for mod in modules:
         server.load_module(mod)
