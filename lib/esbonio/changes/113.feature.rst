@@ -1,4 +1,0 @@
-Add ``log-filter`` cli argument that allows Language Clients to choose
-which loggers they want to recieve messages from. Also add
-``--hide-sphinx-output`` cli argument that can suppress Sphinx's build
-log as it it handled separately.

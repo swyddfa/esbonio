@@ -1,2 +1,0 @@
-Add ``-p``, ``--port`` cli arguments that start the Language Server in
-TCP mode while specifying the port number to listen on.

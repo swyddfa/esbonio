@@ -1,3 +1,35 @@
+v0.5.0 - 2021-02-25
+-------------------
+
+Features
+^^^^^^^^
+
+- The language server now reports invalid references as diagnostics (`#57 <https://github.com/swyddfa/esbonio/issues/57>`_)
+- Add ``--log-level`` cli argument that allows Language Clients to
+  control the verbosity of the Language Server's log output. (`#87 <https://github.com/swyddfa/esbonio/issues/87>`_)
+- Directive completions are now domain aware. (`#101 <https://github.com/swyddfa/esbonio/issues/101>`_)
+- Role and role target completions are now domain aware. (`#104 <https://github.com/swyddfa/esbonio/issues/104>`_)
+- Intersphinx completions are now domain aware (`#106 <https://github.com/swyddfa/esbonio/issues/106>`_)
+- Add ``log-filter`` cli argument that allows Language Clients to choose
+  which loggers they want to recieve messages from. Also add
+  ``--hide-sphinx-output`` cli argument that can suppress Sphinx's build
+  log as it it handled separately. (`#113 <https://github.com/swyddfa/esbonio/issues/113>`_)
+- Add ``-p``, ``--port`` cli arguments that start the Language Server in
+  TCP mode while specifying the port number to listen on. (`#114 <https://github.com/swyddfa/esbonio/issues/114>`_)
+- Add ``--cache-dir`` cli argument that allows Language Clients to
+  specify where cached data should be stored e.g. Sphinx's build output. (`#115 <https://github.com/swyddfa/esbonio/issues/115>`_)
+
+
+Fixes
+^^^^^
+
+- The language server now reloads when the project's ``conf.py`` is modified (`#83 <https://github.com/swyddfa/esbonio/issues/83>`_)
+- ``$/setTraceNotification`` notifications from VSCode no longer cause exceptions to be thrown
+  in the Language Server. (`#91 <https://github.com/swyddfa/esbonio/issues/91>`_)
+- Consistency errors are now included in reported diagnostics. (`#94 <https://github.com/swyddfa/esbonio/issues/94>`_)
+- Ensure ``:doc:`` completions are specified relative to the project root. (`#102 <https://github.com/swyddfa/esbonio/issues/102>`_)
+
+
 v0.4.0 - 2021-02-01
 -------------------
 
