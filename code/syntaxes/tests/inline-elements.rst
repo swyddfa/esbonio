@@ -3,6 +3,12 @@
 This line has **bold** text
 ..            ^^^^^^^^ markup.bold
 
+This is ** invalid** bold text
+..      ^^^^^^^^^^^^ -markup.bold
+
+This is also **invalid ** bold text
+             ^^^^^^^^^^^^ -markup.bold
+
 **Note** this should be bold
 .. <-------- markup.bold
 
@@ -13,6 +19,12 @@ Here are **multiple** bold **texts** on one line
 
 This line has *italic* text
 ..            ^^^^^^^^ markup.italic
+
+This is * invalid* italic text
+..      ^^^^^^^^^^ -markup.italic
+
+This is also *invalid * italic text
+..           ^^^^^^^^^^ -markup.italic
 
 *Note* this should be italic
 .. <------ markup.italic
