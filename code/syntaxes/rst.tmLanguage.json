@@ -52,7 +52,7 @@
             "name": "keyword.control"
         },
         "comment": {
-            "begin": "(\\s*)\\.\\.[ ]",
+            "begin": "^(\\s*)\\.\\.[ ]",
             "end": "^(?!\\1\\s+)(?!\\s*$)",
             "name": "comment.line"
         },
