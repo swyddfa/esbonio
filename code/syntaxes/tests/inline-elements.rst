@@ -3,6 +3,12 @@
 This line has **bold** text
 ..            ^^^^^^^^ markup.bold
 
+This is ** invalid** bold text
+..      ^^^^^^^^^^^^ -markup.bold
+
+This is also **invalid ** bold text
+             ^^^^^^^^^^^^ -markup.bold
+
 **Note** this should be bold
 .. <-------- markup.bold
 
@@ -14,6 +20,12 @@ Here are **multiple** bold **texts** on one line
 This line has *italic* text
 ..            ^^^^^^^^ markup.italic
 
+This is * invalid* italic text
+..      ^^^^^^^^^^ -markup.italic
+
+This is also *invalid * italic text
+..           ^^^^^^^^^^ -markup.italic
+
 *Note* this should be italic
 .. <------ markup.italic
 
@@ -24,6 +36,12 @@ Here are *multiple* italic *texts* on one line
 
 This line has ``inline`` code
 ..            ^^^^^^^^^^ string
+
+This `` literal`` is invalid
+..   ^^^^^^^^^^^^ -string
+
+This ``literal `` is also invalid
+..   ^^^^^^^^^^^^ -string
 
 Here is ``some`` inline ``code``
 ..      ^^^^^^^^ string
@@ -37,15 +55,31 @@ Here is ``some`thing`` tricky to ``handle``
 
 This line contains a :ref:`reference_label`
 ..                   ^^^^^^^^^^^^^^^^^^^^^^ meta.role.rst
-..                    ^^^ keyword.letter
-..                         ^^^^^^^^^^^^^^^ string
+..                    ^^^ entity.name.function
+..                         ^^^^^^^^^^^^^^^ support.constant
+
+This line contains a :cpp:func:`reference_label`
+..                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.role.rst
+..                        ^^^^ entity.name.function
+..                    ^^^ storage.type.namespace
+..                              ^^^^^^^^^^^^^^^ support.constant
 
 This line contains a :ref:`reference <reference_label>`
 ..                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.role.rst
-..                    ^^^ keyword.letter
-..                                   ^^^^^^^^^^^^^^^^^ entity.name.function
+..                    ^^^ entity.name.function
+..                                   ^^^^^^^^^^^^^^^^^ support.constant
+
+This line contains a :cpp:ref:`reference <reference_label>`
+..                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.role.rst
+..                        ^^^ entity.name.function
+..                    ^^^ storage.type.namespace
+..                                       ^^^^^^^^^^^^^^^^^ support.constant
 
 This line has an `inline <https://github.com>`_ link
 ..               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.link.rst
 ..                ^^^^^^ string
-..                       ^^^^^^^^^^^^^^^^^^^^ entity.name.function
+..                       ^^^^^^^^^^^^^^^^^^^^ support.constant
+
+This is a `named`_ link
+..        ^^^^^^^^ meta.link.rst
+..         ^^^^^ string

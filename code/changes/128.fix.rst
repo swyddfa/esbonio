@@ -1,0 +1,2 @@
+Invalid italic text (e.g. ``*invalid *``) is no longer highlighted as valid
+syntax.
