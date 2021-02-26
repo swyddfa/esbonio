@@ -1,0 +1,1 @@
+Invalid literals are no longer highlighted as valid syntax
