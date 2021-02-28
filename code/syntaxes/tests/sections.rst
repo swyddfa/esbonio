@@ -1,33 +1,33 @@
-.. SYNTAX TEST "source.rst" "sections"
+// SYNTAX TEST "source.rst" "sections"
 
 Section
 =======
-.. <------- keyword.control
+// <------- keyword.control
 
 Section
 -------
-.. <------- keyword.control
+// <------- keyword.control
 
 Section
 ^^^^^^^
-.. <------- keyword.control
+// <------- keyword.control
 
 Section
 '''''''
-.. <------- keyword.control
+// <------- keyword.control
 
 Section
 """""""
-.. <------- keyword.control
+// <------- keyword.control
 
 Section
 ~~~~~~~
-.. <------- keyword.control
+// <------- keyword.control
 
 Section
 *******
-.. <------- keyword.control
+// <------- keyword.control
 
 Section
 +++++++
-.. <------- keyword.control
+// <------- keyword.control
