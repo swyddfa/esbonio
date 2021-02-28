@@ -21,6 +21,9 @@
                     "include": "#link-definition"
                 },
                 {
+                    "include": "#footnote-defintion"
+                },
+                {
                     "include": "#comment"
                 },
                 {
@@ -43,7 +46,13 @@
                     "include": "#code"
                 },
                 {
+                    "include": "#link-inline"
+                },
+                {
                     "include": "#link-reference"
+                },
+                {
+                    "include": "#footnote-reference"
                 }
             ]
         },
@@ -170,26 +179,122 @@
             "match": "``(?! ).*?(?<! )``",
             "name": "string"
         },
-        "link-definition": {
-            "match": "\\.\\.\\s+(_.*:)\\s+(.*)$",
+        "footnote-defintion": {
+            "name": "meta.definition.footnote.rst",
+            "begin": "(\\s*)\\.\\.\\s+(\\[)((#[-\\w\\d_]+)|\\d+)(\\])\\s",
+            "beginCaptures": {
+                "2": {
+                    "name": "keyword.operator"
+                },
+                "3": {
+                    "name": "variable.other.label"
+                },
+                "5": {
+                    "name": "keyword.operator"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#body-element"
+                }
+            ],
+            "end": "^(?!\\1\\s+)(?!\\s*$)"
+        },
+        "footnote-reference": {
+            "name": "meta.reference.footnote.rst",
+            "begin": "(\\[)",
+            "beginCaptures": {
+                "1": {
+                    "name": "keyword.operator"
+                }
+            },
+            "end": "(\\]_)",
+            "endCaptures": {
+                "1": {
+                    "name": "keyword.operator"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#footnote-ref-explicit"
+                },
+                {
+                    "include": "#footnote-ref-automatic"
+                },
+                {
+                    "include": "#citation-ref"
+                }
+            ]
+        },
+        "footnote-ref-explicit": {
+            "name": "meta.reference.footnote.explicit.rst",
+            "match": "(\\d+)",
             "captures": {
                 "1": {
-                    "name": "string"
-                },
-                "2": {
-                    "name": "entity.name.function"
+                    "name": "variable.other.label"
                 }
             }
         },
-        "link-reference": {
-            "match": "`(.*?)(<.*>)?`_",
+        "footnote-ref-automatic": {
+            "name": "meta.reference.footnote.automatic.rst",
+            "match": "(#([-\\w\\d_]+)?)",
+            "captures": {
+                "1": {
+                    "name": "variable.other.label"
+                }
+            }
+        },
+        "citation-ref": {
+            "name": "meta.reference.citation.rst",
+            "match": "([-\\w\\d_]+)",
+            "captures": {
+                "1": {
+                    "name": "variable.other.label"
+                }
+            }
+        },
+        "link-definition": {
+            "match": "(\\.\\.\\s+_)(.*)(:)\\s+(.*)$",
+            "name": "meta.definition.link.rst",
+            "captures": {
+                "1": {
+                    "name": "keyword.operator"
+                },
+                "2": {
+                    "name": "variable.other.label"
+                },
+                "3": {
+                    "name": "keyword.operator"
+                },
+                "4": {
+                    "name": "constant.other.url"
+                }
+            }
+        },
+        "link-inline": {
+            "match": "(`.+?(<.*>)`)(_)",
             "name": "meta.link.rst",
             "captures": {
                 "1": {
                     "name": "string"
                 },
                 "2": {
-                    "name": "support.constant"
+                    "name": "constant.other.url"
+                },
+                "3": {
+                    "name": "keyword.operator"
+                }
+            }
+        },
+        "link-reference": {
+            "match": "(`.+`)(_)",
+            "name": "meta.reference.link.rst",
+            "captures": {
+                "1": {
+                    "name": "variable.other.label"
+                },
+                "2": {
+                    "name": "keyword.operator"
                 }
             }
         },

@@ -1,4 +1,4 @@
--- SYNTAX TEST "source.rst" "code"
+-- SYNTAX TEST "source.rst" "comments"
 -- In this file we use '-' as the comment character.
 
 .. This line is a comment
