@@ -1,0 +1,14 @@
+{
+    "scopeName": "source.css",
+    "patterns": [
+        {
+            "include": "#code"
+        }
+    ],
+    "repository": {
+        "code": {
+            "match": ".*",
+            "name": "invalid"
+        }
+    }
+}
