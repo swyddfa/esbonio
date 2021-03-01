@@ -1,5 +1,4 @@
 import * as vscode from "vscode";
-import { join } from "path";
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
 import { getPython, registerCommands } from "./commands";
 import { LanguageServerBootstrap } from "./language-server";
@@ -7,6 +6,7 @@ import { getOutputLogger } from "./log";
 
 export const RESTART_LANGUAGE_SERVER = 'esbonio.languageServer.restart'
 
+let bootstrap: LanguageServerBootstrap
 let client: LanguageClient
 
 export async function activate(context: vscode.ExtensionContext) {
@@ -19,8 +19,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     try {
         let python = await getPython()
-        let bootstrap = new LanguageServerBootstrap(python, context)
-        let config = vscode.workspace.getConfiguration('esbonio')
+        bootstrap = new LanguageServerBootstrap(python, context)
 
         let version = await bootstrap.ensureLanguageServer()
         if (!version) {
@@ -29,38 +28,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
         logger.info(`Starting Language Server v${version}`)
 
-        let pythonArgs = [
-            '-m', 'esbonio',
-            '--cache-dir', join(context.storagePath, 'sphinx'),
-            '--log-level', config.get<string>('server.logLevel')
-        ]
-
-        if (config.get<boolean>('server.hideSphinxOutput')) {
-            pythonArgs.push("--hide-sphinx-output")
-        }
-
-        let logFilters = config.get<string[]>("server.logFilter")
-        if (logFilters) {
-            logFilters.forEach(filterName => {
-                pythonArgs.push("--log-filter", filterName)
-            })
-        }
-
-        let exe: Executable = {
-            command: python,
-            args: pythonArgs
-        }
-
-        logger.debug(`Server start command: ${JSON.stringify(exe)}`)
-        let serverOptions: ServerOptions = exe
-
-        let clientOptions: LanguageClientOptions = {
-            documentSelector: [
-                { scheme: 'file', language: 'rst' },
-                { scheme: 'file', language: 'python' }
-            ]
-        }
-        client = new LanguageClient('esbonio', 'Esbonio Language Server', serverOptions, clientOptions)
+        client = bootstrap.getLanguageClient()
         client.start()
 
     } catch (err) {
@@ -75,17 +43,17 @@ export function deactivate(): Thenable<void> | undefined {
     return client.stop()
 }
 
-function restartLanguageServer(): Promise<null> {
+async function restartLanguageServer(): Promise<null> {
     let logger = getOutputLogger();
 
-    return new Promise((resolve, reject) => {
-        logger.info("Stopping Language Server")
-        client.stop().then(_ => {
-            logger.info("Starting Language Server")
-            client.start()
-            resolve(null)
-        }).catch(err => reject(err))
-    })
+    logger.info("Stopping Language Server")
+    await client.stop()
+
+    client = bootstrap.getLanguageClient()
+    logger.info("Starting Language Server")
+    client.start()
+
+    return
 }
 
 function showError(error) {

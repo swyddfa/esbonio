@@ -3,10 +3,12 @@ import * as semver from "semver";
 import * as vscode from "vscode";
 
 import { request, RequestOptions } from "https"
+import { join } from "path";
 import { promisify } from "util";
 
 import { INSTALL_LANGUAGE_SERVER, UPDATE_LANGUAGE_SERVER } from "./commands"
 import { getOutputLogger } from "./log"
+import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 
 const LAST_UPDATE = "server.lastUpdate"
 const execFile = promisify(child_process.execFile)
@@ -134,6 +136,47 @@ export class LanguageServerBootstrap {
         }
       }
     }
+  }
+
+  /**
+   * Return an appropriate language client instance.
+   */
+  getLanguageClient(): LanguageClient {
+    let config = vscode.workspace.getConfiguration('esbonio')
+
+    let pythonArgs = [
+      '-m', 'esbonio',
+      '--cache-dir', join(this.context.storagePath, 'sphinx'),
+      '--log-level', config.get<string>('server.logLevel')
+    ]
+
+    if (config.get<boolean>('server.hideSphinxOutput')) {
+      pythonArgs.push("--hide-sphinx-output")
+    }
+
+    let logFilters = config.get<string[]>('server.logFilter')
+    if (logFilters) {
+      logFilters.forEach(filterName => {
+        pythonArgs.push("--log-filter", filterName)
+      })
+    }
+
+    let exe: Executable = {
+      command: this.python,
+      args: pythonArgs
+    }
+
+    this.logger.debug(`Server start command: ${JSON.stringify(exe)}`)
+    let serverOptions: ServerOptions = exe
+
+    let clientOptions: LanguageClientOptions = {
+      documentSelector: [
+        { scheme: 'file', language: 'rst' },
+        { scheme: 'file', language: 'python' }
+      ]
+    }
+
+    return new LanguageClient('esbonio', 'Esbonio Language Server', serverOptions, clientOptions)
   }
 
   getLatestVersion(): Promise<string> {
