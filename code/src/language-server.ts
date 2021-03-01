@@ -120,27 +120,30 @@ export class LanguageServerBootstrap {
         return ""
       }
 
-      let message = "The Esbonio language server is not installed in your current " +
-        "environment.\nWould you like to install it?"
+      let config = vscode.workspace.getConfiguration("esbonio")
+      let installBehavior = config.get<string>('server.installBehavior')
 
-      let response = await vscode.window.showWarningMessage(message, { title: "Yes" }, { title: "No" })
-      if (response && response.title === "Yes") {
-        this.logger.debug("Installing language server,")
-        await vscode.commands.executeCommand(INSTALL_LANGUAGE_SERVER)
-
-        try {
-          let version = await getInstalledVersion(this.python)
-
-          // Store todays date so the installation counts as an update
-          let today = new Date(Date.now())
-          this.context.workspaceState.update(LAST_UPDATE, today.toISOString())
-
-          return version;
-        } catch (err) {
-          this.logger.debug(`Installation failed ${err}`)
-          return ""
-        }
+      let tryInstall = await shouldInstall(installBehavior)
+      if (!tryInstall) {
+        return ""
       }
+
+      this.logger.debug("Installing language server,")
+      await vscode.commands.executeCommand(INSTALL_LANGUAGE_SERVER)
+
+      try {
+        let version = await getInstalledVersion(this.python)
+
+        // Store todays date so the installation counts as an update
+        let today = new Date(Date.now())
+        this.context.workspaceState.update(LAST_UPDATE, today.toISOString())
+
+        return version;
+      } catch (err) {
+        this.logger.debug(`Installation failed ${err}`)
+        return ""
+      }
+
     }
   }
 
@@ -270,6 +273,23 @@ export function shouldPromptUpdate(updateBehavior: string, currentVersion: strin
   // promptMajor -- only prompt if the next release is a major version bump.
   let version = semver.parse(currentVersion)
   return !semver.satisfies(latestVersion, `<${version.major + 1}`)
+}
+
+
+export async function shouldInstall(installBehavior: string): Promise<boolean> {
+  if (installBehavior === "nothing") {
+    return false
+  }
+
+  if (installBehavior === "automatic") {
+    return true
+  }
+
+  let message = `The Esbonio Language Server is not installed in your current environment.
+  Would you like to install it?`
+
+  let response = await vscode.window.showWarningMessage(message, { title: "Yes" }, { title: "No" })
+  return response && (response.title === "Yes")
 }
 
 
