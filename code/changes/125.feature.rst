@@ -1,0 +1,1 @@
+``css``, ``html``, ``json`` and ``yaml`` code blocks are now syntax highlighted.
