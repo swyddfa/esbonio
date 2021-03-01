@@ -1,3 +1,12 @@
+v0.5.1 - 2021-03-01
+-------------------
+
+Misc
+^^^^
+
+- Fix release pipeline (`#135 <https://github.com/swyddfa/esbonio/issues/135>`_)
+
+
 v0.5.0 - 2021-03-01
 -------------------
 
