@@ -7,7 +7,7 @@
     "author": "Swyddfa Developers",
     "publisher": "swyddfa",
     "license": "MIT",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "scripts": {
         "compile": "webpack --mode production",
         "compile-test": "npm run clean && tsc -p ./",

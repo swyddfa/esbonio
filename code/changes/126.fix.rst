@@ -1,2 +1,0 @@
-Fix syntax highlighting where sentences containing ellipses were incorrectly
-identified as a comment

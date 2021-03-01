@@ -1,2 +1,0 @@
-Invalid bold text (e.g. ``** invalid**``) is no longer highlighted as valid
-syntax.

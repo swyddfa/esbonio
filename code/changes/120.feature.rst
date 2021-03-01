@@ -1,2 +1,0 @@
-Expose ``esbonio.server.hideSphinxOutput`` option which allows for Sphinx's
-build output to be omitted from the log.

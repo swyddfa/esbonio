@@ -1,2 +1,0 @@
-The language server's logging level is set to match the logging level defined in
-the extension.

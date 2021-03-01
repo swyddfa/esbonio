@@ -1,1 +1,0 @@
-The extension now enforces a minimum Language Server version

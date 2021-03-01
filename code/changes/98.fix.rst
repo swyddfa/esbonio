@@ -1,2 +1,0 @@
-Fix syntax higlighting for namespaced roles (e.g. ``:py:func:``) and directives
-(e.g. ``.. py:function::``)

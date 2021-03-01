@@ -1,3 +1,53 @@
+v0.5.0 - 2021-03-01
+-------------------
+
+Features
+^^^^^^^^
+
+- Add new ``esbonio.server.installBehavior`` option that gives greater control
+  over how Language Server installation is handled. ``automatic`` will install the
+  server in new environments without prompting, ``prompt`` will ask for
+  confirmation first and ``nothing`` disables installation entirely.` (`#92 <https://github.com/swyddfa/esbonio/issues/92>`_)
+- Expose ``esbonio.server.logFilter`` option that can be used to limit the
+  components of the language server which produce output. (`#118 <https://github.com/swyddfa/esbonio/issues/118>`_)
+- Expose ``esbonio.server.hideSphinxOutput`` option which allows for Sphinx's
+  build output to be omitted from the log. (`#120 <https://github.com/swyddfa/esbonio/issues/120>`_)
+- The extension will now automatically restart the Language Server when the
+  extension's configuration is updated (`#122 <https://github.com/swyddfa/esbonio/issues/122>`_)
+- ``css``, ``html``, ``json`` and ``yaml`` code blocks are now syntax highlighted. (`#125 <https://github.com/swyddfa/esbonio/issues/125>`_)
+
+
+Fixes
+^^^^^
+
+- The extension now checks that the configured Python verison is compatible with
+  the Language Server. (`#97 <https://github.com/swyddfa/esbonio/issues/97>`_)
+- Fix syntax higlighting for namespaced roles (e.g. ``:py:func:``) and directives
+  (e.g. ``.. py:function::``) (`#98 <https://github.com/swyddfa/esbonio/issues/98>`_)
+- Invalid literals are no longer highlighted as valid syntax (`#99 <https://github.com/swyddfa/esbonio/issues/99>`_)
+- Ensure that the Language Server uses the latest config options when restarted (`#121 <https://github.com/swyddfa/esbonio/issues/121>`_)
+- The extension now enforces a minimum Language Server version (`#123 <https://github.com/swyddfa/esbonio/issues/123>`_)
+- Fixed syntax highlighting of footnotes. (`#124 <https://github.com/swyddfa/esbonio/issues/124>`_)
+- Fix syntax highlighting where sentences containing ellipses were incorrectly
+  identified as a comment (`#126 <https://github.com/swyddfa/esbonio/issues/126>`_)
+- Invalid bold text (e.g. ``** invalid**``) is no longer highlighted as valid
+  syntax. (`#127 <https://github.com/swyddfa/esbonio/issues/127>`_)
+- Invalid italic text (e.g. ``*invalid *``) is no longer highlighted as valid
+  syntax. (`#128 <https://github.com/swyddfa/esbonio/issues/128>`_)
+
+
+Misc
+^^^^
+
+- The language server's logging level is set to match the logging level defined in
+  the extension. (`#86 <https://github.com/swyddfa/esbonio/issues/86>`_)
+- The extension now makes use of the ``--cache-dir`` cli option in the language
+  server to set Sphinx's build output to use a known location. (`#119 <https://github.com/swyddfa/esbonio/issues/119>`_)
+- If ``esbonio.server.logLevel`` is set to ``debug`` the extension assumes the
+  user is working on the Language Server and will automatically open the log panel
+  on restarts. (`#133 <https://github.com/swyddfa/esbonio/issues/133>`_)
+
+
 v0.4.0 - 2021-02-03
 -------------------
 

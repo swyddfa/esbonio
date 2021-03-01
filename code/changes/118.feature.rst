@@ -1,2 +1,0 @@
-Expose ``esbonio.server.logFilter`` option that can be used to limit the
-components of the language server which produce output.

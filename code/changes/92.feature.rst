@@ -1,4 +1,0 @@
-Add new ``esbonio.server.installBehavior`` option that gives greater control
-over how Language Server installation is handled. ``automatic`` will install the
-server in new environments without prompting, ``prompt`` will ask for
-confirmation first and ``nothing`` disables installation entirely.`

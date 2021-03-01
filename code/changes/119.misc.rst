@@ -1,2 +1,0 @@
-The extension now makes use of the ``--cache-dir`` cli option in the language
-server to set Sphinx's build output to use a known location.

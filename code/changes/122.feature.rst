@@ -1,2 +1,0 @@
-The extension will now automatically restart the Language Server when the
-extension's configuration is updated
