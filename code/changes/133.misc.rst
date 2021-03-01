@@ -1,0 +1,3 @@
+If ``esbonio.server.logLevel`` is set to ``debug`` the extension assumes the
+user is working on the Language Server and will automatically open the log panel
+on restarts.
