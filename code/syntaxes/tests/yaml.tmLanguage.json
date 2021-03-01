@@ -1,0 +1,14 @@
+{
+    "scopeName": "source.yaml",
+    "patterns": [
+        {
+            "include": "#code"
+        }
+    ],
+    "repository": {
+        "code": {
+            "match": ".*",
+            "name": "invalid"
+        }
+    }
+}

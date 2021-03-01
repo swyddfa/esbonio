@@ -1,0 +1,14 @@
+{
+    "scopeName": "text.html.derivative",
+    "patterns": [
+        {
+            "include": "#code"
+        }
+    ],
+    "repository": {
+        "code": {
+            "match": ".*",
+            "name": "invalid"
+        }
+    }
+}

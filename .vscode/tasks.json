@@ -55,8 +55,8 @@
         },
         {
             "label": "Grammar Tests",
-            "type": "shell",
-            "command": "npx vscode-tmgrammar-test -c -s source.rst -g rst.tmLanguage.json -g tests/python.tmLanguage.json -t \"**/*.rst\"",
+            "type": "npm",
+            "script": "test-grammar",
             "group": "test",
             "presentation": {
                 "echo": true,
@@ -67,12 +67,12 @@
                 "clear": false
             },
             "options": {
-                "cwd": "${workspaceRoot}/code/syntaxes"
+                "cwd": "${workspaceRoot}/code"
             },
             "problemMatcher": {
                 "fileLocation": [
                     "relative",
-                    "${workspaceRoot}/code/syntaxes"
+                    "${workspaceRoot}/code"
                 ],
                 "pattern": [
                     {
