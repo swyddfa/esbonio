@@ -10,6 +10,7 @@ import { INSTALL_LANGUAGE_SERVER, UPDATE_LANGUAGE_SERVER } from "./commands"
 import { getOutputLogger } from "./log"
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 
+const MIN_PYTHON = "3.6.0"
 const LAST_UPDATE = "server.lastUpdate"
 const execFile = promisify(child_process.execFile)
 
@@ -36,6 +37,11 @@ export class LanguageServerBootstrap {
    * will resolve to false, indicating that we should not try to start it.
    */
   async ensureLanguageServer(): Promise<string> {
+
+    let pythonVersion = await this.checkPython()
+    if (!pythonVersion) {
+      return ""
+    }
 
     let currentVersion = await this.checkInstalled()
     if (!currentVersion) {
@@ -135,6 +141,43 @@ export class LanguageServerBootstrap {
           return ""
         }
       }
+    }
+  }
+
+  /**
+   * Check that the configured Python is compatible with the Language Server.
+   */
+  async checkPython() {
+
+    try {
+      let { stdout } = await execFile(this.python, ["--version"])
+      let version = stdout.trim().replace("Python ", "")
+
+      this.logger.debug(`Python version ${version}`)
+
+      // Ensure we extracted a valid version number
+      if (!semver.parse(version)) {
+        this.logger.debug("Unable to confirm Python version.")
+        return ""
+      }
+
+      if (semver.lt(version, MIN_PYTHON)) {
+        let message = `Configured Python has version v${version} which is incompatible with the
+        Esbonio Language Server.
+
+        Please choose an environment that has a Python version of at least v${MIN_PYTHON}`
+        await vscode.window.showErrorMessage(message, { title: "Close" })
+
+        return ""
+      }
+
+      return version
+
+    } catch (err) {
+      this.logger.debug("Unable to confirm Python version.")
+      this.logger.debug(`${err.message}`)
+
+      return ""
     }
   }
 

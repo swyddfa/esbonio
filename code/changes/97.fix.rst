@@ -1,0 +1,2 @@
+The extension now checks that the configured Python verison is compatible with
+the Language Server.
