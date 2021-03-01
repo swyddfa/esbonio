@@ -56,7 +56,7 @@ export function getOutputLogger() {
   if (!channelLogger) {
     let logLevel: LogLevel
 
-    let level = vscode.workspace.getConfiguration('esbonio').get<string>('log.level')
+    let level = vscode.workspace.getConfiguration('esbonio').get<string>('server.logLevel')
     switch (level) {
       case 'debug':
         logLevel = LogLevel.DEBUG
