@@ -1,4 +1,5 @@
 import * as vscode from "vscode";
+import { join } from "path";
 import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient";
 import { getPython, registerCommands } from "./commands";
 import { LanguageServerBootstrap } from "./language-server";
@@ -19,6 +20,7 @@ export async function activate(context: vscode.ExtensionContext) {
     try {
         let python = await getPython()
         let bootstrap = new LanguageServerBootstrap(python, context)
+        let config = vscode.workspace.getConfiguration('esbonio')
 
         let version = await bootstrap.ensureLanguageServer()
         if (!version) {
@@ -27,10 +29,29 @@ export async function activate(context: vscode.ExtensionContext) {
         }
         logger.info(`Starting Language Server v${version}`)
 
+        let pythonArgs = [
+            '-m', 'esbonio',
+            '--cache-dir', join(context.storagePath, 'sphinx'),
+            '--log-level', config.get<string>('server.logLevel')
+        ]
+
+        if (config.get<boolean>('server.hideSphinxOutput')) {
+            pythonArgs.push("--hide-sphinx-output")
+        }
+
+        let logFilters = config.get<string[]>("server.logFilter")
+        if (logFilters) {
+            logFilters.forEach(filterName => {
+                pythonArgs.push("--log-filter", filterName)
+            })
+        }
+
         let exe: Executable = {
             command: python,
-            args: ['-m', 'esbonio']
+            args: pythonArgs
         }
+
+        logger.debug(`Server start command: ${JSON.stringify(exe)}`)
         let serverOptions: ServerOptions = exe
 
         let clientOptions: LanguageClientOptions = {
