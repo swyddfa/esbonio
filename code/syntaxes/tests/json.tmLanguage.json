@@ -1,0 +1,14 @@
+{
+    "scopeName": "source.json",
+    "patterns": [
+        {
+            "include": "#code"
+        }
+    ],
+    "repository": {
+        "code": {
+            "match": ".*",
+            "name": "invalid"
+        }
+    }
+}

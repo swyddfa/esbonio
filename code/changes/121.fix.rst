@@ -1,0 +1,1 @@
+Ensure that the Language Server uses the latest config options when restarted

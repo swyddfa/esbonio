@@ -14,7 +14,7 @@
         "webpack": "webpack --mode development",
         "webpack-dev": "webpack --mode development --watch",
         "test": "npm run compile-test && node ./dist/test/runTests.js",
-        "test-grammar": "vscode-tmgrammar-test -s source.rst -g syntaxes/rst.tmLanguage.json -g syntaxes/tests/python.tmLanguage.json -t \"syntaxes/**/*.rst\"",
+        "test-grammar": "vscode-tmgrammar-test -c -s source.rst -g syntaxes/rst.tmLanguage.json -g syntaxes/tests/css.tmLanguage.json -g syntaxes/tests/html.tmLanguage.json -g syntaxes/tests/json.tmLanguage.json -g syntaxes/tests/python.tmLanguage.json -g syntaxes/tests/yaml.tmLanguage.json -t \"syntaxes/**/*.rst\"",
         "clean": "rm -r dist",
         "deploy": "vsce publish --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
@@ -79,7 +79,7 @@
             "type": "object",
             "title": "Esbonio",
             "properties": {
-                "esbonio.log.level": {
+                "esbonio.server.logLevel": {
                     "scope": "application",
                     "type": "string",
                     "default": "error",
@@ -90,11 +90,42 @@
                     ],
                     "description": "The level of log message to show in the log"
                 },
+                "esbonio.server.logFilter": {
+                    "scope": "application",
+                    "type": "array",
+                    "default": null,
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "A list of logger names to limit output from"
+                },
                 "esbonio.server.pythonPath": {
                     "scope": "window",
                     "type": "string",
                     "default": "",
                     "markdownDescription": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the `#python.pythonPath#` option in the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
+                },
+                "esbonio.server.hideSphinxOutput": {
+                    "scope": "application",
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Hide Sphinx build output from the Language Server log."
+                },
+                "esbonio.server.installBehavior": {
+                    "scope": "application",
+                    "type": "string",
+                    "default": "prompt",
+                    "enum": [
+                        "nothing",
+                        "prompt",
+                        "automatic"
+                    ],
+                    "enumDescriptions": [
+                        "Don't attempt to install the Language Server if it's missing",
+                        "Ask for confirmation before installing the Language Server",
+                        "Never ask for confirmation, the Language Server will be installed automatically in new environments"
+                    ],
+                    "description": "When the Language Server is missing from an environment, how should the extension handle it"
                 },
                 "esbonio.server.updateBehavior": {
                     "scope": "application",

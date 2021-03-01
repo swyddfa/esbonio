@@ -3,8 +3,12 @@
 -- gets confused between comments and directives.
 
 .. include:: somefile.rst
--- ^^^^^^^ entity.name.type
+-- ^^^^^^^ entity.name.function
 
 .. toctree::
    :glob:
---  ^^^^ entity.name.type
+--  ^^^^ storage.modifier
+
+.. cpp:function:: x.y.z
+-- ^^^ storage.type.namespace
+--     ^^^^^^^^ entity.name.function

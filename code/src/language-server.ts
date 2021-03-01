@@ -3,11 +3,14 @@ import * as semver from "semver";
 import * as vscode from "vscode";
 
 import { request, RequestOptions } from "https"
+import { join } from "path";
 import { promisify } from "util";
 
 import { INSTALL_LANGUAGE_SERVER, UPDATE_LANGUAGE_SERVER } from "./commands"
 import { getOutputLogger } from "./log"
+import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
 
+const MIN_PYTHON = "3.6.0"
 const LAST_UPDATE = "server.lastUpdate"
 const execFile = promisify(child_process.execFile)
 
@@ -34,6 +37,11 @@ export class LanguageServerBootstrap {
    * will resolve to false, indicating that we should not try to start it.
    */
   async ensureLanguageServer(): Promise<string> {
+
+    let pythonVersion = await this.checkPython()
+    if (!pythonVersion) {
+      return ""
+    }
 
     let currentVersion = await this.checkInstalled()
     if (!currentVersion) {
@@ -112,28 +120,109 @@ export class LanguageServerBootstrap {
         return ""
       }
 
-      let message = "The Esbonio language server is not installed in your current " +
-        "environment.\nWould you like to install it?"
+      let config = vscode.workspace.getConfiguration("esbonio")
+      let installBehavior = config.get<string>('server.installBehavior')
 
-      let response = await vscode.window.showWarningMessage(message, { title: "Yes" }, { title: "No" })
-      if (response && response.title === "Yes") {
-        this.logger.debug("Installing language server,")
-        await vscode.commands.executeCommand(INSTALL_LANGUAGE_SERVER)
-
-        try {
-          let version = await getInstalledVersion(this.python)
-
-          // Store todays date so the installation counts as an update
-          let today = new Date(Date.now())
-          this.context.workspaceState.update(LAST_UPDATE, today.toISOString())
-
-          return version;
-        } catch (err) {
-          this.logger.debug(`Installation failed ${err}`)
-          return ""
-        }
+      let tryInstall = await shouldInstall(installBehavior)
+      if (!tryInstall) {
+        return ""
       }
+
+      this.logger.debug("Installing language server,")
+      await vscode.commands.executeCommand(INSTALL_LANGUAGE_SERVER)
+
+      try {
+        let version = await getInstalledVersion(this.python)
+
+        // Store todays date so the installation counts as an update
+        let today = new Date(Date.now())
+        this.context.workspaceState.update(LAST_UPDATE, today.toISOString())
+
+        return version;
+      } catch (err) {
+        this.logger.debug(`Installation failed ${err}`)
+        return ""
+      }
+
     }
+  }
+
+  /**
+   * Check that the configured Python is compatible with the Language Server.
+   */
+  async checkPython() {
+
+    try {
+      let { stdout } = await execFile(this.python, ["--version"])
+      let version = stdout.trim().replace("Python ", "")
+
+      this.logger.debug(`Python version ${version}`)
+
+      // Ensure we extracted a valid version number
+      if (!semver.parse(version)) {
+        this.logger.debug("Unable to confirm Python version.")
+        return ""
+      }
+
+      if (semver.lt(version, MIN_PYTHON)) {
+        let message = `Configured Python has version v${version} which is incompatible with the
+        Esbonio Language Server.
+
+        Please choose an environment that has a Python version of at least v${MIN_PYTHON}`
+        await vscode.window.showErrorMessage(message, { title: "Close" })
+
+        return ""
+      }
+
+      return version
+
+    } catch (err) {
+      this.logger.debug("Unable to confirm Python version.")
+      this.logger.debug(`${err.message}`)
+
+      return ""
+    }
+  }
+
+  /**
+   * Return an appropriate language client instance.
+   */
+  getLanguageClient(): LanguageClient {
+    let config = vscode.workspace.getConfiguration('esbonio')
+
+    let pythonArgs = [
+      '-m', 'esbonio',
+      '--cache-dir', join(this.context.storagePath, 'sphinx'),
+      '--log-level', config.get<string>('server.logLevel')
+    ]
+
+    if (config.get<boolean>('server.hideSphinxOutput')) {
+      pythonArgs.push("--hide-sphinx-output")
+    }
+
+    let logFilters = config.get<string[]>('server.logFilter')
+    if (logFilters) {
+      logFilters.forEach(filterName => {
+        pythonArgs.push("--log-filter", filterName)
+      })
+    }
+
+    let exe: Executable = {
+      command: this.python,
+      args: pythonArgs
+    }
+
+    this.logger.debug(`Server start command: ${JSON.stringify(exe)}`)
+    let serverOptions: ServerOptions = exe
+
+    let clientOptions: LanguageClientOptions = {
+      documentSelector: [
+        { scheme: 'file', language: 'rst' },
+        { scheme: 'file', language: 'python' }
+      ]
+    }
+
+    return new LanguageClient('esbonio', 'Esbonio Language Server', serverOptions, clientOptions)
   }
 
   getLatestVersion(): Promise<string> {
@@ -184,6 +273,23 @@ export function shouldPromptUpdate(updateBehavior: string, currentVersion: strin
   // promptMajor -- only prompt if the next release is a major version bump.
   let version = semver.parse(currentVersion)
   return !semver.satisfies(latestVersion, `<${version.major + 1}`)
+}
+
+
+export async function shouldInstall(installBehavior: string): Promise<boolean> {
+  if (installBehavior === "nothing") {
+    return false
+  }
+
+  if (installBehavior === "automatic") {
+    return true
+  }
+
+  let message = `The Esbonio Language Server is not installed in your current environment.
+  Would you like to install it?`
+
+  let response = await vscode.window.showWarningMessage(message, { title: "Yes" }, { title: "No" })
+  return response && (response.title === "Yes")
 }
 
 

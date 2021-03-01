@@ -21,6 +21,9 @@
                     "include": "#link-definition"
                 },
                 {
+                    "include": "#footnote-defintion"
+                },
+                {
                     "include": "#comment"
                 },
                 {
@@ -40,10 +43,16 @@
                     "include": "#italic"
                 },
                 {
+                    "include": "#code"
+                },
+                {
+                    "include": "#link-inline"
+                },
+                {
                     "include": "#link-reference"
                 },
                 {
-                    "include": "#code"
+                    "include": "#footnote-reference"
                 }
             ]
         },
@@ -52,7 +61,7 @@
             "name": "keyword.control"
         },
         "comment": {
-            "begin": "(\\s*)\\.\\.[ ]",
+            "begin": "^(\\s*)\\.\\.[ ]",
             "end": "^(?!\\1\\s+)(?!\\s*$)",
             "name": "comment.line"
         },
@@ -60,7 +69,7 @@
             "begin": "(\\s*):([\\w-]+):([ ]|$)",
             "beginCaptures": {
                 "2": {
-                    "name": "entity.name.type"
+                    "name": "storage.modifier"
                 }
             },
             "end": "^(?!\\1\\s+)(?!\\s*$)",
@@ -70,7 +79,19 @@
             "name": "meta.directive.rst",
             "patterns": [
                 {
+                    "include": "#css-code-block"
+                },
+                {
+                    "include": "#html-code-block"
+                },
+                {
+                    "include": "#json-code-block"
+                },
+                {
                     "include": "#python-code-block"
+                },
+                {
+                    "include": "#yaml-code-block"
                 },
                 {
                     "include": "#doctest-directive"
@@ -84,14 +105,59 @@
             "begin": "(\\s*)\\.\\.\\s+(doctest|testcode|testsetup|testcleanup)::",
             "beginCaptures": {
                 "2": {
-                    "name": "entity.name.type"
+                    "name": "entity.name.function"
                 }
             },
             "end": "^(?!\\1\\s+)(?!\\s*$)",
-            "name": "doctest.directive",
+            "name": "meta.directive.doctest.rst",
             "patterns": [
                 {
                     "include": "#python-code"
+                }
+            ]
+        },
+        "css-code-block": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+css",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.function"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.directive.code-block.css.rst",
+            "patterns": [
+                {
+                    "include": "#css-code"
+                }
+            ]
+        },
+        "html-code-block": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+html",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.function"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.directive.code-block.html.rst",
+            "patterns": [
+                {
+                    "include": "#html-code"
+                }
+            ]
+        },
+        "json-code-block": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+json",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.function"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.directive.code-block.json.rst",
+            "patterns": [
+                {
+                    "include": "#json-code"
                 }
             ]
         },
@@ -99,26 +165,44 @@
             "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+python",
             "beginCaptures": {
                 "2": {
-                    "name": "entity.name.type"
+                    "name": "entity.name.function"
                 }
             },
             "end": "^(?!\\1\\s+)(?!\\s*$)",
-            "name": "code.block.directive",
+            "name": "meta.directive.code-block.python.rst",
             "patterns": [
                 {
                     "include": "#python-code"
                 }
             ]
         },
-        "generic-directive": {
-            "begin": "(\\s*)\\.\\.\\s+([\\w-]+)::.*",
+        "yaml-code-block": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+yaml",
             "beginCaptures": {
                 "2": {
-                    "name": "entity.name.type"
+                    "name": "entity.name.function"
                 }
             },
             "end": "^(?!\\1\\s+)(?!\\s*$)",
-            "name": "block.directive",
+            "name": "meta.directive.code-block.yaml.rst",
+            "patterns": [
+                {
+                    "include": "#yaml-code"
+                }
+            ]
+        },
+        "generic-directive": {
+            "begin": "(\\s*)\\.\\.\\s+(([\\w]+):)?([\\w-]+)::.*",
+            "beginCaptures": {
+                "3": {
+                    "name": "storage.type.namespace"
+                },
+                "4": {
+                    "name": "entity.name.function"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.directive.generic.rst",
             "patterns": [
                 {
                     "include": "#body-element"
@@ -127,11 +211,14 @@
         },
         "role": {
             "name": "meta.role.rst",
-            "begin": ":([\\w-]+):`",
+            "begin": ":(([\\w]+):)?([\\w-]+):`",
             "end": "`",
             "beginCaptures": {
-                "1": {
-                    "name": "keyword.letter"
+                "2": {
+                    "name": "storage.type.namespace"
+                },
+                "3": {
+                    "name": "entity.name.function"
                 }
             },
             "patterns": [
@@ -142,58 +229,174 @@
                             "name": "string"
                         },
                         "2": {
-                            "name": "entity.name.function"
+                            "name": "support.constant"
                         }
                     }
                 },
                 {
                     "match": "[^`]+",
-                    "name": "string"
+                    "name": "support.constant"
                 }
             ]
         },
         "bold": {
-            "match": "\\*\\*([^*]|\\*(?!\\*))+\\*\\*",
+            "match": "\\*\\*(?! ).*?(?<! )\\*\\*",
             "name": "markup.bold"
         },
         "italic": {
-            "match": "\\*[^*]+\\*",
+            "match": "\\*(?! ).*?(?<! )\\*",
             "name": "markup.italic"
         },
         "code": {
-            "match": "``([^`]|`(?!`))+``",
+            "match": "``(?! ).*?(?<! )``",
             "name": "string"
         },
+        "footnote-defintion": {
+            "name": "meta.definition.footnote.rst",
+            "begin": "(\\s*)\\.\\.\\s+(\\[)((#[-\\w\\d_]+)|\\d+)(\\])\\s",
+            "beginCaptures": {
+                "2": {
+                    "name": "keyword.operator"
+                },
+                "3": {
+                    "name": "variable.other.label"
+                },
+                "5": {
+                    "name": "keyword.operator"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#body-element"
+                }
+            ],
+            "end": "^(?!\\1\\s+)(?!\\s*$)"
+        },
+        "footnote-reference": {
+            "name": "meta.reference.footnote.rst",
+            "begin": "(\\[)",
+            "beginCaptures": {
+                "1": {
+                    "name": "keyword.operator"
+                }
+            },
+            "end": "(\\]_)",
+            "endCaptures": {
+                "1": {
+                    "name": "keyword.operator"
+                }
+            },
+            "patterns": [
+                {
+                    "include": "#footnote-ref-explicit"
+                },
+                {
+                    "include": "#footnote-ref-automatic"
+                },
+                {
+                    "include": "#citation-ref"
+                }
+            ]
+        },
+        "footnote-ref-explicit": {
+            "name": "meta.reference.footnote.explicit.rst",
+            "match": "(\\d+)",
+            "captures": {
+                "1": {
+                    "name": "variable.other.label"
+                }
+            }
+        },
+        "footnote-ref-automatic": {
+            "name": "meta.reference.footnote.automatic.rst",
+            "match": "(#([-\\w\\d_]+)?)",
+            "captures": {
+                "1": {
+                    "name": "variable.other.label"
+                }
+            }
+        },
+        "citation-ref": {
+            "name": "meta.reference.citation.rst",
+            "match": "([-\\w\\d_]+)",
+            "captures": {
+                "1": {
+                    "name": "variable.other.label"
+                }
+            }
+        },
         "link-definition": {
-            "match": "\\.\\.\\s+(_.*:)\\s+(.*)$",
+            "match": "(\\.\\.\\s+_)(.*)(:)\\s+(.*)$",
+            "name": "meta.definition.link.rst",
+            "captures": {
+                "1": {
+                    "name": "keyword.operator"
+                },
+                "2": {
+                    "name": "variable.other.label"
+                },
+                "3": {
+                    "name": "keyword.operator"
+                },
+                "4": {
+                    "name": "constant.other.url"
+                }
+            }
+        },
+        "link-inline": {
+            "match": "(`.+?(<.*>)`)(_)",
+            "name": "meta.link.rst",
             "captures": {
                 "1": {
                     "name": "string"
                 },
                 "2": {
-                    "name": "entity.name.function"
+                    "name": "constant.other.url"
+                },
+                "3": {
+                    "name": "keyword.operator"
                 }
             }
         },
         "link-reference": {
-            "begin": "`(?!`)",
-            "name": "meta.link.rst",
-            "end": "`_",
+            "match": "(`.+`)(_)",
+            "name": "meta.reference.link.rst",
+            "captures": {
+                "1": {
+                    "name": "variable.other.label"
+                },
+                "2": {
+                    "name": "keyword.operator"
+                }
+            }
+        },
+        "css-code": {
+            "begin": "(\\s*)",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "source.css",
             "patterns": [
                 {
-                    "match": "([^`]+)(<.*>)",
-                    "captures": {
-                        "1": {
-                            "name": "string"
-                        },
-                        "2": {
-                            "name": "entity.name.function"
-                        }
-                    }
-                },
+                    "include": "source.css"
+                }
+            ]
+        },
+        "html-code": {
+            "begin": "(\\s*)",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "text.html.derivative",
+            "patterns": [
                 {
-                    "match": "[^`]+",
-                    "name": "string"
+                    "include": "text.html.derivative"
+                }
+            ]
+        },
+        "json-code": {
+            "begin": "(\\s*)",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "source.json",
+            "patterns": [
+                {
+                    "include": "source.json"
                 }
             ]
         },
@@ -204,6 +407,16 @@
             "patterns": [
                 {
                     "include": "source.python"
+                }
+            ]
+        },
+        "yaml-code": {
+            "begin": "(\\s*)",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "source.yaml",
+            "patterns": [
+                {
+                    "include": "source.yaml"
                 }
             ]
         }
