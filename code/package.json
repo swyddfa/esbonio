@@ -111,6 +111,22 @@
                     "default": false,
                     "description": "Hide Sphinx build output from the Language Server log."
                 },
+                "esbonio.server.installBehavior": {
+                    "scope": "application",
+                    "type": "string",
+                    "default": "prompt",
+                    "enum": [
+                        "nothing",
+                        "prompt",
+                        "automatic"
+                    ],
+                    "enumDescriptions": [
+                        "Don't attempt to install the Language Server if it's missing",
+                        "Ask for confirmation before installing the Language Server",
+                        "Never ask for confirmation, the Language Server will be installed automatically in new environments"
+                    ],
+                    "description": "When the Language Server is missing from an environment, how should the extension handle it"
+                },
                 "esbonio.server.updateBehavior": {
                     "scope": "application",
                     "type": "string",
