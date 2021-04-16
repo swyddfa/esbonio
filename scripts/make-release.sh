@@ -18,10 +18,14 @@ case $1 in
         TAG_PREFIX="esbonio-vscode-v"
         COMMIT_MSG="Esbonio VSCode Ext Release v"
         ;;
-    python)
+    extensions)
+        SRC="lib/esbonio-extensions"
+        TAG_PREFIX="esbonio-exts-v"
+        COMMIT_MSG="Esbonio Extensions Release v"
+    lsp)
         SRC="lib/esbonio"
-        TAG_PREFIX="esbonio-lib-v"
-        COMMIT_MSG="Esbonio Lib Release v"
+        TAG_PREFIX="esbonio-lsp-v"
+        COMMIT_MSG="Esbonio Language Server Release v"
         ;;
     *)
         echo "Unkown component ${1}"
