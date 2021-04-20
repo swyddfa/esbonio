@@ -162,8 +162,8 @@ jobs:
       if: success() && startsWith(github.ref, 'refs/heads/release')
 
   extensions:
-    name: Sphinx Extensions ${{ matrix.python-version }}
-    needs: trigger
+    name: "Sphinx Extensions -- Python v${{ matrix.python-version }}"
+    needs: [trigger, lsp]
     if: ${{ needs.trigger.outputs.extensions }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -262,7 +262,7 @@ jobs:
       if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
 
   lsp:
-    name: Language Server ${{ matrix.python-version }}
+    name: "Language Server -- Python v${{ matrix.python-version }}"
     needs: trigger
     if: ${{ needs.trigger.outputs.lsp }}
     runs-on: ${{ matrix.os }}
