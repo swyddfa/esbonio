@@ -15,16 +15,17 @@ COMPONENT=$1
 case $1 in
     vscode)
         SRC="code"
-        TAG_PREFIX="esbonio-vscode-v"
-        COMMIT_MSG="Esbonio VSCode Ext Release v"
+        TAG_PREFIX="esbonio-vscode-extension-v"
+        COMMIT_MSG="Esbonio VSCode Extension Release v"
         ;;
     extensions)
         SRC="lib/esbonio-extensions"
-        TAG_PREFIX="esbonio-exts-v"
-        COMMIT_MSG="Esbonio Extensions Release v"
+        TAG_PREFIX="esbonio-sphinx-extensions-v"
+        COMMIT_MSG="Esbonio Sphinx Extensions Release v"
+        ;;
     lsp)
         SRC="lib/esbonio"
-        TAG_PREFIX="esbonio-lsp-v"
+        TAG_PREFIX="esbonio-language-server-v"
         COMMIT_MSG="Esbonio Language Server Release v"
         ;;
     *)

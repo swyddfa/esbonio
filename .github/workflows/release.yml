@@ -67,7 +67,7 @@ jobs:
       name: "Build Docs?"
 
   vscode:
-    name: VSCode
+    name: VSCode Extension
     needs: trigger
     if: ${{ needs.trigger.outputs.vscode }}
     runs-on: ubuntu-20.04 # TODO: Enable windows, macOS builds.
@@ -162,7 +162,7 @@ jobs:
       if: success() && startsWith(github.ref, 'refs/heads/release')
 
   extensions:
-    name: Extensions ${{ matrix.python-version }}
+    name: Sphinx Extensions ${{ matrix.python-version }}
     needs: trigger
     if: ${{ needs.trigger.outputs.extensions }}
     runs-on: ${{ matrix.os }}
@@ -262,7 +262,7 @@ jobs:
       if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
 
   lsp:
-    name: LSP ${{ matrix.python-version }}
+    name: Language Server ${{ matrix.python-version }}
     needs: trigger
     if: ${{ needs.trigger.outputs.lsp }}
     runs-on: ${{ matrix.os }}
