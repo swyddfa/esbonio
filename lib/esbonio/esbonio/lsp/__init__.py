@@ -19,6 +19,8 @@ from pygls.types import (
 from pygls.workspace import Document
 from sphinx.application import Sphinx
 
+__version__ = "0.5.1"
+
 
 BUILTIN_MODULES = [
     "esbonio.lsp.sphinx",
