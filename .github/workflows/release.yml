@@ -68,7 +68,7 @@ jobs:
 
   vscode:
     name: VSCode Extension
-    needs: trigger
+    needs: [trigger, extensions]
     if: ${{ needs.trigger.outputs.vscode }}
     runs-on: ubuntu-20.04 # TODO: Enable windows, macOS builds.
     steps:
@@ -209,7 +209,7 @@ jobs:
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v1.0.0
       with:
-        name: 'whl'
+        name: 'dist'
         path: lib/esbonio-extensions/dist
       if: matrix.python-version == '3.8'
 
@@ -309,7 +309,7 @@ jobs:
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v1.0.0
       with:
-        name: 'whl'
+        name: 'dist'
         path: lib/esbonio/dist
       if: matrix.python-version == '3.8'
 
@@ -363,7 +363,7 @@ jobs:
 
   docs:
     name: Documentation
-    needs: trigger
+    needs: [trigger, vscode]
     if: ${{ needs.trigger.outputs.docs }}
     runs-on: ubuntu-20.04
     steps:
@@ -386,7 +386,7 @@ jobs:
       name: Setup Environment
 
     - run: |
-        set - e
+        set -e
 
         cd docs
         make html
