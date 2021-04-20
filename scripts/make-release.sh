@@ -116,6 +116,9 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     git config user.name "github-actions[bot]"
 
     git commit -am "${COMMIT_MSG}${VERSION}"
+
+    # Other stages may have run before this, make sure we have the latest
+    git pull --rebase origin release
     git tag -a "${TAG}" -m "${COMMIT_MSG}${VERSION}"
 
     git push origin release
