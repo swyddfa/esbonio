@@ -4,7 +4,7 @@
 # File patterns to check for each component, if there's a match a build will be
 # triggered
 DOCS="^docs"
-PYTHON="^lib/esbonio/.*\.py"
+PYTHON="^lib/esbonio/"
 VSCODE="^code"
 
 # Determine which files have changed
