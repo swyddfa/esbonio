@@ -1,0 +1,1 @@
+Pin ``pygls<0.10.0`` to ensure installs pick up a compatible version
