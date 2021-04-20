@@ -1,3 +1,12 @@
+v0.5.1 - 2021-04-20v0.5.1 - 2021-04-20
+-------------------
+
+Fixes
+^^^^^
+
+- Pin ``pygls<0.10.0`` to ensure installs pick up a compatible version (`#147 <https://github.com/swyddfa/esbonio/issues/147>`_)
+
+
 v0.5.0 - 2021-02-25
 -------------------
 
