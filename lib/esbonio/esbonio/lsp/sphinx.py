@@ -10,7 +10,7 @@ from urllib.parse import urlparse, unquote
 
 import appdirs
 
-from pygls.types import (
+from pygls.lsp.types import (
     Diagnostic,
     DiagnosticSeverity,
     DidSaveTextDocumentParams,
@@ -162,7 +162,7 @@ class SphinxManagement(LanguageFeature):
         if self.rst.app is None:
             return
 
-        filepath = get_filepath(params.textDocument.uri)
+        filepath = get_filepath(params.text_document.uri)
 
         self.reset_diagnostics(str(filepath))
         self.rst.app.build()
@@ -262,10 +262,16 @@ class SphinxManagement(LanguageFeature):
 
                 line_number = 1
 
-            range_ = Range(Position(line_number - 1, 0), Position(line_number, 0))
+            range_ = Range(
+                start=Position(line=line_number - 1, character=0),
+                end=Position(line=line_number, character=0),
+            )
             diagnostics.append(
                 Diagnostic(
-                    range_, match.group("message"), severity=severity, source="sphinx"
+                    range=range_,
+                    message=match.group("message"),
+                    severity=severity,
+                    source="sphinx",
                 )
             )
 

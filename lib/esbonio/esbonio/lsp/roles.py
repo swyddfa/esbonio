@@ -5,7 +5,7 @@ import re
 from typing import List
 
 from docutils.parsers.rst import roles
-from pygls.types import (
+from pygls.lsp.types import (
     CompletionItem,
     CompletionItemKind,
     DidSaveTextDocumentParams,
@@ -309,12 +309,15 @@ class Roles(LanguageFeature):
         insert_text = f":{name}:"
 
         item = CompletionItem(
-            name,
+            label=name,
             kind=CompletionItemKind.Function,
             filter_text=insert_text,
             detail="role",
             text_edit=TextEdit(
-                range=Range(Position(line, start), Position(line, end)),
+                range=Range(
+                    start=Position(line=line, character=start),
+                    end=Position(line=line, character=end),
+                ),
                 new_text=insert_text,
             ),
         )
@@ -335,7 +338,7 @@ class Roles(LanguageFeature):
         target_type = COMPLETION_TARGETS.get(key, DEFAULT_TARGET)
 
         return CompletionItem(
-            name,
+            label=name,
             kind=target_type.kind,
             detail=str(display_name),
             insert_text=target_type.insert_fmt.format(name=name),

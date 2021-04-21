@@ -5,7 +5,7 @@ import unittest.mock as mock
 
 import py.test
 
-from pygls.types import CompletionItemKind
+from pygls.lsp.types import CompletionItemKind
 
 from esbonio.lsp.roles import Roles
 from esbonio.lsp.testing import completion_test, role_target_patterns
@@ -272,4 +272,4 @@ def test_doc_target_completion_items(sphinx, obj_type):
     assert item.label == "index/example"
     assert item.kind == CompletionItemKind.File
     assert item.detail == "Example"
-    assert item.insertText == "/index/example"
+    assert item.insert_text == "/index/example"

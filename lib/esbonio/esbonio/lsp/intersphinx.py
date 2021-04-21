@@ -2,7 +2,7 @@
 import re
 
 from typing import List
-from pygls.types import (
+from pygls.lsp.types import (
     CompletionItem,
     CompletionItemKind,
     Position,
@@ -207,7 +207,7 @@ class InterSphinx(LanguageFeature):
 
     def project_to_completion_item(self, project: str) -> CompletionItem:
         return CompletionItem(
-            project, detail="intersphinx", kind=CompletionItemKind.Module
+            label=project, detail="intersphinx", kind=CompletionItemKind.Module
         )
 
     def target_to_completion_item(
@@ -231,7 +231,7 @@ class InterSphinx(LanguageFeature):
         detail = f"{display} - {source}{version}"
 
         return CompletionItem(
-            label, kind=completion_type.kind, detail=detail, insert_text=label
+            label=label, kind=completion_type.kind, detail=detail, insert_text=label
         )
 
 

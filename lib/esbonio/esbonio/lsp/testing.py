@@ -3,7 +3,7 @@ import logging
 
 from typing import List, Optional, Set
 
-from pygls.types import Position
+from pygls.lsp.types import Position
 from pygls.workspace import Document
 
 logger = logging.getLogger(__name__)
@@ -103,7 +103,7 @@ def completion_test(
     assert "\n" not in text, "Insertion text cannot contain newlines"
 
     document = Document("file:///test_doc.rst", contents)
-    position = Position(len(document.lines), len(text) - 1)
+    position = Position(line=len(document.lines), character=len(text) - 1)
 
     results = []
     for trigger in feature.suggest_triggers:

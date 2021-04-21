@@ -56,7 +56,7 @@ deps =
     pytest-cov
 extras = lsp
 commands =
-    pytest --cov=esbonio
+    pytest --cov=esbonio.lsp {posargs}
 
 [testenv:pkg]
 deps =
