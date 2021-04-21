@@ -6,7 +6,7 @@ import re
 from typing import List, Union, Tuple
 
 from docutils.parsers.rst import directives, Directive
-from pygls.types import (
+from pygls.lsp.types import (
     CompletionItem,
     CompletionItemKind,
     InsertTextFormat,
@@ -244,7 +244,7 @@ class Directives(LanguageFeature):
         )
 
         return CompletionItem(
-            name,
+            label=name,
             kind=CompletionItemKind.Class,
             detail="directive",
             documentation=documentation,
@@ -252,8 +252,8 @@ class Directives(LanguageFeature):
             insert_text_format=InsertTextFormat.Snippet,
             text_edit=TextEdit(
                 range=Range(
-                    Position(position.line, 0),
-                    Position(position.line, position.character - 1),
+                    start=Position(line=position.line, character=0),
+                    end=Position(line=position.line, character=position.character - 1),
                 ),
                 new_text=f"{indent}.. {name}:: {args}",
             ),
@@ -297,7 +297,7 @@ class Directives(LanguageFeature):
 
         return [
             CompletionItem(
-                opt,
+                label=opt,
                 detail="option",
                 kind=CompletionItemKind.Field,
                 insert_text=f"{opt}: ",

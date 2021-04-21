@@ -7,9 +7,14 @@ import pathlib
 from typing import List, Optional
 from urllib.parse import urlparse, unquote
 
-from pygls.features import COMPLETION, INITIALIZE, INITIALIZED, TEXT_DOCUMENT_DID_SAVE
 from pygls.server import LanguageServer
-from pygls.types import (
+from pygls.lsp.methods import (
+    COMPLETION,
+    INITIALIZE,
+    INITIALIZED,
+    TEXT_DOCUMENT_DID_SAVE,
+)
+from pygls.lsp.types import (
     CompletionList,
     CompletionParams,
     DidSaveTextDocumentParams,
@@ -156,7 +161,7 @@ def create_language_server(
     @server.feature(COMPLETION, trigger_characters=[".", ":", "`", "<"])
     def on_completion(rst: RstLanguageServer, params: CompletionParams):
         """Suggest completions based on the current context."""
-        uri = params.textDocument.uri
+        uri = params.text_document.uri
         pos = params.position
 
         doc = rst.workspace.get_document(uri)
@@ -176,7 +181,7 @@ def create_language_server(
     def on_save(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
         rst.logger.debug("DidSave: %s", params)
 
-        uri = urlparse(params.textDocument.uri)
+        uri = urlparse(params.text_document.uri)
         filepath = pathlib.Path(unquote(uri.path))
         conf_py = pathlib.Path(rst.app.confdir, "conf.py")
 

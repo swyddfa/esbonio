@@ -3,7 +3,7 @@ import unittest.mock as mock
 
 import py.test
 
-from pygls.types import (
+from pygls.lsp.types import (
     Diagnostic,
     DiagnosticSeverity,
     DidSaveTextDocumentParams,
@@ -16,7 +16,10 @@ from esbonio.lsp.sphinx import DiagnosticList, SphinxManagement, find_conf_py
 
 
 def line(linum: int) -> Range:
-    return Range(Position(linum - 1, 0), Position(linum, 0))
+    return Range(
+        start=Position(line=linum - 1, character=0),
+        end=Position(line=linum, character=0),
+    )
 
 
 @py.test.mark.parametrize(
@@ -63,8 +66,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "/path/to/file.rst": [
                     Diagnostic(
-                        line(4),
-                        "toctree contains reference to nonexisting document 'changelog'",
+                        range=line(4),
+                        message="toctree contains reference to nonexisting document 'changelog'",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -76,8 +79,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "c:\\path\\to\\file.rst": [
                     Diagnostic(
-                        line(4),
-                        "toctree contains reference to nonexisting document 'changelog'",
+                        range=line(4),
+                        message="toctree contains reference to nonexisting document 'changelog'",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -89,8 +92,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "/path/to/file.rst": [
                     Diagnostic(
-                        line(120),
-                        "unable to build docs",
+                        range=line(120),
+                        message="unable to build docs",
                         severity=DiagnosticSeverity.Error,
                         source="sphinx",
                     )
@@ -102,8 +105,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "c:\\path\\to\\file.rst": [
                     Diagnostic(
-                        line(120),
-                        "unable to build docs",
+                        range=line(120),
+                        message="unable to build docs",
                         severity=DiagnosticSeverity.Error,
                         source="sphinx",
                     )
@@ -115,8 +118,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "/path/to/file.rst": [
                     Diagnostic(
-                        line(71),
-                        "duplicate label: _setup",
+                        range=line(71),
+                        message="duplicate label: _setup",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -128,8 +131,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "c:\\path\\to\\file.rst": [
                     Diagnostic(
-                        line(71),
-                        "duplicate label: _setup",
+                        range=line(71),
+                        message="duplicate label: _setup",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -141,8 +144,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "/path/to/file.rst": [
                     Diagnostic(
-                        line(1),
-                        "document isn't included in any toctree",
+                        range=line(1),
+                        message="document isn't included in any toctree",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -154,8 +157,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "c:\\path\\to\\file.rst": [
                     Diagnostic(
-                        line(1),
-                        "document isn't included in any toctree",
+                        range=line(1),
+                        message="document isn't included in any toctree",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
