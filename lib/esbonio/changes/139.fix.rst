@@ -1,0 +1,2 @@
+The Language Server no longer throws an exception while handling errors raised
+during initialization of a Sphinx application.

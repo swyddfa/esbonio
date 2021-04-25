@@ -199,9 +199,12 @@ def create_language_server(
     def on_save(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
         rst.logger.debug("DidSave: %s", params)
 
+        conf_py = None
         uri = urlparse(params.text_document.uri)
         filepath = pathlib.Path(unquote(uri.path))
-        conf_py = pathlib.Path(rst.app.confdir, "conf.py")
+
+        if rst.app:
+            conf_py = pathlib.Path(rst.app.confdir, "conf.py")
 
         # Re-initialize everything if the app's config has changed.
         if filepath == conf_py:
