@@ -273,8 +273,8 @@ class TestCreateApp:
 
             assert rst.app is None
 
-            (message,) = rst.show_message.call_args.args
-            assert "Unable to find" in message
+            (args, _) = rst.show_message.call_args
+            assert "Unable to find" in args[0]
 
     def test_set_cache_dir(self, rst, testdata):
         """Ensure that we can override the cache dir if necessary"""
@@ -306,5 +306,5 @@ class TestCreateApp:
 
         assert rst.app is None
 
-        message = rst.show_message.call_args.kwargs["message"]
-        assert "Unable to initialize Sphinx" in message
+        (_, kwargs) = rst.show_message.call_args
+        assert "Unable to initialize Sphinx" in kwargs["message"]
