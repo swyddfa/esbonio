@@ -122,6 +122,13 @@ def get_line_til_position(doc: Document, position: Position) -> str:
     return line[: position.character]
 
 
+def filepath_from_uri(uri: str) -> pathlib.Path:
+    """Given a uri, return the filepath component."""
+
+    uri = urlparse(uri)
+    return pathlib.Path(unquote(uri.path))
+
+
 def dump(obj) -> str:
     """Debug helper function that converts an object to JSON."""
 
