@@ -49,11 +49,24 @@ def intersphinx_target_patterns(name: str, project: str) -> List[str]:
 
 
 def completion_test(
-    feature, text: str, expected: Optional[Set[str]], unexpected: Optional[Set[str]]
+    feature: LanguageFeature,
+    text: str,
+    *,
+    filepath: str = "index.rst",
+    expected: Optional[Set[str]] = None,
+    unexpected: Optional[Set[str]] = None,
 ):
     """Check to see if a feature provides the correct completion suggestions.
 
-    **Only checking CompletionItem labels is supported**
+    .. admonition:: Assumptions
+
+       - The ``feature`` has access to a valid Sphinx application via ``rst.app``
+       - If ``feature`` requires initialisation, it has already been done.
+
+    .. admonition:: Limitations
+
+       - Only checking ``CompletionItem`` labels is supported, if you want to check
+         other aspects of the results, write a dedicated test method.
 
     This function takes the given ``feature`` and calls it in the same manner as the
     real language server so that it can simulate real usage without being a full blown
@@ -75,11 +88,16 @@ def completion_test(
            ^
 
     The ``text`` parameter should be set to
-    ``.. image:: filename.png\\n   :align: center\\n\\f   :``. It's important to note that
-    newlines **cannot** come after the ``\\f`` character.
+    ``.. image:: filename.png\\n   :align: center\\n\\f   :``. It's important to note
+    that newlines **cannot** come after the ``\\f`` character.
 
-    If you want to test the case where no completions should be suggested, pass ``None``
-    to both the ``expected`` and ``unexpected`` parameters.
+    If you want to test the case where no completions should be suggested, set
+    ``expected`` to ``None``.
+
+    By default completion suggestions will be asked for the main ``index.rst`` file at
+    the root of the docs project. If you want them to be asked for a file with a
+    different path (like for filepath completion tests) this can be overridden with the
+    ``filepath`` argument.
 
     Parameters
     ----------
@@ -87,6 +105,9 @@ def completion_test(
        An instance of the language service feature to test.
     text:
        The text to offer completion suggestions for.
+    filepath:
+       The path of the file that completion suggestions are being asked for. Relative
+       to the Sphinx application's srcdir.
     expected:
        The set of completion item labels you expect to see in the output.
     unexpected:
@@ -99,10 +120,11 @@ def completion_test(
         contents = ""
 
     logger.debug("Context text:    '%s'", contents)
-    logger.debug("Insertsion text: '%s'", text)
+    logger.debug("Insertion text: '%s'", text)
     assert "\n" not in text, "Insertion text cannot contain newlines"
 
-    document = Document("file:///test_doc.rst", contents)
+    filepath = pathlib.Path(feature.rst.app.srcdir) / filepath
+    document = Document(f"file://{filepath}", contents)
     position = Position(line=len(document.lines), character=len(text) - 1)
 
     results = []
@@ -114,6 +136,7 @@ def completion_test(
             results += feature.suggest(match, document, position)
 
     items = {item.label for item in results}
+    unexpected = unexpected or set()
 
     logger.debug("Results:    %s", items)
     logger.debug("Expected:   %s", expected)

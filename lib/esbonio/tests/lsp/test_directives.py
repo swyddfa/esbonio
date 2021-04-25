@@ -128,7 +128,7 @@ def test_directive_completions(sphinx, project, text, expected, unexpected):
     feature = Directives(rst)
     feature.initialize()
 
-    completion_test(feature, text, expected, unexpected)
+    completion_test(feature, text, expected=expected, unexpected=unexpected)
 
 
 AUTOCLASS_OPTS = {
@@ -219,4 +219,4 @@ def test_directive_option_completions(sphinx, project, text, expected, unexpecte
     feature = Directives(rst)
     feature.initialize()
 
-    completion_test(feature, text, expected, unexpected)
+    completion_test(feature, text, expected=expected, unexpected=unexpected)

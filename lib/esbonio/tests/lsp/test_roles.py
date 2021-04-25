@@ -1,4 +1,3 @@
-"""Utilities and helpers for writing tests around the Language Server."""
 import itertools
 import logging
 import unittest.mock as mock
@@ -74,7 +73,7 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
     feature = Roles(rst)
     feature.initialize()
 
-    completion_test(feature, text, expected, unexpected)
+    completion_test(feature, text, expected=expected, unexpected=unexpected)
 
 
 @py.test.mark.parametrize(
@@ -87,7 +86,7 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
                 (
                     "sphinx-default",
                     {"index", "glossary", "theorems/index", "theorems/pythagoras"},
-                    set(),
+                    None,
                 )
             ],
         ),
@@ -104,7 +103,7 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
                         "search",
                         "welcome",
                     },
-                    set(),
+                    None,
                 )
             ],
         ),
@@ -112,15 +111,15 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
         *itertools.product(
             role_target_patterns("class"),
             [
-                ("sphinx-default", {"pythagoras.Triangle"}, set()),
-                ("sphinx-extensions", set(), {"pythagoras.Triangle"}),
+                ("sphinx-default", {"pythagoras.Triangle"}, None),
+                ("sphinx-extensions", None, {"pythagoras.Triangle"}),
             ],
         ),
         *itertools.product(
             role_target_patterns("py:class"),
             [
-                ("sphinx-default", set(), {"pythagoras.Triangle"}),
-                ("sphinx-extensions", {"pythagoras.Triangle"}, set()),
+                ("sphinx-default", None, {"pythagoras.Triangle"}),
+                ("sphinx-extensions", {"pythagoras.Triangle"}, None),
             ],
         ),
         *itertools.product(
@@ -129,11 +128,11 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
                 (
                     "sphinx-default",
                     {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
-                    set(),
+                    None,
                 ),
                 (
                     "sphinx-extensions",
-                    set(),
+                    None,
                     {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
                 ),
             ],
@@ -143,28 +142,28 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
             [
                 (
                     "sphinx-default",
-                    set(),
+                    None,
                     {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
                 ),
                 (
                     "sphinx-extensions",
                     {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
-                    set(),
+                    None,
                 ),
             ],
         ),
         *itertools.product(
             role_target_patterns("meth"),
             [
-                ("sphinx-default", {"pythagoras.Triangle.is_right_angled"}, set()),
-                ("sphinx-extensions", set(), {"pythagoras.Triangle.is_right_angled"}),
+                ("sphinx-default", {"pythagoras.Triangle.is_right_angled"}, None),
+                ("sphinx-extensions", None, {"pythagoras.Triangle.is_right_angled"}),
             ],
         ),
         *itertools.product(
             role_target_patterns("py:meth"),
             [
-                ("sphinx-default", set(), {"pythagoras.Triangle.is_right_angled"}),
-                ("sphinx-extensions", {"pythagoras.Triangle.is_right_angled"}, set()),
+                ("sphinx-default", None, {"pythagoras.Triangle.is_right_angled"}),
+                ("sphinx-extensions", {"pythagoras.Triangle.is_right_angled"}, None),
             ],
         ),
         *itertools.product(
@@ -184,11 +183,11 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
                         "pythagoras.calc_hypotenuse",
                         "pythagoras.calc_side",
                     },
-                    set(),
+                    None,
                 ),
                 (
                     "sphinx-extensions",
-                    set(),
+                    None,
                     {
                         "pythagoras",
                         "pythagoras.PI",
@@ -221,11 +220,11 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
                         "pythagoras.calc_hypotenuse",
                         "pythagoras.calc_side",
                     },
-                    set(),
+                    None,
                 ),
                 (
                     "sphinx-default",
-                    set(),
+                    None,
                     {
                         "pythagoras",
                         "pythagoras.PI",
@@ -255,7 +254,7 @@ def test_role_target_completions(sphinx, text, setup):
     feature = Roles(rst)
     feature.initialize()
 
-    completion_test(feature, text, expected, unexpected)
+    completion_test(feature, text, expected=expected, unexpected=unexpected)
 
 
 @py.test.mark.parametrize("obj_type", ["doc", "std:doc"])
