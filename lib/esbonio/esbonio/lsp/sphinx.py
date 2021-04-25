@@ -165,7 +165,6 @@ class SphinxManagement(LanguageFeature):
     def create_app(self):
         """Initialize a Sphinx application instance for the current workspace."""
         self.rst.logger.debug("Workspace root %s", self.rst.workspace.root_uri)
-
         conf_py = find_conf_py(self.rst.workspace.root_uri)
 
         if conf_py is None:
@@ -200,14 +199,11 @@ class SphinxManagement(LanguageFeature):
                 src, src, build, doctrees, "html", status=self, warning=self
             )
         except Exception as exc:
-            message = (
-                "There was an error initializing Sphinx, "
-                "see output window for details.",
-            )
+            message = "Unable to initialize Sphinx, see output window for details."
 
-            self.rst.sphinx_log.error(exc)
+            self.sphinx_log.error(exc)
             self.rst.show_message(
-                message, msg_type=MessageType.Error,
+                message=message, msg_type=MessageType.Error,
             )
 
     def report_diagnostics(self):

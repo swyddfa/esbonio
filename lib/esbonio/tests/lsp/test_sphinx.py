@@ -1,4 +1,6 @@
 import logging
+import os
+import tempfile
 import unittest.mock as mock
 
 import py.test
@@ -225,3 +227,84 @@ def test_report_diagnostics():
         mock.call("file:///home/username/Project/file.rst", DiagnosticList([4, 5, 6])),
     ]
     assert publish_diagnostics.call_args_list == expected
+
+
+class TestCreateApp:
+    """Test cases around creating Sphinx application instances."""
+
+    @py.test.fixture()
+    def rst(self):
+
+        rst = mock.Mock()
+        rst.app = None
+        rst.cache_dir = None
+        rst.logger = logging.getLogger("esbonio.lsp")
+
+        # Pygls functions / attributes
+        rst.workspace = mock.Mock()
+        rst.show_message = mock.Mock()
+
+        return rst
+
+    def test_default_case(self, rst, testdata):
+        """Ensure that we can successfully create an instance of a Sphinx
+        application in a "default" scenario."""
+
+        sphinx_default = testdata("sphinx-default", path_only=True)
+        rst.workspace.root_uri = f"file://{sphinx_default}"
+
+        manager = SphinxManagement(rst)
+        manager.create_app()
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_default)
+        assert rst.app.srcdir == str(sphinx_default)
+        assert ".cache/esbonio" in rst.app.outdir
+        assert rst.app.doctreedir == os.path.join(rst.app.outdir, "doctrees")
+
+    def test_missing_conf(self, rst):
+        """Ensure that if we cannot find a project's conf.py we notify the user."""
+
+        with tempfile.TemporaryDirectory() as confdir:
+            rst.workspace.root_uri = f"file://{confdir}"
+
+            manager = SphinxManagement(rst)
+            manager.create_app()
+
+            assert rst.app is None
+
+            (args, _) = rst.show_message.call_args
+            assert "Unable to find" in args[0]
+
+    def test_set_cache_dir(self, rst, testdata):
+        """Ensure that we can override the cache dir if necessary"""
+
+        with tempfile.TemporaryDirectory() as cache_dir:
+            sphinx_default = testdata("sphinx-default", path_only=True)
+
+            rst.workspace.root_uri = f"file://{sphinx_default}"
+            rst.cache_dir = cache_dir
+
+            manager = SphinxManagement(rst)
+            manager.create_app()
+
+            assert rst.app is not None
+            assert rst.app.confdir == str(sphinx_default)
+            assert rst.app.srcdir == str(sphinx_default)
+            assert rst.app.outdir == cache_dir
+            assert rst.app.doctreedir == os.path.join(rst.app.outdir, "doctrees")
+
+    def test_sphinx_exception(self, rst, testdata):
+        """Ensure that we correctly handle the case where creating a Sphinx app throws
+        an exception."""
+
+        sphinx_error = testdata("sphinx-error", path_only=True)
+        rst.workspace.root_uri = f"file://{sphinx_error}"
+
+        manager = SphinxManagement(rst)
+        manager.create_app()
+
+        assert rst.app is None
+
+        (_, kwargs) = rst.show_message.call_args
+        assert "Unable to initialize Sphinx" in kwargs["message"]
