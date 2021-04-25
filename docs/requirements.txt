@@ -1,3 +1,4 @@
 sphinx
 sphinx_rtd_theme
-../lib/esbonio[lsp]
+../lib/esbonio
+../lib/esbonio-extensions
