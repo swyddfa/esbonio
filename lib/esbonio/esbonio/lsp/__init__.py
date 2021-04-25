@@ -35,6 +35,7 @@ BUILTIN_MODULES = [
     "esbonio.lsp.directives",
     "esbonio.lsp.roles",
     "esbonio.lsp.intersphinx",
+    "esbonio.lsp.filepaths",
 ]
 
 

@@ -1,0 +1,3 @@
+The Language Server will now offer filepath completions for the ``image``,
+``figure``, ``include`` and ``literalinclude`` directives as well as the
+``download`` role.

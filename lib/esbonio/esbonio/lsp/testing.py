@@ -1,27 +1,53 @@
 """Utility functions to help with testing Language Server features."""
 import logging
+import pathlib
 
 from typing import List, Optional, Set
 
 from pygls.lsp.types import Position
 from pygls.workspace import Document
 
+from esbonio.lsp import LanguageFeature
+
 logger = logging.getLogger(__name__)
 
 
-def role_target_patterns(name: str) -> List[str]:
+def directive_argument_patterns(name: str, partial: str = "") -> List[str]:
+    """Return a number of example directive argument patterns.
+
+    These correspond to test cases where directive argument suggestions should be
+    generated.
+
+    Paramters
+    ---------
+    name:
+       The name of the directive to generate suggestions for.
+    partial:
+       The partial argument that the user has already entered.
+    """
+    return [s.format(name, partial) for s in [".. {}:: {}", "   .. {}:: {}"]]
+
+
+def role_target_patterns(name: str, partial: str = "") -> List[str]:
     """Return a number of example role target patterns.
 
-    These correspond to cases where role target completions may be generated.
+    These correspond to test cases where role target suggestions should be generated.
 
     Parameters
     ----------
     name:
-       The name of the role to generate examples for
+       The name of the role to generate suggestions for.
+    partial:
+       The partial target that the user as already entered.
     """
     return [
-        s.format(name)
-        for s in [":{}:`", ":{}:`More Info <", "   :{}:`", "   :{}:`Some Label <"]
+        s.format(name, partial)
+        for s in [
+            ":{}:`{}",
+            ":{}:`More Info <{}",
+            "   :{}:`{}",
+            "   :{}:`Some Label <{}",
+        ]
     ]
 
 
