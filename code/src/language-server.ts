@@ -5,10 +5,12 @@ import * as vscode from "vscode";
 import { request, RequestOptions } from "https"
 import { join } from "path";
 import { promisify } from "util";
+import { LanguageClientOptions } from 'vscode-languageclient';
+import { Executable, LanguageClient, ServerOptions } from "vscode-languageclient/node";
 
 import { INSTALL_LANGUAGE_SERVER, UPDATE_LANGUAGE_SERVER } from "./commands"
 import { getOutputLogger } from "./log"
-import { Executable, LanguageClient, LanguageClientOptions, ServerOptions } from 'vscode-languageclient';
+
 
 const MIN_PYTHON = "3.6.0"
 const LAST_UPDATE = "server.lastUpdate"

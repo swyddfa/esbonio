@@ -1,6 +1,6 @@
 import * as semver from "semver";
 import * as vscode from "vscode";
-import { LanguageClient, } from "vscode-languageclient";
+import { LanguageClient, } from "vscode-languageclient/node";
 
 import { getPython, registerCommands, UPDATE_LANGUAGE_SERVER } from "./commands";
 import { LanguageServerBootstrap } from "./language-server";
