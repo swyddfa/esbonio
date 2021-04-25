@@ -20,9 +20,20 @@ from esbonio.lsp import RstLanguageServer, LanguageFeature
 from esbonio.lsp.sphinx import get_domains
 
 
-DIRECTIVE = re.compile(r"\s*\.\.[ ](?P<domain>[\w]+:)?(?P<name>[\w-]+)::")
+DIRECTIVE = re.compile(
+    r"""
+    (?P<indent>\s*)             # directives can be indented
+    (?P<directive>\.\.          # start with a comment
+    [ ]                         # separated by a space
+    (?P<domain>[\w]+:)?         # with an optional domain namespace
+    (?P<name>[\w-]+))           # with a name
+    ::
+    ([\s]+(?P<argument>.*$))?   # some directives may take an argument
+    """,
+    re.VERBOSE,
+)
 """A regular expression that matches a complete, valid directive declaration. Not
-including the arguments or options."""
+including any options or content."""
 
 
 PARTIAL_DIRECTIVE = re.compile(

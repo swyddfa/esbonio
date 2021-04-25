@@ -12,11 +12,14 @@ from pygls.lsp.methods import (
     COMPLETION,
     INITIALIZE,
     INITIALIZED,
+    TEXT_DOCUMENT_DID_OPEN,
     TEXT_DOCUMENT_DID_SAVE,
 )
 from pygls.lsp.types import (
     CompletionList,
+    CompletionOptions,
     CompletionParams,
+    DidOpenTextDocumentParams,
     DidSaveTextDocumentParams,
     InitializeParams,
     Position,
@@ -32,6 +35,7 @@ BUILTIN_MODULES = [
     "esbonio.lsp.directives",
     "esbonio.lsp.roles",
     "esbonio.lsp.intersphinx",
+    "esbonio.lsp.filepaths",
 ]
 
 
@@ -119,6 +123,13 @@ def get_line_til_position(doc: Document, position: Position) -> str:
     return line[: position.character]
 
 
+def filepath_from_uri(uri: str) -> pathlib.Path:
+    """Given a uri, return the filepath component."""
+
+    uri = urlparse(uri)
+    return pathlib.Path(unquote(uri.path))
+
+
 def dump(obj) -> str:
     """Debug helper function that converts an object to JSON."""
 
@@ -150,7 +161,6 @@ def create_language_server(
 
     @server.feature(INITIALIZE)
     def on_initialize(rst: RstLanguageServer, params: InitializeParams):
-
         rst.run_hooks("init")
         rst.logger.info("LSP Server Initialized")
 
@@ -158,9 +168,13 @@ def create_language_server(
     def on_initialized(rst: RstLanguageServer, params):
         rst.run_hooks("initialized")
 
-    @server.feature(COMPLETION, trigger_characters=[".", ":", "`", "<"])
+    @server.feature(
+        COMPLETION, CompletionOptions(trigger_characters=[".", ":", "`", "<", "/"])
+    )
     def on_completion(rst: RstLanguageServer, params: CompletionParams):
         """Suggest completions based on the current context."""
+        rst.logger.debug("Completion: %s", params)
+
         uri = params.text_document.uri
         pos = params.position
 
@@ -175,7 +189,11 @@ def create_language_server(
                 for handler in handlers:
                     items += handler(match, doc, pos)
 
-        return CompletionList(False, items)
+        return CompletionList(is_incomplete=False, items=items)
+
+    @server.feature(TEXT_DOCUMENT_DID_OPEN)
+    def on_open(rst: RstLanguageServer, params: DidOpenTextDocumentParams):
+        rst.logger.debug("DidOpen %s", params)
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(rst: RstLanguageServer, params: DidSaveTextDocumentParams):

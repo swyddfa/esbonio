@@ -22,6 +22,7 @@ from sphinx.application import Sphinx
 from sphinx.domains import Domain
 from sphinx.util import console
 
+import esbonio.lsp as lsp
 from esbonio.lsp import LanguageFeature, RstLanguageServer
 
 
@@ -48,13 +49,6 @@ PROBLEM_SEVERITY = {
     "WARNING": DiagnosticSeverity.Warning,
     "ERROR": DiagnosticSeverity.Error,
 }
-
-
-def get_filepath(uri: str) -> pathlib.Path:
-    """Given a uri, return the filepath component."""
-
-    uri = urlparse(uri)
-    return pathlib.Path(unquote(uri.path))
 
 
 def get_domains(app: Sphinx) -> Iterator[Tuple[str, Domain]]:
@@ -88,7 +82,7 @@ def get_domains(app: Sphinx) -> Iterator[Tuple[str, Domain]]:
 def find_conf_py(root_uri: str) -> Optional[pathlib.Path]:
     """Attempt to find Sphinx's configuration file in the given workspace."""
 
-    root = get_filepath(root_uri)
+    root = lsp.filepath_from_uri(root_uri)
 
     # Strangely for windows paths, there's an extra leading slash which we have to
     # remove ourselves.
@@ -162,7 +156,7 @@ class SphinxManagement(LanguageFeature):
         if self.rst.app is None:
             return
 
-        filepath = get_filepath(params.text_document.uri)
+        filepath = lsp.filepath_from_uri(params.text_document.uri)
 
         self.reset_diagnostics(str(filepath))
         self.rst.app.build()
@@ -213,8 +207,7 @@ class SphinxManagement(LanguageFeature):
 
             self.rst.sphinx_log.error(exc)
             self.rst.show_message(
-                message,
-                msg_type=MessageType.Error,
+                message, msg_type=MessageType.Error,
             )
 
     def report_diagnostics(self):
