@@ -69,7 +69,7 @@ jobs:
   vscode:
     name: VSCode Extension
     needs: [trigger, extensions]
-    if: ${{ needs.trigger.outputs.vscode }}
+    if: always() && needs.trigger.outputs.vscode
     runs-on: ubuntu-20.04 # TODO: Enable windows, macOS builds.
     steps:
     - uses: 'actions/checkout@v2'
@@ -164,7 +164,7 @@ jobs:
   extensions:
     name: "Sphinx Extensions -- Python v${{ matrix.python-version }}"
     needs: [trigger, lsp]
-    if: ${{ needs.trigger.outputs.extensions }}
+    if: always() && needs.trigger.outputs.extensions
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -264,7 +264,7 @@ jobs:
   lsp:
     name: "Language Server -- Python v${{ matrix.python-version }}"
     needs: trigger
-    if: ${{ needs.trigger.outputs.lsp }}
+    if: always() && needs.trigger.outputs.lsp
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -364,7 +364,7 @@ jobs:
   docs:
     name: Documentation
     needs: [trigger, vscode]
-    if: ${{ needs.trigger.outputs.docs }}
+    if: always() && needs.trigger.outputs.docs
     runs-on: ubuntu-20.04
     steps:
     - uses: 'actions/checkout@v2'
