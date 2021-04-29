@@ -1,1 +1,1 @@
-Update `vscode-languageclient` to v7.0.0
+Update ``vscode-languageclient`` to v7.0.0
