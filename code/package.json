@@ -177,12 +177,12 @@
             {
                 "command": "esbonio.insert.inlineLink",
                 "key": "alt+l",
-                "when": "editorTextFocus"
+                "when": "editorTextFocus && editorLangId == rst"
             },
             {
                 "command": "esbonio.insert.link",
                 "key": "alt+shift+l",
-                "when": "editorTextFocus"
+                "when": "editorTextFocus && editorLangId == rst"
             }
         ],
         "languages": [
