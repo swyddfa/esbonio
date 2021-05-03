@@ -50,7 +50,7 @@
 (lsp-register-client
  (make-lsp-client :new-connection
 		  (lsp-stdio-connection
-                   '("/home/alex/Projects/esbonio/.env/bin/python" "-m" "esbonio"))
+                   '("/path/to/virtualenv/bin/python" "-m" "esbonio"))
                   :activation-fn (lsp-activate-on "rst")
                   :server-id 'esbonio))
 

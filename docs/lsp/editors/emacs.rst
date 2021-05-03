@@ -127,7 +127,35 @@ To try this config on your machine
 LSP Mode -- Extended Config
 ---------------------------
 
+.. figure:: /_static/images/emacs-lsp-mode-extended.png
+   :align: center
+   :width: 80%
 
+   Using Esbonio and Emacs with the ``lsp-mode-extended.el`` configuration.
+
+Here is a configuration with a few more bells and whistles that aims to showcase what
+can be achieved with some additional configuration.
+
+.. literalinclude:: /_static/sample-configs/emacs/lsp-mode-extended.el
+   :language: elisp
+   :start-after: ;; Most important, ensure that lsp-mode is available and configured.
+   :end-before: ;; UI Tweaks
+
+This time the configuration makes use of `use-package`_ to install (if necessary) and
+configure packages with a single declaration
+		
+To try this config on your machine
+
+1. Make sure that you've followed the :ref:`editor_integration_common`.
+2. Download :download:`lsp-mode-extended.el </_static/sample-configs/emacs/lsp-mode-extended.el>`
+   to a folder of your choosing.
+3. Edit ``lsp-mode-extended.el`` to set the path to the Python executable to be the one
+   in the virtual environment you just installed the language server into.
+4. Run the following command to launch a separate instance of Emacs isolated from your
+   usual configuration::
+
+     emacs -Q -l lsp-mode-extended.el
+     
 .. _eglot: https://github.com/joaotavora/eglot
 .. _lsp-mode: https://emacs-lsp.github.io/lsp-mode/
 .. _use-package: https://github.com/jwiegley/use-package

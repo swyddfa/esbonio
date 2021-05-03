@@ -43,7 +43,7 @@
 ;; files.
 (require 'eglot)
 (add-to-list 'eglot-server-programs
-             `(rst-mode . ("/home/alex/Projects/esbonio/.env/bin/python"
+             `(rst-mode . ("/path/to/virtualenv/bin/python"
                            "-m" "esbonio")))
 (add-hook 'rst-mode-hook 'eglot-ensure)
 
