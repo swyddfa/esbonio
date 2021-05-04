@@ -71,7 +71,7 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
     rst.logger = logging.getLogger("rst")
 
     feature = Roles(rst)
-    feature.initialize()
+    feature.initialized(None)
 
     completion_test(feature, text, expected=expected, unexpected=unexpected)
 
@@ -252,7 +252,7 @@ def test_role_target_completions(sphinx, text, setup):
     rst.logger = logging.getLogger("rst")
 
     feature = Roles(rst)
-    feature.initialize()
+    feature.initialized(None)
 
     completion_test(feature, text, expected=expected, unexpected=unexpected)
 

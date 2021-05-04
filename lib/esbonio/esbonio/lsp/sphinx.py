@@ -23,7 +23,6 @@ from sphinx.domains import Domain
 from sphinx.util import console
 
 import esbonio.lsp as lsp
-from esbonio.lsp import LanguageFeature, RstLanguageServer
 
 
 PROBLEM_PATTERN = re.compile(
@@ -79,10 +78,38 @@ def get_domains(app: Sphinx) -> Iterator[Tuple[str, Domain]]:
         yield prefix, domain
 
 
-def find_conf_py(root_uri: str) -> Optional[pathlib.Path]:
+def expand_conf_dir(root_dir: str, conf_dir: str) -> str:
+    """Expand the user provided conf_dir into a real path.
+
+    Here is where we handle "variables" that can be included in the path, currently
+    we support
+
+    - ``${workspaceRoot}`` which expands to the workspace root as provided by the
+      language client.
+
+    Parameters
+    ----------
+    root_dir:
+       The workspace root path
+    conf_dir:
+       The user provided path
+    """
+
+    match = re.match(r"^\${(\w+)}/.*", conf_dir)
+    if not match or match.group(1) != "workspaceRoot":
+        return conf_dir
+
+    conf = pathlib.Path(conf_dir).parts[1:]
+    return pathlib.Path(root_dir, *conf).resolve()
+
+
+def find_conf_dir(root_uri: str, config: lsp.SphinxConfig) -> Optional[pathlib.Path]:
     """Attempt to find Sphinx's configuration file in the given workspace."""
 
     root = lsp.filepath_from_uri(root_uri)
+
+    if config.conf_dir:
+        return expand_conf_dir(root, config.conf_dir)
 
     # Strangely for windows paths, there's an extra leading slash which we have to
     # remove ourselves.
@@ -98,7 +125,7 @@ def find_conf_py(root_uri: str) -> Optional[pathlib.Path]:
         if any(path in str(candidate) for path in ignore_paths):
             continue
 
-        return candidate
+        return candidate.parent
 
 
 class DiagnosticList(collections.UserList):
@@ -129,7 +156,7 @@ class DiagnosticList(collections.UserList):
         self.data.append(item)
 
 
-class SphinxManagement(LanguageFeature):
+class SphinxManagement(lsp.LanguageFeature):
     """A LSP Server feature that manages the Sphinx application instance for the
     project."""
 
@@ -142,13 +169,13 @@ class SphinxManagement(LanguageFeature):
         self.sphinx_log = logging.getLogger("esbonio.sphinx")
         """The logger that should be used by a Sphinx application"""
 
-    def initialize(self):
-        self.create_app()
+    def initialized(self, config: lsp.SphinxConfig):
+        self.create_app(config)
 
         if self.rst.app is not None:
             self.rst.app.build()
 
-    def initialized(self):
+        self.logger.debug("%s", config)
         self.report_diagnostics()
 
     def save(self, params: DidSaveTextDocumentParams):
@@ -162,32 +189,30 @@ class SphinxManagement(LanguageFeature):
         self.rst.app.build()
         self.report_diagnostics()
 
-    def create_app(self):
+    def create_app(self, config: lsp.SphinxConfig):
         """Initialize a Sphinx application instance for the current workspace."""
         self.rst.logger.debug("Workspace root %s", self.rst.workspace.root_uri)
-        conf_py = find_conf_py(self.rst.workspace.root_uri)
+        conf_dir = find_conf_dir(self.rst.workspace.root_uri, config)
 
-        if conf_py is None:
+        if conf_dir is None:
             self.rst.show_message(
                 'Unable to find your project\'s "conf.py", features wil be limited',
                 msg_type=MessageType.Warning,
             )
             return
 
-        src = conf_py.parent
-
         if self.rst.cache_dir is not None:
             build = self.rst.cache_dir
         else:
             # Try to pick a sensible dir based on the project's location
             cache = appdirs.user_cache_dir("esbonio", "swyddfa")
-            project = hashlib.md5(str(src).encode()).hexdigest()
+            project = hashlib.md5(str(conf_dir).encode()).hexdigest()
             build = pathlib.Path(cache) / project
 
         doctrees = pathlib.Path(build) / "doctrees"
 
-        self.rst.logger.debug("Config dir %s", src)
-        self.rst.logger.debug("Src dir %s", src)
+        self.rst.logger.debug("Config dir %s", conf_dir)
+        self.rst.logger.debug("Src dir %s", conf_dir)
         self.rst.logger.debug("Build dir %s", build)
         self.rst.logger.debug("Doctree dir %s", str(doctrees))
 
@@ -196,14 +221,15 @@ class SphinxManagement(LanguageFeature):
 
         try:
             self.rst.app = Sphinx(
-                src, src, build, doctrees, "html", status=self, warning=self
+                conf_dir, conf_dir, build, doctrees, "html", status=self, warning=self
             )
         except Exception as exc:
             message = "Unable to initialize Sphinx, see output window for details."
 
             self.sphinx_log.error(exc)
             self.rst.show_message(
-                message=message, msg_type=MessageType.Error,
+                message=message,
+                msg_type=MessageType.Error,
             )
 
     def report_diagnostics(self):
@@ -269,7 +295,6 @@ class SphinxManagement(LanguageFeature):
         self.sphinx_log.info(line)
 
 
-def setup(rst: RstLanguageServer):
-    rst.logger.debug("Running setup.")
+def setup(rst: lsp.RstLanguageServer):
     sphinx_management = SphinxManagement(rst)
     rst.add_feature(sphinx_management)

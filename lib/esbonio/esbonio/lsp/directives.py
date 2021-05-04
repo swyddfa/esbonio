@@ -16,7 +16,7 @@ from pygls.lsp.types import (
 )
 from pygls.workspace import Document
 
-from esbonio.lsp import RstLanguageServer, LanguageFeature
+import esbonio.lsp as lsp
 from esbonio.lsp.sphinx import get_domains
 
 
@@ -64,10 +64,10 @@ PARTIAL_DIRECTIVE_OPTION = re.compile(
 auto complete suggestions."""
 
 
-class Directives(LanguageFeature):
+class Directives(lsp.LanguageFeature):
     """Directive support for the language server."""
 
-    def initialize(self):
+    def initialized(self, config: lsp.SphinxConfig):
         self.discover()
 
     def discover(self):
@@ -317,7 +317,7 @@ class Directives(LanguageFeature):
         ]
 
 
-def setup(rst: RstLanguageServer):
+def setup(rst: lsp.RstLanguageServer):
 
     directive_completion = Directives(rst)
     rst.add_feature(directive_completion)

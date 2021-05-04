@@ -9,7 +9,7 @@ from pygls.lsp.types import (
 )
 from pygls.workspace import Document
 
-from esbonio.lsp import RstLanguageServer, LanguageFeature
+import esbonio.lsp as lsp
 from esbonio.lsp.roles import (
     COMPLETION_TARGETS,
     DEFAULT_TARGET,
@@ -69,10 +69,10 @@ Used when generating auto complete suggestions.
 """
 
 
-class InterSphinx(LanguageFeature):
+class InterSphinx(lsp.LanguageFeature):
     """Intersphinx support for the language server."""
 
-    def initialize(self):
+    def initialized(self, config: lsp.SphinxConfig):
 
         self.targets = {}
         self.target_types = {}
@@ -235,6 +235,6 @@ class InterSphinx(LanguageFeature):
         )
 
 
-def setup(rst: RstLanguageServer):
+def setup(rst: lsp.RstLanguageServer):
     intersphinx = InterSphinx(rst)
     rst.add_feature(intersphinx)
