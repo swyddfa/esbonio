@@ -15,7 +15,7 @@ from pygls.lsp.types import (
 )
 from pygls.workspace import Document
 
-from esbonio.lsp import RstLanguageServer, LanguageFeature, dump
+import esbonio.lsp as lsp
 from esbonio.lsp.directives import DIRECTIVE
 from esbonio.lsp.sphinx import get_domains
 
@@ -104,10 +104,10 @@ COMPLETION_TARGETS = {
 }
 
 
-class Roles(LanguageFeature):
+class Roles(lsp.LanguageFeature):
     """Role support for the language server."""
 
-    def initialize(self):
+    def initialized(self, config: lsp.SphinxConfig):
         self.discover_roles()
         self.discover_targets()
 
@@ -322,7 +322,7 @@ class Roles(LanguageFeature):
             ),
         )
 
-        self.logger.debug("Item %s", dump(item))
+        self.logger.debug("Item %s", lsp.dump(item))
         return item
 
     def target_object_to_completion_item(
@@ -345,6 +345,6 @@ class Roles(LanguageFeature):
         )
 
 
-def setup(rst: RstLanguageServer):
+def setup(rst: lsp.RstLanguageServer):
     role_completion = Roles(rst)
     rst.add_feature(role_completion)

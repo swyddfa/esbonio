@@ -126,7 +126,7 @@ def test_directive_completions(sphinx, project, text, expected, unexpected):
     rst.logger = logging.getLogger("rst")
 
     feature = Directives(rst)
-    feature.initialize()
+    feature.initialized(None)
 
     completion_test(feature, text, expected=expected, unexpected=unexpected)
 
@@ -217,6 +217,6 @@ def test_directive_option_completions(sphinx, project, text, expected, unexpecte
     rst.logger = logging.getLogger("rst")
 
     feature = Directives(rst)
-    feature.initialize()
+    feature.initialized(None)
 
     completion_test(feature, text, expected=expected, unexpected=unexpected)

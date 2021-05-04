@@ -14,7 +14,8 @@ from pygls.lsp.types import (
     TextDocumentIdentifier,
 )
 
-from esbonio.lsp.sphinx import DiagnosticList, SphinxManagement, find_conf_py
+from esbonio.lsp import SphinxConfig
+from esbonio.lsp.sphinx import DiagnosticList, SphinxManagement
 
 
 def line(linum: int) -> Range:
@@ -22,41 +23,6 @@ def line(linum: int) -> Range:
         start=Position(line=linum - 1, character=0),
         end=Position(line=linum, character=0),
     )
-
-
-@py.test.mark.parametrize(
-    "root,expected,candidates",
-    [
-        ("/home/user/Project", None, []),
-        (
-            "/home/user/Project/",
-            "/home/user/Project/conf.py",
-            ["/home/user/Project/conf.py"],
-        ),
-        (
-            "/home/user/Project",
-            "/home/user/Project/conf.py",
-            ["/home/user/Project/.tox/conf.py", "/home/user/Project/conf.py"],
-        ),
-        (
-            "/home/user/Project",
-            "/home/user/Project/conf.py",
-            [
-                "/home/user/Project/.env/lib/site-packages/pkg/conf.py",
-                "/home/user/Project/conf.py",
-            ],
-        ),
-    ],
-)
-def test_find_conf_py(root, candidates, expected):
-    """Ensure that we can correctly find a project's conf.py"""
-
-    with mock.patch("esbonio.lsp.sphinx.pathlib.Path") as MockPath:
-        instance = MockPath.return_value
-        instance.glob.return_value = candidates
-
-        conf_py = find_conf_py(f"file://{root}")
-        assert conf_py == expected
 
 
 @py.test.mark.parametrize(
@@ -254,7 +220,7 @@ class TestCreateApp:
         rst.workspace.root_uri = f"file://{sphinx_default}"
 
         manager = SphinxManagement(rst)
-        manager.create_app()
+        manager.create_app(SphinxConfig.default())
 
         assert rst.app is not None
         assert rst.app.confdir == str(sphinx_default)
@@ -269,12 +235,42 @@ class TestCreateApp:
             rst.workspace.root_uri = f"file://{confdir}"
 
             manager = SphinxManagement(rst)
-            manager.create_app()
+            manager.create_app(SphinxConfig.default())
 
             assert rst.app is None
 
             (args, _) = rst.show_message.call_args
             assert "Unable to find" in args[0]
+
+    def test_conf_dir_option(self, rst, testdata):
+        """Ensure that we can override the conf.py discovery mechanism if necessary."""
+
+        sphinx_extensions = testdata("sphinx-extensions", path_only=True)
+        data_dir = (sphinx_extensions / "..").resolve()
+        rst.workspace.root_uri = f"file://{data_dir}"
+
+        config = SphinxConfig(conf_dir=str(sphinx_extensions))
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_extensions)
+
+    def test_conf_dir_pattern(self, rst, testdata):
+        """Ensure that we can use 'variables' in our setting of the config dir."""
+
+        sphinx_extensions = testdata("sphinx-extensions", path_only=True)
+        data_dir = (sphinx_extensions / "..").resolve()
+        rst.workspace.root_uri = f"file://{data_dir}"
+
+        config = SphinxConfig(conf_dir="${workspaceRoot}/sphinx-extensions")
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_extensions)
 
     def test_set_cache_dir(self, rst, testdata):
         """Ensure that we can override the cache dir if necessary"""
@@ -286,7 +282,7 @@ class TestCreateApp:
             rst.cache_dir = cache_dir
 
             manager = SphinxManagement(rst)
-            manager.create_app()
+            manager.create_app(SphinxConfig.default())
 
             assert rst.app is not None
             assert rst.app.confdir == str(sphinx_default)
@@ -302,7 +298,7 @@ class TestCreateApp:
         rst.workspace.root_uri = f"file://{sphinx_error}"
 
         manager = SphinxManagement(rst)
-        manager.create_app()
+        manager.create_app(SphinxConfig.default())
 
         assert rst.app is None
 

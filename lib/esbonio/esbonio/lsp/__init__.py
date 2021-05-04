@@ -19,9 +19,12 @@ from pygls.lsp.types import (
     CompletionList,
     CompletionOptions,
     CompletionParams,
+    ConfigurationItem,
+    ConfigurationParams,
     DidOpenTextDocumentParams,
     DidSaveTextDocumentParams,
     InitializeParams,
+    InitializedParams,
     Position,
 )
 from pygls.workspace import Document
@@ -45,6 +48,21 @@ class LanguageFeature:
     def __init__(self, rst: "RstLanguageServer"):
         self.rst = rst
         self.logger = rst.logger.getChild(self.__class__.__name__)
+
+
+class SphinxConfig:
+    """Represents the `esbonio.sphinx.*` configuration namespace."""
+
+    def __init__(self, conf_dir: Optional[str] = None):
+        self.conf_dir = conf_dir
+
+    @classmethod
+    def default(cls):
+        return cls(conf_dir="")
+
+    @classmethod
+    def from_dict(cls, config):
+        return cls(conf_dir=config["confDir"])
 
 
 class RstLanguageServer(LanguageServer):
@@ -106,9 +124,11 @@ class RstLanguageServer(LanguageServer):
 
     def run_hooks(self, kind: str, *args):
         """Run each hook registered of the given kind."""
-
+        self.logger.debug("Runnning %s hooks", kind)
         hooks = getattr(self, f"on_{kind}_hooks")
+
         for hook in hooks:
+            self.logger.debug("%s", hook)
             hook(*args)
 
 
@@ -161,19 +181,31 @@ def create_language_server(
 
     @server.feature(INITIALIZE)
     def on_initialize(rst: RstLanguageServer, params: InitializeParams):
+        rst.logger.debug("%s: %s", INITIALIZE, params)
         rst.run_hooks("init")
-        rst.logger.info("LSP Server Initialized")
+
+        rst.logger.info("Language server started.")
 
     @server.feature(INITIALIZED)
-    def on_initialized(rst: RstLanguageServer, params):
-        rst.run_hooks("initialized")
+    async def on_initialized(rst: RstLanguageServer, params: InitializedParams):
+        rst.logger.debug(INITIALIZED)
+
+        config_params = ConfigurationParams(
+            items=[ConfigurationItem(section="esbonio.sphinx")]
+        )
+        config = await rst.get_configuration_async(config_params)
+
+        rst.logger.debug("SphinxConfig: %s", config[0])
+        rst.run_hooks("initialized", SphinxConfig.from_dict(config[0]))
+
+        rst.logger.info("LSP server initialized")
 
     @server.feature(
         COMPLETION, CompletionOptions(trigger_characters=[".", ":", "`", "<", "/"])
     )
     def on_completion(rst: RstLanguageServer, params: CompletionParams):
         """Suggest completions based on the current context."""
-        rst.logger.debug("Completion: %s", params)
+        rst.logger.debug("%s: %s", COMPLETION, params)
 
         uri = params.text_document.uri
         pos = params.position
@@ -193,11 +225,11 @@ def create_language_server(
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
     def on_open(rst: RstLanguageServer, params: DidOpenTextDocumentParams):
-        rst.logger.debug("DidOpen %s", params)
+        rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_OPEN, params)
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
-        rst.logger.debug("DidSave: %s", params)
+        rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_SAVE, params)
 
         conf_py = None
         uri = urlparse(params.text_document.uri)
@@ -215,6 +247,6 @@ def create_language_server(
     @server.feature("$/setTraceNotification")
     def vscode_set_trace(rst: RstLanguageServer, params):
         """Dummy implementation, stops JsonRpcMethodNotFound exceptions."""
-        rst.logger.debug("VSCode set trace: %s", params)
+        rst.logger.debug("$/setTraceNotification: %s", params)
 
     return server
