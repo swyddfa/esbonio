@@ -103,6 +103,49 @@ def expand_conf_dir(root_dir: str, conf_dir: str) -> str:
     return pathlib.Path(root_dir, *conf).resolve()
 
 
+def get_src_dir(
+    root_uri: str, conf_dir: pathlib.Path, config: lsp.SphinxConfig
+) -> pathlib.Path:
+    """Get the src dir to use based on the given config.
+
+    By default the src dir will be the same as the conf dir, but this can
+    be overriden in the given config.
+
+    There are a number of "variables" that can be included in the path, currently
+    we support
+
+    - ``${workspaceRoot}`` which expands to the workspace root as provided by the
+      language client.
+    - ``${confDir}`` which expands to the configured config dir.
+
+    Parameters
+    ----------
+    root_uri:
+       The workspace root uri
+    conf_dir:
+       The project's conf dir
+    config:
+       The user's configuration.
+    """
+
+    if not config.src_dir:
+        return conf_dir
+
+    src_dir = config.src_dir
+    root_dir = lsp.filepath_from_uri(root_uri)
+
+    match = re.match(r"^\${(\w+)}/.*", src_dir)
+    if match and match.group(1) == "workspaceRoot":
+        src = pathlib.Path(src_dir).parts[1:]
+        return pathlib.Path(root_dir, *src).resolve()
+
+    if match and match.group(1) == "confDir":
+        src = pathlib.Path(src_dir).parts[1:]
+        return pathlib.Path(conf_dir, *src).resolve()
+
+    return src_dir
+
+
 def find_conf_dir(root_uri: str, config: lsp.SphinxConfig) -> Optional[pathlib.Path]:
     """Attempt to find Sphinx's configuration file in the given workspace."""
 
@@ -192,6 +235,7 @@ class SphinxManagement(lsp.LanguageFeature):
     def create_app(self, config: lsp.SphinxConfig):
         """Initialize a Sphinx application instance for the current workspace."""
         self.rst.logger.debug("Workspace root %s", self.rst.workspace.root_uri)
+
         conf_dir = find_conf_dir(self.rst.workspace.root_uri, config)
 
         if conf_dir is None:
@@ -202,26 +246,33 @@ class SphinxManagement(lsp.LanguageFeature):
             return
 
         if self.rst.cache_dir is not None:
-            build = self.rst.cache_dir
+            build_dir = self.rst.cache_dir
         else:
             # Try to pick a sensible dir based on the project's location
             cache = appdirs.user_cache_dir("esbonio", "swyddfa")
             project = hashlib.md5(str(conf_dir).encode()).hexdigest()
-            build = pathlib.Path(cache) / project
+            build_dir = pathlib.Path(cache) / project
 
-        doctrees = pathlib.Path(build) / "doctrees"
+        src_dir = get_src_dir(self.rst.workspace.root_uri, conf_dir, config)
+        doctree_dir = pathlib.Path(build_dir) / "doctrees"
 
         self.rst.logger.debug("Config dir %s", conf_dir)
-        self.rst.logger.debug("Src dir %s", conf_dir)
-        self.rst.logger.debug("Build dir %s", build)
-        self.rst.logger.debug("Doctree dir %s", str(doctrees))
+        self.rst.logger.debug("Src dir %s", src_dir)
+        self.rst.logger.debug("Build dir %s", build_dir)
+        self.rst.logger.debug("Doctree dir %s", str(doctree_dir))
 
         # Disable color escape codes in Sphinx's log messages
         console.nocolor()
 
         try:
             self.rst.app = Sphinx(
-                conf_dir, conf_dir, build, doctrees, "html", status=self, warning=self
+                srcdir=src_dir,
+                confdir=conf_dir,
+                outdir=build_dir,
+                doctreedir=doctree_dir,
+                buildername="html",
+                status=self,
+                warning=self,
             )
         except Exception as exc:
             message = "Unable to initialize Sphinx, see output window for details."
