@@ -1,7 +1,10 @@
+.. _editor_itegration_vscode:
+
 VSCode
 ======
 
 Integration with the `VSCode`_ editor is provided via the `Esbonio`_ extension.
+
 
 Configuration
 """""""""""""

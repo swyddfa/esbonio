@@ -1,0 +1,3 @@
+Add new ``esbonio.sphinx.srcDir`` option that allows for overriding the
+language server's assumption that source files are located in the same
+place as the ``conf.py`` file.

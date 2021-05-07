@@ -2,6 +2,7 @@ import * as vscode from "vscode";
 import { getOutputLogger } from "./log";
 
 const PYTHON_EXT = "ms-python.python"
+export const MIN_SERVER_VERSION = "0.6.0"
 
 export const INSTALL_LANGUAGE_SERVER = 'esbonio.languageServer.install'
 export const UPDATE_LANGUAGE_SERVER = 'esbonio.languageServer.update'
@@ -11,7 +12,7 @@ function installLanguageServer(): Promise<null> {
   let promise: Promise<null> = new Promise((resolve, reject) => {
 
     getPython().then(python => {
-      let process = new vscode.ProcessExecution(python, ["-m", "pip", "install", "esbonio[lsp]"])
+      let process = new vscode.ProcessExecution(python, ["-m", "pip", "install", `esbonio>=${MIN_SERVER_VERSION}`])
       let task = new vscode.Task({ type: 'process' }, vscode.TaskScope.Workspace, 'Install Language Server', 'esbonio', process)
 
       // Executing a one-shot task and waiting for it to finish seems a little awkward?
@@ -36,7 +37,7 @@ function updateLanguageServer(): Promise<null> {
   let promise: Promise<null> = new Promise((resolve, reject) => {
 
     getPython().then(python => {
-      let process = new vscode.ProcessExecution(python, ["-m", "pip", "install", "--upgrade", "esbonio[lsp]"])
+      let process = new vscode.ProcessExecution(python, ["-m", "pip", "install", "--upgrade", `esbonio>=${MIN_SERVER_VERSION}`])
       let task = new vscode.Task({ type: 'process' }, vscode.TaskScope.Workspace, 'Update Language Server', 'esbonio', process)
 
       // Executing a one-shot task and waiting for it to finish seems a little awkward?

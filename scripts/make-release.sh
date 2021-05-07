@@ -15,13 +15,18 @@ COMPONENT=$1
 case $1 in
     vscode)
         SRC="code"
-        TAG_PREFIX="esbonio-vscode-v"
-        COMMIT_MSG="Esbonio VSCode Ext Release v"
+        TAG_PREFIX="esbonio-vscode-extension-v"
+        COMMIT_MSG="Esbonio VSCode Extension Release v"
         ;;
-    python)
+    extensions)
+        SRC="lib/esbonio-extensions"
+        TAG_PREFIX="esbonio-sphinx-extensions-v"
+        COMMIT_MSG="Esbonio Sphinx Extensions Release v"
+        ;;
+    lsp)
         SRC="lib/esbonio"
-        TAG_PREFIX="esbonio-lib-v"
-        COMMIT_MSG="Esbonio Lib Release v"
+        TAG_PREFIX="esbonio-language-server-v"
+        COMMIT_MSG="Esbonio Language Server Release v"
         ;;
     *)
         echo "Unkown component ${1}"
@@ -111,6 +116,9 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     git config user.name "github-actions[bot]"
 
     git commit -am "${COMMIT_MSG}${VERSION}"
+
+    # Other stages may have run before this, make sure we have the latest
+    git pull --rebase origin release
     git tag -a "${TAG}" -m "${COMMIT_MSG}${VERSION}"
 
     git push origin release

@@ -6,7 +6,7 @@ import re
 from typing import List, Union, Tuple
 
 from docutils.parsers.rst import directives, Directive
-from pygls.types import (
+from pygls.lsp.types import (
     CompletionItem,
     CompletionItemKind,
     InsertTextFormat,
@@ -16,13 +16,24 @@ from pygls.types import (
 )
 from pygls.workspace import Document
 
-from esbonio.lsp import RstLanguageServer, LanguageFeature
+import esbonio.lsp as lsp
 from esbonio.lsp.sphinx import get_domains
 
 
-DIRECTIVE = re.compile(r"\s*\.\.[ ](?P<domain>[\w]+:)?(?P<name>[\w-]+)::")
+DIRECTIVE = re.compile(
+    r"""
+    (?P<indent>\s*)             # directives can be indented
+    (?P<directive>\.\.          # start with a comment
+    [ ]                         # separated by a space
+    (?P<domain>[\w]+:)?         # with an optional domain namespace
+    (?P<name>[\w-]+))           # with a name
+    ::
+    ([\s]+(?P<argument>.*$))?   # some directives may take an argument
+    """,
+    re.VERBOSE,
+)
 """A regular expression that matches a complete, valid directive declaration. Not
-including the arguments or options."""
+including any options or content."""
 
 
 PARTIAL_DIRECTIVE = re.compile(
@@ -53,10 +64,10 @@ PARTIAL_DIRECTIVE_OPTION = re.compile(
 auto complete suggestions."""
 
 
-class Directives(LanguageFeature):
+class Directives(lsp.LanguageFeature):
     """Directive support for the language server."""
 
-    def initialize(self):
+    def initialized(self, config: lsp.SphinxConfig):
         self.discover()
 
     def discover(self):
@@ -244,7 +255,7 @@ class Directives(LanguageFeature):
         )
 
         return CompletionItem(
-            name,
+            label=name,
             kind=CompletionItemKind.Class,
             detail="directive",
             documentation=documentation,
@@ -252,8 +263,8 @@ class Directives(LanguageFeature):
             insert_text_format=InsertTextFormat.Snippet,
             text_edit=TextEdit(
                 range=Range(
-                    Position(position.line, 0),
-                    Position(position.line, position.character - 1),
+                    start=Position(line=position.line, character=0),
+                    end=Position(line=position.line, character=position.character - 1),
                 ),
                 new_text=f"{indent}.. {name}:: {args}",
             ),
@@ -297,7 +308,7 @@ class Directives(LanguageFeature):
 
         return [
             CompletionItem(
-                opt,
+                label=opt,
                 detail="option",
                 kind=CompletionItemKind.Field,
                 insert_text=f"{opt}: ",
@@ -306,7 +317,7 @@ class Directives(LanguageFeature):
         ]
 
 
-def setup(rst: RstLanguageServer):
+def setup(rst: lsp.RstLanguageServer):
 
     directive_completion = Directives(rst)
     rst.add_feature(directive_completion)

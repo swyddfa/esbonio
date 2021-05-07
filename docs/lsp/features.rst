@@ -20,14 +20,6 @@ options that they expose.
 
    Completing directive names
 
-.. note::
-
-   Currently the Language Server makes a hardcoded assumption that your
-   ``primary_domain`` is set to ``python`` and has no knowledge that other
-   domains exist.
-
-   Support for additional domains will come in a future release
-
 Roles
 ^^^^^
 In the case of roles, completions can also be offered for the targets of certain
@@ -38,20 +30,14 @@ supported role types
 
    Completing roles
 
-.. note::
 
-   Currently the Language Server makes a hardcoded assumption that your
-   ``primary_domain`` is set to ``python`` and has no knowledge that other
-   domains exist.
-
-   Support for additional domains will come in a future release
-
-Target completionss are currently supported for the following role type
+Target completions are currently supported for the following roles
 
 .. hlist::
    :columns: 3
 
    * :rst:role:`sphinx:doc`
+   * :rst:role:`sphinx:download`
    * :rst:role:`sphinx:envvar`
    * :rst:role:`sphinx:ref`
    * :rst:role:`sphinx:option`

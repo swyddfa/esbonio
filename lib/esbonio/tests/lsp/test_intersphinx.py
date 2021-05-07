@@ -33,7 +33,7 @@ def intersphinx(sphinx):
         rst.logger = logging.getLogger("rst")
 
         feature = InterSphinx(rst)
-        feature.initialize()
+        feature.initialized(None)
         instances[project] = feature
 
         return feature
@@ -74,7 +74,7 @@ def test_project_completions(intersphinx, text, setup):
     project, expected, unexpected = setup
     feature = intersphinx(project)
 
-    completion_test(feature, text, expected, unexpected)
+    completion_test(feature, text, expected=expected, unexpected=unexpected)
 
 
 @py.test.mark.parametrize(
@@ -161,4 +161,4 @@ def test_target_completions(intersphinx, text, setup):
     project, expected, unexpected = setup
     feature = intersphinx(project)
 
-    completion_test(feature, text, expected, unexpected)
+    completion_test(feature, text, expected=expected, unexpected=unexpected)

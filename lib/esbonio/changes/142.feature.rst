@@ -1,0 +1,3 @@
+Language clients can now override the assumption that Sphinx's ``srcdir``
+is the same as its ``confdir`` by providing a ``esbonio.sphinx.srcDir``
+config option.

@@ -4,19 +4,11 @@ Esbonio - to explain.
 
 **This package is in early development**
 
-A Python package that provides a number of Sphinx extensions and a [Language Server](https://microsoft.github.io/language-server-protocol/) that
-aims to make it easier to work with Sphinx documentation projects in editors that support it.
+A [Language Server](https://microsoft.github.io/language-server-protocol/) that aims to make it easier to work with Sphinx documentation projects in editors that support it.
 ## Installation
 
-If you are just afer the Sphinx extensions, then you can install `esbonio` with the following
+The Language Server can be installed via pip.
 
 ```
 $ pip install esbonio
-```
-
-However if you are looking to use the language server then some additional dependencies are
-required, which can be installed as follows
-
-```
-$ pip install esbonio[lsp]
 ```

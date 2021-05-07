@@ -42,7 +42,7 @@ yourself. To install the Lanaguage Server open the terminal in your desired Pyth
 environment and run
 
 ```
-(env) $ pip install esbonio[lsp]
+(env) $ pip install esbonio
 ```
 
 Then all you have to ensure is that Esbonio is configured to use the same environment,

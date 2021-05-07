@@ -2,14 +2,14 @@
 import re
 
 from typing import List
-from pygls.types import (
+from pygls.lsp.types import (
     CompletionItem,
     CompletionItemKind,
     Position,
 )
 from pygls.workspace import Document
 
-from esbonio.lsp import RstLanguageServer, LanguageFeature
+import esbonio.lsp as lsp
 from esbonio.lsp.roles import (
     COMPLETION_TARGETS,
     DEFAULT_TARGET,
@@ -69,10 +69,10 @@ Used when generating auto complete suggestions.
 """
 
 
-class InterSphinx(LanguageFeature):
+class InterSphinx(lsp.LanguageFeature):
     """Intersphinx support for the language server."""
 
-    def initialize(self):
+    def initialized(self, config: lsp.SphinxConfig):
 
         self.targets = {}
         self.target_types = {}
@@ -207,7 +207,7 @@ class InterSphinx(LanguageFeature):
 
     def project_to_completion_item(self, project: str) -> CompletionItem:
         return CompletionItem(
-            project, detail="intersphinx", kind=CompletionItemKind.Module
+            label=project, detail="intersphinx", kind=CompletionItemKind.Module
         )
 
     def target_to_completion_item(
@@ -231,10 +231,10 @@ class InterSphinx(LanguageFeature):
         detail = f"{display} - {source}{version}"
 
         return CompletionItem(
-            label, kind=completion_type.kind, detail=detail, insert_text=label
+            label=label, kind=completion_type.kind, detail=detail, insert_text=label
         )
 
 
-def setup(rst: RstLanguageServer):
+def setup(rst: lsp.RstLanguageServer):
     intersphinx = InterSphinx(rst)
     rst.add_feature(intersphinx)

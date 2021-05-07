@@ -4,8 +4,7 @@ import sys
 
 import esbonio.lsp as lsp
 
-from esbonio import __version__
-from esbonio.lsp import RstLanguageServer
+from esbonio.lsp import RstLanguageServer, __version__
 from esbonio.lsp.logger import LspHandler
 
 LOG_LEVELS = {

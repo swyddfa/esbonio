@@ -1,14 +1,12 @@
 import * as semver from "semver";
 import * as vscode from "vscode";
-import { LanguageClient, } from "vscode-languageclient";
+import { LanguageClient, } from "vscode-languageclient/node";
 
-import { getPython, registerCommands, UPDATE_LANGUAGE_SERVER } from "./commands";
+import { getPython, registerCommands, UPDATE_LANGUAGE_SERVER, MIN_SERVER_VERSION } from "./commands";
 import { LanguageServerBootstrap } from "./language-server";
 import { getOutputLogger } from "./log";
 
 export const RESTART_LANGUAGE_SERVER = 'esbonio.languageServer.restart'
-
-const MIN_SERVER_VERSION = "0.5.0"
 
 let bootstrap: LanguageServerBootstrap
 let client: LanguageClient

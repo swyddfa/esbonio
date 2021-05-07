@@ -4,7 +4,8 @@
 # File patterns to check for each component, if there's a match a build will be
 # triggered
 DOCS="^docs"
-PYTHON="^lib/esbonio/"
+LSP="^lib/esbonio/"
+EXTENSIONS="^lib/esbonio-extensions/"
 VSCODE="^code"
 
 # Determine which files have changed
@@ -16,8 +17,11 @@ case $1 in
     docs)
         PATTERN=${DOCS}
         ;;
-    python)
-        PATTERN=${PYTHON}
+    extensions)
+        PATTERN=${EXTENSIONS}
+        ;;
+    lsp)
+        PATTERN=${LSP}
         ;;
     vscode)
         PATTERN=${VSCODE}
@@ -30,8 +34,6 @@ esac
 
 changes=$(grep -E "${PATTERN}" changes)
 echo
-#echo $changes
-#echo
 
 rm changes
 

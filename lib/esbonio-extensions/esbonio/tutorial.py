@@ -6,8 +6,6 @@ import docutils.parsers.rst as rst
 import nbformat.v4 as nbformat
 from docutils.parsers.rst.directives.admonitions import BaseAdmonition
 
-import esbonio
-
 RESOURCES = "resources"
 
 
@@ -249,4 +247,4 @@ def setup(app):
     app.add_directive(SolutionDirective.NAME, SolutionDirective)
     app.add_directive(TutorialDirective.NAME, TutorialDirective)
 
-    return {"version": esbonio.__version__, "parallel_read_safe": True}
+    return {"version": "0.0.0", "parallel_read_safe": True}

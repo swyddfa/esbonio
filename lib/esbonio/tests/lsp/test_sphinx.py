@@ -1,9 +1,11 @@
 import logging
+import os
+import tempfile
 import unittest.mock as mock
 
 import py.test
 
-from pygls.types import (
+from pygls.lsp.types import (
     Diagnostic,
     DiagnosticSeverity,
     DidSaveTextDocumentParams,
@@ -12,46 +14,15 @@ from pygls.types import (
     TextDocumentIdentifier,
 )
 
-from esbonio.lsp.sphinx import DiagnosticList, SphinxManagement, find_conf_py
+from esbonio.lsp import SphinxConfig
+from esbonio.lsp.sphinx import DiagnosticList, SphinxManagement
 
 
 def line(linum: int) -> Range:
-    return Range(Position(linum - 1, 0), Position(linum, 0))
-
-
-@py.test.mark.parametrize(
-    "root,expected,candidates",
-    [
-        ("/home/user/Project", None, []),
-        (
-            "/home/user/Project/",
-            "/home/user/Project/conf.py",
-            ["/home/user/Project/conf.py"],
-        ),
-        (
-            "/home/user/Project",
-            "/home/user/Project/conf.py",
-            ["/home/user/Project/.tox/conf.py", "/home/user/Project/conf.py"],
-        ),
-        (
-            "/home/user/Project",
-            "/home/user/Project/conf.py",
-            [
-                "/home/user/Project/.env/lib/site-packages/pkg/conf.py",
-                "/home/user/Project/conf.py",
-            ],
-        ),
-    ],
-)
-def test_find_conf_py(root, candidates, expected):
-    """Ensure that we can correctly find a project's conf.py"""
-
-    with mock.patch("esbonio.lsp.sphinx.pathlib.Path") as MockPath:
-        instance = MockPath.return_value
-        instance.glob.return_value = candidates
-
-        conf_py = find_conf_py(f"file://{root}")
-        assert conf_py == expected
+    return Range(
+        start=Position(line=linum - 1, character=0),
+        end=Position(line=linum, character=0),
+    )
 
 
 @py.test.mark.parametrize(
@@ -63,8 +34,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "/path/to/file.rst": [
                     Diagnostic(
-                        line(4),
-                        "toctree contains reference to nonexisting document 'changelog'",
+                        range=line(4),
+                        message="toctree contains reference to nonexisting document 'changelog'",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -76,8 +47,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "c:\\path\\to\\file.rst": [
                     Diagnostic(
-                        line(4),
-                        "toctree contains reference to nonexisting document 'changelog'",
+                        range=line(4),
+                        message="toctree contains reference to nonexisting document 'changelog'",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -89,8 +60,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "/path/to/file.rst": [
                     Diagnostic(
-                        line(120),
-                        "unable to build docs",
+                        range=line(120),
+                        message="unable to build docs",
                         severity=DiagnosticSeverity.Error,
                         source="sphinx",
                     )
@@ -102,8 +73,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "c:\\path\\to\\file.rst": [
                     Diagnostic(
-                        line(120),
-                        "unable to build docs",
+                        range=line(120),
+                        message="unable to build docs",
                         severity=DiagnosticSeverity.Error,
                         source="sphinx",
                     )
@@ -115,8 +86,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "/path/to/file.rst": [
                     Diagnostic(
-                        line(71),
-                        "duplicate label: _setup",
+                        range=line(71),
+                        message="duplicate label: _setup",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -128,8 +99,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "c:\\path\\to\\file.rst": [
                     Diagnostic(
-                        line(71),
-                        "duplicate label: _setup",
+                        range=line(71),
+                        message="duplicate label: _setup",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -141,8 +112,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "/path/to/file.rst": [
                     Diagnostic(
-                        line(1),
-                        "document isn't included in any toctree",
+                        range=line(1),
+                        message="document isn't included in any toctree",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -154,8 +125,8 @@ def test_find_conf_py(root, candidates, expected):
             {
                 "c:\\path\\to\\file.rst": [
                     Diagnostic(
-                        line(1),
-                        "document isn't included in any toctree",
+                        range=line(1),
+                        message="document isn't included in any toctree",
                         severity=DiagnosticSeverity.Warning,
                         source="sphinx",
                     )
@@ -222,3 +193,165 @@ def test_report_diagnostics():
         mock.call("file:///home/username/Project/file.rst", DiagnosticList([4, 5, 6])),
     ]
     assert publish_diagnostics.call_args_list == expected
+
+
+class TestCreateApp:
+    """Test cases around creating Sphinx application instances."""
+
+    @py.test.fixture()
+    def rst(self):
+
+        rst = mock.Mock()
+        rst.app = None
+        rst.cache_dir = None
+        rst.logger = logging.getLogger("esbonio.lsp")
+
+        # Pygls functions / attributes
+        rst.workspace = mock.Mock()
+        rst.show_message = mock.Mock()
+
+        return rst
+
+    def test_default_case(self, rst, testdata):
+        """Ensure that we can successfully create an instance of a Sphinx
+        application in a "default" scenario."""
+
+        sphinx_default = testdata("sphinx-default", path_only=True)
+        rst.workspace.root_uri = f"file://{sphinx_default}"
+
+        manager = SphinxManagement(rst)
+        manager.create_app(SphinxConfig.default())
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_default)
+        assert rst.app.srcdir == str(sphinx_default)
+        assert ".cache/esbonio" in rst.app.outdir
+        assert rst.app.doctreedir == os.path.join(rst.app.outdir, "doctrees")
+
+    def test_missing_conf(self, rst):
+        """Ensure that if we cannot find a project's conf.py we notify the user."""
+
+        with tempfile.TemporaryDirectory() as confdir:
+            rst.workspace.root_uri = f"file://{confdir}"
+
+            manager = SphinxManagement(rst)
+            manager.create_app(SphinxConfig.default())
+
+            assert rst.app is None
+
+            (args, _) = rst.show_message.call_args
+            assert "Unable to find" in args[0]
+
+    def test_conf_dir_option(self, rst, testdata):
+        """Ensure that we can override the conf.py discovery mechanism if necessary."""
+
+        sphinx_extensions = testdata("sphinx-extensions", path_only=True)
+        data_dir = (sphinx_extensions / "..").resolve()
+        rst.workspace.root_uri = f"file://{data_dir}"
+
+        config = SphinxConfig(conf_dir=str(sphinx_extensions))
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_extensions)
+
+    def test_conf_dir_pattern(self, rst, testdata):
+        """Ensure that we can use 'variables' in our setting of the config dir."""
+
+        sphinx_extensions = testdata("sphinx-extensions", path_only=True)
+        data_dir = (sphinx_extensions / "..").resolve()
+        rst.workspace.root_uri = f"file://{data_dir}"
+
+        config = SphinxConfig(conf_dir="${workspaceRoot}/sphinx-extensions")
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_extensions)
+
+    def test_src_dir_absolute_path(self, rst, testdata):
+        """Ensure that we can override the src dir if necessary"""
+
+        sphinx_srcdir = testdata("sphinx-srcdir", path_only=True)
+        rst.workspace.root_uri = f"file://{sphinx_srcdir}"
+
+        srcdir = (sphinx_srcdir / "../sphinx-default").resolve()
+        config = SphinxConfig(src_dir=str(srcdir))
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_srcdir)
+        assert rst.app.srcdir == str(srcdir)
+
+    def test_src_dir_workspace_root(self, rst, testdata):
+        """Ensure that we can override the src dir with a path relative to the
+        workspace root."""
+
+        datadir = testdata("sphinx-srcdir", path_only=True).parent
+        rst.workspace.root_uri = f"file://{datadir}"
+
+        srcdir = "${workspaceRoot}/sphinx-default"
+        confdir = "${workspaceRoot}/sphinx-srcdir"
+        config = SphinxConfig(src_dir=srcdir, conf_dir=confdir)
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(datadir / "sphinx-srcdir")
+        assert rst.app.srcdir == str(datadir / "sphinx-default")
+
+    def test_src_dir_conf_dir(self, rst, testdata):
+        """Ensure that we can override the src dir with a path relative to the
+        conf dir."""
+
+        sphinx_srcdir = testdata("sphinx-srcdir", path_only=True)
+        rst.workspace.root_uri = f"file://{sphinx_srcdir}"
+
+        srcdir = "${confDir}/../sphinx-default"
+        config = SphinxConfig(src_dir=srcdir)
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_srcdir)
+        assert rst.app.srcdir == str((sphinx_srcdir / "../sphinx-default").resolve())
+
+    def test_set_cache_dir(self, rst, testdata):
+        """Ensure that we can override the cache dir if necessary"""
+
+        with tempfile.TemporaryDirectory() as cache_dir:
+            sphinx_default = testdata("sphinx-default", path_only=True)
+
+            rst.workspace.root_uri = f"file://{sphinx_default}"
+            rst.cache_dir = cache_dir
+
+            manager = SphinxManagement(rst)
+            manager.create_app(SphinxConfig.default())
+
+            assert rst.app is not None
+            assert rst.app.confdir == str(sphinx_default)
+            assert rst.app.srcdir == str(sphinx_default)
+            assert rst.app.outdir == cache_dir
+            assert rst.app.doctreedir == os.path.join(rst.app.outdir, "doctrees")
+
+    def test_sphinx_exception(self, rst, testdata):
+        """Ensure that we correctly handle the case where creating a Sphinx app throws
+        an exception."""
+
+        sphinx_error = testdata("sphinx-error", path_only=True)
+        rst.workspace.root_uri = f"file://{sphinx_error}"
+
+        manager = SphinxManagement(rst)
+        manager.create_app(SphinxConfig.default())
+
+        assert rst.app is None
+
+        (_, kwargs) = rst.show_message.call_args
+        assert "Unable to initialize Sphinx" in kwargs["message"]

@@ -22,26 +22,26 @@
     },
     "main": "dist/extension",
     "dependencies": {
-        "semver": "^7.3.2",
-        "vscode-languageclient": "^6.1.3"
+        "semver": "^7.3.5",
+        "vscode-languageclient": "^7.0.0"
     },
     "devDependencies": {
         "@types/glob": "^7.1.3",
-        "@types/mocha": "^8.2.0",
-        "@types/node": "^14.14.7",
-        "@types/semver": "^7.3.4",
-        "@types/vscode": "^1.43.0",
-        "mocha": "^8.2.1",
-        "ts-loader": "^8.0.11",
-        "typescript": "^4.0.5",
-        "vsce": "^1.81.1",
-        "vscode-test": "^1.4.1",
+        "@types/mocha": "^8.2.2",
+        "@types/node": "^14.14.44",
+        "@types/semver": "^7.3.5",
+        "@types/vscode": "1.52.0",
+        "mocha": "^8.4.0",
+        "ts-loader": "^8.2.0",
+        "typescript": "^4.2.4",
+        "vsce": "^1.88.0",
+        "vscode-test": "^1.5.2",
         "vscode-tmgrammar-test": "0.0.10",
-        "webpack": "^5.8.0",
-        "webpack-cli": "^4.2.0"
+        "webpack": "^5.36.2",
+        "webpack-cli": "^4.7.0"
     },
     "engines": {
-        "vscode": "^1.43.0"
+        "vscode": "^1.52.0"
     },
     "activationEvents": [
         "onLanguage:rst",
@@ -160,6 +160,18 @@
                         "Check for updates daily"
                     ],
                     "description": "How often should the extension check for updates to the Language Server"
+                },
+                "esbonio.sphinx.confDir": {
+                    "scope": "window",
+                    "type": "string",
+                    "default": "",
+                    "description": "The Language Server should be able to automatically find the folder containing your project's 'conf.py' file. However this setting can be used to force the Language Server to use a particular directory if required."
+                },
+                "esbonio.sphinx.srcDir": {
+                    "scope": "window",
+                    "type": "string",
+                    "default": "",
+                    "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.srcDir#` but this opton can override this if necessary."
                 }
             }
         },
@@ -177,12 +189,12 @@
             {
                 "command": "esbonio.insert.inlineLink",
                 "key": "alt+l",
-                "when": "editorTextFocus"
+                "when": "editorTextFocus && editorLangId == rst"
             },
             {
                 "command": "esbonio.insert.link",
                 "key": "alt+shift+l",
-                "when": "editorTextFocus"
+                "when": "editorTextFocus && editorLangId == rst"
             }
         ],
         "languages": [

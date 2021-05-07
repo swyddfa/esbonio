@@ -13,16 +13,16 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
-import esbonio
+import esbonio.lsp
 
 # -- Project information -----------------------------------------------------
 
 project = "Esbonio"
-copyright = "2020, Swyddfa Developers"
-author = "Swyddfa Developers"
+copyright = "2021, Alex Carney"
+author = "Alex Carney"
 
 # The full version, including alpha/beta/rc tags
-release = esbonio.__version__
+release = esbonio.lsp.__version__
 
 
 # -- General configuration ---------------------------------------------------
