@@ -1,3 +1,32 @@
+v0.6.0 - 2021-05-07v0.6.0 - 2021-05-07
+-------------------
+
+Features
+^^^^^^^^
+
+- The Language Server will now offer filepath completions for the ``image``,
+  ``figure``, ``include`` and ``literalinclude`` directives as well as the
+  ``download`` role. (`#34 <https://github.com/swyddfa/esbonio/issues/34>`_)
+- Language clients can now override the default ``conf.py`` discovery mechanism
+  by providing a ``esbonio.sphinx.confDir`` config option. (`#62 <https://github.com/swyddfa/esbonio/issues/62>`_)
+- Language clients can now override the assumption that Sphinx's ``srcdir``
+  is the same as its ``confdir`` by providing a ``esbonio.sphinx.srcDir``
+  config option. (`#142 <https://github.com/swyddfa/esbonio/issues/142>`_)
+
+
+Fixes
+^^^^^
+
+- The Language Server no longer throws an exception while handling errors raised
+  during initialization of a Sphinx application. (`#139 <https://github.com/swyddfa/esbonio/issues/139>`_)
+
+
+Misc
+^^^^
+
+- Upgrage pygls to v0.10.x (`#144 <https://github.com/swyddfa/esbonio/issues/144>`_)
+
+
 v0.5.1 - 2021-04-20
 -------------------
 

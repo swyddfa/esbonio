@@ -1,2 +1,0 @@
-Language clients can now override the default ``conf.py`` discovery mechanism
-by providing a ``esbonio.sphinx.confDir`` config option.
