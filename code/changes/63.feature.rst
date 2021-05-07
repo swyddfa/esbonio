@@ -1,3 +1,0 @@
-Add new ``esbonio.sphinx.confDir`` option that allows for a project's config
-directory to be explictly set should the automatic discovery in the Language
-Server fail.

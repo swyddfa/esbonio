@@ -1,3 +1,29 @@
+v0.6.0 - 2021-05-07v0.6.0 - 2021-05-07
+-------------------
+
+Features
+^^^^^^^^
+
+- Add new ``esbonio.sphinx.confDir`` option that allows for a project's config
+  directory to be explictly set should the automatic discovery in the Language
+  Server fail. (`#63 <https://github.com/swyddfa/esbonio/issues/63>`_)
+- Add new ``esbonio.sphinx.srcDir`` option that allows for overriding the
+  language server's assumption that source files are located in the same
+  place as the ``conf.py`` file. (`#142 <https://github.com/swyddfa/esbonio/issues/142>`_)
+
+
+Fixes
+^^^^^
+
+- Editor keybindings now only apply in ``*.rst`` files. (`#141 <https://github.com/swyddfa/esbonio/issues/141>`_)
+
+
+Misc
+^^^^
+
+- Update ``vscode-languageclient`` to v7.0.0 (`#152 <https://github.com/swyddfa/esbonio/issues/152>`_)
+
+
 v0.5.1 - 2021-03-01
 -------------------
 

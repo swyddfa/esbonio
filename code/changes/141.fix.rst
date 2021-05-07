@@ -1,1 +1,0 @@
-Editor keybindings now only apply in ``*.rst`` files.
