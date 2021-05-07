@@ -53,16 +53,24 @@ class LanguageFeature:
 class SphinxConfig:
     """Represents the `esbonio.sphinx.*` configuration namespace."""
 
-    def __init__(self, conf_dir: Optional[str] = None):
+    def __init__(self, conf_dir: Optional[str] = None, src_dir: Optional[str] = None):
         self.conf_dir = conf_dir
+        """Used to override the default 'conf.py' discovery mechanism."""
+
+        self.src_dir = src_dir
+        """Used to override the assumption that rst soruce files are
+        in the same folder as 'conf.py'"""
 
     @classmethod
     def default(cls):
-        return cls(conf_dir="")
+        return cls(conf_dir="", src_dir="")
 
     @classmethod
     def from_dict(cls, config):
-        return cls(conf_dir=config["confDir"])
+        conf_dir = config.get("confDir", "")
+        src_dir = config.get("srcDir", "")
+
+        return cls(conf_dir=conf_dir, src_dir=src_dir)
 
 
 class RstLanguageServer(LanguageServer):

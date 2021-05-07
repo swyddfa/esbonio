@@ -272,6 +272,57 @@ class TestCreateApp:
         assert rst.app is not None
         assert rst.app.confdir == str(sphinx_extensions)
 
+    def test_src_dir_absolute_path(self, rst, testdata):
+        """Ensure that we can override the src dir if necessary"""
+
+        sphinx_srcdir = testdata("sphinx-srcdir", path_only=True)
+        rst.workspace.root_uri = f"file://{sphinx_srcdir}"
+
+        srcdir = (sphinx_srcdir / "../sphinx-default").resolve()
+        config = SphinxConfig(src_dir=str(srcdir))
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_srcdir)
+        assert rst.app.srcdir == str(srcdir)
+
+    def test_src_dir_workspace_root(self, rst, testdata):
+        """Ensure that we can override the src dir with a path relative to the
+        workspace root."""
+
+        datadir = testdata("sphinx-srcdir", path_only=True).parent
+        rst.workspace.root_uri = f"file://{datadir}"
+
+        srcdir = "${workspaceRoot}/sphinx-default"
+        confdir = "${workspaceRoot}/sphinx-srcdir"
+        config = SphinxConfig(src_dir=srcdir, conf_dir=confdir)
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(datadir / "sphinx-srcdir")
+        assert rst.app.srcdir == str(datadir / "sphinx-default")
+
+    def test_src_dir_conf_dir(self, rst, testdata):
+        """Ensure that we can override the src dir with a path relative to the
+        conf dir."""
+
+        sphinx_srcdir = testdata("sphinx-srcdir", path_only=True)
+        rst.workspace.root_uri = f"file://{sphinx_srcdir}"
+
+        srcdir = "${confDir}/../sphinx-default"
+        config = SphinxConfig(src_dir=srcdir)
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_srcdir)
+        assert rst.app.srcdir == str((sphinx_srcdir / "../sphinx-default").resolve())
+
     def test_set_cache_dir(self, rst, testdata):
         """Ensure that we can override the cache dir if necessary"""
 
