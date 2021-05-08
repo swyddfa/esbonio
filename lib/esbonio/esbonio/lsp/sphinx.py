@@ -6,7 +6,7 @@ import pathlib
 import re
 
 from typing import Iterator, Optional, Tuple
-from urllib.parse import urlparse, unquote
+from urllib.parse import quote
 
 import appdirs
 
@@ -289,9 +289,10 @@ class SphinxManagement(lsp.LanguageFeature):
         for doc, diagnostics in self.diagnostics.items():
 
             if not doc.startswith("/"):
-                doc = "/" + doc
+                doc = "/" + doc.replace("\\", "/")
 
-            uri = f"file://{doc}"
+            uri = f"file://{quote(doc)}"
+            self.logger.debug("Publishing diagnostics for document: %s", uri)
             self.rst.publish_diagnostics(uri, diagnostics.data)
 
     def reset_diagnostics(self, filepath: str):
@@ -322,9 +323,8 @@ class SphinxManagement(lsp.LanguageFeature):
                 line_number = int(match.group("line"))
             except (TypeError, ValueError) as exc:
                 self.logger.debug(
-                    "Unable to parse line number: '%s'", match.group("line")
+                    "Unable to parse line number: '%s' - %s", match.group("line"), exc
                 )
-                self.logger.debug(exc)
 
                 line_number = 1
 
