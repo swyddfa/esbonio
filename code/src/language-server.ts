@@ -1,4 +1,5 @@
 import * as child_process from 'child_process'
+import * as net from "net";
 import * as semver from "semver";
 import * as vscode from "vscode";
 
@@ -8,7 +9,7 @@ import { promisify } from "util";
 import { LanguageClientOptions } from 'vscode-languageclient';
 import { Executable, LanguageClient, ServerOptions } from "vscode-languageclient/node";
 
-import { INSTALL_LANGUAGE_SERVER, UPDATE_LANGUAGE_SERVER } from "./commands"
+import { INSTALL_LANGUAGE_SERVER, UPDATE_LANGUAGE_SERVER, MIN_SERVER_VERSION } from "./commands"
 import { getOutputLogger } from "./log"
 
 
@@ -29,14 +30,14 @@ export class LanguageServerBootstrap {
   }
 
   /**
-   * Try and ensure a Language server is present in the current environment.
+   * Ensure a copy of the Language server is present in the current environment.
    *
    * First this will check to see if there is a version already installed. If not, the user
    * will be prompted to install it. If there is a version installed, it will check for updates
    * according to the update policy as per the user's settings.
    *
    * If we're unable to obtain any version of the server, the promise returned by this method
-   * will resolve to false, indicating that we should not try to start it.
+   * will resolve to the empty string, indicating that we should not try to start it.
    */
   async ensureLanguageServer(): Promise<string> {
 
@@ -68,6 +69,43 @@ export class LanguageServerBootstrap {
 
     await vscode.commands.executeCommand(UPDATE_LANGUAGE_SERVER)
     return latestVersion
+  }
+
+  /**
+   * Get the version number of the available Language Server.
+   *
+   * This will call ensureLanguageServer to make sure we have a version available to use.
+   * However, there's a chance the user's update policy means that the version available
+   * is not compatible with this version of the extension. So, if necessary this will prompt
+   * the user to see if they wish to upgrade their version.
+   *
+   * This will return the final version number.
+   */
+  async getLanguageServerVersion(): Promise<string> {
+    let logger = getOutputLogger()
+
+    let version = await this.ensureLanguageServer()
+    if (!version) {
+      logger.error("Language server is not available")
+      return ""
+    }
+
+    if (semver.lt(version, MIN_SERVER_VERSION)) {
+      let message = `Your current version of the Esbonio language server (v${version}) is outdated and
+      not compatible with this version of the extension.
+
+      Please upgrade to at least version v${MIN_SERVER_VERSION}.`
+
+      let response = await vscode.window.showErrorMessage(message, { title: "Update Server" })
+      if (!response || response.title !== "Update Server") {
+        return
+      }
+
+      await vscode.commands.executeCommand(UPDATE_LANGUAGE_SERVER)
+      version = await this.ensureLanguageServer()
+    }
+
+    return version
   }
 
   /**
@@ -187,10 +225,17 @@ export class LanguageServerBootstrap {
   }
 
   /**
-   * Return an appropriate language client instance.
+   * Return a LanguageClient setup to talk to the Language Server
+   * over stdio.
    */
-  getLanguageClient(): LanguageClient {
+  async getStdioLanguageClient(): Promise<LanguageClient | undefined> {
     let config = vscode.workspace.getConfiguration('esbonio')
+
+    let version = await this.getLanguageServerVersion()
+    if (!version) {
+      this.logger.error("Language server is not available.");
+      return undefined
+    }
 
     let pythonArgs = [
       '-m', 'esbonio',
@@ -216,15 +261,38 @@ export class LanguageServerBootstrap {
 
     this.logger.debug(`Server start command: ${JSON.stringify(exe)}`)
     let serverOptions: ServerOptions = exe
+    let clientOptions = this.getLanguageClientOptions()
 
-    let clientOptions: LanguageClientOptions = {
+    this.logger.info(`Starting language server v${version}`)
+    return new LanguageClient('esbonio', 'Esbonio Language Server', serverOptions, clientOptions)
+  }
+
+  getTcpClient(): LanguageClient {
+
+    let clientOptions = this.getLanguageClientOptions()
+    let serverOptions: ServerOptions = () => {
+      return new Promise((resolve) => {
+        const clientSocket = new net.Socket()
+        clientSocket.connect(8421, "127.0.0.1", () => {
+          resolve({
+            reader: clientSocket,
+            writer: clientSocket
+          })
+        })
+      })
+    }
+
+    this.logger.info("Creating TCP Language Client")
+    return new LanguageClient("esbonio", "Esbonio Language Server", serverOptions, clientOptions)
+  }
+
+  getLanguageClientOptions(): LanguageClientOptions {
+    return {
       documentSelector: [
         { scheme: 'file', language: 'rst' },
         { scheme: 'file', language: 'python' }
       ]
     }
-
-    return new LanguageClient('esbonio', 'Esbonio Language Server', serverOptions, clientOptions)
   }
 
   getLatestVersion(): Promise<string> {

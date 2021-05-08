@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Esbonio VSCode",
+            "name": "VSCode Extension",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
@@ -13,10 +13,13 @@
             "outFiles": [
                 "${workspaceRoot}/code/dist/**/*.js"
             ],
-            "preLaunchTask": "${defaultBuildTask}"
+            "preLaunchTask": "${defaultBuildTask}",
+            "env": {
+                "VSCODE_DEBUG": "true"
+            }
         },
         {
-            "name": "Esbonio VSCode Tests",
+            "name": "VSCode Tests",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
@@ -28,6 +31,28 @@
                 "${workspaceFolder}/code/dist/test/**/*.js"
             ],
             "preLaunchTask": "Build Tests",
+        },
+        {
+            "name": "Language Server",
+            "type": "python",
+            "request": "launch",
+            "module": "esbonio",
+            "justMyCode": false,
+            "args": [
+                "--port",
+                "8421"
+            ],
+            "python": "${command:python.interpreterPath}",
+            "cwd": "${workspaceRoot}"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "VSCode + Language Server",
+            "configurations": [
+                "Language Server",
+                "VSCode Extension"
+            ]
         }
     ]
 }

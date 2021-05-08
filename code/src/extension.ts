@@ -1,8 +1,7 @@
-import * as semver from "semver";
 import * as vscode from "vscode";
 import { LanguageClient, } from "vscode-languageclient/node";
 
-import { getPython, registerCommands, UPDATE_LANGUAGE_SERVER, MIN_SERVER_VERSION } from "./commands";
+import { getPython, registerCommands } from "./commands";
 import { LanguageServerBootstrap } from "./language-server";
 import { getOutputLogger } from "./log";
 
@@ -24,35 +23,20 @@ export async function activate(context: vscode.ExtensionContext) {
         let python = await getPython()
         bootstrap = new LanguageServerBootstrap(python, context)
 
-        let version = await bootstrap.ensureLanguageServer()
-        if (!version) {
-            logger.error("Language Server is not available")
-            return
+        if (process.env.VSCODE_DEBUG === "true") {
+            client = bootstrap.getTcpClient()
+        } else {
+            client = await bootstrap.getStdioLanguageClient()
         }
 
-        if (semver.lt(version, MIN_SERVER_VERSION)) {
-            let message = `Version v${version} of the Esbonio Language Server is outdated and not compatible with this
-            version of the extension.
-
-            Please install at least version v${MIN_SERVER_VERSION}`
-
-            let response = await vscode.window.showErrorMessage(message, { title: "Update Server" })
-            if (!response || response.title !== "Update Server") {
-                return
-            }
-
-            await vscode.commands.executeCommand(UPDATE_LANGUAGE_SERVER)
-            version = await bootstrap.ensureLanguageServer()
+        if (client) {
+            client.start()
         }
-
-        logger.info(`Starting Language Server v${version}`)
-
-        client = bootstrap.getLanguageClient()
-        client.start()
 
     } catch (err) {
         showError(err)
     }
+
 }
 
 export function deactivate(): Thenable<void> | undefined {
@@ -69,7 +53,7 @@ async function restartLanguageServer(): Promise<null> {
     logger.info("Stopping Language Server")
     await client.stop()
 
-    client = bootstrap.getLanguageClient()
+    client = await bootstrap.getStdioLanguageClient()
     logger.info("Starting Language Server")
     client.start()
 
