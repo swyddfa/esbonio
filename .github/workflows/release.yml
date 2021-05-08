@@ -304,14 +304,14 @@ jobs:
       run: |
         cd lib/esbonio
         python -m tox -e pkg
-      if: matrix.python-version == '3.8'
+      if: always() && matrix.python-version == '3.8'
 
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v1.0.0
       with:
         name: 'dist'
         path: lib/esbonio/dist
-      if: matrix.python-version == '3.8'
+      if: always() && matrix.python-version == '3.8'
 
     - name: Publish
       id: assets
