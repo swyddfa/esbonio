@@ -18,6 +18,9 @@
                     "include": "#directive"
                 },
                 {
+                    "include": "#literal-block"
+                },
+                {
                     "include": "#link-definition"
                 },
                 {
@@ -206,6 +209,18 @@
             "patterns": [
                 {
                     "include": "#body-element"
+                }
+            ]
+        },
+        "literal-block": {
+            "begin": "^(\\s*).*::$",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.literal-block.rst",
+            "patterns": [
+                {
+                    "begin": "^(\\s+)",
+                    "end": "^(?!\\1\\s+)(?!\\s*$)",
+                    "name": "string"
                 }
             ]
         },
