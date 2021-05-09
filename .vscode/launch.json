@@ -1,5 +1,31 @@
 {
     "version": "0.2.0",
+    "inputs": [
+        {
+            "id": "workspace",
+            "type": "pickString",
+            "description": "Pick the workspace root for this session",
+            "default": "code/",
+            "options": [
+                {
+                    "label": "code/",
+                    "value": "code"
+                },
+                {
+                    "label": "sphinx-default",
+                    "value": "lib/esbonio/tests/data/sphinx-default"
+                },
+                {
+                    "label": "sphinx-extensions",
+                    "value": "lib/esbonio/tests/data/sphinx-extensions"
+                },
+                {
+                    "label": "sphinx-srcdir",
+                    "value": "lib/esbonio/tests/data/sphinx-srcdir"
+                }
+            ]
+        }
+    ],
     "configurations": [
         {
             "name": "VSCode Extension",
@@ -8,7 +34,7 @@
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceRoot}/code",
-                "--folder-uri=${workspaceRoot}/lib/esbonio/tests/data/sphinx-default"
+                "--folder-uri=${workspaceRoot}/${input:workspace}"
             ],
             "outFiles": [
                 "${workspaceRoot}/code/dist/**/*.js"
