@@ -151,6 +151,14 @@ export class LanguageServerBootstrap {
       let version = await getInstalledVersion(this.python)
       this.logger.debug(`Current version: ${version}`)
 
+      // PEP 440 dev release numbers (https://www.python.org/dev/peps/pep-0440/#developmental-releases)
+      // are not compatible with semver. To allow people to test dev builds with the extension we
+      // need to transform the version number to be semver compatible.
+      if (version.includes(".dev")) {
+        version = version.replace(".dev", "-dev.")
+        this.logger.debug(`Semver compatible version: ${version}`)
+      }
+
       return version
     } catch (err) {
       this.logger.debug(`${err.message}`)
