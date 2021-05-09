@@ -201,10 +201,12 @@ def create_language_server(
         config_params = ConfigurationParams(
             items=[ConfigurationItem(section="esbonio.sphinx")]
         )
-        config = await rst.get_configuration_async(config_params)
 
-        rst.logger.debug("SphinxConfig: %s", config[0])
-        rst.run_hooks("initialized", SphinxConfig.from_dict(config[0]))
+        config_items = await rst.get_configuration_async(config_params)
+        sphinx_config = SphinxConfig.from_dict(config_items[0] or dict())
+
+        rst.logger.debug("SphinxConfig: %s", dump(sphinx_config))
+        rst.run_hooks("initialized", sphinx_config)
 
         rst.logger.info("LSP server initialized")
 

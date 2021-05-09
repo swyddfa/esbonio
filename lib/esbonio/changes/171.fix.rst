@@ -1,0 +1,2 @@
+The language server no longer crashes if clients don't send the ``esbonio.sphinx``
+configuration object
