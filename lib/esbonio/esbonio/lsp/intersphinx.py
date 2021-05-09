@@ -1,7 +1,7 @@
 """Intersphinx support."""
 import re
 
-from typing import List
+from typing import List, Optional
 from pygls.lsp.types import (
     CompletionItem,
     CompletionItemKind,
@@ -163,34 +163,24 @@ class InterSphinx(lsp.LanguageFeature):
         groups = match.groupdict()
 
         if "target" in groups:
-            return self.suggest_projects()
+            return self.suggest_projects(match)
 
         return self.suggest_targets(match)
 
-    def suggest_projects(self) -> List[CompletionItem]:
-        self.logger.info("Suggesting projects")
+    def suggest_projects(self, match: "re.Match") -> List[CompletionItem]:
 
-        return list(self.projects.values())
+        if self.get_target_types(match):
+            self.logger.info("Suggesting projects")
+            return list(self.projects.values())
+
+        return []
 
     def suggest_targets(self, match: "re.Match") -> List[CompletionItem]:
         # TODO: Detect if we're in an angle bracket e.g. :ref:`More Info <python:`
         # and add the closing '>' to the completion item insert text.
         self.logger.info("Suggesting targets")
 
-        role = match.group("name")
-        domain = match.group("domain") or ""
-        primary_domain = self.rst.app.config.primary_domain or ""
-
-        self.logger.debug("Suggesting targets for '%s%s'", domain, role)
-
-        # Attempt to find the right key..
-        for key in [f"{domain}{role}", f"{primary_domain}:{role}", f"std:{role}"]:
-            target_types = self.target_types.get(key, None)
-            self.logger.debug("Targets types for '%s': %s", key, target_types)
-
-            if target_types is not None:
-                break
-
+        target_types = self.get_target_types(match)
         if target_types is None:
             return []
 
@@ -204,6 +194,24 @@ class InterSphinx(lsp.LanguageFeature):
             targets += items.values()
 
         return targets
+
+    def get_target_types(self, match: "re.Match") -> Optional[List[str]]:
+        """Returns the list of target types that are targeted by the role we're
+        generating suggestions for."""
+
+        role = match.group("name")
+        domain = match.group("domain") or ""
+        primary_domain = self.rst.app.config.primary_domain or ""
+
+        self.logger.debug("Looking up target types for '%s%s'", domain, role)
+
+        # Attempt to find the right key..
+        for key in [f"{domain}{role}", f"{primary_domain}:{role}", f"std:{role}"]:
+            target_types = self.target_types.get(key, None)
+            self.logger.debug("Targets types for '%s': %s", key, target_types)
+
+            if target_types is not None:
+                return target_types
 
     def project_to_completion_item(self, project: str) -> CompletionItem:
         return CompletionItem(
