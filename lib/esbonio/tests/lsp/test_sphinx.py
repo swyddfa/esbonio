@@ -188,7 +188,7 @@ def test_report_diagnostics():
 
     expected = [
         mock.call(
-            "file:///c:\\Users\\username\\Project\\file.rst", DiagnosticList([1, 2, 3])
+            "file:///c%3A/Users/username/Project/file.rst", DiagnosticList([1, 2, 3])
         ),
         mock.call("file:///home/username/Project/file.rst", DiagnosticList([4, 5, 6])),
     ]

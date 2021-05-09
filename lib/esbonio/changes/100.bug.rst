@@ -1,1 +1,0 @@
-The Language Server now correctly offers completions for ``autoxxx`` directive options
