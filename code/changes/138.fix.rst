@@ -1,0 +1,1 @@
+Literal blocks now have the correct syntax highlighting
