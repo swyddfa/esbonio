@@ -79,7 +79,10 @@ export class ClientManager {
    */
   async restartServer() {
     this.logger.info("Stopping Language Server")
-    await this.client.stop()
+
+    if (this.client) {
+      await this.client.stop()
+    }
 
     await this.start()
   }
@@ -90,7 +93,7 @@ export class ClientManager {
    */
   private async getStdioClient(): Promise<LanguageClient | undefined> {
 
-    let version = this.server.bootstrap()
+    let version = await this.server.bootstrap()
     if (!version) {
       return undefined
     }
@@ -164,10 +167,21 @@ export class ClientManager {
     }
   }
 
+  /**
+   * Listen to changes in the user's configuration and decide if we should
+   * restart the language server.
+   */
   private async configChanged(event: vscode.ConfigurationChangeEvent) {
-    this.logger.debug(`ConfigurationChangeEvent ${JSON.stringify(event)}`)
+    this.logger.debug(`ConfigurationChangeEvent`)
 
-    if (event.affectsConfiguration("esbonio")) {
+    let config = vscode.workspace.getConfiguration("esbonio")
+
+    let conditions = [
+      event.affectsConfiguration("esbonio"),
+      !config.get<string>('server.pythonPath') && event.affectsConfiguration("python.pythonPath")
+    ]
+
+    if (conditions.some(i => i)) {
       await this.restartServer()
     }
   }

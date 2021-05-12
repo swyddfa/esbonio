@@ -237,11 +237,15 @@ export class ServerManager {
     }
 
     if (semver.lt(pythonVersion, Server.REQUIRED_PYTHON)) {
-      let message = `Configured Python has version v${pythonVersion} which is incompatible with the
+      let message = `Your configured Python version is v${pythonVersion} which is incompatible with the
       Esbonio Lanuage Server.
 
       Please choose an environment that has a Python version of at least v${Server.REQUIRED_PYTHON}`
       await vscode.window.showErrorMessage(message, { title: "Close" })
+
+      // TODO: Add a "pick interpreter" button that will automatically call the following
+      //       command. (Of course this should only be added if the python extension is available)
+      // await vscode.commands.executeCommand("python.setInterpreter")
       return undefined
     }
 

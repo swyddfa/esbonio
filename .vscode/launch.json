@@ -41,7 +41,7 @@
             ],
             "preLaunchTask": "${defaultBuildTask}",
             "env": {
-                "VSCODE_LSP_DEBUG": "true"
+                // "VSCODE_LSP_DEBUG": "true"
             }
         },
         {
