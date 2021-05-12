@@ -1,7 +1,7 @@
 import * as assert from "assert";
 import * as vscode from "vscode";
 import { after, before, beforeEach } from "mocha";
-import { EditorCommands, UserInput } from "../../commands";
+import { EditorCommands, UserInput } from "../../editor";
 
 /**
  * Class that mocks out the user input part of the vscode API.

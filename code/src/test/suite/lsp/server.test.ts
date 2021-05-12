@@ -1,7 +1,7 @@
 import * as assert from "assert";
-import { shouldPromptUpdate, shouldUpdate } from "../../language-server";
+import { shouldPromptUpdate, shouldUpdate } from "../../../lsp/server";
 
-suite("LanguageServerBootstrap", () => {
+suite("ServerManager", () => {
 
   suite("shouldUpdate", () => {
     let cases = [

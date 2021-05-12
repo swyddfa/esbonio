@@ -8,7 +8,7 @@ export enum LogLevel {
 
 let channelLogger: OutputChannelLogger
 
-abstract class Logger {
+export abstract class Logger {
   constructor(public level: LogLevel) { }
 
   abstract log(message: string): void
@@ -32,7 +32,7 @@ abstract class Logger {
   }
 }
 
-export class OutputChannelLogger extends Logger {
+class OutputChannelLogger extends Logger {
   private channel: vscode.OutputChannel
 
   constructor(name: string, level: LogLevel) {

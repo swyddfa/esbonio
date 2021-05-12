@@ -60,17 +60,17 @@
                 "category": "Esbonio"
             },
             {
-                "command": "esbonio.languageServer.install",
+                "command": "esbonio.server.install",
                 "title": "Install Language Server",
                 "category": "Esbonio"
             },
             {
-                "command": "esbonio.languageServer.update",
+                "command": "esbonio.server.update",
                 "title": "Update Language Server",
                 "category": "Esbonio"
             },
             {
-                "command": "esbonio.languageServer.restart",
+                "command": "esbonio.server.restart",
                 "title": "Restart Language Server",
                 "category": "Esbonio"
             }
