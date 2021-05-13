@@ -8,12 +8,20 @@
             "default": "code/",
             "options": [
                 {
-                    "label": "code/",
+                    "label": "code",
                     "value": "code"
+                },
+                {
+                    "label": "docs",
+                    "value": "docs"
                 },
                 {
                     "label": "sphinx-default",
                     "value": "lib/esbonio/tests/data/sphinx-default"
+                },
+                {
+                    "label": "sphinx-error",
+                    "value": "lib/esbonio/tests/data/sphinx-error"
                 },
                 {
                     "label": "sphinx-extensions",

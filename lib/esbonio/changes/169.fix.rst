@@ -1,0 +1,2 @@
+The language server now attempts to recreate the Sphinx application if the user
+updates a broken ``conf.py``.
