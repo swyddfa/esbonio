@@ -3,6 +3,7 @@ import importlib
 import json
 import logging
 import pathlib
+import textwrap
 
 from typing import List, Optional
 from urllib.parse import urlparse, unquote
@@ -132,11 +133,10 @@ class RstLanguageServer(LanguageServer):
 
     def run_hooks(self, kind: str, *args):
         """Run each hook registered of the given kind."""
-        self.logger.debug("Runnning %s hooks", kind)
         hooks = getattr(self, f"on_{kind}_hooks")
 
         for hook in hooks:
-            self.logger.debug("%s", hook)
+            self.logger.debug("Running '%s' hook %s", kind, hook)
             hook(*args)
 
 
@@ -161,11 +161,23 @@ def filepath_from_uri(uri: str) -> pathlib.Path:
 def dump(obj) -> str:
     """Debug helper function that converts an object to JSON."""
 
-    def default(obj):
-        if isinstance(obj, enum.Enum):
-            return obj.value
+    def default(o):
+        if isinstance(o, enum.Enum):
+            return o.value
 
-        return {k: v for k, v in obj.__dict__.items() if v is not None}
+        fields = {}
+        for k, v in o.__dict__.items():
+
+            if v is None:
+                continue
+
+            # Truncate long strings - but not uris!
+            if isinstance(v, str) and not k.lower().endswith("uri"):
+                v = textwrap.shorten(v, width=25)
+
+            fields[k] = v
+
+        return fields
 
     return json.dumps(obj, default=default)
 
@@ -189,14 +201,14 @@ def create_language_server(
 
     @server.feature(INITIALIZE)
     def on_initialize(rst: RstLanguageServer, params: InitializeParams):
-        rst.logger.debug("%s: %s", INITIALIZE, params)
+        rst.logger.debug("%s: %s", INITIALIZE, dump(params))
         rst.run_hooks("init")
 
         rst.logger.info("Language server started.")
 
     @server.feature(INITIALIZED)
     async def on_initialized(rst: RstLanguageServer, params: InitializedParams):
-        rst.logger.debug(INITIALIZED)
+        rst.logger.debug("%s: %s", INITIALIZED, dump(params))
 
         config_params = ConfigurationParams(
             items=[ConfigurationItem(section="esbonio.sphinx")]
@@ -215,7 +227,7 @@ def create_language_server(
     )
     def on_completion(rst: RstLanguageServer, params: CompletionParams):
         """Suggest completions based on the current context."""
-        rst.logger.debug("%s: %s", COMPLETION, params)
+        rst.logger.debug("%s: %s", COMPLETION, dump(params))
 
         uri = params.text_document.uri
         pos = params.position
@@ -235,21 +247,21 @@ def create_language_server(
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
     def on_open(rst: RstLanguageServer, params: DidOpenTextDocumentParams):
-        rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_OPEN, params)
+        rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_OPEN, dump(params))
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
-        rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_SAVE, params)
+        rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_SAVE, dump(params))
         rst.run_hooks("save", params)
 
     @server.feature("$/setTrace")
     def on_set_trace(rst: RstLanguageServer, params):
         """Dummy implementation, stops JsonRpcMethodNotFound exceptions."""
-        rst.logger.debug("$/setTrace: %s", params)
+        rst.logger.debug("$/setTrace: %s", dump(params))
 
     @server.feature("$/setTraceNotification")
     def vscode_set_trace(rst: RstLanguageServer, params):
         """Dummy implementation, stops JsonRpcMethodNotFound exceptions."""
-        rst.logger.debug("$/setTraceNotification: %s", params)
+        rst.logger.debug("$/setTraceNotification: %s", dump(params))
 
     return server
