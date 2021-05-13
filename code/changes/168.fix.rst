@@ -1,1 +1,0 @@
-It's now possible to test dev builds of the language server with the extension

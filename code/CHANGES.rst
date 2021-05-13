@@ -1,3 +1,20 @@
+v0.6.1 - 2021-05-13
+-------------------
+
+Fixes
+^^^^^
+
+- Literal blocks now have the correct syntax highlighting (`#138 <https://github.com/swyddfa/esbonio/issues/138>`_)
+- The language server is now reloaded when the Python environment is changed. (`#140 <https://github.com/swyddfa/esbonio/issues/140>`_)
+- It's now possible to test dev builds of the language server with the extension (`#168 <https://github.com/swyddfa/esbonio/issues/168>`_)
+
+
+Misc
+^^^^
+
+- Improvements to the development experience (`#170 <https://github.com/swyddfa/esbonio/issues/170>`_)
+
+
 v0.6.0 - 2021-05-07v0.6.0 - 2021-05-07
 -------------------
 
