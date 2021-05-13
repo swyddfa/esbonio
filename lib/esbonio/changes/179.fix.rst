@@ -1,1 +1,0 @@
-Sphinx build time exceptions are now caught and reported

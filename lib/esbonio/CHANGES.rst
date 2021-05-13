@@ -1,3 +1,22 @@
+v0.6.1 - 2021-05-13
+-------------------
+
+Fixes
+^^^^^
+
+- Intersphinx projects are now only included as completion suggestions for roles
+  which target object types in a project's inventory. (`#158 <https://github.com/swyddfa/esbonio/issues/158>`_)
+- Fix the uri representation of Windows paths when reporting diagnostics (`#166 <https://github.com/swyddfa/esbonio/issues/166>`_)
+- The language server now attempts to recreate the Sphinx application if the user
+  updates a broken ``conf.py``. (`#169 <https://github.com/swyddfa/esbonio/issues/169>`_)
+- The language server no longer crashes if clients don't send the ``esbonio.sphinx``
+  configuration object (`#171 <https://github.com/swyddfa/esbonio/issues/171>`_)
+- Docstrings from Sphinx and Docutils' base directive classes are no longer
+  included in completion suggestions as they are not useful. (`#178 <https://github.com/swyddfa/esbonio/issues/178>`_)
+- Sphinx build time exceptions are now caught and reported (`#179 <https://github.com/swyddfa/esbonio/issues/179>`_)
+- Fix ``Method not found: $/setTrace`` exceptions when running against VSCode (`#180 <https://github.com/swyddfa/esbonio/issues/180>`_)
+
+
 v0.6.0 - 2021-05-07
 -------------------
 

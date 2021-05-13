@@ -31,7 +31,7 @@ from pygls.lsp.types import (
 from pygls.workspace import Document
 from sphinx.application import Sphinx
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 
 
 BUILTIN_MODULES = [

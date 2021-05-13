@@ -1,2 +1,0 @@
-Docstrings from Sphinx and Docutils' base directive classes are no longer
-included in completion suggestions as they are not useful.

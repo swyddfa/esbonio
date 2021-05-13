@@ -1,1 +1,0 @@
-Fix ``Method not found: $/setTrace`` exceptions when running against VSCode

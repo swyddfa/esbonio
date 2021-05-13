@@ -1,2 +1,0 @@
-Intersphinx projects are now only included as completion suggestions for roles
-which target object types in a project's inventory.
