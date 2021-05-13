@@ -9,61 +9,59 @@ Completion
 
 The Language Server can offer auto complete suggestions in a variety of contexts
 
-Directives
-^^^^^^^^^^
+.. tabbed:: Directives
 
-Completion suggestions are offered for the directives themselves, as well as any
-options that they expose.
+   Completion suggestions are offered for the directives themselves, as well as any
+   options that they expose.
 
-.. figure:: ../../resources/images/complete-directive-demo.gif
-   :align: center
+   .. figure:: ../../resources/images/complete-directive-demo.gif
+      :align: center
 
-   Completing directive names
+      Completing directive names
 
-Roles
-^^^^^
-In the case of roles, completions can also be offered for the targets of certain
-supported role types
+.. tabbed:: Roles
 
-.. figure:: ../../resources/images/complete-role-demo.gif
-   :align: center
+   In the case of roles, completions can also be offered for the targets of certain
+   supported role types
 
-   Completing roles
+   .. figure:: ../../resources/images/complete-role-demo.gif
+      :align: center
+
+      Completing roles
 
 
-Target completions are currently supported for the following roles
+   Target completions are currently supported for the following roles
 
-.. hlist::
-   :columns: 3
+   .. hlist::
+      :columns: 3
 
-   * :rst:role:`sphinx:doc`
-   * :rst:role:`sphinx:download`
-   * :rst:role:`sphinx:envvar`
-   * :rst:role:`sphinx:ref`
-   * :rst:role:`sphinx:option`
-   * :rst:role:`sphinx:py:attr`
-   * :rst:role:`sphinx:py:class`
-   * :rst:role:`sphinx:py:data`
-   * :rst:role:`sphinx:py:exc`
-   * :rst:role:`sphinx:py:func`
-   * :rst:role:`sphinx:py:meth`
-   * :rst:role:`sphinx:py:mod`
-   * :rst:role:`sphinx:py:obj`
-   * :rst:role:`sphinx:term`
-   * :rst:role:`sphinx:token`
+      * :rst:role:`sphinx:doc`
+      * :rst:role:`sphinx:download`
+      * :rst:role:`sphinx:envvar`
+      * :rst:role:`sphinx:ref`
+      * :rst:role:`sphinx:option`
+      * :rst:role:`sphinx:py:attr`
+      * :rst:role:`sphinx:py:class`
+      * :rst:role:`sphinx:py:data`
+      * :rst:role:`sphinx:py:exc`
+      * :rst:role:`sphinx:py:func`
+      * :rst:role:`sphinx:py:meth`
+      * :rst:role:`sphinx:py:mod`
+      * :rst:role:`sphinx:py:obj`
+      * :rst:role:`sphinx:term`
+      * :rst:role:`sphinx:token`
 
-Inter Sphinx
-^^^^^^^^^^^^
+.. tabbed:: Intersphinx
 
-The :doc:`intersphinx <sphinx:usage/extensions/intersphinx>` extension that
-comes bundled with Sphinx makes it easy to link to other Sphinx projects. If
-configured for your project, the language server will offer autocomplete
-suggestions when appropriate.
+   The :doc:`intersphinx <sphinx:usage/extensions/intersphinx>` extension that
+   comes bundled with Sphinx makes it easy to link to other Sphinx projects. If
+   configured for your project, the language server will offer autocomplete
+   suggestions when appropriate.
 
-.. figure:: ../../resources/images/complete-intersphinx-demo.gif
-   :align: center
+   .. figure:: ../../resources/images/complete-intersphinx-demo.gif
+      :align: center
 
-   Completing references to the Python documentation.
+      Completing references to the Python documentation.
 
 Diagnostics
 -----------
