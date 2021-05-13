@@ -245,7 +245,12 @@ class Directives(lsp.LanguageFeature):
         documentation = inspect.getdoc(directive)
 
         # Ignore directives that do not provide their own documentation.
-        if documentation.startswith("Base class for reStructedText directives."):
+        if any(
+            [
+                documentation.startswith("Base class for reStructuredText directives."),
+                documentation.startswith("A base class for Sphinx directives."),
+            ]
+        ):
             documentation = None
 
         # TODO: Give better names to arguments based on what they represent.
