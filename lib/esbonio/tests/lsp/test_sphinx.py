@@ -172,6 +172,7 @@ def test_report_diagnostics():
     publish_diagnostics = mock.Mock()
 
     rst = mock.Mock()
+    rst.app.confdir = "/some/folder"
     rst.publish_diagnostics = publish_diagnostics
 
     manager = SphinxManagement(rst)

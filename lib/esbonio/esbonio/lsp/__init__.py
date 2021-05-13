@@ -240,19 +240,7 @@ def create_language_server(
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(rst: RstLanguageServer, params: DidSaveTextDocumentParams):
         rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_SAVE, params)
-
-        conf_py = None
-        uri = urlparse(params.text_document.uri)
-        filepath = pathlib.Path(unquote(uri.path))
-
-        if rst.app:
-            conf_py = pathlib.Path(rst.app.confdir, "conf.py")
-
-        # Re-initialize everything if the app's config has changed.
-        if filepath == conf_py:
-            rst.run_hooks("init")
-        else:
-            rst.run_hooks("save", params)
+        rst.run_hooks("save", params)
 
     @server.feature("$/setTraceNotification")
     def vscode_set_trace(rst: RstLanguageServer, params):
