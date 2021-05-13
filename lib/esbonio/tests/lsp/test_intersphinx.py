@@ -53,6 +53,13 @@ def intersphinx(sphinx):
             ],
         ),
         *itertools.product(
+            role_target_patterns("download"),
+            [
+                ("sphinx-default", set(), {"python", "sphinx"}),
+                ("sphinx-extensions", set(), {"python", "sphinx"}),
+            ],
+        ),
+        *itertools.product(
             role_target_patterns("ref"),
             [
                 ("sphinx-default", set(), {"python", "sphinx"}),

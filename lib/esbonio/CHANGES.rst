@@ -1,4 +1,4 @@
-v0.6.0 - 2021-05-07v0.6.0 - 2021-05-07
+v0.6.0 - 2021-05-07
 -------------------
 
 Features
@@ -19,6 +19,8 @@ Fixes
 
 - The Language Server no longer throws an exception while handling errors raised
   during initialization of a Sphinx application. (`#139 <https://github.com/swyddfa/esbonio/issues/139>`_)
+- The Language Server now correctly offers completions for ``autoxxx`` directive options
+  (`#100 <https://github.com/swyddfa/esbonio/issues/100>`_)
 
 
 Misc

@@ -88,7 +88,7 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version towncrier docutils
+        python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
 
       name: Install Build Tools
 
@@ -184,7 +184,7 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version towncrier docutils
+        python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
       name: Setup Environment
 
     - run: |
@@ -284,7 +284,7 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version towncrier docutils
+        python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
       name: Setup Environment
 
     - run: |
@@ -304,14 +304,14 @@ jobs:
       run: |
         cd lib/esbonio
         python -m tox -e pkg
-      if: matrix.python-version == '3.8'
+      if: always() && matrix.python-version == '3.8'
 
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v1.0.0
       with:
         name: 'dist'
         path: lib/esbonio/dist
-      if: matrix.python-version == '3.8'
+      if: always() && matrix.python-version == '3.8'
 
     - name: Publish
       id: assets

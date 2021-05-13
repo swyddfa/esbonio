@@ -1,22 +1,59 @@
 {
     "version": "0.2.0",
+    "inputs": [
+        {
+            "id": "workspace",
+            "type": "pickString",
+            "description": "Pick the workspace root for this session",
+            "default": "code/",
+            "options": [
+                {
+                    "label": "code",
+                    "value": "code"
+                },
+                {
+                    "label": "docs",
+                    "value": "docs"
+                },
+                {
+                    "label": "sphinx-default",
+                    "value": "lib/esbonio/tests/data/sphinx-default"
+                },
+                {
+                    "label": "sphinx-error",
+                    "value": "lib/esbonio/tests/data/sphinx-error"
+                },
+                {
+                    "label": "sphinx-extensions",
+                    "value": "lib/esbonio/tests/data/sphinx-extensions"
+                },
+                {
+                    "label": "sphinx-srcdir",
+                    "value": "lib/esbonio/tests/data/sphinx-srcdir"
+                }
+            ]
+        }
+    ],
     "configurations": [
         {
-            "name": "Esbonio VSCode",
+            "name": "VSCode Extension",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceRoot}/code",
-                "--folder-uri=${workspaceRoot}/lib/esbonio/tests/data/sphinx-default"
+                "--folder-uri=${workspaceRoot}/${input:workspace}"
             ],
             "outFiles": [
                 "${workspaceRoot}/code/dist/**/*.js"
             ],
-            "preLaunchTask": "${defaultBuildTask}"
+            "preLaunchTask": "${defaultBuildTask}",
+            "env": {
+                // "VSCODE_LSP_DEBUG": "true"
+            }
         },
         {
-            "name": "Esbonio VSCode Tests",
+            "name": "VSCode Tests",
             "type": "extensionHost",
             "request": "launch",
             "runtimeExecutable": "${execPath}",
@@ -28,6 +65,28 @@
                 "${workspaceFolder}/code/dist/test/**/*.js"
             ],
             "preLaunchTask": "Build Tests",
+        },
+        {
+            "name": "Language Server",
+            "type": "python",
+            "request": "launch",
+            "module": "esbonio",
+            "justMyCode": false,
+            "args": [
+                "--port",
+                "8421"
+            ],
+            "python": "${command:python.interpreterPath}",
+            "cwd": "${workspaceRoot}"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "VSCode + Language Server",
+            "configurations": [
+                "Language Server",
+                "VSCode Extension"
+            ]
         }
     ]
 }

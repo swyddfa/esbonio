@@ -6,7 +6,7 @@ import pathlib
 import re
 
 from typing import Iterator, Optional, Tuple
-from urllib.parse import urlparse, unquote
+from urllib.parse import quote
 
 import appdirs
 
@@ -209,38 +209,62 @@ class SphinxManagement(lsp.LanguageFeature):
         self.diagnostics = {}
         """A place to keep track of diagnostics we can publish to the client."""
 
+        self.config: Optional[lsp.SphinxConfig] = None
+        """The client's ``esbonio.sphinx.*`` configuration."""
+
+        self._conf_dir = None
+        """The directory containing Sphinx's ``conf.py``.
+
+        The source of truth for this value should be the Sphinx application itself,
+        **you should not depend on this value**.
+
+        The only use case for this field is when a user's config is broken and there
+        currently isn't a valid application object, we use this field to determine when
+        a user has edited their ``conf.py`` and we should try to restart the server.
+        """
+
         self.sphinx_log = logging.getLogger("esbonio.sphinx")
         """The logger that should be used by a Sphinx application"""
 
     def initialized(self, config: lsp.SphinxConfig):
-        self.create_app(config)
 
-        if self.rst.app is not None:
-            self.rst.app.build()
-
-        self.logger.debug("%s", config)
-        self.report_diagnostics()
+        self.config = config
+        self.logger.debug("%s", self.config)
+        self.create_app(self.config)
+        self.build_app()
 
     def save(self, params: DidSaveTextDocumentParams):
 
-        if self.rst.app is None:
-            return
-
         filepath = lsp.filepath_from_uri(params.text_document.uri)
 
-        self.reset_diagnostics(str(filepath))
-        self.rst.app.build()
-        self.report_diagnostics()
+        # There may not be an application instance - the user's config could
+        # be broken...
+        if not self.rst.app:
+
+            # ...did thry try to fix it?
+            if self._conf_dir and filepath == (self._conf_dir / "conf.py"):
+                self.create_app(self.config)
+
+        # The user has updated their conf.py, we need to recreate the application.
+        elif filepath == pathlib.Path(self.rst.app.confdir) / "conf.py":
+            self.create_app(self.config)
+
+        else:
+            self.reset_diagnostics(str(filepath))
+
+        self.build_app()
 
     def create_app(self, config: lsp.SphinxConfig):
         """Initialize a Sphinx application instance for the current workspace."""
         self.rst.logger.debug("Workspace root %s", self.rst.workspace.root_uri)
 
+        self.diagnostics = {}
         conf_dir = find_conf_dir(self.rst.workspace.root_uri, config)
 
         if conf_dir is None:
             self.rst.show_message(
-                'Unable to find your project\'s "conf.py", features wil be limited',
+                'Unable to find your project\'s "conf.py", features that depend on '
+                + "Sphinx will be unavailable",
                 msg_type=MessageType.Warning,
             )
             return
@@ -276,6 +300,7 @@ class SphinxManagement(lsp.LanguageFeature):
             )
         except Exception as exc:
             message = "Unable to initialize Sphinx, see output window for details."
+            self._conf_dir = conf_dir
 
             self.sphinx_log.error(exc)
             self.rst.show_message(
@@ -283,15 +308,34 @@ class SphinxManagement(lsp.LanguageFeature):
                 msg_type=MessageType.Error,
             )
 
+    def build_app(self):
+
+        if not self.rst.app:
+            return
+
+        try:
+            self.rst.app.build()
+        except Exception as exc:
+            message = "Unable to build documentation, see output window for details."
+
+            self.sphinx_log.error(exc)
+            self.rst.show_message(
+                message=message,
+                msg_type=MessageType.Error,
+            )
+
+        self.report_diagnostics()
+
     def report_diagnostics(self):
         """Publish the current set of diagnostics to the client."""
 
         for doc, diagnostics in self.diagnostics.items():
 
             if not doc.startswith("/"):
-                doc = "/" + doc
+                doc = "/" + doc.replace("\\", "/")
 
-            uri = f"file://{doc}"
+            uri = f"file://{quote(doc)}"
+            self.logger.debug("Publishing diagnostics for document: %s", uri)
             self.rst.publish_diagnostics(uri, diagnostics.data)
 
     def reset_diagnostics(self, filepath: str):
@@ -322,9 +366,8 @@ class SphinxManagement(lsp.LanguageFeature):
                 line_number = int(match.group("line"))
             except (TypeError, ValueError) as exc:
                 self.logger.debug(
-                    "Unable to parse line number: '%s'", match.group("line")
+                    "Unable to parse line number: '%s' - %s", match.group("line"), exc
                 )
-                self.logger.debug(exc)
 
                 line_number = 1
 
