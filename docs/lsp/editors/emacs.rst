@@ -42,7 +42,7 @@ it and that we want to use it with ``*.rst`` files
 
 To try this config on your machine.
 
-1. Make sure you've followed the :ref:`editor_integration_common`.
+1. Make sure you've followed the :ref:`editor_integration_setup`.
 2. Download :download:`eglot-minimal.el </_static/sample-configs/emacs/eglot-minimal.el>`
    to a folder of your choosing.
 3. Edit ``eglot-minimal.el`` to set the path to the Python executable to be the one in
@@ -81,7 +81,7 @@ configure packages with a single declaration
 
 To try this config on your machine
 
-1. Make sure you've followed the :ref:`editor_integration_common`.
+1. Make sure you've followed the :ref:`editor_integration_setup`.
 2. Download :download:`eglot-extended.el </_static/sample-configs/emacs/eglot-extended.el>`
    to a folder of your choosing.
 3. Edit ``eglot-extended.el`` to set the path to the Python executable to be the one in
@@ -114,7 +114,7 @@ start the server and then tell it when it should be started.
 
 To try this config on your machine
 
-1. Make sure that you've followed the :ref:`editor_integration_common`.
+1. Make sure that you've followed the :ref:`editor_integration_setup`.
 2. Download :download:`lsp-mode-minimal.el </_static/sample-configs/emacs/lsp-mode-minimal.el>`
    to a folder of your choosing.
 3. Edit ``lsp-mode-minimal.el`` to set the path to the Python executable to be the one
@@ -143,10 +143,10 @@ can be achieved with some additional configuration.
 
 This time the configuration makes use of `use-package`_ to install (if necessary) and
 configure packages with a single declaration
-		
+
 To try this config on your machine
 
-1. Make sure that you've followed the :ref:`editor_integration_common`.
+1. Make sure that you've followed the :ref:`editor_integration_setup`.
 2. Download :download:`lsp-mode-extended.el </_static/sample-configs/emacs/lsp-mode-extended.el>`
    to a folder of your choosing.
 3. Edit ``lsp-mode-extended.el`` to set the path to the Python executable to be the one
@@ -155,7 +155,7 @@ To try this config on your machine
    usual configuration::
 
      emacs -Q -l lsp-mode-extended.el
-     
+
 .. _eglot: https://github.com/joaotavora/eglot
 .. _lsp-mode: https://emacs-lsp.github.io/lsp-mode/
 .. _use-package: https://github.com/jwiegley/use-package

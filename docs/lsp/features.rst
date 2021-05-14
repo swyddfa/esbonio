@@ -17,7 +17,7 @@ The Language Server can offer auto complete suggestions in a variety of contexts
    .. figure:: ../../resources/images/complete-directive-demo.gif
       :align: center
 
-      Completing directive names
+      Completing directives
 
 .. tabbed:: Roles
 
