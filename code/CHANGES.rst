@@ -1,3 +1,12 @@
+v0.6.2 - 2021-05-14
+-------------------
+
+Fixes
+^^^^^
+
+- Fix minimum required language server version (`#183 <https://github.com/swyddfa/esbonio/issues/183>`_)
+
+
 v0.6.1 - 2021-05-13
 -------------------
 
