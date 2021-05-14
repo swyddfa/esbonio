@@ -1,4 +1,5 @@
 sphinx
-sphinx_rtd_theme
+sphinx-book-theme
+sphinx-panels
 ../lib/esbonio
 ../lib/esbonio-extensions
