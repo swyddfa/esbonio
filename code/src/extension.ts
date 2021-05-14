@@ -2,13 +2,14 @@ import * as vscode from "vscode";
 
 import { EditorCommands, VSCodeInput } from "./editor";
 import { getOutputLogger } from "./log";
-import { ClientManager } from "./lsp/client";
+import { EsbonioClient } from "./lsp/client";
 import { PythonManager } from "./lsp/python";
 import { ServerManager } from "./lsp/server";
+import { PreviewManager } from "./preview/view";
 
 export const RESTART_LANGUAGE_SERVER = 'esbonio.languageServer.restart'
 
-let client: ClientManager
+let esbonio: EsbonioClient
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -20,13 +21,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
     let python = new PythonManager(logger)
     let server = new ServerManager(logger, python, context)
-    client = new ClientManager(logger, python, server, context)
-    await client.start()
+    esbonio = new EsbonioClient(logger, python, server, context)
+
+    let preview = new PreviewManager(logger, context, esbonio)
+
+    await esbonio.start()
 }
 
 export function deactivate(): Thenable<void> | undefined {
-    if (!client) {
+    if (!esbonio) {
         return undefined
     }
-    return client.stop()
+    return esbonio.stop()
 }
