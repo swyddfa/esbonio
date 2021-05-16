@@ -13,6 +13,76 @@ import { ServerManager } from "./server";
 const DEBUG = process.env.VSCODE_LSP_DEBUG === "true"
 
 /**
+ * Represents the current sphinx configuration / configuration options
+ * that should be passed to sphinx on creation.
+ */
+export interface SphinxConfig {
+
+  /**
+   * Sphinx's version number.
+   */
+  version?: string
+
+  /**
+   * The directory containing the project's 'conf.py' file.
+   */
+  confDir?: string
+
+  /**
+   * The source dir containing the *.rst files for the project.
+   */
+  srcDir?: string
+
+  /**
+   * The directory where Sphinx's build output should be stored.
+   */
+  buildDir?: string
+
+  /**
+   * The name of the builder to use.
+   */
+  builderName?: string
+
+}
+
+/**
+ * Represents configuration options that should be passed to the server.
+ */
+export interface ServerConfig {
+
+  /**
+   * Used to set the logging level of the server.
+   */
+  logLevel: string
+
+  /**
+   * A list of logger names to suppress output from.
+   */
+  logFilter?: string[]
+
+  /**
+   * A flag to indicate if Sphinx build output should be omitted from the log.
+   */
+  hideSphinxOutput: boolean
+}
+
+/**
+ * The initialization options we pass to the server on startup.
+ */
+export interface InitOptions {
+
+  /**
+   * Language server specific options
+   */
+  server: ServerConfig
+
+  /**
+   * Sphinx specific options
+   */
+  sphinx: SphinxConfig
+}
+
+/**
  * While the ServerManager is responsible for installation and updates of the
  * Python package containing the server. The ClientManager is responsible for
  * creating the LanguageClient instance that utilmately starts the server
@@ -21,6 +91,8 @@ const DEBUG = process.env.VSCODE_LSP_DEBUG === "true"
 export class ClientManager {
 
   private client: LanguageClient
+  private sphinxConfig: SphinxConfig
+  private statusBar: vscode.StatusBarItem
 
   constructor(
     private logger: Logger,
@@ -34,6 +106,9 @@ export class ClientManager {
     context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration(this.configChanged, this)
     )
+
+    this.statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
+    context.subscriptions.push(this.statusBar)
   }
 
   async stop() {
@@ -47,7 +122,9 @@ export class ClientManager {
   /**
    * Start the language client.
    */
-  async start() {
+  async start(): Promise<void> {
+    this.statusBar.text = "$(sync~spin) Starting."
+    this.statusBar.show()
     if (DEBUG) {
       this.client = await this.getTcpClient()
     } else {
@@ -62,15 +139,29 @@ export class ClientManager {
           getOutputLogger().show()
         }
       })
-
+      this.statusBar.text = "$(error) Failed."
       return
     }
 
-    this.logger.info("Starting Language Server")
-    this.client.start()
-    if (DEBUG) {
-      // Auto open the output window when debugging
-      this.client.outputChannel.show()
+    try {
+      this.logger.info("Starting Language Server")
+      this.client.start()
+
+      if (DEBUG) {
+        // Auto open the output window when debugging
+        this.client.outputChannel.show()
+      }
+
+      await this.client.onReady()
+      this.client.onNotification("esbonio/sphinxConfiguration", params => {
+        this.sphinxConfig = params
+        this.statusBar.text = `$(check) Sphinx v${this.sphinxConfig.version}`
+      })
+
+
+      return
+    } catch (err) {
+      this.statusBar.text = "$(error) Failed."
     }
   }
 
@@ -98,27 +189,10 @@ export class ClientManager {
       return undefined
     }
 
-    let config = vscode.workspace.getConfiguration('esbonio')
     let command = await this.python.getCmd()
-
-    let cache = this.context.storageUri.path
-
     command.push(
       "-m", "esbonio",
-      "--cache-dir", join(cache, 'sphinx'),
-      "--log-level", config.get<string>('server.logLevel')
     )
-
-    if (config.get<boolean>('server.hideSphinxOutput')) {
-      command.push("--hide-sphinx-output")
-    }
-
-    let logFilters = config.get<string[]>('server.logFilter')
-    if (logFilters) {
-      logFilters.forEach(filterName => {
-        command.push("--log-filter", filterName)
-      })
-    }
 
     this.logger.debug(`Server start command: ${command.join(" ")}`)
 
@@ -159,12 +233,32 @@ export class ClientManager {
    * transport.
    */
   private getLanguageClientOptions(): LanguageClientOptions {
-    return {
+
+    let cache = this.context.storageUri.path
+    let config = vscode.workspace.getConfiguration("esbonio")
+
+    let initOptions: InitOptions = {
+      sphinx: {
+        srcDir: config.get<string>("sphinx.srcDir"),
+        confDir: config.get<string>('sphinx.confDir'),
+        buildDir: join(cache, 'sphinx')
+      },
+      server: {
+        logLevel: config.get<string>('server.logLevel'),
+        logFilter: config.get<string[]>('server.logFilter'),
+        hideSphinxOutput: config.get<boolean>('server.hideSphinxOutput')
+      }
+    }
+
+    let clientOptions: LanguageClientOptions = {
       documentSelector: [
         { scheme: 'file', language: 'rst' },
         { scheme: 'file', language: 'python' }
-      ]
+      ],
+      initializationOptions: initOptions
     }
+    this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions)}`)
+    return clientOptions
   }
 
   /**

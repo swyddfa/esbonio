@@ -33,7 +33,7 @@ def intersphinx(sphinx):
         rst.logger = logging.getLogger("rst")
 
         feature = InterSphinx(rst)
-        feature.initialized(None)
+        feature.initialize(None)
         instances[project] = feature
 
         return feature
