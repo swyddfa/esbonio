@@ -67,7 +67,7 @@ auto complete suggestions."""
 class Directives(lsp.LanguageFeature):
     """Directive support for the language server."""
 
-    def initialized(self, config: lsp.SphinxConfig):
+    def initialize(self, options: lsp.InitializationOptions):
         self.discover()
 
     def discover(self):

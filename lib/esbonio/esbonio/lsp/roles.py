@@ -107,7 +107,7 @@ COMPLETION_TARGETS = {
 class Roles(lsp.LanguageFeature):
     """Role support for the language server."""
 
-    def initialized(self, config: lsp.SphinxConfig):
+    def initialize(self, options: lsp.InitializationOptions):
         self.discover_roles()
         self.discover_targets()
 

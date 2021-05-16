@@ -72,7 +72,7 @@ Used when generating auto complete suggestions.
 class InterSphinx(lsp.LanguageFeature):
     """Intersphinx support for the language server."""
 
-    def initialized(self, config: lsp.SphinxConfig):
+    def initialize(self, options: lsp.InitializationOptions):
 
         self.targets = {}
         self.target_types = {}

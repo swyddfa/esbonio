@@ -221,13 +221,15 @@ class TestCreateApp:
         rst.workspace.root_uri = f"file://{sphinx_default}"
 
         manager = SphinxManagement(rst)
-        manager.create_app(SphinxConfig.default())
+        manager.create_app(SphinxConfig())
 
         assert rst.app is not None
         assert rst.app.confdir == str(sphinx_default)
         assert rst.app.srcdir == str(sphinx_default)
         assert ".cache/esbonio" in rst.app.outdir
-        assert rst.app.doctreedir == os.path.join(rst.app.outdir, "doctrees")
+        assert rst.app.doctreedir == os.path.realpath(
+            os.path.join(rst.app.outdir, "..", "doctrees")
+        )
 
     def test_missing_conf(self, rst):
         """Ensure that if we cannot find a project's conf.py we notify the user."""
@@ -236,7 +238,7 @@ class TestCreateApp:
             rst.workspace.root_uri = f"file://{confdir}"
 
             manager = SphinxManagement(rst)
-            manager.create_app(SphinxConfig.default())
+            manager.create_app(SphinxConfig())
 
             assert rst.app is None
 
@@ -250,7 +252,7 @@ class TestCreateApp:
         data_dir = (sphinx_extensions / "..").resolve()
         rst.workspace.root_uri = f"file://{data_dir}"
 
-        config = SphinxConfig(conf_dir=str(sphinx_extensions))
+        config = SphinxConfig(confDir=str(sphinx_extensions))
 
         manager = SphinxManagement(rst)
         manager.create_app(config)
@@ -265,7 +267,7 @@ class TestCreateApp:
         data_dir = (sphinx_extensions / "..").resolve()
         rst.workspace.root_uri = f"file://{data_dir}"
 
-        config = SphinxConfig(conf_dir="${workspaceRoot}/sphinx-extensions")
+        config = SphinxConfig(confDir="${workspaceRoot}/sphinx-extensions")
 
         manager = SphinxManagement(rst)
         manager.create_app(config)
@@ -280,7 +282,7 @@ class TestCreateApp:
         rst.workspace.root_uri = f"file://{sphinx_srcdir}"
 
         srcdir = (sphinx_srcdir / "../sphinx-default").resolve()
-        config = SphinxConfig(src_dir=str(srcdir))
+        config = SphinxConfig(srcDir=str(srcdir))
 
         manager = SphinxManagement(rst)
         manager.create_app(config)
@@ -298,7 +300,7 @@ class TestCreateApp:
 
         srcdir = "${workspaceRoot}/sphinx-default"
         confdir = "${workspaceRoot}/sphinx-srcdir"
-        config = SphinxConfig(src_dir=srcdir, conf_dir=confdir)
+        config = SphinxConfig(srcDir=srcdir, confDir=confdir)
 
         manager = SphinxManagement(rst)
         manager.create_app(config)
@@ -315,7 +317,7 @@ class TestCreateApp:
         rst.workspace.root_uri = f"file://{sphinx_srcdir}"
 
         srcdir = "${confDir}/../sphinx-default"
-        config = SphinxConfig(src_dir=srcdir)
+        config = SphinxConfig(srcDir=srcdir)
 
         manager = SphinxManagement(rst)
         manager.create_app(config)
@@ -327,20 +329,19 @@ class TestCreateApp:
     def test_set_cache_dir(self, rst, testdata):
         """Ensure that we can override the cache dir if necessary"""
 
-        with tempfile.TemporaryDirectory() as cache_dir:
+        with tempfile.TemporaryDirectory() as build_dir:
             sphinx_default = testdata("sphinx-default", path_only=True)
 
             rst.workspace.root_uri = f"file://{sphinx_default}"
-            rst.cache_dir = cache_dir
 
             manager = SphinxManagement(rst)
-            manager.create_app(SphinxConfig.default())
+            manager.create_app(SphinxConfig(buildDir=build_dir))
 
             assert rst.app is not None
             assert rst.app.confdir == str(sphinx_default)
             assert rst.app.srcdir == str(sphinx_default)
-            assert rst.app.outdir == cache_dir
-            assert rst.app.doctreedir == os.path.join(rst.app.outdir, "doctrees")
+            assert rst.app.outdir == os.path.join(build_dir, "html")
+            assert rst.app.doctreedir == os.path.join(build_dir, "doctrees")
 
     def test_sphinx_exception(self, rst, testdata):
         """Ensure that we correctly handle the case where creating a Sphinx app throws
@@ -350,7 +351,7 @@ class TestCreateApp:
         rst.workspace.root_uri = f"file://{sphinx_error}"
 
         manager = SphinxManagement(rst)
-        manager.create_app(SphinxConfig.default())
+        manager.create_app(SphinxConfig())
 
         assert rst.app is None
 

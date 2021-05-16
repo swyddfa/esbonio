@@ -146,6 +146,19 @@ def get_src_dir(
     return src_dir
 
 
+def get_build_dir(conf_dir: pathlib.Path, config: lsp.SphinxConfig) -> pathlib.Path:
+
+    if config.build_dir is not None:
+        return pathlib.Path(config.build_dir)
+
+    # Try to pick a sensible dir based on the project's location
+    cache = appdirs.user_cache_dir("esbonio", "swyddfa")
+    project = hashlib.md5(str(conf_dir).encode()).hexdigest()
+    build_dir = pathlib.Path(cache) / project
+
+    return build_dir
+
+
 def find_conf_dir(root_uri: str, config: lsp.SphinxConfig) -> Optional[pathlib.Path]:
     """Attempt to find Sphinx's configuration file in the given workspace."""
 
@@ -226,10 +239,10 @@ class SphinxManagement(lsp.LanguageFeature):
         self.sphinx_log = logging.getLogger("esbonio.sphinx")
         """The logger that should be used by a Sphinx application"""
 
-    def initialized(self, config: lsp.SphinxConfig):
+    def initialize(self, options: lsp.InitializationOptions):
 
-        self.config = config
-        self.logger.debug("%s", self.config)
+        self.config = options.sphinx
+        self.logger.debug("SphinxConfig %s", self.config.dict())
         self.create_app(self.config)
         self.build_app()
 
@@ -269,21 +282,16 @@ class SphinxManagement(lsp.LanguageFeature):
             )
             return
 
-        if self.rst.cache_dir is not None:
-            build_dir = self.rst.cache_dir
-        else:
-            # Try to pick a sensible dir based on the project's location
-            cache = appdirs.user_cache_dir("esbonio", "swyddfa")
-            project = hashlib.md5(str(conf_dir).encode()).hexdigest()
-            build_dir = pathlib.Path(cache) / project
-
+        builder_name = config.builder_name
         src_dir = get_src_dir(self.rst.workspace.root_uri, conf_dir, config)
+        build_dir = get_build_dir(conf_dir, config)
         doctree_dir = pathlib.Path(build_dir) / "doctrees"
+        build_dir /= builder_name
 
         self.rst.logger.debug("Config dir %s", conf_dir)
         self.rst.logger.debug("Src dir %s", src_dir)
         self.rst.logger.debug("Build dir %s", build_dir)
-        self.rst.logger.debug("Doctree dir %s", str(doctree_dir))
+        self.rst.logger.debug("Doctree dir %s", doctree_dir)
 
         # Disable color escape codes in Sphinx's log messages
         console.nocolor()
