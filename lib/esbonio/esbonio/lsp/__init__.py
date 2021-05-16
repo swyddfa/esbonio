@@ -255,6 +255,7 @@ def create_language_server(modules: List[str]) -> RstLanguageServer:
     @server.feature(INITIALIZED)
     def on_initialized(rst: RstLanguageServer, params: InitializedParams):
         rst.logger.debug("%s: %s", INITIALIZED, dump(params))
+        rst.run_hooks("initialized")
 
     @server.feature(
         COMPLETION, CompletionOptions(trigger_characters=[".", ":", "`", "<", "/"])

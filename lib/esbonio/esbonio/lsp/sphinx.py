@@ -18,6 +18,7 @@ from pygls.lsp.types import (
     Position,
     Range,
 )
+from sphinx import __version__ as __sphinx_version__
 from sphinx.application import Sphinx
 from sphinx.domains import Domain
 from sphinx.util import console
@@ -245,6 +246,22 @@ class SphinxManagement(lsp.LanguageFeature):
         self.logger.debug("SphinxConfig %s", self.config.dict())
         self.create_app(self.config)
         self.build_app()
+
+    def initialized(self):
+
+        if not self.rst.app:
+            return
+
+        app = self.rst.app
+        params = lsp.SphinxConfig(
+            version=__sphinx_version__,
+            confDir=app.confdir,
+            srcDir=app.srcdir,
+            buildDir=app.outdir,
+            builderName=app.builder.name,
+        )
+        self.rst.logger.debug("Final Sphinx Config: %s", params.dict(by_alias=True))
+        self.rst.send_notification("esbonio/sphinxConfiguration", params)
 
     def save(self, params: DidSaveTextDocumentParams):
 
