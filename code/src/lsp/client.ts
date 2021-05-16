@@ -91,6 +91,8 @@ export interface InitOptions {
 export class ClientManager {
 
   private client: LanguageClient
+  private sphinxConfig: SphinxConfig
+  private statusBar: vscode.StatusBarItem
 
   constructor(
     private logger: Logger,
@@ -104,6 +106,9 @@ export class ClientManager {
     context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration(this.configChanged, this)
     )
+
+    this.statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
+    context.subscriptions.push(this.statusBar)
   }
 
   async stop() {
@@ -117,7 +122,9 @@ export class ClientManager {
   /**
    * Start the language client.
    */
-  async start() {
+  async start(): Promise<void> {
+    this.statusBar.text = "$(sync~spin) Starting."
+    this.statusBar.show()
     if (DEBUG) {
       this.client = await this.getTcpClient()
     } else {
@@ -132,15 +139,29 @@ export class ClientManager {
           getOutputLogger().show()
         }
       })
-
+      this.statusBar.text = "$(error) Failed."
       return
     }
 
-    this.logger.info("Starting Language Server")
-    this.client.start()
-    if (DEBUG) {
-      // Auto open the output window when debugging
-      this.client.outputChannel.show()
+    try {
+      this.logger.info("Starting Language Server")
+      this.client.start()
+
+      if (DEBUG) {
+        // Auto open the output window when debugging
+        this.client.outputChannel.show()
+      }
+
+      await this.client.onReady()
+      this.client.onNotification("esbonio/sphinxConfiguration", params => {
+        this.sphinxConfig = params
+        this.statusBar.text = `$(check) Sphinx v${this.sphinxConfig.version}`
+      })
+
+
+      return
+    } catch (err) {
+      this.statusBar.text = "$(error) Failed."
     }
   }
 
