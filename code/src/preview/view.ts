@@ -12,11 +12,12 @@ import { EsbonioClient } from "../lsp/client";
  */
 export class PreviewManager {
 
+  private htmlPath: string
   private panel: vscode.WebviewPanel
 
   constructor(
     private logger: Logger,
-    private context: vscode.ExtensionContext,
+    context: vscode.ExtensionContext,
     private esbonio: EsbonioClient
   ) {
     context.subscriptions.push(
@@ -25,6 +26,10 @@ export class PreviewManager {
     context.subscriptions.push(
       vscode.commands.registerTextEditorCommand(Commands.OPEN_PREVIEW_TO_SIDE, this.openPreviewToSide, this)
     )
+
+    esbonio.onBuildComplete(async () => {
+      await this.reloadView()
+    })
   }
 
   async openPreview(editor: vscode.TextEditor) {
@@ -33,6 +38,15 @@ export class PreviewManager {
 
   async openPreviewToSide(editor: vscode.TextEditor) {
     return await this.previewEditor(editor, vscode.ViewColumn.Beside)
+  }
+
+  private async reloadView() {
+    if (!this.panel || !this.htmlPath) {
+      return
+    }
+
+    this.logger.debug("Reloading preview.")
+    this.panel.webview.html = await this.getHtmlContent(this.htmlPath)
   }
 
   private async previewEditor(editor: vscode.TextEditor, placement: vscode.ViewColumn) {
@@ -58,6 +72,7 @@ export class PreviewManager {
     )
 
     this.panel.webview.html = await this.getHtmlContent(htmlPath)
+    this.htmlPath = htmlPath
   }
 
   /**
