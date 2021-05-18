@@ -27,6 +27,8 @@ export class PreviewManager {
       vscode.commands.registerTextEditorCommand(Commands.OPEN_PREVIEW_TO_SIDE, this.openPreviewToSide, this)
     )
 
+    vscode.window.onDidChangeActiveTextEditor(this.onDidChangeEditor, this)
+
     esbonio.onBuildComplete(async () => {
       await this.reloadView()
     })
@@ -38,6 +40,25 @@ export class PreviewManager {
 
   async openPreviewToSide(editor: vscode.TextEditor) {
     return await this.previewEditor(editor, vscode.ViewColumn.Beside)
+  }
+
+  /**
+   * Called whenever the user changes their active text editor.
+   * Used to switch the preview to match the current source file
+   * the user is editing.
+   */
+  private async onDidChangeEditor(editor: vscode.TextEditor) {
+    if (!editor) {
+      return
+    }
+
+    let htmlPath = await this.getHtmlPath(editor)
+    if (!htmlPath) {
+      return
+    }
+
+    this.htmlPath = htmlPath
+    await this.reloadView()
   }
 
   private async reloadView() {
