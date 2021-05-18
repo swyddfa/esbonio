@@ -7,6 +7,10 @@ export namespace Server {
 }
 
 export namespace Commands {
+
+  export const OPEN_PREVIEW = "esbonio.preview.open"
+  export const OPEN_PREVIEW_TO_SIDE = "esbonio.preview.openSide"
+
   export const INSTALL_SERVER = "esbonio.server.install"
   export const RESTART_SERVER = "esbonio.server.restart"
   export const UPDATE_SERVER = "esbonio.server.update"

@@ -349,6 +349,7 @@ class SphinxManagement(lsp.LanguageFeature):
                 msg_type=MessageType.Error,
             )
 
+        self.rst.send_notification("esbonio/buildComplete", {})
         self.report_diagnostics()
 
     def report_diagnostics(self):

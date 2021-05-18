@@ -1,0 +1,1 @@
+Add a statusbar item that indicates the state of the language server.

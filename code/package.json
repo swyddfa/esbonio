@@ -22,11 +22,13 @@
     },
     "main": "dist/extension",
     "dependencies": {
+        "jsdom": "^16.5.3",
         "semver": "^7.3.5",
         "vscode-languageclient": "^7.0.0"
     },
     "devDependencies": {
         "@types/glob": "^7.1.3",
+        "@types/jsdom": "^16.2.10",
         "@types/mocha": "^8.2.2",
         "@types/node": "^14.14.44",
         "@types/semver": "^7.3.5",
@@ -57,6 +59,18 @@
             {
                 "command": "esbonio.insert.inlineLink",
                 "title": "Insert Inline Link",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.preview.open",
+                "title": "Open Preview",
+                "icon": "$(preview)",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.preview.openSide",
+                "title": "Open Preview to the Side",
+                "icon": "$(open-preview)",
                 "category": "Esbonio"
             },
             {
@@ -208,6 +222,16 @@
                 ],
                 "configuration": "./rst-language-configuration.json"
             }
-        ]
+        ],
+        "menus": {
+            "editor/title": [
+                {
+                    "command": "esbonio.preview.openSide",
+                    "alt": "esbonio.preview.open",
+                    "group": "navigation",
+                    "when": "resourceLangId == rst"
+                }
+            ]
+        }
     }
 }

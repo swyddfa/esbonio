@@ -84,15 +84,22 @@ export interface InitOptions {
 
 /**
  * While the ServerManager is responsible for installation and updates of the
- * Python package containing the server. The ClientManager is responsible for
+ * Python package containing the server. The EsbonioClient is responsible for
  * creating the LanguageClient instance that utilmately starts the server
  * running.
  */
-export class ClientManager {
+export class EsbonioClient {
+
+  /**
+   * If present, this represents the current configuration of the Sphinx instance
+   * managed by the Language server.
+   */
+  public sphinxConfig?: SphinxConfig
 
   private client: LanguageClient
-  private sphinxConfig: SphinxConfig
   private statusBar: vscode.StatusBarItem
+
+  private buildCompleteCallback
 
   constructor(
     private logger: Logger,
@@ -158,6 +165,12 @@ export class ClientManager {
         this.statusBar.text = `$(check) Sphinx v${this.sphinxConfig.version}`
       })
 
+      this.client.onNotification("esbonio/buildComplete", params => {
+        this.logger.debug("Build complete")
+        if (this.buildCompleteCallback) {
+          this.buildCompleteCallback()
+        }
+      })
 
       return
     } catch (err) {
@@ -278,5 +291,9 @@ export class ClientManager {
     if (conditions.some(i => i)) {
       await this.restartServer()
     }
+  }
+
+  onBuildComplete(callback) {
+    this.buildCompleteCallback = callback
   }
 }
