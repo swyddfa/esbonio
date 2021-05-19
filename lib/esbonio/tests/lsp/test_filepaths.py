@@ -4,8 +4,6 @@ import unittest.mock as mock
 
 import py.test
 
-from pygls.lsp.types import CompletionItemKind
-
 from esbonio.lsp.filepaths import FilepathCompletions
 from esbonio.lsp.testing import (
     completion_test,

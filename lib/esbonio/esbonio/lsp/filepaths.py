@@ -18,6 +18,7 @@ from esbonio.lsp import RstLanguageServer, LanguageFeature
 from esbonio.lsp.directives import DIRECTIVE
 from esbonio.lsp.roles import PARTIAL_PLAIN_TARGET, PARTIAL_ALIASED_TARGET
 
+
 # TODO: Would it be better to make the role and directive language features extensible
 #       and have this and the intersphinx feature contribute suggestions when they know
 #       something?..

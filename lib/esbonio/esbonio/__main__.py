@@ -1,11 +1,9 @@
 import argparse
-import logging
 import sys
 
 import esbonio.lsp as lsp
 
-from esbonio.lsp import RstLanguageServer, __version__
-from esbonio.lsp.logger import LspHandler
+from esbonio.lsp import __version__
 
 
 def start_server(args):
