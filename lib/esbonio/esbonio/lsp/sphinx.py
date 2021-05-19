@@ -4,20 +4,18 @@ import hashlib
 import logging
 import pathlib
 import re
-
-from typing import Iterator, Optional, Tuple
+from typing import Iterator
+from typing import Optional
+from typing import Tuple
 from urllib.parse import quote
 
 import appdirs
-
-from pygls.lsp.types import (
-    Diagnostic,
-    DiagnosticSeverity,
-    DidSaveTextDocumentParams,
-    MessageType,
-    Position,
-    Range,
-)
+from pygls.lsp.types import Diagnostic
+from pygls.lsp.types import DiagnosticSeverity
+from pygls.lsp.types import DidSaveTextDocumentParams
+from pygls.lsp.types import MessageType
+from pygls.lsp.types import Position
+from pygls.lsp.types import Range
 from sphinx import __version__ as __sphinx_version__
 from sphinx.application import Sphinx
 from sphinx.domains import Domain

@@ -1,18 +1,15 @@
 """Role support."""
 import collections
 import re
-
 from typing import List
 
 from docutils.parsers.rst import roles
-from pygls.lsp.types import (
-    CompletionItem,
-    CompletionItemKind,
-    DidSaveTextDocumentParams,
-    Position,
-    Range,
-    TextEdit,
-)
+from pygls.lsp.types import CompletionItem
+from pygls.lsp.types import CompletionItemKind
+from pygls.lsp.types import DidSaveTextDocumentParams
+from pygls.lsp.types import Position
+from pygls.lsp.types import Range
+from pygls.lsp.types import TextEdit
 from pygls.workspace import Document
 
 import esbonio.lsp as lsp

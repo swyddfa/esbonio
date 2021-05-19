@@ -4,14 +4,10 @@ import unittest.mock as mock
 
 import py.test
 
-from pygls.lsp.types import CompletionItemKind
-
 from esbonio.lsp.filepaths import FilepathCompletions
-from esbonio.lsp.testing import (
-    completion_test,
-    directive_argument_patterns,
-    role_target_patterns,
-)
+from esbonio.lsp.testing import completion_test
+from esbonio.lsp.testing import directive_argument_patterns
+from esbonio.lsp.testing import role_target_patterns
 
 ROOT_FILES = {
     "_static",
@@ -43,21 +39,46 @@ def trigger_cases(path=None):
         *itertools.product(
             [*trigger_cases("/"), *trigger_cases("/conf")],
             [
-                ("sphinx-default", "index.rst", ROOT_FILES, None,),
-                ("sphinx-default", "theorems/pythagoras.rst", ROOT_FILES, None,),
+                (
+                    "sphinx-default",
+                    "index.rst",
+                    ROOT_FILES,
+                    None,
+                ),
+                (
+                    "sphinx-default",
+                    "theorems/pythagoras.rst",
+                    ROOT_FILES,
+                    None,
+                ),
             ],
         ),
         *itertools.product(
             trigger_cases(),
             [
-                ("sphinx-default", "index.rst", ROOT_FILES, None,),
-                ("sphinx-default", "theorems/pythagoras.rst", THEOREM_FILES, None,),
+                (
+                    "sphinx-default",
+                    "index.rst",
+                    ROOT_FILES,
+                    None,
+                ),
+                (
+                    "sphinx-default",
+                    "theorems/pythagoras.rst",
+                    THEOREM_FILES,
+                    None,
+                ),
             ],
         ),
         *itertools.product(
             trigger_cases("../"),
             [
-                ("sphinx-default", "theorems/pythagoras.rst", ROOT_FILES, None,),
+                (
+                    "sphinx-default",
+                    "theorems/pythagoras.rst",
+                    ROOT_FILES,
+                    None,
+                ),
                 (
                     "sphinx-default",
                     "index.rst",
@@ -69,8 +90,18 @@ def trigger_cases(path=None):
         *itertools.product(
             trigger_cases("/theorems/"),
             [
-                ("sphinx-default", "index.rst", THEOREM_FILES, None,),
-                ("sphinx-default", "theorems/pythagoras.rst", THEOREM_FILES, None,),
+                (
+                    "sphinx-default",
+                    "index.rst",
+                    THEOREM_FILES,
+                    None,
+                ),
+                (
+                    "sphinx-default",
+                    "theorems/pythagoras.rst",
+                    THEOREM_FILES,
+                    None,
+                ),
             ],
         ),
     ],

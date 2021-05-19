@@ -1,8 +1,9 @@
 """Utility functions to help with testing Language Server features."""
 import logging
 import pathlib
-
-from typing import List, Optional, Set
+from typing import List
+from typing import Optional
+from typing import Set
 
 from pygls.lsp.types import Position
 from pygls.workspace import Document

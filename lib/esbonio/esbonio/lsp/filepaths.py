@@ -7,16 +7,21 @@ the roles or directives that accept filepaths as arguments.
 """
 import pathlib
 import re
+from typing import Dict
+from typing import List
 
-from typing import Dict, List
-
-from pygls.lsp.types import CompletionItem, CompletionItemKind, Position
+from pygls.lsp.types import CompletionItem
+from pygls.lsp.types import CompletionItemKind
+from pygls.lsp.types import Position
 from pygls.workspace import Document
 
 import esbonio.lsp as lsp
-from esbonio.lsp import RstLanguageServer, LanguageFeature
+from esbonio.lsp import LanguageFeature
+from esbonio.lsp import RstLanguageServer
 from esbonio.lsp.directives import DIRECTIVE
-from esbonio.lsp.roles import PARTIAL_PLAIN_TARGET, PARTIAL_ALIASED_TARGET
+from esbonio.lsp.roles import PARTIAL_ALIASED_TARGET
+from esbonio.lsp.roles import PARTIAL_PLAIN_TARGET
+
 
 # TODO: Would it be better to make the role and directive language features extensible
 #       and have this and the intersphinx feature contribute suggestions when they know
@@ -76,7 +81,9 @@ class FilepathCompletions(LanguageFeature):
 
         kind = CompletionItemKind.Folder if path.is_dir() else CompletionItemKind.File
         return CompletionItem(
-            label=str(path.name), kind=kind, insert_text=f"{path.name}",
+            label=str(path.name),
+            kind=kind,
+            insert_text=f"{path.name}",
         )
 
 

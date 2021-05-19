@@ -1,7 +1,6 @@
 import pathlib
 
 import py.test
-
 from sphinx.application import Sphinx
 
 
