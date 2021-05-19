@@ -297,7 +297,9 @@ jobs:
 
     - run: |
         cd lib/esbonio
-        python -m tox -e py`echo ${{ matrix.python-version }} | tr -d .`
+
+        version=$(echo ${{ matrix.python-version }} | tr -d .)
+        python -m tox -e `tox -l | grep $version | tr '\n' ','`
       name: Test
 
     - name: Package

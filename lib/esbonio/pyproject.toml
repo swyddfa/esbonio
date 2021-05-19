@@ -48,15 +48,18 @@ underlines = ["-", "^", "\""]
 legacy_tox_ini = """
 [tox]
 isolated_build = True
+skip_missing_interpreters = true
+envlist = py{36,37,38,39}-sphinx{2,3,4}
 
 [testenv]
 deps =
-    mock
+    sphinx2: sphinx>=2,<3
+    sphinx3: sphinx>=3,<4
+    sphinx4: sphinx>=4,<5
     pytest
     pytest-cov
-extras = lsp
 commands =
-    pytest --cov=esbonio.lsp {posargs}
+    pytest --tb=short --cov=esbonio.lsp {posargs}
 
 [testenv:pkg]
 deps =
