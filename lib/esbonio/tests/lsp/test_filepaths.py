@@ -43,21 +43,46 @@ def trigger_cases(path=None):
         *itertools.product(
             [*trigger_cases("/"), *trigger_cases("/conf")],
             [
-                ("sphinx-default", "index.rst", ROOT_FILES, None,),
-                ("sphinx-default", "theorems/pythagoras.rst", ROOT_FILES, None,),
+                (
+                    "sphinx-default",
+                    "index.rst",
+                    ROOT_FILES,
+                    None,
+                ),
+                (
+                    "sphinx-default",
+                    "theorems/pythagoras.rst",
+                    ROOT_FILES,
+                    None,
+                ),
             ],
         ),
         *itertools.product(
             trigger_cases(),
             [
-                ("sphinx-default", "index.rst", ROOT_FILES, None,),
-                ("sphinx-default", "theorems/pythagoras.rst", THEOREM_FILES, None,),
+                (
+                    "sphinx-default",
+                    "index.rst",
+                    ROOT_FILES,
+                    None,
+                ),
+                (
+                    "sphinx-default",
+                    "theorems/pythagoras.rst",
+                    THEOREM_FILES,
+                    None,
+                ),
             ],
         ),
         *itertools.product(
             trigger_cases("../"),
             [
-                ("sphinx-default", "theorems/pythagoras.rst", ROOT_FILES, None,),
+                (
+                    "sphinx-default",
+                    "theorems/pythagoras.rst",
+                    ROOT_FILES,
+                    None,
+                ),
                 (
                     "sphinx-default",
                     "index.rst",
@@ -69,8 +94,18 @@ def trigger_cases(path=None):
         *itertools.product(
             trigger_cases("/theorems/"),
             [
-                ("sphinx-default", "index.rst", THEOREM_FILES, None,),
-                ("sphinx-default", "theorems/pythagoras.rst", THEOREM_FILES, None,),
+                (
+                    "sphinx-default",
+                    "index.rst",
+                    THEOREM_FILES,
+                    None,
+                ),
+                (
+                    "sphinx-default",
+                    "theorems/pythagoras.rst",
+                    THEOREM_FILES,
+                    None,
+                ),
             ],
         ),
     ],

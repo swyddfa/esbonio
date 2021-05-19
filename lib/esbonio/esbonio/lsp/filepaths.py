@@ -76,7 +76,9 @@ class FilepathCompletions(LanguageFeature):
 
         kind = CompletionItemKind.Folder if path.is_dir() else CompletionItemKind.File
         return CompletionItem(
-            label=str(path.name), kind=kind, insert_text=f"{path.name}",
+            label=str(path.name),
+            kind=kind,
+            insert_text=f"{path.name}",
         )
 
 
