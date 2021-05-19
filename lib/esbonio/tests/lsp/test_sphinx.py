@@ -4,18 +4,16 @@ import tempfile
 import unittest.mock as mock
 
 import py.test
-
-from pygls.lsp.types import (
-    Diagnostic,
-    DiagnosticSeverity,
-    DidSaveTextDocumentParams,
-    Position,
-    Range,
-    TextDocumentIdentifier,
-)
+from pygls.lsp.types import Diagnostic
+from pygls.lsp.types import DiagnosticSeverity
+from pygls.lsp.types import DidSaveTextDocumentParams
+from pygls.lsp.types import Position
+from pygls.lsp.types import Range
+from pygls.lsp.types import TextDocumentIdentifier
 
 from esbonio.lsp import SphinxConfig
-from esbonio.lsp.sphinx import DiagnosticList, SphinxManagement
+from esbonio.lsp.sphinx import DiagnosticList
+from esbonio.lsp.sphinx import SphinxManagement
 
 
 def line(linum: int) -> Range:

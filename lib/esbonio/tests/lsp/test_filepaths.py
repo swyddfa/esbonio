@@ -5,11 +5,9 @@ import unittest.mock as mock
 import py.test
 
 from esbonio.lsp.filepaths import FilepathCompletions
-from esbonio.lsp.testing import (
-    completion_test,
-    directive_argument_patterns,
-    role_target_patterns,
-)
+from esbonio.lsp.testing import completion_test
+from esbonio.lsp.testing import directive_argument_patterns
+from esbonio.lsp.testing import role_target_patterns
 
 ROOT_FILES = {
     "_static",

@@ -4,33 +4,33 @@ import json
 import logging
 import pathlib
 import textwrap
+from typing import List
+from typing import Optional
+from urllib.parse import unquote
+from urllib.parse import urlparse
 
-from typing import List, Optional
-from urllib.parse import urlparse, unquote
-
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
+from pydantic import Field
+from pygls.lsp.methods import COMPLETION
+from pygls.lsp.methods import INITIALIZE
+from pygls.lsp.methods import INITIALIZED
+from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
+from pygls.lsp.methods import TEXT_DOCUMENT_DID_SAVE
+from pygls.lsp.types import CompletionList
+from pygls.lsp.types import CompletionOptions
+from pygls.lsp.types import CompletionParams
+from pygls.lsp.types import DidOpenTextDocumentParams
+from pygls.lsp.types import DidSaveTextDocumentParams
+from pygls.lsp.types import InitializedParams
+from pygls.lsp.types import InitializeParams
+from pygls.lsp.types import Position
 from pygls.server import LanguageServer
-from pygls.lsp.methods import (
-    COMPLETION,
-    INITIALIZE,
-    INITIALIZED,
-    TEXT_DOCUMENT_DID_OPEN,
-    TEXT_DOCUMENT_DID_SAVE,
-)
-from pygls.lsp.types import (
-    CompletionList,
-    CompletionOptions,
-    CompletionParams,
-    DidOpenTextDocumentParams,
-    DidSaveTextDocumentParams,
-    InitializeParams,
-    InitializedParams,
-    Position,
-)
 from pygls.workspace import Document
 from sphinx.application import Sphinx
 
-from esbonio.lsp.logger import LOG_LEVELS, LogFilter, LspHandler
+from esbonio.lsp.logger import LOG_LEVELS
+from esbonio.lsp.logger import LogFilter
+from esbonio.lsp.logger import LspHandler
 
 __version__ = "0.6.1"
 

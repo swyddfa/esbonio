@@ -2,7 +2,6 @@ import argparse
 import sys
 
 import esbonio.lsp as lsp
-
 from esbonio.lsp import __version__
 
 

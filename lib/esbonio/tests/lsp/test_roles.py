@@ -3,11 +3,11 @@ import logging
 import unittest.mock as mock
 
 import py.test
-
 from pygls.lsp.types import CompletionItemKind
 
 from esbonio.lsp.roles import Roles
-from esbonio.lsp.testing import completion_test, role_target_patterns
+from esbonio.lsp.testing import completion_test
+from esbonio.lsp.testing import role_target_patterns
 
 C_EXPECTED = {"c:func", "c:macro"}
 C_UNEXPECTED = {"ref", "doc", "py:func", "py:mod"}

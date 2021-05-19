@@ -2,18 +2,18 @@
 import importlib
 import inspect
 import re
+from typing import List
+from typing import Tuple
+from typing import Union
 
-from typing import List, Union, Tuple
-
-from docutils.parsers.rst import directives, Directive
-from pygls.lsp.types import (
-    CompletionItem,
-    CompletionItemKind,
-    InsertTextFormat,
-    Position,
-    Range,
-    TextEdit,
-)
+from docutils.parsers.rst import Directive
+from docutils.parsers.rst import directives
+from pygls.lsp.types import CompletionItem
+from pygls.lsp.types import CompletionItemKind
+from pygls.lsp.types import InsertTextFormat
+from pygls.lsp.types import Position
+from pygls.lsp.types import Range
+from pygls.lsp.types import TextEdit
 from pygls.workspace import Document
 
 import esbonio.lsp as lsp
