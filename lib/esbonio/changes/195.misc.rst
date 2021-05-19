@@ -1,0 +1,3 @@
+An entry for ``esbonio`` has been added to the ``console_scripts``
+entry point, so it's now possible to launch the language server by
+calling ``esbonio`` directly
