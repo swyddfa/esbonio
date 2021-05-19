@@ -1,5 +1,6 @@
 # Esbonio
 
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/swyddfa/esbonio/develop.svg)](https://results.pre-commit.ci/latest/github/swyddfa/esbonio/develop)
 
 This is a monorepo containing a number of subprojects
 
