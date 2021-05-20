@@ -1,0 +1,2 @@
+Role and role target completions are now correctly generated when the role
+is being typed within parenthesis e.g. ``(:kbd:...``
