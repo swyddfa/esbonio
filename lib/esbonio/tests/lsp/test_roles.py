@@ -7,6 +7,7 @@ from pygls.lsp.types import CompletionItemKind
 
 from esbonio.lsp.roles import Roles
 from esbonio.lsp.testing import completion_test
+from esbonio.lsp.testing import role_patterns
 from esbonio.lsp.testing import role_target_patterns
 
 C_EXPECTED = {"c:func", "c:macro"}
@@ -23,48 +24,39 @@ PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
 
 
 @py.test.mark.parametrize(
-    "project,text,expected,unexpected",
+    "text,setup",
     [
-        ("sphinx-default", ":", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", ":r", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", ":ref:", None, None),
-        ("sphinx-default", ":py:", None, None),
-        ("sphinx-default", ":c:", C_EXPECTED, C_UNEXPECTED),
-        ("sphinx-default", "some text :", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", "some text :ref:", None, None),
-        ("sphinx-default", "some text :py:", None, None),
-        ("sphinx-default", "some text :c:", C_EXPECTED, C_UNEXPECTED),
-        ("sphinx-default", "   :", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", "   :r", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", "   :ref:", None, None),
-        ("sphinx-default", "   :py:", None, None),
-        ("sphinx-default", "   :c:", C_EXPECTED, C_UNEXPECTED),
-        ("sphinx-default", "   some text :", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", "   some text :ref:", None, None),
-        ("sphinx-default", "   some text :py:", None, None),
-        ("sphinx-default", "   some text :c:", C_EXPECTED, C_UNEXPECTED),
-        ("sphinx-extensions", ":", EXT_EXPECTED, EXT_UNEXPECTED),
-        ("sphinx-extensions", ":r", EXT_EXPECTED, EXT_UNEXPECTED),
-        ("sphinx-extensions", ":ref:", None, None),
-        ("sphinx-extensions", ":py:", PY_EXPECTED, PY_UNEXPECTED),
-        ("sphinx-extensions", ":c:", None, None),
-        ("sphinx-extensions", "some text :", EXT_EXPECTED, EXT_UNEXPECTED),
-        ("sphinx-extensions", "some text :ref:", None, None),
-        ("sphinx-extensions", "some text :py:", PY_EXPECTED, PY_UNEXPECTED),
-        ("sphinx-extensions", "some text :c:", None, None),
-        ("sphinx-extensions", "   :", EXT_EXPECTED, EXT_UNEXPECTED),
-        ("sphinx-extensions", "   :r", EXT_EXPECTED, EXT_UNEXPECTED),
-        ("sphinx-extensions", "   :ref:", None, None),
-        ("sphinx-extensions", "   :py:", PY_EXPECTED, PY_UNEXPECTED),
-        ("sphinx-extensions", "   :c:", None, None),
-        ("sphinx-extensions", "   some text :", EXT_EXPECTED, EXT_UNEXPECTED),
-        ("sphinx-extensions", "   some text :ref:", None, None),
-        ("sphinx-extensions", "   some text :py:", PY_EXPECTED, PY_UNEXPECTED),
-        ("sphinx-extensions", "   some text :c:", None, None),
+        *itertools.product(
+            role_patterns(":") + role_patterns(":r"),
+            [
+                ("sphinx-default", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
+                ("sphinx-extensions", EXT_EXPECTED, EXT_UNEXPECTED),
+            ],
+        ),
+        *itertools.product(
+            role_patterns(":ref:") + role_patterns("a:"),
+            [("sphinx-default", None, None), ("sphinx-extensions", None, None)],
+        ),
+        *itertools.product(
+            role_patterns(":py:"),
+            [
+                ("sphinx-default", None, None),
+                ("sphinx-extensions", PY_EXPECTED, PY_UNEXPECTED),
+            ],
+        ),
+        *itertools.product(
+            role_patterns(":c:"),
+            [
+                ("sphinx-default", C_EXPECTED, C_UNEXPECTED),
+                ("sphinx-extensions", None, None),
+            ],
+        ),
     ],
 )
-def test_role_completions(sphinx, project, text, expected, unexpected):
+def test_role_completions(sphinx, text, setup):
     """Ensure that we can offer correct role suggestions."""
+
+    project, expected, unexpected = setup
 
     rst = mock.Mock()
     rst.app = sphinx(project)

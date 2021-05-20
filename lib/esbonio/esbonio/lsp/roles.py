@@ -19,7 +19,7 @@ from esbonio.lsp.sphinx import get_domains
 
 PARTIAL_ROLE = re.compile(
     r"""
-    (^|.*[ ])            # roles must be preceeded by a space, or start the line
+    (^|.*[^\w])          # roles cannot be preceeded by alpha chars
     (?P<role>:           # roles start with the ':' character
     (?!:)                # make sure the next character is not ':'
     (?P<domain>[\w]+:)?  # there may be a domain namespace
@@ -40,7 +40,7 @@ Used when generating auto complete suggestions.
 
 PARTIAL_PLAIN_TARGET = re.compile(
     r"""
-    (^|.*[ ])            # roles must be preceeded by a space, or start the line
+    (^|.*[^\w])          # roles cannot be preceeded by alpha chars
     (?P<role>:           # roles start with the ':' character
     (?!:)                # make sure the next character is not ':'
     (?P<domain>[\w]+:)?  # there may be a domain namespace
@@ -63,7 +63,7 @@ Used when generating auto complete suggestions.
 
 PARTIAL_ALIASED_TARGET = re.compile(
     r"""
-    (^|.*[ ])            # roles must be preceeded by a space, or start the line
+    (^|.*[^\w])          # roles cannot be preceeded by alpha chars
     (?P<role>:           # roles start with the ':' character
     (?!:)                # make sure the next character is not ':'
     (?P<domain>[\w]+:)?  # there may be a domain namespace

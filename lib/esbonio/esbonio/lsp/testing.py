@@ -51,6 +51,31 @@ def directive_argument_patterns(name: str, partial: str = "") -> List[str]:
     return [s.format(name, partial) for s in [".. {}:: {}", "   .. {}:: {}"]]
 
 
+def role_patterns(partial: str = "") -> List[str]:
+    """Return a number of example role patterns.
+
+    These correspond to when role suggestions should be generated.
+
+    Parameters
+    ----------
+    partial:
+       The partial role name that the user has already entered
+    """
+    return [
+        s.format(partial)
+        for s in [
+            "{}",
+            "({}",
+            "   {}",
+            "   ({}",
+            "some text {}",
+            "some text ({}",
+            "   some text {}",
+            "   some text ({}",
+        ]
+    ]
+
+
 def role_target_patterns(name: str, partial: str = "") -> List[str]:
     """Return a number of example role target patterns.
 
@@ -67,9 +92,13 @@ def role_target_patterns(name: str, partial: str = "") -> List[str]:
         s.format(name, partial)
         for s in [
             ":{}:`{}",
+            "(:{}:`{}",
             ":{}:`More Info <{}",
+            "(:{}:`More Info <{}",
             "   :{}:`{}",
+            "   (:{}:`{}",
             "   :{}:`Some Label <{}",
+            "   (:{}:`Some Label <{}",
         ]
     ]
 
@@ -90,9 +119,13 @@ def intersphinx_target_patterns(name: str, project: str) -> List[str]:
         s.format(name, project)
         for s in [
             ":{}:`{}:",
+            "(:{}:`{}:",
             ":{}:`More Info <{}:",
+            "(:{}:`More Info <{}:",
             "   :{}:`{}:",
+            "   (:{}:`{}:",
             "   :{}:`Some Label <{}:",
+            "   (:{}:`Some Label <{}:",
         ]
     ]
 
