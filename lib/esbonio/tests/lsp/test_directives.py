@@ -5,6 +5,7 @@ import py.test
 
 from esbonio.lsp.directives import Directives
 from esbonio.lsp.testing import completion_test
+from esbonio.lsp.testing import sphinx_version
 
 
 DEFAULT_EXPECTED = {
@@ -143,8 +144,8 @@ AUTOCLASS_OPTS = {
     "special-members",
 }
 IMAGE_OPTS = {"align", "alt", "class", "height", "scale", "target", "width"}
-PY_FUNC_OPTS = {"annotation", "async", "module", "noindex", "noindexentry"}
-C_FUNC_OPTS = {"noindexentry"}
+PY_FUNC_OPTS = {"annotation", "async", "module", "noindex"}
+C_FUNC_OPTS = {"noindex"} if sphinx_version(eq=2) else {"noindexentry"}
 
 
 @py.test.mark.parametrize(
