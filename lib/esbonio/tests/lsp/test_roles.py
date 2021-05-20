@@ -98,7 +98,6 @@ def test_role_completions(sphinx, project, text, expected, unexpected):
                     {
                         "genindex",
                         "modindex",
-                        "py-modindex",
                         "pythagoras_theorem",
                         "search",
                         "welcome",

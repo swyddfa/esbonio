@@ -7,10 +7,32 @@ from typing import Set
 
 from pygls.lsp.types import Position
 from pygls.workspace import Document
+from sphinx import __version__ as __sphinx_version__
 
 from esbonio.lsp import LanguageFeature
 
 logger = logging.getLogger(__name__)
+
+
+def sphinx_version(eq: Optional[int] = None) -> bool:
+    """Helper function for determining which version of Sphinx we are
+    testing with.
+
+    Currently this only cares about the major version number.
+
+    Parameters
+    ----------
+    eq:
+       When set returns ``True`` if the Sphinx version exactly matches
+       what's given.
+    """
+
+    major, _, _ = [int(v) for v in __sphinx_version__.split(".")]
+
+    if eq and major == eq:
+        return True
+
+    return False
 
 
 def directive_argument_patterns(name: str, partial: str = "") -> List[str]:
@@ -19,8 +41,8 @@ def directive_argument_patterns(name: str, partial: str = "") -> List[str]:
     These correspond to test cases where directive argument suggestions should be
     generated.
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     name:
        The name of the directive to generate suggestions for.
     partial:
