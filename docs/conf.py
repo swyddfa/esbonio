@@ -11,6 +11,8 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+from sphinx.application import Sphinx
+
 import esbonio.lsp
 
 # -- Project information -----------------------------------------------------
@@ -66,6 +68,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 html_theme = "sphinx_book_theme"
 html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
 html_favicon = "favicon.svg"
+html_static_path = ["_static"]
 html_theme_options = {
     "repository_url": "https://github.com/swyddfa/esbonio",
     "use_repository_button": True,
@@ -74,7 +77,7 @@ html_theme_options = {
     "repository_branch": "release",
     "path_to_docs": "docs/",
 }
-# Add any paths that contain custom static files (such as style sheets) here,
-# relative to this directory. They are copied after the builtin static files,
-# so a file named "default.css" will overwrite the builtin "default.css".
-# html_static_path = ["_static"]
+
+
+def setup(app: Sphinx):
+    app.add_css_file("css/custom.css", priority=1000)
