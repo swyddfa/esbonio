@@ -3,7 +3,7 @@
 VSCode
 ======
 
-.. figure:: /_static/images/vscode-screenshot.png
+.. figure:: /images/vscode-screenshot.png
    :align: center
    :width: 80%
 
