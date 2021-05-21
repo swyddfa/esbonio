@@ -49,8 +49,16 @@ language server from your editor of choice.
 Common Configuration
 --------------------
 
-The following options are implemented directly by the language server and therefore
+The following options are implemented directly by the language server and should be
 supported by any language client.
+
+.. note::
+
+   *For Language Clients*
+
+   These options are only used during startup and must be passed as
+   ``initializationOptions`` as part of the ``initialize`` request. An example of this
+   can be found in the `VSCode Extension`_
 
 ``esbonio.sphinx.confDir`` (string)
    The language server attempts to automatically find the folder which contains your
@@ -70,3 +78,26 @@ supported by any language client.
     - ``/path/to/src/`` - An absolute path
     - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
     - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
+
+``esbonio.sphinx.buildDir`` (string)
+   By default the language server will choose an appropriate location to cache the build
+   output from Sphinx. This option can be used to force the language server to use a location
+   of your choosing.
+
+``esbonio.server.logLevel`` (string)
+   This can be used to set the level of log messages emitted by the server. This can be set
+   to one of the following values.
+
+   - ``error`` (default)
+   - ``info``
+   - ``debug``
+
+``esbonio.server.logFilter`` (string[])
+   The language server will typically include log output from all of its components. This
+   option can be used to restrict the log output to be only those named.
+
+``esbonio.server.hideSphinxOutput`` (boolean)
+   Normally any build output from Sphinx will be forwarded to the client as log messages.
+   If you prefer this flag can be used to exclude any Sphinx output from the log.
+
+.. _VSCode Extension: https://github.com/swyddfa/esbonio/blob/4ce1ba426b85aa397d51336d8c7eecccb7516b71/code/src/lsp/client.ts#L253
