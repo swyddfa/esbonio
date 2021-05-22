@@ -64,7 +64,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # a list of builtin themes.
 #
 html_theme = "sphinx_book_theme"
-
+html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
+html_favicon = "favicon.svg"
 html_theme_options = {
     "repository_url": "https://github.com/swyddfa/esbonio",
     "use_repository_button": True,

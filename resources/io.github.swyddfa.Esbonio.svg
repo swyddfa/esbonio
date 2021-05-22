@@ -1,5 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg height="128px" viewBox="0 0 128 128" width="128px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <style>
+        @keyframes cursor-fade {
+            0% {
+                opacity: 1;
+            }
+
+            25% {
+                opacity: 0;
+            }
+
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        #cursor {
+            animation: cursor-fade 2s infinite;
+            animation-timing-function: ease-in-out;
+        }
+    </style>
     <symbol id="a" overflow="visible">
         <path d="m 2.5625 -20 h 11.546875 v 2.28125 h -8.90625 v 5.921875 h 8.515625 v 2.265625 h -8.515625 v 7.25 h 9.15625 v 2.28125 h -11.796875 z m 0 0"/>
     </symbol>
@@ -38,7 +59,7 @@
     <path d="m 8.234375 5.730469 c -2.71875 0 -4.90625 2.1875 -4.90625 4.90625 v 97.191406 c 0 2.71875 2.1875 4.910157 4.90625 4.910157 h 13.550781 v -107.007813 z m 0 0" fill="#dddddd" fill-rule="evenodd" stroke="#222222" stroke-width="0.4"/>
     <use fill="#fb0e81" x="21.085938" xlink:href="#a" y="37.84041"/>
     <use fill="#888888" x="3.785156" xlink:href="#b" y="37.832598"/>
-    <path d="m 37.675781 17.390625 h 10.8125 v 20.449219 h -10.8125 z m 0 0" fill="#aaaaaa"/>
+    <path id="cursor" d="m 37.675781 17.390625 h 10.8125 v 20.449219 h -10.8125 z m 0 0" fill="#aaaaaa"/>
     <path d="m 37.675781 39.109375 h 87.28125 v 51.210937 h -87.28125 z m 0 0" fill="#bbbbbb"/>
     <path d="m 37.664062 40.589844 h 52.671876 v 50.421875 h -52.671876 z m 0 0" fill="#bbbbbb"/>
     <path d="m 38.160157 39.609375 h 86.300781 v 47.367187 h -86.300781 z m 0 0" fill="#dddddd" stroke="#222222" stroke-linejoin="round" stroke-width="0.5"/>
