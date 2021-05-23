@@ -1,3 +1,4 @@
+![Esbonio logo](./resources/io.github.swyddfa.Esbonio.svg)
 # Esbonio
 
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/swyddfa/esbonio/develop.svg)](https://results.pre-commit.ci/latest/github/swyddfa/esbonio/develop)

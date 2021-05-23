@@ -17,7 +17,9 @@ const config = {
     },
     devtool: 'source-map',
     externals: {
-        canvas: "util", // See [1]
+        bufferutil: 'util',        // See [2]
+        canvas: "util",            // See [1]
+        'utf-8-validate': 'util',  // See [2]
         vscode: "commonjs vscode"
     },
     resolve: {
@@ -53,4 +55,8 @@ module.exports = config
 
  This gets webpack to rewrite the "import canvas" statements to "import util"
  and apparently the library is able to degrade gracefully!
+ */
+
+/*
+  [2]: Similar to above, we don't need websocket support.
  */

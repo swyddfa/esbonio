@@ -2,8 +2,10 @@ changes
 node_modules
 src/**
 dist/**/*.map
+dist/test
 syntaxes/tests
 .bumpversion.cfg
+.pytest_cache
 CHANGES.rst
 pyproject.toml
 tsconfig.json

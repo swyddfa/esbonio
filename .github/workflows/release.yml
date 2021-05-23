@@ -110,13 +110,7 @@ jobs:
 
     - run: |
         cd code
-
         rm -r dist
-        npm run compile
-      name: Build Extension
-
-    - run: |
-        cd code
         npm run package
 
         vsix=$(find . -name '*.vsix' -exec basename {} \;)
