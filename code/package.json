@@ -1,5 +1,6 @@
 {
     "name": "esbonio",
+    "displayName": "Esbonio",
     "description": "An extension for editing sphinx projects",
     "repository": {
         "url": "https://github.com/swyddfa/esbonio"
@@ -45,6 +46,7 @@
     "engines": {
         "vscode": "^1.52.0"
     },
+    "icon": "icon.png",
     "activationEvents": [
         "onLanguage:rst",
         "workspaceContains:**/conf.py"
