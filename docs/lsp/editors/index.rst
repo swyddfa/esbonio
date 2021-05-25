@@ -1,7 +1,6 @@
 Editor Integrations
 ===================
 
-
 .. toctree::
    :glob:
    :maxdepth: 1
@@ -42,6 +41,7 @@ language server from your editor of choice.
    :columns: 3
 
    - :doc:`/lsp/editors/emacs`
+   - :doc:`/lsp/editors/kate`
    - :doc:`/lsp/editors/vscode`
 
 .. _editor_integration_config:
@@ -51,14 +51,6 @@ Common Configuration
 
 The following options are implemented directly by the language server and should be
 supported by any language client.
-
-.. note::
-
-   *For Language Clients*
-
-   These options are only used during startup and must be passed as
-   ``initializationOptions`` as part of the ``initialize`` request. An example of this
-   can be found in the `VSCode Extension`_
 
 ``esbonio.sphinx.confDir`` (string)
    The language server attempts to automatically find the folder which contains your

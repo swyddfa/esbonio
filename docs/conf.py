@@ -19,7 +19,7 @@ import esbonio.lsp
 
 project = "Esbonio"
 copyright = "2021, Alex Carney"
-author = "Alex Carney"
+author = ""
 
 # The full version, including alpha/beta/rc tags
 release = esbonio.lsp.__version__
