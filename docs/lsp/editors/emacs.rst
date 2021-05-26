@@ -1,11 +1,6 @@
 Emacs
 =====
 
-.. note::
-
-   While I like to play around now and again with Emacs, I'm hardly an expert! If you
-   know of a better way to set this up, feel free to open a pull request!
-
 There are multiple LSP clients available in the Emacs ecosystem.
 
 - `eglot`_ a more minimal Language Client that integrates tightly with features built
@@ -22,7 +17,7 @@ This page contains a number of sample configurations that you can use to get sta
 Eglot -- Minimal Config
 -----------------------
 
-.. figure:: /_static/images/emacs-eglot-minimal.png
+.. figure:: /images/emacs-eglot-minimal.png
    :align: center
    :width: 80%
 
@@ -34,7 +29,7 @@ Emacs, Esbonio and Eglot, might be useful to help track down configuration issue
 The key to setting up ``eglot`` is to tell it about the language server, how to start
 it and that we want to use it with ``*.rst`` files
 
-.. literalinclude:: /_static/sample-configs/emacs/eglot-minimal.el
+.. literalinclude:: emacs/eglot-minimal.el
    :language: elisp
    :start-after: ;; files.
    :end-before: ;; Setup some keybindings
@@ -43,7 +38,7 @@ it and that we want to use it with ``*.rst`` files
 To try this config on your machine.
 
 1. Make sure you've followed the :ref:`editor_integration_setup`.
-2. Download :download:`eglot-minimal.el </_static/sample-configs/emacs/eglot-minimal.el>`
+2. Download :download:`eglot-minimal.el <emacs/eglot-minimal.el>`
    to a folder of your choosing.
 3. Edit ``eglot-minimal.el`` to set the path to the Python executable to be the one in
    the virtual environment you just installed the language server into.
@@ -55,7 +50,7 @@ To try this config on your machine.
 Eglot -- Extended Config
 ------------------------
 
-.. figure:: /_static/images/emacs-eglot-extended.png
+.. figure:: /images/emacs-eglot-extended.png
    :align: center
    :width: 80%
 
@@ -74,7 +69,7 @@ can be achieved with some additional configuration.
 This time the configuration makes use of `use-package`_ to install (if necessary) and
 configure packages with a single declaration
 
-.. literalinclude:: /_static/sample-configs/emacs/eglot-extended.el
+.. literalinclude:: emacs/eglot-extended.el
    :language: elisp
    :start-after: ;; Most important, ensure the eglot is available and configured.
    :end-before: ;; UI Tweaks
@@ -82,7 +77,7 @@ configure packages with a single declaration
 To try this config on your machine
 
 1. Make sure you've followed the :ref:`editor_integration_setup`.
-2. Download :download:`eglot-extended.el </_static/sample-configs/emacs/eglot-extended.el>`
+2. Download :download:`eglot-extended.el <emacs/eglot-extended.el>`
    to a folder of your choosing.
 3. Edit ``eglot-extended.el`` to set the path to the Python executable to be the one in
    the virtual environment you just installed the language server into.
@@ -94,7 +89,7 @@ To try this config on your machine
 LSP Mode -- Minimal Config
 --------------------------
 
-.. figure:: /_static/images/emacs-lsp-mode-minimal.png
+.. figure:: /images/emacs-lsp-mode-minimal.png
    :align: center
    :width: 80%
 
@@ -107,7 +102,7 @@ Setting up LSP Mode is slightly more complicated than Eglot as there is more
 infrastructure to navigate but it boils down to the same steps, tell LSP Mode how to
 start the server and then tell it when it should be started.
 
-.. literalinclude:: /_static/sample-configs/emacs/lsp-mode-minimal.el
+.. literalinclude:: emacs/lsp-mode-minimal.el
    :language: elisp
    :start-after: ;; Register the Esbonio language server with lsp-mode
    :end-before: ;; Setup some keybindings
@@ -115,7 +110,7 @@ start the server and then tell it when it should be started.
 To try this config on your machine
 
 1. Make sure that you've followed the :ref:`editor_integration_setup`.
-2. Download :download:`lsp-mode-minimal.el </_static/sample-configs/emacs/lsp-mode-minimal.el>`
+2. Download :download:`lsp-mode-minimal.el <emacs/lsp-mode-minimal.el>`
    to a folder of your choosing.
 3. Edit ``lsp-mode-minimal.el`` to set the path to the Python executable to be the one
    in the virtual environment you just installed the language server into.
@@ -127,7 +122,7 @@ To try this config on your machine
 LSP Mode -- Extended Config
 ---------------------------
 
-.. figure:: /_static/images/emacs-lsp-mode-extended.png
+.. figure:: /images/emacs-lsp-mode-extended.png
    :align: center
    :width: 80%
 
@@ -136,7 +131,7 @@ LSP Mode -- Extended Config
 Here is a configuration with a few more bells and whistles that aims to showcase what
 can be achieved with some additional configuration.
 
-.. literalinclude:: /_static/sample-configs/emacs/lsp-mode-extended.el
+.. literalinclude:: emacs/lsp-mode-extended.el
    :language: elisp
    :start-after: ;; Most important, ensure that lsp-mode is available and configured.
    :end-before: ;; UI Tweaks
@@ -147,7 +142,7 @@ configure packages with a single declaration
 To try this config on your machine
 
 1. Make sure that you've followed the :ref:`editor_integration_setup`.
-2. Download :download:`lsp-mode-extended.el </_static/sample-configs/emacs/lsp-mode-extended.el>`
+2. Download :download:`lsp-mode-extended.el <emacs/lsp-mode-extended.el>`
    to a folder of your choosing.
 3. Edit ``lsp-mode-extended.el`` to set the path to the Python executable to be the one
    in the virtual environment you just installed the language server into.

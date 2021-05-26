@@ -3,12 +3,10 @@
 VSCode
 ======
 
-.. figure:: /_static/images/vscode-screenshot.png
+.. figure:: /images/vscode-screenshot.png
    :align: center
-   :width: 80%
 
    The VSCode extension editing this page
-
 
 Integration with the `VSCode`_ editor is provided via the `Esbonio`_ extension.
 
@@ -95,6 +93,16 @@ Insert Link - ``esbonio.insert.link`` - :kbd:`Alt+Shift+l`
 
       If you select some text before triggering the command, the text you selected will be
       used as the link's label.
+
+Open Preview - ``esbonio.preview.open``
+   This will open a webview in the current editor window showing the latest html build of the
+   document being edited.
+
+Open Preview to the Side - ``esbonio.preview.openSide``
+   Much like the *Open Preview* command, this will open a webview showing the latest build
+   for the current document but to the side of the editor window. Additionally, as you change
+   between source files the preview will automatically update to show the page you are
+   currently working on.
 
 Install Language Server - ``esbonio.server.install``
    This can be used to manually install the language server into the current environment
