@@ -67,9 +67,9 @@ supported by any language client.
    you can use this setting to tell the server where to look. Currently accepted values
    include:
 
-    - ``/path/to/src/`` - An absolute path
-    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
-    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
+   - ``/path/to/src/`` - An absolute path
+   - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
+   - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
 ``esbonio.sphinx.buildDir`` (string)
    By default the language server will choose an appropriate location to cache the build

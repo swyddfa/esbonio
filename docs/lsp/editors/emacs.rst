@@ -1,11 +1,6 @@
 Emacs
 =====
 
-.. note::
-
-   While I like to play around now and again with Emacs, I'm hardly an expert! If you
-   know of a better way to set this up, feel free to open a pull request!
-
 There are multiple LSP clients available in the Emacs ecosystem.
 
 - `eglot`_ a more minimal Language Client that integrates tightly with features built
