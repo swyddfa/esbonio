@@ -34,7 +34,7 @@ PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
             ],
         ),
         *itertools.product(
-            role_patterns(":ref:") + role_patterns("a:"),
+            role_patterns(":ref:") + role_patterns("a:") + role_patterns("figure::"),
             [("sphinx-default", None, None), ("sphinx-extensions", None, None)],
         ),
         *itertools.product(

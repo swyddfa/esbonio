@@ -19,12 +19,12 @@ from esbonio.lsp.sphinx import get_domains
 
 PARTIAL_ROLE = re.compile(
     r"""
-    (^|.*[^\w])          # roles cannot be preceeded by alpha chars
-    (?P<role>:           # roles start with the ':' character
-    (?!:)                # make sure the next character is not ':'
-    (?P<domain>[\w]+:)?  # there may be a domain namespace
-    (?P<name>[\w-]*))    # match the role name
-    $                    # ensure pattern only matches incomplete roles
+    (^|.*[^\w:])          # roles cannot be preceeded by certain characters
+    (?P<role>:            # roles start with the ':' character
+    (?!:)                 # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?   # there may be a domain namespace
+    (?P<name>[\w-]*))     # match the role name
+    $                     # ensure pattern only matches incomplete roles
     """,
     re.MULTILINE | re.VERBOSE,
 )
@@ -40,14 +40,14 @@ Used when generating auto complete suggestions.
 
 PARTIAL_PLAIN_TARGET = re.compile(
     r"""
-    (^|.*[^\w])          # roles cannot be preceeded by alpha chars
-    (?P<role>:           # roles start with the ':' character
-    (?!:)                # make sure the next character is not ':'
-    (?P<domain>[\w]+:)?  # there may be a domain namespace
-    (?P<name>[\w-]*)     # followed by the role name
-    :)                   # the role name ends with a ':'
-    `                    # the target begins with a '`'
-    (?P<target>[^<:`]*)  # match "plain link" targets
+    (^|.*[^\w:])          # roles cannot be preceeded by certain chars
+    (?P<role>:            # roles start with the ':' character
+    (?!:)                 # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?   # there may be a domain namespace
+    (?P<name>[\w-]*)      # followed by the role name
+    :)                    # the role name ends with a ':'
+    `                     # the target begins with a '`'
+    (?P<target>[^<:`]*)   # match "plain link" targets
     $
     """,
     re.MULTILINE | re.VERBOSE,
@@ -63,15 +63,15 @@ Used when generating auto complete suggestions.
 
 PARTIAL_ALIASED_TARGET = re.compile(
     r"""
-    (^|.*[^\w])          # roles cannot be preceeded by alpha chars
-    (?P<role>:           # roles start with the ':' character
-    (?!:)                # make sure the next character is not ':'
-    (?P<domain>[\w]+:)?  # there may be a domain namespace
-    (?P<name>[\w-]*)     # followed by the role name
-    :)                   # the role name ends with a ':'
-    `                    # the target begins with a '`'`
-    .*<                  # the actual target name starts after a '<'
-    (?P<target>[^`:]*)   # match "aliased" targets
+    (^|.*[^\w:])          # roles cannot be preceeded by certain chars
+    (?P<role>:            # roles start with the ':' character
+    (?!:)                 # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?   # there may be a domain namespace
+    (?P<name>[\w-]*)      # followed by the role name
+    :)                    # the role name ends with a ':'
+    `                     # the target begins with a '`'`
+    .*<                   # the actual target name starts after a '<'
+    (?P<target>[^`:]*)    # match "aliased" targets
     $
     """,
     re.MULTILINE | re.VERBOSE,
