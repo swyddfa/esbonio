@@ -359,7 +359,7 @@
             }
         },
         "link-inline": {
-            "match": "(`.+?(<.*>)`)(_)",
+            "match": "(`.+?(<.*?>)`)(_)",
             "name": "meta.link.rst",
             "captures": {
                 "1": {
@@ -374,7 +374,7 @@
             }
         },
         "link-reference": {
-            "match": "(`.+`)(_)",
+            "match": "(`.+?`)(_)",
             "name": "meta.reference.link.rst",
             "captures": {
                 "1": {
