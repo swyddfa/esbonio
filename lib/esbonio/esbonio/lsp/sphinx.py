@@ -148,13 +148,19 @@ def get_src_dir(
 
 def get_build_dir(conf_dir: pathlib.Path, config: lsp.SphinxConfig) -> pathlib.Path:
 
-    if config.build_dir is not None:
-        return pathlib.Path(config.build_dir)
+    if config.build_dir is None:
+        # Try to pick a sensible dir based on the project's location
+        cache = appdirs.user_cache_dir("esbonio", "swyddfa")
+        project = hashlib.md5(str(conf_dir).encode()).hexdigest()
 
-    # Try to pick a sensible dir based on the project's location
-    cache = appdirs.user_cache_dir("esbonio", "swyddfa")
-    project = hashlib.md5(str(conf_dir).encode()).hexdigest()
-    build_dir = pathlib.Path(cache) / project
+        return pathlib.Path(cache) / project
+
+    build_dir = pathlib.Path(config.build_dir)
+
+    # Strangely for windows paths, there's an extra leading slash which we have to
+    # remove ourselves.
+    if isinstance(build_dir, pathlib.WindowsPath) and str(build_dir).startswith("\\"):
+        build_dir = pathlib.Path(str(build_dir)[1:])
 
     return build_dir
 
