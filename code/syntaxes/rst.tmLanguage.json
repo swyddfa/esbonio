@@ -82,16 +82,28 @@
             "name": "meta.directive.rst",
             "patterns": [
                 {
+                    "include": "#c-code-block"
+                },
+                {
+                    "include": "#cpp-code-block"
+                },
+                {
                     "include": "#css-code-block"
                 },
                 {
                     "include": "#html-code-block"
                 },
                 {
+                    "include": "#js-code-block"
+                },
+                {
                     "include": "#json-code-block"
                 },
                 {
                     "include": "#python-code-block"
+                },
+                {
+                    "include": "#ts-code-block"
                 },
                 {
                     "include": "#yaml-code-block"
@@ -116,6 +128,36 @@
             "patterns": [
                 {
                     "include": "#python-code"
+                }
+            ]
+        },
+        "c-code-block": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+c$",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.function"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.directive.code-block.c.rst",
+            "patterns": [
+                {
+                    "include": "#c-code"
+                }
+            ]
+        },
+        "cpp-code-block": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+cpp$",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.function"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.directive.code-block.cpp.rst",
+            "patterns": [
+                {
+                    "include": "#cpp-code"
                 }
             ]
         },
@@ -149,6 +191,21 @@
                 }
             ]
         },
+        "js-code-block": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+(js|javascript)$",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.function"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.directive.code-block.js.rst",
+            "patterns": [
+                {
+                    "include": "#js-code"
+                }
+            ]
+        },
         "json-code-block": {
             "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+json",
             "beginCaptures": {
@@ -176,6 +233,21 @@
             "patterns": [
                 {
                     "include": "#python-code"
+                }
+            ]
+        },
+        "ts-code-block": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::\\s+(ts|typescript)$",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.function"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.directive.code-block.ts.rst",
+            "patterns": [
+                {
+                    "include": "#ts-code"
                 }
             ]
         },
@@ -385,6 +457,26 @@
                 }
             }
         },
+        "c-code": {
+            "begin": "(\\s*)",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "source.c",
+            "patterns": [
+                {
+                    "include": "source.c"
+                }
+            ]
+        },
+        "cpp-code": {
+            "begin": "(\\s*)",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "source.cpp",
+            "patterns": [
+                {
+                    "include": "source.cpp"
+                }
+            ]
+        },
         "css-code": {
             "begin": "(\\s*)",
             "end": "^(?!\\1\\s+)(?!\\s*$)",
@@ -405,6 +497,16 @@
                 }
             ]
         },
+        "js-code": {
+            "begin": "(\\s*)",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "source.js",
+            "patterns": [
+                {
+                    "include": "source.js"
+                }
+            ]
+        },
         "json-code": {
             "begin": "(\\s*)",
             "end": "^(?!\\1\\s+)(?!\\s*$)",
@@ -422,6 +524,16 @@
             "patterns": [
                 {
                     "include": "source.python"
+                }
+            ]
+        },
+        "ts-code": {
+            "begin": "(\\s*)",
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "source.ts",
+            "patterns": [
+                {
+                    "include": "source.ts"
                 }
             ]
         },

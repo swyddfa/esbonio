@@ -1,0 +1,1 @@
+VSCode will now syntax highlight C, C++, Javascript and Typescript code blocks
