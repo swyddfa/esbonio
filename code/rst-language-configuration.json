@@ -5,13 +5,25 @@
     "autoClosingPairs": [
         {
             "open": "`",
-            "close": "`"
-        }
+            "close": "`",
+        },
+        {
+            "open": "*",
+            "close": "*"
+        },
     ],
     "surroundingPairs": [
         [
             "`",
             "`"
+        ],
+        [
+            "*",
+            "*"
         ]
-    ]
+    ],
+    "indentationRules": {
+        "increaseIndentPattern": "^.*::.*$",
+        "decreaseIndentPattern": "^[^ ]$"
+    }
 }
