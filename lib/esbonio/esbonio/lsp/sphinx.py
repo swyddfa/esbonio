@@ -4,6 +4,7 @@ import hashlib
 import logging
 import pathlib
 import re
+import traceback
 from typing import Iterator
 from typing import Optional
 from typing import Tuple
@@ -321,13 +322,12 @@ class SphinxManagement(lsp.LanguageFeature):
                 status=self,
                 warning=self,
             )
-        except Exception as exc:
-            message = "Unable to initialize Sphinx, see output window for details."
+        except Exception:
             self._conf_dir = conf_dir
 
-            self.sphinx_log.error(exc)
+            self.sphinx_log.error(traceback.format_exc())
             self.rst.show_message(
-                message=message,
+                message="Unable to initialize Sphinx, see output window for details.",
                 msg_type=MessageType.Error,
             )
 
@@ -338,10 +338,10 @@ class SphinxManagement(lsp.LanguageFeature):
 
         try:
             self.rst.app.build()
-        except Exception as exc:
+        except Exception:
             message = "Unable to build documentation, see output window for details."
 
-            self.sphinx_log.error(exc)
+            self.sphinx_log.error(traceback.format_exc())
             self.rst.show_message(
                 message=message,
                 msg_type=MessageType.Error,
