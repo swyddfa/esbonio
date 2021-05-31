@@ -57,43 +57,48 @@ export class PreviewManager {
       return
     }
 
-    this.htmlPath = htmlPath
-    await this.reloadView()
+    await this.reloadView(htmlPath)
   }
 
-  private async reloadView() {
-    if (!this.panel || !this.htmlPath) {
+  private async reloadView(htmlPath?: string) {
+    if (!this.panel) {
       return
     }
 
-    this.logger.debug("Reloading preview.")
-    this.panel.webview.html = await this.getHtmlContent(this.htmlPath)
+    if (!htmlPath) {
+      htmlPath = this.htmlPath
+    }
+
+    this.logger.debug(`Previewing ${htmlPath}`)
+    this.panel.webview.html = await this.getHtmlContent(htmlPath)
+    this.htmlPath = htmlPath
   }
 
   private async previewEditor(editor: vscode.TextEditor, placement: vscode.ViewColumn) {
-
-    // Currently we only support one open editor at a time.
-    if (this.panel) {
-      this.panel.dispose()
-    }
 
     let htmlPath = await this.getHtmlPath(editor)
     if (!htmlPath) {
       return
     }
 
-    let buildDir = this.esbonio.sphinxConfig.buildDir
-    this.panel = vscode.window.createWebviewPanel(
-      'esbonioPreview', 'Preview',
-      placement,
-      {
-        enableScripts: true,
-        localResourceRoots: [vscode.Uri.file(buildDir)]
-      }
-    )
+    // Currently we only support one open editor at a time.
+    if (!this.panel) {
+      let buildDir = this.esbonio.sphinxConfig.buildDir
+      this.panel = vscode.window.createWebviewPanel(
+        'esbonioPreview', 'Preview',
+        placement,
+        {
+          enableScripts: true,
+          localResourceRoots: [vscode.Uri.file(buildDir)]
+        }
+      )
+    }
 
-    this.panel.webview.html = await this.getHtmlContent(htmlPath)
-    this.htmlPath = htmlPath
+    this.panel.onDidDispose(() => {
+      this.panel = undefined
+    })
+
+    await this.reloadView(htmlPath)
   }
 
   /**
@@ -113,10 +118,7 @@ export class PreviewManager {
     let buildDir = this.esbonio.sphinxConfig.buildDir
 
     if (!sourcePath.startsWith(srcDir)) {
-      let message = `Unable to preview document ${sourcePath}, it is not part of the project's
-      source directory.`
-      await vscode.window.showErrorMessage(message, { title: "Close" })
-
+      this.logger.debug(`Ingoring ${sourcePath}`)
       return undefined
     }
 

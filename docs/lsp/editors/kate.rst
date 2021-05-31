@@ -1,7 +1,7 @@
 Kate
 ====
 
-.. figure:: /images/
+.. figure:: /images/kate-screenshot.png
    :align: center
 
    Editing this page with Kate and Esbonio
