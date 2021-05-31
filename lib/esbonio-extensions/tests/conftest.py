@@ -63,6 +63,9 @@ def rst_mock_settings():
 
     settings.tab_width = 2
 
+    # The following setting is required for docutils >=0.17
+    settings.line_length_limit = 10_000
+
     # Fake some additional settings on the (Sphinx?) application object
     settings.env.app.confdir = "/project/docs"
 
