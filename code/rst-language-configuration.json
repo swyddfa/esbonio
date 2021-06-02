@@ -21,9 +21,5 @@
             "*",
             "*"
         ]
-    ],
-    "indentationRules": {
-        "increaseIndentPattern": "^.*::.*$",
-        "decreaseIndentPattern": "^[^ ]$"
-    }
+    ]
 }

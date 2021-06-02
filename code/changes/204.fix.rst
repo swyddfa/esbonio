@@ -1,4 +1,2 @@
 VSCode now treats ``*`` characters as quotes, meaning selecting some text and entering
 a ``*`` will automatically surround that text rather than replacing it.
-
-Also VSCode will now automatically indent after "opening" a directive or literal block.
