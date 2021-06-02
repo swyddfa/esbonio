@@ -273,6 +273,20 @@ class TestCreateApp:
         assert rst.app is not None
         assert rst.app.confdir == str(sphinx_extensions)
 
+    def test_conf_dir_is_workspace_root(self, rst, testdata):
+        """Ensure that we can override the conf dir to be the workspace root."""
+
+        sphinx_extensions = testdata("sphinx-extensions", path_only=True)
+        rst.workspace.root_uri = f"file://{sphinx_extensions}"
+
+        config = SphinxConfig(confDir="${workspaceRoot}")
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_extensions)
+
     def test_src_dir_absolute_path(self, rst, testdata):
         """Ensure that we can override the src dir if necessary"""
 
@@ -306,6 +320,22 @@ class TestCreateApp:
         assert rst.app is not None
         assert rst.app.confdir == str(datadir / "sphinx-srcdir")
         assert rst.app.srcdir == str(datadir / "sphinx-default")
+
+    def test_src_dir_is_conf_dir(self, rst, testdata):
+        """Ensure that we can override the src dir to be exactly the conf dir."""
+
+        sphinx_srcdir = testdata("sphinx-srcdir", path_only=True)
+        rst.workspace.root_uri = f"file://{sphinx_srcdir}"
+
+        srcdir = "${confDir}"
+        config = SphinxConfig(srcDir=srcdir)
+
+        manager = SphinxManagement(rst)
+        manager.create_app(config)
+
+        assert rst.app is not None
+        assert rst.app.confdir == str(sphinx_srcdir)
+        assert rst.app.srcdir == str(sphinx_srcdir)
 
     def test_src_dir_conf_dir(self, rst, testdata):
         """Ensure that we can override the src dir with a path relative to the
