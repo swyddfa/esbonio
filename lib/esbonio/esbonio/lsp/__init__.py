@@ -81,10 +81,10 @@ class ServerConfig(BaseModel):
 class InitializationOptions(BaseModel):
     """The initialization options we can expect to receive from a client."""
 
-    sphinx: SphinxConfig
+    sphinx: Optional[SphinxConfig] = Field(default_factory=SphinxConfig)
     """The ``esbonio.sphinx.*`` namespace of options"""
 
-    server: ServerConfig
+    server: Optional[ServerConfig] = Field(default_factory=ServerConfig)
     """The ``esbonio.server.*`` namespace of options"""
 
 

@@ -25,6 +25,9 @@ from sphinx.util import console
 import esbonio.lsp as lsp
 
 
+PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")
+
+
 PROBLEM_PATTERN = re.compile(
     r"""
     (?P<file>(.*:\\)?[^:]*):   # Capture the path to the file containing the problem
@@ -95,7 +98,7 @@ def expand_conf_dir(root_dir: str, conf_dir: str) -> str:
        The user provided path
     """
 
-    match = re.match(r"^\${(\w+)}/.*", conf_dir)
+    match = PATH_VAR_PATTERN.match(conf_dir)
     if not match or match.group(1) != "workspaceRoot":
         return conf_dir
 
@@ -134,7 +137,7 @@ def get_src_dir(
     src_dir = config.src_dir
     root_dir = lsp.filepath_from_uri(root_uri)
 
-    match = re.match(r"^\${(\w+)}/.*", src_dir)
+    match = PATH_VAR_PATTERN.match(src_dir)
     if match and match.group(1) == "workspaceRoot":
         src = pathlib.Path(src_dir).parts[1:]
         return pathlib.Path(root_dir, *src).resolve()
