@@ -91,28 +91,27 @@ or use it as a starting point for your own configuration.
    issue on the first run so if you encounter this try restarting Emacs and it should
    magically fix itself.
 
-LSP Mode -- Minimal Config
---------------------------
+LSP Mode
+--------
 
-.. figure:: /images/emacs-lsp-mode-minimal.png
+.. figure:: /images/emacs-lsp-mode-extended.png
    :align: center
    :width: 80%
 
-   Using Esbonio and Emacs with the ``lsp-mode-minimal.el`` configuration
+   Using Esbonio and Emacs with the ``lsp-mode-extended.el`` configuration.
 
-This should be just enough configuration to get Esbonio working with LSP Mode and Emacs,
-might be useful when tracking down configuration issues.
-
-Setting up LSP Mode is slightly more complicated than Eglot as there is more
-infrastructure to navigate but it boils down to the same steps, tell LSP Mode how to
-start the server and then tell it when it should be started.
+Setting up LSP Mode is *slightly* more complicated than Eglot as there is more
+infrastructure to navigate but it boils down to the same steps, telling LSP Mode how
+and when to start the server.
 
 .. literalinclude:: emacs/lsp-mode-minimal.el
    :language: elisp
    :start-after: ;; Register the Esbonio language server with lsp-mode
    :end-before: ;; Setup some keybindings
 
-To try this config on your machine
+We provide a barebones configuration ``lsp-mode-minimal.el`` that you can use to either
+experiment with LSP Mode and Esbonios or as a basis for your own configuration. To try it out
+on your machine.
 
 1. Make sure that you've followed the :ref:`editor_integration_setup`.
 2. Download :download:`lsp-mode-minimal.el <emacs/lsp-mode-minimal.el>`
@@ -124,25 +123,25 @@ To try this config on your machine
 
      emacs -Q -l lsp-mode-minimal.el
 
-LSP Mode -- Extended Config
----------------------------
+Server Configuration
+^^^^^^^^^^^^^^^^^^^^
 
-.. figure:: /images/emacs-lsp-mode-extended.png
-   :align: center
-   :width: 80%
+The language server provides a number of :ref:`settings <editor_integration_config>` that
+for example can be used to control the instance of Sphinx that the server manages.
 
-   Using Esbonio and Emacs with the ``lsp-mode-extended.el`` configuration.
-
-Here is a configuration with a few more bells and whistles that aims to showcase what
-can be achieved with some additional configuration.
+To set these values via LSP Mode you need to extend your call to ``make-lsp-client`` to
+include an ``initialization-options`` field which is set to a function that returns a
+list of lists representing the settings you wish to set.
 
 .. literalinclude:: emacs/lsp-mode-extended.el
+   :dedent: 3
    :language: elisp
-   :start-after: ;; Most important, ensure that lsp-mode is available and configured.
-   :end-before: ;; UI Tweaks
+   :start-at: (make-lsp-client
+   :end-at: :server-id
 
-This time the configuration makes use of `use-package`_ to install (if necessary) and
-configure packages with a single declaration
+We provide an extended configuration ``lsp-mode-extended.el`` that sets a few of these
+settings as well as including a few extras. Feel free to use it to experiment with LSP Mode
+and Esbonio or use it as a starting point for your own configuration
 
 To try this config on your machine
 
@@ -158,4 +157,3 @@ To try this config on your machine
 
 .. _eglot: https://github.com/joaotavora/eglot
 .. _lsp-mode: https://emacs-lsp.github.io/lsp-mode/
-.. _use-package: https://github.com/jwiegley/use-package

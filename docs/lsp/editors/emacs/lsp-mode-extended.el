@@ -53,6 +53,9 @@
 		    (lsp-stdio-connection
                      '("/path/to/virtualenv/bin/python" "-m" "esbonio"))
                     :activation-fn (lsp-activate-on "rst")
+                    :initialization-options (lambda () `((sphinx . ((confDir . "${workspaceRoot}")
+                                                                    (srcDir . "${confDir}")))
+                                                         (server . ((logLevel . "debug")))))
                     :server-id 'esbonio)))
 
 (use-package rst
