@@ -47,8 +47,18 @@
 (use-package eglot
   :ensure t
   :config
+  (defclass eglot-esbonio (eglot-lsp-server) ()
+    :documentation "Esbonio Language Server.")
+
+  (cl-defmethod eglot-initialization-options ((server eglot-esbonio))
+    "Passes the initializationOptions required to run the server."
+    `(:sphinx (:confDir "${workspaceRoot}"
+               :srcDir "${confDir}" )
+      :server (:logLevel "debug")))
+
   (add-to-list 'eglot-server-programs
-               `(rst-mode . ("/path/to/virtualenv/bin/python"
+               `(rst-mode . (eglot-esbonio
+                             "/path/to/virtualenv/bin/python"
                              "-m" "esbonio"))))
 
 (use-package rst
