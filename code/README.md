@@ -5,6 +5,33 @@
 Esbonio is an extension that provides a language server for working with
 [Sphinx](https://www.sphinx-doc.org/en/master/) documentation projects.
 
+## Features
+
+### Preview
+
+The extension can show a HTML preview of the documentation
+
+![HTML Preview](../resources/images/vscode-preview-demo.gif)
+
+### Completions
+
+The language server can provide completion suggestions in various contexts
+
+![Completion Demo](../resources/images/completion-demo.gif)
+
+### Diagnostics
+
+Errors from a build are published to VSCode as diagnostics
+
+![Diagnostics](../resources/images/diagnostic-sphinx-errors-demo.png)
+
+### Syntax Highlighting
+
+This extension also offers a simple grammar definition to enable some basic
+syntax highlighting
+
+![Syntax Highlighting](../resources/images/syntax-highlighting-demo.png)
+
 ## Setup
 
 The language server works by wrapping an instance of Sphinx's application object,
@@ -53,46 +80,6 @@ or through the `esbonio.server.pythonPath` configuration option.
 To also manage updates manually, be sure to look at the
 [documentation](https://swyddfa.github.io/esbonio/docs/lsp/editors/vscode.html#configuration)
 for options on how to disable automatic updates.
-
-## Features
-
-### Completions
-
-The language server can provide completion suggestions in various contexts
-#### Directives
-
-Completion suggestions are offered for the directives themselves, as well as any options
-that they expose.
-
-![Directive Completions](../resources/images/complete-directive-demo.gif)
-
-#### Roles
-
-In the case of roles, completions can also be offered for the targets of certain
-[supported](https://swyddfa.github.io/esbonio/docs/lsp/features.html#roles) role types
-
-![Role Completions](../resources/images/complete-role-demo.gif)
-
-#### Inter Sphinx
-
-The [intersphinx](https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html)
-extension can be used to easily link to other Sphinx projects. If configured, the language
-server will offer suggestions when appropriate
-
-![InterSphinx Completions](../resources/images/complete-intersphinx-demo.gif)
-
-### Diagnostics
-
-Errors from a build are published to VSCode as diagnostics
-
-![Diagnostics](../resources/images/diagnostic-sphinx-errors-demo.png)
-
-### Syntax Highlighting
-
-This extension also offers a simple grammar definition to enable some basic
-syntax highlighting
-
-![Syntax Highlighting](../resources/images/syntax-highlighting-demo.png)
 
 ## Alternatives
 
