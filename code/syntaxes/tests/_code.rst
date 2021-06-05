@@ -2,6 +2,16 @@
 -- In this file we use '-' as the comment character as vscode-tmgrammar-test
 -- gets confused between comments and directives.
 
+.. code-block:: c
+
+   int main(void) {}
+-- ^^^^^^^^^^^^^^^^^ source.c
+
+.. code-block:: cpp
+
+   std::cout << "Hello, world" << std::endl;
+-- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.cpp
+
 .. code-block:: css
 
    p {width: 50%}
@@ -12,6 +22,16 @@
    <p class="example">html</p>
 -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^ text.html.derivative
 
+.. code-block:: javascript
+
+   import { join } from 'path';
+-- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.js
+
+.. code-block:: js
+
+   console.log("Hi there!")
+-- ^^^^^^^^^^^^^^^^^^^^^^^^ source.js
+
 .. code-block:: json
 
    {"example": "json"}
@@ -21,6 +41,16 @@
 
    print("Hi there!")
 -- ^^^^^^^^^^^^^^^^^^ source.python
+
+.. code-block:: ts
+
+   function test(a: number, b: string) {}
+-- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.ts
+
+.. code-block:: typescript
+
+   function test(a: number, b: string) {}
+-- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.ts
 
 .. code-block:: yaml
 

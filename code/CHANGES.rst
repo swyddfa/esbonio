@@ -24,7 +24,7 @@ Misc
 - Improvements to the development experience (`#170 <https://github.com/swyddfa/esbonio/issues/170>`_)
 
 
-v0.6.0 - 2021-05-07v0.6.0 - 2021-05-07
+v0.6.0 - 2021-05-07
 -------------------
 
 Features

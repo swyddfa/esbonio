@@ -1,18 +1,15 @@
 """Role support."""
 import collections
 import re
-
 from typing import List
 
 from docutils.parsers.rst import roles
-from pygls.lsp.types import (
-    CompletionItem,
-    CompletionItemKind,
-    DidSaveTextDocumentParams,
-    Position,
-    Range,
-    TextEdit,
-)
+from pygls.lsp.types import CompletionItem
+from pygls.lsp.types import CompletionItemKind
+from pygls.lsp.types import DidSaveTextDocumentParams
+from pygls.lsp.types import Position
+from pygls.lsp.types import Range
+from pygls.lsp.types import TextEdit
 from pygls.workspace import Document
 
 import esbonio.lsp as lsp
@@ -22,12 +19,12 @@ from esbonio.lsp.sphinx import get_domains
 
 PARTIAL_ROLE = re.compile(
     r"""
-    (^|.*[ ])            # roles must be preceeded by a space, or start the line
-    (?P<role>:           # roles start with the ':' character
-    (?!:)                # make sure the next character is not ':'
-    (?P<domain>[\w]+:)?  # there may be a domain namespace
-    (?P<name>[\w-]*))    # match the role name
-    $                    # ensure pattern only matches incomplete roles
+    (^|.*[^\w:])          # roles cannot be preceeded by certain characters
+    (?P<role>:            # roles start with the ':' character
+    (?!:)                 # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?   # there may be a domain namespace
+    (?P<name>[\w-]*))     # match the role name
+    $                     # ensure pattern only matches incomplete roles
     """,
     re.MULTILINE | re.VERBOSE,
 )
@@ -43,14 +40,14 @@ Used when generating auto complete suggestions.
 
 PARTIAL_PLAIN_TARGET = re.compile(
     r"""
-    (^|.*[ ])            # roles must be preceeded by a space, or start the line
-    (?P<role>:           # roles start with the ':' character
-    (?!:)                # make sure the next character is not ':'
-    (?P<domain>[\w]+:)?  # there may be a domain namespace
-    (?P<name>[\w-]*)     # followed by the role name
-    :)                   # the role name ends with a ':'
-    `                    # the target begins with a '`'
-    (?P<target>[^<:`]*)  # match "plain link" targets
+    (^|.*[^\w:])          # roles cannot be preceeded by certain chars
+    (?P<role>:            # roles start with the ':' character
+    (?!:)                 # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?   # there may be a domain namespace
+    (?P<name>[\w-]*)      # followed by the role name
+    :)                    # the role name ends with a ':'
+    `                     # the target begins with a '`'
+    (?P<target>[^<:`]*)   # match "plain link" targets
     $
     """,
     re.MULTILINE | re.VERBOSE,
@@ -66,15 +63,15 @@ Used when generating auto complete suggestions.
 
 PARTIAL_ALIASED_TARGET = re.compile(
     r"""
-    (^|.*[ ])            # roles must be preceeded by a space, or start the line
-    (?P<role>:           # roles start with the ':' character
-    (?!:)                # make sure the next character is not ':'
-    (?P<domain>[\w]+:)?  # there may be a domain namespace
-    (?P<name>[\w-]*)     # followed by the role name
-    :)                   # the role name ends with a ':'
-    `                    # the target begins with a '`'`
-    .*<                  # the actual target name starts after a '<'
-    (?P<target>[^`:]*)   # match "aliased" targets
+    (^|.*[^\w:])          # roles cannot be preceeded by certain chars
+    (?P<role>:            # roles start with the ':' character
+    (?!:)                 # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?   # there may be a domain namespace
+    (?P<name>[\w-]*)      # followed by the role name
+    :)                    # the role name ends with a ':'
+    `                     # the target begins with a '`'`
+    .*<                   # the actual target name starts after a '<'
+    (?P<target>[^`:]*)    # match "aliased" targets
     $
     """,
     re.MULTILINE | re.VERBOSE,
@@ -107,7 +104,7 @@ COMPLETION_TARGETS = {
 class Roles(lsp.LanguageFeature):
     """Role support for the language server."""
 
-    def initialized(self, config: lsp.SphinxConfig):
+    def initialize(self, options: lsp.InitializationOptions):
         self.discover_roles()
         self.discover_targets()
 

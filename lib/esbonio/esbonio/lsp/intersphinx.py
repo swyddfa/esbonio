@@ -1,35 +1,32 @@
 """Intersphinx support."""
 import re
+from typing import List
+from typing import Optional
 
-from typing import List, Optional
-from pygls.lsp.types import (
-    CompletionItem,
-    CompletionItemKind,
-    Position,
-)
+from pygls.lsp.types import CompletionItem
+from pygls.lsp.types import CompletionItemKind
+from pygls.lsp.types import Position
 from pygls.workspace import Document
 
 import esbonio.lsp as lsp
-from esbonio.lsp.roles import (
-    COMPLETION_TARGETS,
-    DEFAULT_TARGET,
-    PARTIAL_PLAIN_TARGET,
-    PARTIAL_ALIASED_TARGET,
-)
+from esbonio.lsp.roles import COMPLETION_TARGETS
+from esbonio.lsp.roles import DEFAULT_TARGET
+from esbonio.lsp.roles import PARTIAL_ALIASED_TARGET
+from esbonio.lsp.roles import PARTIAL_PLAIN_TARGET
 from esbonio.lsp.sphinx import get_domains
 
 
 PARTIAL_INTER_PLAIN_TARGET = re.compile(
     r"""
-    (^|.*[ ])               # roles must be preceeded by a space, or start the line
-    (?P<role>:              # roles start with the ':' character
-    (?!:)                   # make sure the next character is not ':'
-    (?P<domain>[\w]+:)?     # there may be a domain namespace
-    (?P<name>[\w-]*)        # followed by the role name
-    :)                      # the role name ends with a ':'
-    `                       # the target begins with a '`'
-    (?P<project>[^<:`]*)    # match "plain link" targets
-    :                       # projects end with a ':'
+    (^|.*[^\w:])             # roles cannot be preceeded by certain chars
+    (?P<role>:               # roles start with the ':' character
+    (?!:)                    # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?      # there may be a domain namespace
+    (?P<name>[\w-]*)         # followed by the role name
+    :)                       # the role name ends with a ':'
+    `                        # the target begins with a '`'
+    (?P<project>[^<:`]*)     # match "plain link" targets
+    :                        # projects end with a ':'
     $
     """,
     re.MULTILINE | re.VERBOSE,
@@ -45,16 +42,16 @@ Used when generating auto complete suggestions.
 
 PARTIAL_INTER_ALIASED_TARGET = re.compile(
     r"""
-    (^|.*[ ])            # roles must be preceeded by a space, or start the line
-    (?P<role>:           # roles start with the ':' character
-    (?!:)                # make sure the next character is not ':'
-    (?P<domain>[\w]+:)?  # there may be a domain namespace
-    (?P<name>[\w-]*)     # followed by the role name
-    :)                   # the role name ends with a ':'
-    `                    # the target begins with a '`'`
-    .*<                  # the actual target name starts after a '<'
-    (?P<project>[^`:]*)  # match "aliased" targets
-    :                    # projects end with a ':'
+    (^|.*[^\w:])          # roles cannot be preceeded by alpha chars
+    (?P<role>:            # roles start with the ':' character
+    (?!:)                 # make sure the next character is not ':'
+    (?P<domain>[\w]+:)?   # there may be a domain namespace
+    (?P<name>[\w-]*)      # followed by the role name
+    :)                    # the role name ends with a ':'
+    `                     # the target begins with a '`'`
+    .*<                   # the actual target name starts after a '<'
+    (?P<project>[^`:]*)   # match "aliased" targets
+    :                     # projects end with a ':'
     $
     """,
     re.MULTILINE | re.VERBOSE,
@@ -72,7 +69,7 @@ Used when generating auto complete suggestions.
 class InterSphinx(lsp.LanguageFeature):
     """Intersphinx support for the language server."""
 
-    def initialized(self, config: lsp.SphinxConfig):
+    def initialize(self, options: lsp.InitializationOptions):
 
         self.targets = {}
         self.target_types = {}

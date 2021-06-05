@@ -4,32 +4,33 @@ import json
 import logging
 import pathlib
 import textwrap
+from typing import List
+from typing import Optional
+from urllib.parse import unquote
+from urllib.parse import urlparse
 
-from typing import List, Optional
-from urllib.parse import urlparse, unquote
-
+from pydantic import BaseModel
+from pydantic import Field
+from pygls.lsp.methods import COMPLETION
+from pygls.lsp.methods import INITIALIZE
+from pygls.lsp.methods import INITIALIZED
+from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
+from pygls.lsp.methods import TEXT_DOCUMENT_DID_SAVE
+from pygls.lsp.types import CompletionList
+from pygls.lsp.types import CompletionOptions
+from pygls.lsp.types import CompletionParams
+from pygls.lsp.types import DidOpenTextDocumentParams
+from pygls.lsp.types import DidSaveTextDocumentParams
+from pygls.lsp.types import InitializedParams
+from pygls.lsp.types import InitializeParams
+from pygls.lsp.types import Position
 from pygls.server import LanguageServer
-from pygls.lsp.methods import (
-    COMPLETION,
-    INITIALIZE,
-    INITIALIZED,
-    TEXT_DOCUMENT_DID_OPEN,
-    TEXT_DOCUMENT_DID_SAVE,
-)
-from pygls.lsp.types import (
-    CompletionList,
-    CompletionOptions,
-    CompletionParams,
-    ConfigurationItem,
-    ConfigurationParams,
-    DidOpenTextDocumentParams,
-    DidSaveTextDocumentParams,
-    InitializeParams,
-    InitializedParams,
-    Position,
-)
 from pygls.workspace import Document
 from sphinx.application import Sphinx
+
+from esbonio.lsp.logger import LOG_LEVELS
+from esbonio.lsp.logger import LogFilter
+from esbonio.lsp.logger import LspHandler
 
 __version__ = "0.6.1"
 
@@ -43,6 +44,50 @@ BUILTIN_MODULES = [
 ]
 
 
+class SphinxConfig(BaseModel):
+    """Represents both the current Sphinx configuration and also the config options that
+    we should create Sphinx with."""
+
+    version: Optional[str]
+    """Sphinx's version number."""
+
+    conf_dir: Optional[str] = Field(None, alias="confDir")
+    """Can be used to override the default conf.py discovery mechanism."""
+
+    src_dir: Optional[str] = Field(None, alias="srcDir")
+    """Can be used to override the default assumption on where the project's rst files are
+    located."""
+
+    build_dir: Optional[str] = Field(None, alias="buildDir")
+    """Can be used to override the default location for storing build outputs."""
+
+    builder_name: str = Field("html", alias="builderName")
+    """The currently used builder."""
+
+
+class ServerConfig(BaseModel):
+    """Configuration options for the server."""
+
+    log_level: Optional[str] = Field("error", alias="logLevel")
+    """The logging level for server messages"""
+
+    log_filter: Optional[List[str]] = Field(None, alias="logFilter")
+    """A list of logger names to restrict output to."""
+
+    hide_sphinx_output: Optional[bool] = Field(False, alias="hideSphinxOutput")
+    """A flag to indicate if Sphinx build output should be omitted from the log."""
+
+
+class InitializationOptions(BaseModel):
+    """The initialization options we can expect to receive from a client."""
+
+    sphinx: Optional[SphinxConfig] = Field(default_factory=SphinxConfig)
+    """The ``esbonio.sphinx.*`` namespace of options"""
+
+    server: Optional[ServerConfig] = Field(default_factory=ServerConfig)
+    """The ``esbonio.server.*`` namespace of options"""
+
+
 class LanguageFeature:
     """Base class for language features."""
 
@@ -51,35 +96,9 @@ class LanguageFeature:
         self.logger = rst.logger.getChild(self.__class__.__name__)
 
 
-class SphinxConfig:
-    """Represents the `esbonio.sphinx.*` configuration namespace."""
-
-    def __init__(self, conf_dir: Optional[str] = None, src_dir: Optional[str] = None):
-        self.conf_dir = conf_dir
-        """Used to override the default 'conf.py' discovery mechanism."""
-
-        self.src_dir = src_dir
-        """Used to override the assumption that rst soruce files are
-        in the same folder as 'conf.py'"""
-
-    @classmethod
-    def default(cls):
-        return cls(conf_dir="", src_dir="")
-
-    @classmethod
-    def from_dict(cls, config):
-        conf_dir = config.get("confDir", "")
-        src_dir = config.get("srcDir", "")
-
-        return cls(conf_dir=conf_dir, src_dir=src_dir)
-
-
 class RstLanguageServer(LanguageServer):
-    def __init__(self, cache_dir=None, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        self.cache_dir = cache_dir
-        """The folder to store cached data in."""
 
         self.logger = logging.getLogger(__name__)
         """The logger that should be used for all Language Server log entries"""
@@ -87,7 +106,7 @@ class RstLanguageServer(LanguageServer):
         self.app: Optional[Sphinx] = None
         """Sphinx application instance configured for the current project."""
 
-        self.on_init_hooks = []
+        self.on_initialize_hooks = []
         """A list of functions to run on initialization"""
 
         self.on_initialized_hooks = []
@@ -104,7 +123,7 @@ class RstLanguageServer(LanguageServer):
         """Add a new feature to the language server."""
 
         if hasattr(feature, "initialize"):
-            self.on_init_hooks.append(feature.initialize)
+            self.on_initialize_hooks.append(feature.initialize)
 
         if hasattr(feature, "initialized"):
             self.on_initialized_hooks.append(feature.initialized)
@@ -138,6 +157,33 @@ class RstLanguageServer(LanguageServer):
         for hook in hooks:
             self.logger.debug("Running '%s' hook %s", kind, hook)
             hook(*args)
+
+    def _configure_logging(self, config: ServerConfig):
+        level = LOG_LEVELS[config.log_level]
+
+        lsp_logger = logging.getLogger("esbonio.lsp")
+        lsp_logger.setLevel(level)
+
+        lsp_handler = LspHandler(self)
+        lsp_handler.setLevel(level)
+
+        if config.log_filter is not None and len(config.log_filter) > 0:
+            lsp_handler.addFilter(LogFilter(config.log_filter))
+
+        formatter = logging.Formatter("[%(name)s] %(message)s")
+        lsp_handler.setFormatter(formatter)
+        lsp_logger.addHandler(lsp_handler)
+
+        if not config.hide_sphinx_output:
+            sphinx_logger = logging.getLogger("esbonio.sphinx")
+            sphinx_logger.setLevel(logging.INFO)
+
+            sphinx_handler = LspHandler(self)
+            sphinx_handler.setLevel(logging.INFO)
+
+            formatter = logging.Formatter("%(message)s")
+            sphinx_handler.setFormatter(formatter)
+            sphinx_logger.addHandler(sphinx_handler)
 
 
 def get_line_til_position(doc: Document, position: Position) -> str:
@@ -182,45 +228,34 @@ def dump(obj) -> str:
     return json.dumps(obj, default=default)
 
 
-def create_language_server(
-    modules: List[str], cache_dir: Optional[str] = None
-) -> RstLanguageServer:
+def create_language_server(modules: List[str]) -> RstLanguageServer:
     """Create a new language server instance.
 
     Parameters
     ----------
     modules:
         The list of modules that should be loaded.
-    cache_dir:
-        The folder to use for cached data.
     """
-    server = RstLanguageServer(cache_dir)
+    server = RstLanguageServer()
 
     for mod in modules:
         server.load_module(mod)
 
     @server.feature(INITIALIZE)
     def on_initialize(rst: RstLanguageServer, params: InitializeParams):
-        rst.logger.debug("%s: %s", INITIALIZE, dump(params))
-        rst.run_hooks("init")
+        options = InitializationOptions(**params.initialization_options)
 
+        # Let there be light...
+        rst._configure_logging(options.server)
         rst.logger.info("Language server started.")
 
+        rst.logger.debug("%s: %s", INITIALIZE, dump(params))
+        rst.run_hooks("initialize", options)
+
     @server.feature(INITIALIZED)
-    async def on_initialized(rst: RstLanguageServer, params: InitializedParams):
+    def on_initialized(rst: RstLanguageServer, params: InitializedParams):
         rst.logger.debug("%s: %s", INITIALIZED, dump(params))
-
-        config_params = ConfigurationParams(
-            items=[ConfigurationItem(section="esbonio.sphinx")]
-        )
-
-        config_items = await rst.get_configuration_async(config_params)
-        sphinx_config = SphinxConfig.from_dict(config_items[0] or dict())
-
-        rst.logger.debug("SphinxConfig: %s", dump(sphinx_config))
-        rst.run_hooks("initialized", sphinx_config)
-
-        rst.logger.info("LSP server initialized")
+        rst.run_hooks("initialized")
 
     @server.feature(
         COMPLETION, CompletionOptions(trigger_characters=[".", ":", "`", "<", "/"])

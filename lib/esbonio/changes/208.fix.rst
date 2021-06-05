@@ -1,0 +1,2 @@
+Path variables like ``${confDir}`` and ``${workspaceRoot}`` are now properly expanded
+even when there are no additional path elements.

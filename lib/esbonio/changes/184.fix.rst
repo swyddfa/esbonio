@@ -1,0 +1,2 @@
+The language server now correctly handles windows file URIs when determining Sphinx's
+build directory.

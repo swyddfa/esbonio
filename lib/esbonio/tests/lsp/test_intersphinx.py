@@ -5,11 +5,9 @@ import unittest.mock as mock
 import py.test
 
 from esbonio.lsp.intersphinx import InterSphinx
-from esbonio.lsp.testing import (
-    completion_test,
-    role_target_patterns,
-    intersphinx_target_patterns,
-)
+from esbonio.lsp.testing import completion_test
+from esbonio.lsp.testing import intersphinx_target_patterns
+from esbonio.lsp.testing import role_target_patterns
 
 
 @py.test.fixture(scope="session")
@@ -33,7 +31,7 @@ def intersphinx(sphinx):
         rst.logger = logging.getLogger("rst")
 
         feature = InterSphinx(rst)
-        feature.initialized(None)
+        feature.initialize(None)
         instances[project] = feature
 
         return feature

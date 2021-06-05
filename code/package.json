@@ -1,5 +1,6 @@
 {
     "name": "esbonio",
+    "displayName": "Esbonio",
     "description": "An extension for editing sphinx projects",
     "repository": {
         "url": "https://github.com/swyddfa/esbonio"
@@ -14,7 +15,7 @@
         "webpack": "webpack --mode development",
         "webpack-dev": "webpack --mode development --watch",
         "test": "npm run compile-test && node ./dist/test/runTests.js",
-        "test-grammar": "vscode-tmgrammar-test -c -s source.rst -g syntaxes/rst.tmLanguage.json -g syntaxes/tests/css.tmLanguage.json -g syntaxes/tests/html.tmLanguage.json -g syntaxes/tests/json.tmLanguage.json -g syntaxes/tests/python.tmLanguage.json -g syntaxes/tests/yaml.tmLanguage.json -t \"syntaxes/**/*.rst\"",
+        "test-grammar": "vscode-tmgrammar-test -c -s source.rst -g syntaxes/rst.tmLanguage.json -g syntaxes/tests/c.tmLanguage.json -g syntaxes/tests/cpp.tmLanguage.json -g syntaxes/tests/css.tmLanguage.json -g syntaxes/tests/html.tmLanguage.json -g syntaxes/tests/js.tmLanguage.json -g syntaxes/tests/json.tmLanguage.json -g syntaxes/tests/python.tmLanguage.json -g syntaxes/tests/ts.tmLanguage.json -g syntaxes/tests/yaml.tmLanguage.json -t \"syntaxes/**/*.rst\"",
         "clean": "rm -r dist",
         "deploy": "vsce publish --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
@@ -22,11 +23,13 @@
     },
     "main": "dist/extension",
     "dependencies": {
+        "jsdom": "^16.5.3",
         "semver": "^7.3.5",
         "vscode-languageclient": "^7.0.0"
     },
     "devDependencies": {
         "@types/glob": "^7.1.3",
+        "@types/jsdom": "^16.2.10",
         "@types/mocha": "^8.2.2",
         "@types/node": "^14.14.44",
         "@types/semver": "^7.3.5",
@@ -43,6 +46,7 @@
     "engines": {
         "vscode": "^1.52.0"
     },
+    "icon": "icon.png",
     "activationEvents": [
         "onLanguage:rst",
         "workspaceContains:**/conf.py"
@@ -57,6 +61,18 @@
             {
                 "command": "esbonio.insert.inlineLink",
                 "title": "Insert Inline Link",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.preview.open",
+                "title": "Open Preview",
+                "icon": "$(preview)",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.preview.openSide",
+                "title": "Open Preview to the Side",
+                "icon": "$(open-preview)",
                 "category": "Esbonio"
             },
             {
@@ -164,13 +180,13 @@
                 "esbonio.sphinx.confDir": {
                     "scope": "window",
                     "type": "string",
-                    "default": "",
+                    "default": null,
                     "description": "The Language Server should be able to automatically find the folder containing your project's 'conf.py' file. However this setting can be used to force the Language Server to use a particular directory if required."
                 },
                 "esbonio.sphinx.srcDir": {
                     "scope": "window",
                     "type": "string",
-                    "default": "",
+                    "default": null,
                     "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.srcDir#` but this opton can override this if necessary."
                 }
             }
@@ -195,6 +211,16 @@
                 "command": "esbonio.insert.link",
                 "key": "alt+shift+l",
                 "when": "editorTextFocus && editorLangId == rst"
+            },
+            {
+                "command": "esbonio.preview.open",
+                "key": "ctrl+shift+v",
+                "when": "editorTextFocus && editorLangId == rst"
+            },
+            {
+                "command": "esbonio.preview.openSide",
+                "key": "ctrl+k v",
+                "when": "editorTextFocus && editorLangId == rst"
             }
         ],
         "languages": [
@@ -208,6 +234,16 @@
                 ],
                 "configuration": "./rst-language-configuration.json"
             }
-        ]
+        ],
+        "menus": {
+            "editor/title": [
+                {
+                    "command": "esbonio.preview.openSide",
+                    "alt": "esbonio.preview.open",
+                    "group": "navigation",
+                    "when": "resourceLangId == rst"
+                }
+            ]
+        }
     }
 }

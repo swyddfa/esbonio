@@ -5,13 +5,21 @@
     "autoClosingPairs": [
         {
             "open": "`",
-            "close": "`"
-        }
+            "close": "`",
+        },
+        {
+            "open": "*",
+            "close": "*"
+        },
     ],
     "surroundingPairs": [
         [
             "`",
             "`"
+        ],
+        [
+            "*",
+            "*"
         ]
     ]
 }

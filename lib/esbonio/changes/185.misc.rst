@@ -1,0 +1,4 @@
+The cli arguments ``--cache-dir``, ``--log-filter``, ``--log-level`` and
+``--hide-sphinx-output`` have been replaced with the configuration
+parameters ``esbonio.sphinx.buildDir``, ``esbonio.server.logFilter``,
+``esbonio.logLevel`` and ``esbonio.server.hideSphinxOutput`` respectively

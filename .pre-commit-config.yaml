@@ -1,0 +1,24 @@
+repos:
+
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.0.1
+  hooks:
+  - id: end-of-file-fixer
+  - id: trailing-whitespace
+
+- repo: https://github.com/psf/black
+  rev: 21.5b2
+  hooks:
+  - id: black
+
+- repo: https://github.com/PyCQA/flake8
+  rev: 3.9.2
+  hooks:
+  - id: flake8
+    args: [--config=lib/esbonio/setup.cfg]
+
+- repo: https://github.com/asottile/reorder_python_imports
+  rev: v2.5.0
+  hooks:
+  - id: reorder-python-imports
+    args: [--application-directories=lib:esbonio]

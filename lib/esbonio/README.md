@@ -1,3 +1,4 @@
+![Esbonio logo](https://github.com/swyddfa/esbonio/blob/release/resources/io.github.swyddfa.Esbonio.svg?raw=true)
 # Esbonio [![PyPI](https://img.shields.io/pypi/v/esbonio?style=flat-square)](https://pypi.org/project/esbonio) [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/esbonio?style=flat-square)](https://pypi.org/project/esbonio)
 
 Esbonio - to explain.

@@ -1,15 +1,15 @@
 import pathlib
 from unittest import mock
 
+import py.test
 from docutils.io import StringInput
-from docutils.parsers.rst import Parser, directives
+from docutils.parsers.rst import directives
+from docutils.parsers.rst import Parser
 from docutils.readers.standalone import Reader
-
 from sphinx.ext.doctest import DoctestDirective
 
-import py.test
-
-from esbonio.tutorial import SolutionDirective, TutorialDirective
+from esbonio.tutorial import SolutionDirective
+from esbonio.tutorial import TutorialDirective
 
 
 @py.test.fixture(scope="session")
@@ -62,6 +62,9 @@ def rst_mock_settings():
     # truth of these so there's a good chance these values are **not** representative.
 
     settings.tab_width = 2
+
+    # The following setting is required for docutils >=0.17
+    settings.line_length_limit = 10_000
 
     # Fake some additional settings on the (Sphinx?) application object
     settings.env.app.confdir = "/project/docs"
