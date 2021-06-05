@@ -1,3 +1,34 @@
+v0.7.0 - 2021-06-05
+-------------------
+
+Features
+^^^^^^^^
+
+- Add the ability to preview the output from the ``html`` builder.` (`#190 <https://github.com/swyddfa/esbonio/issues/190>`_)
+- Add a statusbar item that indicates the state of the language server. (`#194 <https://github.com/swyddfa/esbonio/issues/194>`_)
+- VSCode will now syntax highlight C, C++, Javascript and Typescript code blocks (`#205 <https://github.com/swyddfa/esbonio/issues/205>`_)
+
+
+Fixes
+^^^^^
+
+- Fix incorrect syntax highlighting of multiple links on a single line (`#203 <https://github.com/swyddfa/esbonio/issues/203>`_)
+- VSCode now treats ``*`` characters as quotes, meaning selecting some text and entering
+  a ``*`` will automatically surround that text rather than replacing it. (`#204 <https://github.com/swyddfa/esbonio/issues/204>`_)
+
+
+Misc
+^^^^
+
+- The cli arguments ``--cache-dir``, ``--log-filter``, ``--log-level`` and
+  ``--hide-sphinx-output`` have been replaced with the configuration
+  parameters ``esbonio.sphinx.buildDir``, ``esbonio.server.logFilter``,
+  ``esbonio.logLevel`` and ``esbonio.server.hideSphinxOutput`` respectively (`#185 <https://github.com/swyddfa/esbonio/issues/185>`_)
+- The language server's startup sequence has been reworked. Language clients are now
+  required to provide configuration parameters under the ``initializationOptions`` field
+  in the ``initialize`` request. (`#192 <https://github.com/swyddfa/esbonio/issues/192>`_)
+
+
 v0.6.2 - 2021-05-14
 -------------------
 

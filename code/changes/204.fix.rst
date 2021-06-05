@@ -1,2 +1,0 @@
-VSCode now treats ``*`` characters as quotes, meaning selecting some text and entering
-a ``*`` will automatically surround that text rather than replacing it.

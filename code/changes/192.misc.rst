@@ -1,3 +1,0 @@
-The language server's startup sequence has been reworked. Language clients are now
-required to provide configuration parameters under the ``initializationOptions`` field
-in the ``initialize`` request.

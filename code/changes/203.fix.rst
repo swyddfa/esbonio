@@ -1,1 +1,0 @@
-Fix incorrect syntax highlighting of multiple links on a single line
