@@ -247,4 +247,4 @@ def setup(app):
     app.add_directive(SolutionDirective.NAME, SolutionDirective)
     app.add_directive(TutorialDirective.NAME, TutorialDirective)
 
-    return {"version": "0.0.1", "parallel_read_safe": True}
+    return {"version": "0.0.2", "parallel_read_safe": True}
