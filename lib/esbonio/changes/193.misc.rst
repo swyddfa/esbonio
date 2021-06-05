@@ -1,2 +1,0 @@
-The language server will now send an `esbonio/buildComplete` notification to
-clients when it has finished (re)building the docs.

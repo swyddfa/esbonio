@@ -32,7 +32,7 @@ from esbonio.lsp.logger import LOG_LEVELS
 from esbonio.lsp.logger import LogFilter
 from esbonio.lsp.logger import LspHandler
 
-__version__ = "0.6.1"
+__version__ = "0.6.2"
 
 
 BUILTIN_MODULES = [

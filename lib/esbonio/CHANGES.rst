@@ -1,3 +1,34 @@
+v0.6.2 - 2021-06-05
+-------------------
+
+Fixes
+^^^^^
+
+- The language server now correctly handles windows file URIs when determining Sphinx's
+  build directory. (`#184 <https://github.com/swyddfa/esbonio/issues/184>`_)
+- Role and role target completions are now correctly generated when the role
+  is being typed within parenthesis e.g. ``(:kbd:...`` (`#191 <https://github.com/swyddfa/esbonio/issues/191>`_)
+- Path variables like ``${confDir}`` and ``${workspaceRoot}`` are now properly expanded
+  even when there are no additional path elements. (`#208 <https://github.com/swyddfa/esbonio/issues/208>`_)
+
+
+Misc
+^^^^
+
+- The cli arguments ``--cache-dir``, ``--log-filter``, ``--log-level`` and
+  ``--hide-sphinx-output`` have been replaced with the configuration
+  parameters ``esbonio.sphinx.buildDir``, ``esbonio.server.logFilter``,
+  ``esbonio.logLevel`` and ``esbonio.server.hideSphinxOutput`` respectively (`#185 <https://github.com/swyddfa/esbonio/issues/185>`_)
+- The language server's startup sequence has been reworked. Language clients are now
+  required to provide configuration parameters under the ``initializationOptions`` field
+  in the ``initialize`` request. (`#192 <https://github.com/swyddfa/esbonio/issues/192>`_)
+- The language server will now send an `esbonio/buildComplete` notification to
+  clients when it has finished (re)building the docs. (`#193 <https://github.com/swyddfa/esbonio/issues/193>`_)
+- An entry for ``esbonio`` has been added to the ``console_scripts``
+  entry point, so it's now possible to launch the language server by
+  calling ``esbonio`` directly (`#195 <https://github.com/swyddfa/esbonio/issues/195>`_)
+
+
 v0.6.1 - 2021-05-13
 -------------------
 
