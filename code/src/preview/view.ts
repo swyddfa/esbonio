@@ -149,8 +149,8 @@ export class PreviewManager {
     styles.forEach(stylesheet => this.rewriteHrefUrl(stylesheet, baseDir))
 
     // Rewrite script urls
-    let headScripts = head.querySelectorAll('script')
-    let bodyScripts = body.querySelectorAll('script')
+    let headScripts = head.querySelectorAll('script [src]')
+    let bodyScripts = body.querySelectorAll('script [src]')
     headScripts.forEach(script => this.rewriteSrcUrl(script, baseDir))
     bodyScripts.forEach(script => this.rewriteSrcUrl(script, baseDir))
 
