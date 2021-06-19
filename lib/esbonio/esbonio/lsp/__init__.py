@@ -289,11 +289,6 @@ def create_language_server(modules: List[str]) -> RstLanguageServer:
         rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_SAVE, dump(params))
         rst.run_hooks("save", params)
 
-    @server.feature("$/setTrace")
-    def on_set_trace(rst: RstLanguageServer, params):
-        """Dummy implementation, stops JsonRpcMethodNotFound exceptions."""
-        rst.logger.debug("$/setTrace: %s", dump(params))
-
     @server.feature("$/setTraceNotification")
     def vscode_set_trace(rst: RstLanguageServer, params):
         """Dummy implementation, stops JsonRpcMethodNotFound exceptions."""
