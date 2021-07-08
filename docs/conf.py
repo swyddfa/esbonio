@@ -62,9 +62,6 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # -- Options for HTML output -------------------------------------------------
 
-# The theme to use for HTML and HTML Help pages.  See the documentation for
-# a list of builtin themes.
-#
 html_theme = "sphinx_book_theme"
 html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
 html_favicon = "favicon.svg"
