@@ -1,0 +1,1 @@
+Diagnostics are now correctly cleared on Windows

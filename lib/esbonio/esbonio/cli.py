@@ -1,14 +1,16 @@
 import argparse
 import sys
 
-import esbonio.lsp as lsp
 from esbonio.lsp import __version__
+from esbonio.lsp import BUILTIN_MODULES
+from esbonio.lsp import create_language_server
+from esbonio.lsp import SphinxLanguageServer
 
 
 def start_server(args):
     """Start the language server."""
 
-    server = lsp.create_language_server(lsp.BUILTIN_MODULES)
+    server = create_language_server(SphinxLanguageServer, BUILTIN_MODULES)
 
     if args.port:
         server.start_tcp("localhost", args.port)
