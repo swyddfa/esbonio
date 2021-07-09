@@ -1,12 +1,7 @@
-import logging
-import unittest.mock as mock
-
 import py.test
 
-from esbonio.lsp.directives import Directives
-from esbonio.lsp.testing import completion_test
+from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import sphinx_version
-
 
 DEFAULT_EXPECTED = {
     "function",
@@ -51,6 +46,7 @@ EXTENSIONS_UNEXPECTED = {
 }
 
 
+@py.test.mark.asyncio
 @py.test.mark.parametrize(
     "project,text,expected,unexpected",
     [
@@ -119,17 +115,23 @@ EXTENSIONS_UNEXPECTED = {
         ("sphinx-extensions", "   .. c:", None, None),
     ],
 )
-def test_directive_completions(sphinx, project, text, expected, unexpected):
-    """Ensure that we can provide the correct completions for directives."""
+async def test_directive_completions(
+    client_server, project, text, expected, unexpected
+):
 
-    rst = mock.Mock()
-    rst.app = sphinx(project)
-    rst.logger = logging.getLogger("rst")
+    test = await client_server(project)
+    test_uri = test.server.workspace.root_uri + "/test.rst"
 
-    feature = Directives(rst)
-    feature.initialize(None)
+    results = await completion_request(test, test_uri, text)
 
-    completion_test(feature, text, expected=expected, unexpected=unexpected)
+    items = {item.label for item in results.items}
+    unexpected = unexpected or set()
+
+    if expected is None:
+        assert len(items) == 0
+    else:
+        assert expected == items & expected
+        assert set() == items & unexpected
 
 
 AUTOCLASS_OPTS = {
@@ -148,6 +150,7 @@ PY_FUNC_OPTS = {"annotation", "async", "module", "noindex"}
 C_FUNC_OPTS = {"noindex"} if sphinx_version(eq=2) else {"noindexentry"}
 
 
+@py.test.mark.asyncio
 @py.test.mark.parametrize(
     "project,text,expected,unexpected",
     [
@@ -210,14 +213,20 @@ C_FUNC_OPTS = {"noindex"} if sphinx_version(eq=2) else {"noindexentry"}
         ),
     ],
 )
-def test_directive_option_completions(sphinx, project, text, expected, unexpected):
-    """Ensure that we can provide the correct completions for directive options."""
+async def test_directive_option_completions(
+    client_server, project, text, expected, unexpected
+):
 
-    rst = mock.Mock()
-    rst.app = sphinx(project)
-    rst.logger = logging.getLogger("rst")
+    test = await client_server(project)
+    test_uri = test.server.workspace.root_uri + "/test.rst"
 
-    feature = Directives(rst)
-    feature.initialize(None)
+    results = await completion_request(test, test_uri, text)
 
-    completion_test(feature, text, expected=expected, unexpected=unexpected)
+    items = {item.label for item in results.items}
+    unexpected = unexpected or set()
+
+    if expected is None:
+        assert len(items) == 0
+    else:
+        assert expected == items & expected
+        assert set() == items & unexpected

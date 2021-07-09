@@ -1,13 +1,10 @@
 """Logic around directive completions goes here."""
-import importlib
 import inspect
 import re
 from typing import List
-from typing import Tuple
-from typing import Union
+from typing import Optional
 
 from docutils.parsers.rst import Directive
-from docutils.parsers.rst import directives
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import InsertTextFormat
@@ -16,8 +13,8 @@ from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
 from pygls.workspace import Document
 
-import esbonio.lsp as lsp
-from esbonio.lsp.sphinx import get_domains
+from esbonio.lsp import LanguageFeature
+from esbonio.lsp import RstLanguageServer
 
 
 DIRECTIVE = re.compile(
@@ -64,76 +61,85 @@ PARTIAL_DIRECTIVE_OPTION = re.compile(
 auto complete suggestions."""
 
 
-class Directives(lsp.LanguageFeature):
+class ArgumentCompletion:
+    """A completion provider for directive arguments."""
+
+    def complete_arguments(
+        self, doc: Document, match: "re.Match", name: str, domain: Optional[str] = None
+    ) -> List[CompletionItem]:
+        """Return a list of completion items representing valid targets for the given
+        directive.
+
+        Parameters
+        ----------
+        doc:
+           The document containing the match
+        match:
+           The match object that triggered the completion
+        name:
+           The name of the directive
+        domain:
+           The domain the directive is part of, if applicable.
+        """
+        return []
+
+
+class Directives(LanguageFeature):
     """Directive support for the language server."""
 
-    def initialize(self, options: lsp.InitializationOptions):
-        self.discover()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    def discover(self):
-        """Build an index of all available directives and the their options."""
-        ignored_directives = ["restructuredtext-test-directive"]
+        self._argument_providers: List[ArgumentCompletion] = []
+        """A list of providers that give completion suggestions for directive
+        arguments."""
 
-        # Find directives that have been registered directly with docutils.
-        found_directives = {**directives._directive_registry, **directives._directives}
+    def add_argument_provider(self, provider: ArgumentCompletion) -> None:
+        self._argument_providers.append(provider)
 
-        # Find directives under Sphinx domains
-        for prefix, domain in get_domains(self.rst.app):
-            fmt = "{prefix}:{name}" if prefix else "{name}"
+    completion_triggers = [DIRECTIVE, PARTIAL_DIRECTIVE, PARTIAL_DIRECTIVE_OPTION]
 
-            for name, directive in domain.directives.items():
-                key = fmt.format(name=name, prefix=prefix)
-                found_directives[key] = directive
-
-        self.directives = {
-            k: self.resolve_directive(v)
-            for k, v in found_directives.items()
-            if k not in ignored_directives
-        }
-
-        self.options = {
-            k: self.options_to_completion_items(k, v)
-            for k, v in self.directives.items()
-        }
-
-        self.logger.info("Discovered %s directives", len(self.directives))
-        self.logger.debug("Directives: %s", list(self.directives.keys()))
-
-    def resolve_directive(self, directive: Union[Directive, Tuple[str]]):
-
-        # 'Core' docutils directives are returned as tuples (modulename, ClassName)
-        # so its up to us to resolve the reference
-        if isinstance(directive, tuple):
-            mod, cls = directive
-
-            modulename = "docutils.parsers.rst.directives.{}".format(mod)
-            module = importlib.import_module(modulename)
-            directive = getattr(module, cls)
-
-        return directive
-
-    suggest_triggers = [PARTIAL_DIRECTIVE, PARTIAL_DIRECTIVE_OPTION]
-    """Regular expressions that match lines that we want to offer autocomplete
-    suggestions for."""
-
-    def suggest(
+    def complete(
         self, match: "re.Match", doc: Document, position: Position
     ) -> List[CompletionItem]:
         self.logger.debug("Trigger match: %s", match)
         groups = match.groupdict()
 
+        if "argument" in groups:
+            return self.complete_arguments(doc, match)
+
         if "domain" in groups:
-            return self.suggest_directives(match, position)
+            return self.complete_directives(match, position)
 
-        return self.suggest_options(match, doc, position)
+        return self.complete_options(doc, match, position)
 
-    def suggest_directives(self, match, position) -> List[CompletionItem]:
+    def complete_arguments(
+        self, doc: Document, match: "re.Match"
+    ) -> List[CompletionItem]:
+
+        groups = match.groupdict()
+        domain = groups["domain"] or None
+        name = groups["name"]
+
+        arguments = []
+        self.logger.debug(
+            "Suggesting arguments for %s:%s:: %s", domain or "", name, match.groupdict()
+        )
+
+        for provide in self._argument_providers:
+            arguments += provide.complete_arguments(doc, match, name, domain) or []
+
+        return arguments
+
+    def complete_directives(
+        self, match: "re.Match", position: Position
+    ) -> List[CompletionItem]:
         self.logger.debug("Suggesting directives")
 
         domain = match.groupdict()["domain"] or ""
         items = []
 
-        for name, directive in self.directives.items():
+        for name, directive in self.rst.get_directives().items():
 
             if not name.startswith(domain):
                 continue
@@ -143,8 +149,8 @@ class Directives(lsp.LanguageFeature):
 
         return items
 
-    def suggest_options(
-        self, match: "re.Match", doc: Document, position: Position
+    def complete_options(
+        self, doc: Document, match: "re.Match", position: Position
     ) -> List[CompletionItem]:
 
         groups = match.groupdict()
@@ -158,7 +164,7 @@ class Directives(lsp.LanguageFeature):
         linum = position.line - 1
         line = doc.lines[linum]
 
-        while line.startswith(indent):
+        while linum >= 0 and line.startswith(indent):
             linum -= 1
             line = doc.lines[linum]
 
@@ -174,7 +180,8 @@ class Directives(lsp.LanguageFeature):
         domain = match.group("domain") or ""
         name = f"{domain}{match.group('name')}"
 
-        return self.options.get(name, [])
+        options = self.rst.get_directive_options(name)
+        return self.options_to_completion_items(options)
 
     def directive_to_completion_item(
         self, name: str, directive: Directive, match: "re.Match", position: Position
@@ -275,42 +282,7 @@ class Directives(lsp.LanguageFeature):
             ),
         )
 
-    def options_to_completion_items(
-        self, name: str, directive: Directive
-    ) -> List[CompletionItem]:
-        """Convert a directive's options to a list of completion items.
-
-        Unfortunately, the ``autoxxx`` family of directives are a little different.
-        Each ``autoxxxx`` directive name resolves to the same ``AutodocDirective`` class.
-        That paricular directive does not have any options, instead the options are
-        held on the particular Documenter that documents that object type.
-
-        This method does the lookup in order to determine what those options are.
-
-        Parameters
-        ----------
-        name:
-           The name of the directive as it appears in an rst file.
-        directive:
-           The directive whose options we are creating completions for.
-        """
-
-        options = directive.option_spec
-
-        # autoxxx directives require special handlng.
-        if name.startswith("auto") and self.rst.app:
-            self.logger.debug("Processing options for '%s' directive", name)
-            name = name.replace("auto", "")
-
-            self.logger.debug("Documenter name is '%s'", name)
-            documenter = self.rst.app.registry.documenters.get(name, None)
-
-            if documenter is not None:
-                options = documenter.option_spec
-
-        if options is None:
-            return []
-
+    def options_to_completion_items(self, options) -> List[CompletionItem]:
         return [
             CompletionItem(
                 label=opt,
@@ -322,7 +294,7 @@ class Directives(lsp.LanguageFeature):
         ]
 
 
-def setup(rst: lsp.RstLanguageServer):
+def esbonio_setup(rst: RstLanguageServer):
 
-    directive_completion = Directives(rst)
-    rst.add_feature(directive_completion)
+    directives = Directives(rst)
+    rst.add_feature(directives)
