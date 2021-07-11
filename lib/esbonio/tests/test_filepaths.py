@@ -1,13 +1,11 @@
 import itertools
-import logging
-import unittest.mock as mock
 
 import py.test
 
-from esbonio.lsp.filepaths import FilepathCompletions
-from esbonio.lsp.testing import completion_test
+from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import directive_argument_patterns
 from esbonio.lsp.testing import role_target_patterns
+
 
 ROOT_FILES = {
     "_static",
@@ -22,7 +20,7 @@ ROOT_FILES = {
 THEOREM_FILES = {"index.rst", "pythagoras.rst"}
 
 
-def trigger_cases(path=None):
+def filepath_trigger_cases(path: str = ""):
     """Expand a path into all roles and directives we wish to test it with."""
     return [
         *role_target_patterns("download", path),
@@ -33,11 +31,12 @@ def trigger_cases(path=None):
     ]
 
 
+@py.test.mark.asyncio
 @py.test.mark.parametrize(
-    "text, setup",
+    "text,setup",
     [
         *itertools.product(
-            [*trigger_cases("/"), *trigger_cases("/conf")],
+            [*filepath_trigger_cases("/"), *filepath_trigger_cases("/conf")],
             [
                 (
                     "sphinx-default",
@@ -54,7 +53,7 @@ def trigger_cases(path=None):
             ],
         ),
         *itertools.product(
-            trigger_cases(),
+            filepath_trigger_cases(),
             [
                 (
                     "sphinx-default",
@@ -71,7 +70,7 @@ def trigger_cases(path=None):
             ],
         ),
         *itertools.product(
-            trigger_cases("../"),
+            filepath_trigger_cases("../"),
             [
                 (
                     "sphinx-default",
@@ -88,7 +87,7 @@ def trigger_cases(path=None):
             ],
         ),
         *itertools.product(
-            trigger_cases("/theorems/"),
+            filepath_trigger_cases("/theorems/"),
             [
                 (
                     "sphinx-default",
@@ -106,16 +105,21 @@ def trigger_cases(path=None):
         ),
     ],
 )
-def test_filepath_completions(sphinx, text, setup):
+async def test_filepath_completions(client_server, text, setup):
     """Ensure that we can offer correct filepath suggestions."""
 
     project, filepath, expected, unexpected = setup
 
-    rst = mock.Mock()
-    rst.app = sphinx(project)
-    rst.logger = logging.getLogger("rst")
+    test = await client_server(project)
+    test_uri = test.server.workspace.root_uri + f"/{filepath}"
 
-    feature = FilepathCompletions(rst)
-    completion_test(
-        feature, text, filepath=filepath, expected=expected, unexpected=unexpected
-    )
+    results = await completion_request(test, test_uri, text)
+
+    items = {item.label for item in results.items}
+    unexpected = unexpected or set()
+
+    if expected is None:
+        assert len(items) == 0
+    else:
+        assert expected == items & expected
+        assert set() == items & unexpected

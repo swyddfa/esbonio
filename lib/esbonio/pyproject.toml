@@ -2,11 +2,6 @@
 requires = ["setuptools >= 35.0.2", "wheel >= 0.29.0"]
 build-backend = "setuptools.build_meta"
 
-[tool.pytest.ini_options]
-markers = [
-        "integration: mark for integration tests"
-]
-
 [tool.towncrier]
 filename = "CHANGES.rst"
 directory = "changes/"
@@ -57,6 +52,7 @@ deps =
     sphinx3: sphinx>=3,<4
     sphinx4: sphinx>=4,<5
     pytest
+    pytest-asyncio
     pytest-cov
 commands =
     pytest --tb=short --cov=esbonio.lsp {posargs}

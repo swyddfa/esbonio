@@ -1,8 +1,7 @@
-"""This module defines a custom logging handler that publishes log messages to an LSP
-client."""
 import logging
 
 from pygls.server import LanguageServer
+
 
 LOG_LEVELS = {
     "debug": logging.DEBUG,

@@ -1,17 +1,109 @@
 """Utility functions to help with testing Language Server features."""
+import asyncio
 import logging
-import pathlib
+import os
+import threading
+from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
-from typing import Set
 
+from pygls.lsp.methods import COMPLETION
+from pygls.lsp.methods import EXIT
+from pygls.lsp.methods import INITIALIZE
+from pygls.lsp.methods import SHUTDOWN
+from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
+from pygls.lsp.methods import TEXT_DOCUMENT_DID_CLOSE
+from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
+from pygls.lsp.methods import TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
+from pygls.lsp.methods import WINDOW_LOG_MESSAGE
+from pygls.lsp.methods import WINDOW_SHOW_MESSAGE
+from pygls.lsp.types import ClientCapabilities
+from pygls.lsp.types import CompletionList
+from pygls.lsp.types import CompletionParams
+from pygls.lsp.types import DidChangeTextDocumentParams
+from pygls.lsp.types import DidCloseTextDocumentParams
+from pygls.lsp.types import DidOpenTextDocumentParams
+from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import Position
-from pygls.workspace import Document
+from pygls.lsp.types import Range
+from pygls.lsp.types import TextDocumentContentChangeEvent
+from pygls.lsp.types import TextDocumentIdentifier
+from pygls.lsp.types import TextDocumentItem
+from pygls.lsp.types import VersionedTextDocumentIdentifier
+from pygls.lsp.types.basic_structures import Diagnostic
+from pygls.server import LanguageServer
 from sphinx import __version__ as __sphinx_version__
 
-from esbonio.lsp import LanguageFeature
-
 logger = logging.getLogger(__name__)
+
+
+class ClientServer:
+    """A class that returns a client server pair for use in tests.
+
+    Originally based on:
+    https://github.com/openlawlibrary/pygls/blob/704ff607a2a993a633fc2ad05eb95120dd34cad5/tests/conftest.py#L53
+    """
+
+    def __init__(self, server: LanguageServer):
+
+        client_server_read, client_server_write = os.pipe()
+        server_client_read, server_client_write = os.pipe()
+
+        self.server = server
+        self.server_thread = threading.Thread(
+            name="Server Thread",
+            target=self.server.start_io,
+            args=(
+                os.fdopen(client_server_read, "rb"),
+                os.fdopen(server_client_write, "wb"),
+            ),
+        )
+        self.server_thread.daemon = True
+
+        self.client = new_test_client()
+        self.client_thread = threading.Thread(
+            name="Client Thread",
+            target=self.client.start_io,
+            args=(
+                os.fdopen(server_client_read, "rb"),
+                os.fdopen(client_server_write, "wb"),
+            ),
+        )
+        self.client_thread.daemon = True
+
+    async def start(
+        self, root_uri: str, initialization_options: Optional[Dict[str, Any]] = None
+    ):
+        self.server_thread.start()
+        self.client_thread.start()
+
+        response = await self.client.lsp.send_request_async(
+            INITIALIZE,
+            InitializeParams(
+                process_id=12345,
+                root_uri=root_uri,
+                capabilities=ClientCapabilities(),
+                initialization_options=initialization_options or {},
+            ),
+        )
+
+        assert "capabilities" in response
+
+    async def stop(self):
+        response = await self.client.lsp.send_request_async(SHUTDOWN)
+        assert response is None
+
+        self.client.lsp.notify(EXIT)
+        self.server_thread.join()
+
+        self.client._stop_event.set()
+        try:
+            self.client.loop._signal_handlers.clear()
+        except AttributeError:
+            pass
+
+        self.client_thread.join()
 
 
 def sphinx_version(eq: Optional[int] = None) -> bool:
@@ -130,71 +222,11 @@ def intersphinx_target_patterns(name: str, project: str) -> List[str]:
     ]
 
 
-def completion_test(
-    feature: LanguageFeature,
+async def completion_request(
+    test: ClientServer,
+    test_uri: str,
     text: str,
-    *,
-    filepath: str = "index.rst",
-    expected: Optional[Set[str]] = None,
-    unexpected: Optional[Set[str]] = None,
-):
-    """Check to see if a feature provides the correct completion suggestions.
-
-    .. admonition:: Assumptions
-
-       - The ``feature`` has access to a valid Sphinx application via ``rst.app``
-       - If ``feature`` requires initialisation, it has already been done.
-
-    .. admonition:: Limitations
-
-       - Only checking ``CompletionItem`` labels is supported, if you want to check
-         other aspects of the results, write a dedicated test method.
-
-    This function takes the given ``feature`` and calls it in the same manner as the
-    real language server so that it can simulate real usage without being a full blown
-    integration test.
-
-    This requires ``suggest_triggers`` to be set and it to have a working ``suggest``
-    method.
-
-    Completions will be asked for with the cursor's position to be at the end of the
-    inserted ``text`` in a blank document by default. If your test case requires
-    additional context this can be included in ``text`` delimited by a ``\\f`` character.
-
-    For example to pass text representing the following scenario (``^`` represents the
-    user's cursor)::
-
-       .. image:: filename.png
-          :align: center
-          :
-           ^
-
-    The ``text`` parameter should be set to
-    ``.. image:: filename.png\\n   :align: center\\n\\f   :``. It's important to note
-    that newlines **cannot** come after the ``\\f`` character.
-
-    If you want to test the case where no completions should be suggested, set
-    ``expected`` to ``None``.
-
-    By default completion suggestions will be asked for the main ``index.rst`` file at
-    the root of the docs project. If you want them to be asked for a file with a
-    different path (like for filepath completion tests) this can be overridden with the
-    ``filepath`` argument.
-
-    Parameters
-    ----------
-    feature:
-       An instance of the language service feature to test.
-    text:
-       The text to offer completion suggestions for.
-    filepath:
-       The path of the file that completion suggestions are being asked for. Relative
-       to the Sphinx application's srcdir.
-    expected:
-       The set of completion item labels you expect to see in the output.
-    unexpected:
-       The set of completion item labels you do *not* expect to see in the output.
-    """
+) -> None:
 
     if "\f" in text:
         contents, text = text.split("\f")
@@ -205,27 +237,79 @@ def completion_test(
     logger.debug("Insertion text: '%s'", text)
     assert "\n" not in text, "Insertion text cannot contain newlines"
 
-    filepath = pathlib.Path(feature.rst.app.srcdir) / filepath
-    document = Document(f"file://{filepath}", contents)
-    position = Position(line=len(document.lines), character=len(text) - 1)
+    test.client.lsp.notify(
+        TEXT_DOCUMENT_DID_OPEN,
+        DidOpenTextDocumentParams(
+            text_document=TextDocumentItem(
+                uri=test_uri, language_id="rst", version=1, text=contents
+            )
+        ),
+    )
 
-    results = []
-    for trigger in feature.suggest_triggers:
-        match = trigger.match(text)
-        logger.debug("Match: %s", match)
+    lines = contents.split("\n")
+    line = len(lines) - 1
+    character = len(lines[-1])
 
-        if match:
-            results += feature.suggest(match, document, position)
+    logger.debug("Insertion pos: (%d, %d)", line, character)
 
-    items = {item.label for item in results}
-    unexpected = unexpected or set()
+    test.client.lsp.notify(
+        TEXT_DOCUMENT_DID_CHANGE,
+        DidChangeTextDocumentParams(
+            text_document=VersionedTextDocumentIdentifier(uri=test_uri, version=2),
+            content_changes=[
+                TextDocumentContentChangeEvent(
+                    range=Range(
+                        start=Position(line=line, character=character),
+                        end=Position(line=line, character=character + len(text)),
+                    ),
+                    text=text,
+                )
+            ],
+        ),
+    )
 
-    logger.debug("Results:    %s", items)
-    logger.debug("Expected:   %s", expected)
-    logger.debug("Unexpected: %s", unexpected)
+    response = await test.client.lsp.send_request_async(
+        COMPLETION,
+        CompletionParams(
+            text_document=TextDocumentIdentifier(uri=test_uri),
+            position=Position(line=line, character=character + len(text)),
+        ),
+    )
 
-    if expected is None:
-        assert len(items) == 0
-    else:
-        assert expected == items & expected
-        assert set() == items & unexpected
+    test.client.lsp.notify(
+        TEXT_DOCUMENT_DID_CLOSE,
+        DidCloseTextDocumentParams(text_document=TextDocumentIdentifier(uri=test_uri)),
+    )
+
+    return CompletionList(**response)
+
+
+class TestClient(LanguageServer):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.messages: List[Any] = []
+        self.diagnostics: Dict[str, List[Diagnostic]] = {}
+
+
+def new_test_client() -> TestClient:
+
+    client = TestClient(asyncio.new_event_loop())
+
+    @client.feature(TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
+    def publish_diagnostics(client: TestClient, params):
+        client.diagnostics[params.uri] = params.diagnostics
+
+    @client.feature(WINDOW_LOG_MESSAGE)
+    def log_message(client: TestClient, params):
+        pass
+
+    @client.feature(WINDOW_SHOW_MESSAGE)
+    def show_message(client: TestClient, params):
+        client.messages.append(params)
+
+    @client.feature("esbonio/buildComplete")
+    def build_complete(client: TestClient, params):
+        pass
+
+    return client
