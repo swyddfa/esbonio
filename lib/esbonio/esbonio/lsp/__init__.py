@@ -7,6 +7,7 @@ import traceback
 from typing import List
 
 from pygls.lsp.methods import COMPLETION
+from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
@@ -15,6 +16,7 @@ from pygls.lsp.methods import TEXT_DOCUMENT_DID_SAVE
 from pygls.lsp.types import CompletionList
 from pygls.lsp.types import CompletionOptions
 from pygls.lsp.types import CompletionParams
+from pygls.lsp.types import DefinitionParams
 from pygls.lsp.types import DidChangeTextDocumentParams
 from pygls.lsp.types import DidOpenTextDocumentParams
 from pygls.lsp.types import DidSaveTextDocumentParams
@@ -39,6 +41,7 @@ BUILTIN_MODULES = [
     "esbonio.lsp.directives",
     "esbonio.lsp.roles",
     "esbonio.lsp.completion",
+    "esbonio.lsp.definition",
 ]
 
 logger = logging.getLogger(__name__)
@@ -121,6 +124,26 @@ def create_language_server(
                     items += feature.complete(match, doc, pos)
 
         return CompletionList(is_incomplete=False, items=items)
+
+    @server.feature(DEFINITION)
+    def on_definition(rst: server_cls, params: DefinitionParams):
+        rst.logger.debug("%s: %s", DEFINITION, dump(params))
+
+        uri = params.text_document.uri
+        pos = params.position
+
+        doc = rst.workspace.get_document(uri)
+        line = rst.line_at_position(doc, pos)
+
+        definitions = []
+
+        for feature in rst._features.values():
+            for pattern in feature.definition_triggers:
+                match = pattern.search(line)
+                if match:
+                    definitions += feature.definition(match, doc, pos)
+
+        return definitions
 
     @server.command("esbonio.server.configuration")
     def get_configuration(rst: server_cls, *args):
