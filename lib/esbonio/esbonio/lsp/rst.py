@@ -8,7 +8,6 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
-from pygls import IS_WIN
 
 import pygls.uris as Uri
 from docutils.parsers.rst import Directive
@@ -16,6 +15,7 @@ from docutils.parsers.rst import directives
 from docutils.parsers.rst import roles
 from pydantic import BaseModel
 from pydantic import Field
+from pygls import IS_WIN
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DidSaveTextDocumentParams
 from pygls.lsp.types import InitializedParams

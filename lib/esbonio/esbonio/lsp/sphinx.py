@@ -108,7 +108,7 @@ class SphinxLogHandler(LspHandler):
 
         # On windows the rest of the path will be the first element of parts
         if IS_WIN:
-            path += f':{parts.pop(0)}'
+            path += f":{parts.pop(0)}"
 
         if len(parts) == 1:
             try:
