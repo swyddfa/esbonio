@@ -209,14 +209,18 @@ class RstLanguageServer(LanguageServer):
             self.logger.debug("Publishing %d diagnostics for: %s", len(diags), uri)
             self.publish_diagnostics(uri, diags.data)
 
-    def line_to_position(self, doc: Document, position: Position) -> str:
-        """Return the contents of the line up until the given position."""
+    def line_at_position(self, doc: Document, position: Position) -> str:
+        """Return the contents of the line corresponding to the given position."""
 
         try:
-            line = doc.lines[position.line]
+            return doc.lines[position.line]
         except IndexError:
             return ""
 
+    def line_to_position(self, doc: Document, position: Position) -> str:
+        """Return the contents of the line up until the given position."""
+
+        line = self.line_at_position(doc, position)
         return line[: position.character]
 
     def _configure_logging(self, config: ServerConfig):
