@@ -328,6 +328,23 @@ class SphinxLanguageServer(RstLanguageServer):
 
         return app
 
+    def get_domain(self, name: str) -> Optional[Domain]:
+        """Return the domain with the given name.
+
+        If a domain with the given name cannot be found, this method will return None.
+
+        Parameters
+        ----------
+        name:
+           The name of the domain
+        """
+
+        if self.app is None:
+            return None
+
+        domains = self.app.env.domains
+        return domains.get(name, None)
+
     def get_domains(self) -> Iterator[Tuple[str, Domain]]:
         """Get all the domains registered with an applications.
 
