@@ -328,6 +328,30 @@ class SphinxLanguageServer(RstLanguageServer):
 
         return app
 
+    def get_doctree(
+        self, docname: Optional[str] = None, uri: Optional[str] = None
+    ) -> Optional[Any]:
+        """Return the doctree that corresponds with the specified document.
+
+        The ``docname`` of a document is its path relative to the project's ``srcdir``
+        minus the extension e.g. the docname of the file ``docs/lsp/features.rst``
+        would be ``lsp/features``.
+
+        Parameters
+        ----------
+        docname:
+           Returns the doctree that corresponds with the given docname
+        uri:
+           Returns the doctree that corresponds with the given uri. (Not yet
+           implemented)
+        """
+
+        if uri is not None:
+            raise NotImplementedError()
+
+        self.logger.debug("Getting doctree for '%s'", docname)
+        return self.app.env.get_and_resolve_doctree(docname, self.app.builder)
+
     def get_domain(self, name: str) -> Optional[Domain]:
         """Return the domain with the given name.
 
@@ -460,7 +484,10 @@ class SphinxLanguageServer(RstLanguageServer):
 
                     self._role_target_types[role_key] = target_types
 
-        return self._role_target_types.get(key, [])
+        types = self._role_target_types.get(key, [])
+        self.logger.debug("Role '%s' targets object types '%s'", key, types)
+
+        return types
 
     def get_role_targets(self, name: str, domain: str = "") -> List[tuple]:
         """Return a list of objects targeted by the given role.
