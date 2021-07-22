@@ -350,7 +350,12 @@ class SphinxLanguageServer(RstLanguageServer):
             raise NotImplementedError()
 
         self.logger.debug("Getting doctree for '%s'", docname)
-        return self.app.env.get_and_resolve_doctree(docname, self.app.builder)
+
+        try:
+            return self.app.env.get_and_resolve_doctree(docname, self.app.builder)
+        except FileNotFoundError:
+            self.logger.debug(traceback.format_exc())
+            return None
 
     def get_domain(self, name: str) -> Optional[Domain]:
         """Return the domain with the given name.

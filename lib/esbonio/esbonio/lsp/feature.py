@@ -30,7 +30,7 @@ class LanguageFeature:
     def save(self, params: DidSaveTextDocumentParams) -> None:
         """Called each time a document is saved."""
 
-    completion_triggers: List[re.Pattern] = []
+    completion_triggers: List["re.Pattern"] = []
     """A list of regular expressions used to determine if the
     :meth`~esbonio.lsp.feature.LanguageFeature.complete` method should be called on the
     current line."""
@@ -53,7 +53,7 @@ class LanguageFeature:
         """
         return []
 
-    definition_triggers: List[re.Pattern] = []
+    definition_triggers: List["re.Pattern"] = []
     """A list of regular expressions used to determine if the
     :meth:`~esbonio.lsp.feature.LanguageFeature.definition` method should be called."""
 

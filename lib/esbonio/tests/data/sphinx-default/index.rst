@@ -13,6 +13,7 @@ Welcome to Defaults's documentation!
    :caption: Contents:
 
    theorems/index
+   definitions
    glossary
 
 Setup

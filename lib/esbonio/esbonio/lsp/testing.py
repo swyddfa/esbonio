@@ -2,13 +2,16 @@
 import asyncio
 import logging
 import os
+import pathlib
 import threading
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 
+import pygls.uris as Uri
 from pygls.lsp.methods import COMPLETION
+from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import EXIT
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import SHUTDOWN
@@ -21,17 +24,19 @@ from pygls.lsp.methods import WINDOW_SHOW_MESSAGE
 from pygls.lsp.types import ClientCapabilities
 from pygls.lsp.types import CompletionList
 from pygls.lsp.types import CompletionParams
+from pygls.lsp.types import DefinitionParams
+from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DidChangeTextDocumentParams
 from pygls.lsp.types import DidCloseTextDocumentParams
 from pygls.lsp.types import DidOpenTextDocumentParams
 from pygls.lsp.types import InitializeParams
+from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextDocumentContentChangeEvent
 from pygls.lsp.types import TextDocumentIdentifier
 from pygls.lsp.types import TextDocumentItem
 from pygls.lsp.types import VersionedTextDocumentIdentifier
-from pygls.lsp.types.basic_structures import Diagnostic
 from pygls.server import LanguageServer
 from sphinx import __version__ as __sphinx_version__
 
@@ -226,7 +231,41 @@ async def completion_request(
     test: ClientServer,
     test_uri: str,
     text: str,
-) -> None:
+) -> CompletionList:
+    """Make a completion request to a language server.
+
+    Intended for use within test cases, this function simulates the opening of a
+    document, inserting some text, triggering a completion request and closing it
+    again.
+
+    The file referenced by ``test_uri`` does not have to exist.
+
+    The text to be inserted is specified through the ``text`` parameter. By default
+    it's assumed that the ``text`` parameter consists of a single line of text, in fact
+    this function will error if that is not the case.
+
+    If your request requires additional context (such as directive option completions)
+    it can be included but it must be delimited with a ``\\f`` character. For example,
+    to represent the following scenario::
+
+       .. image:: filename.png
+          :align: center
+          :
+           ^
+
+    where ``^`` represents the position from which we trigger the completion request.
+    We would set ``text`` to the following
+    ``.. image:: filename.png\\n   :align: center\\n\\f   :``
+
+    Parameters
+    ----------
+    test:
+       The client-server pair to be used to make the request.
+    test_uri:
+       The uri the completion request should be made within.
+    text
+       The text that provides the context for the completion request.
+    """
 
     if "\f" in text:
         contents, text = text.split("\f")
@@ -282,6 +321,50 @@ async def completion_request(
     )
 
     return CompletionList(**response)
+
+
+async def definition_request(
+    test: ClientServer, test_uri: str, position: Position
+) -> List[Location]:
+    """Make a definition request to a language server.
+
+    Intended for use within test cases, this function simulates opening an
+    existing file and making a definition request and closing it again.
+
+    The file referenced by ``test_uri`` *must* exist as the actual content of the file
+    will be used by the language server.
+
+    Parameters
+    ----------
+    test:
+       The client-server pair to be used to make the request
+    test_uri:
+       The uri of the file the definition request should be made within.
+    position:
+       The position at which to trigger the completion request.
+    """
+
+    path = pathlib.Path(Uri.to_fs_path(test_uri))
+    with path.open() as f:
+        contents = f.read()
+
+    test.client.lsp.notify(
+        TEXT_DOCUMENT_DID_OPEN,
+        DidOpenTextDocumentParams(
+            text_document=TextDocumentItem(
+                uri=test_uri, language_id="rst", version=1, text=contents
+            )
+        ),
+    )
+
+    response = await test.client.lsp.send_request_async(
+        DEFINITION,
+        DefinitionParams(
+            text_document=TextDocumentIdentifier(uri=test_uri), position=position
+        ),
+    )
+
+    return [Location(**obj) for obj in response]
 
 
 class TestClient(LanguageServer):

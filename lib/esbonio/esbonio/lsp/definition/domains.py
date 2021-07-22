@@ -2,6 +2,7 @@ import pathlib
 import re
 from typing import List
 from typing import Optional
+from typing import Set
 
 import pygls.uris as Uri
 from docutils.parsers.rst import nodes
@@ -9,6 +10,7 @@ from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.workspace import Document
+from sphinx.domains import Domain
 
 from esbonio.lsp.roles import TargetDefinition
 from esbonio.lsp.sphinx import SphinxLanguageServer
@@ -62,23 +64,17 @@ class Domain(TargetDefinition):
         std = self.rst.get_domain("std")
         types = set(self.rst.get_role_target_types("ref"))
 
-        uri = None
-        line = None
-        docname = None
-
-        if not std:
+        docname = self.find_docname_for_target(target, std, types)
+        if docname is None:
             return []
 
-        # _, title, _, _, anchor, priority
-        for name, _, type_, doc, _, _ in std.get_objects():
-            if type_ not in types:
-                continue
-
-            if name == target:
-                docname = doc
-                break
-
         doctree = self.rst.get_doctree(docname)
+        if doctree is None:
+            return []
+
+        uri = None
+        line = None
+
         for node in doctree.traverse(condition=nodes.target):
 
             if "refid" not in node:
@@ -101,3 +97,35 @@ class Domain(TargetDefinition):
                 ),
             )
         ]
+
+    def find_docname_for_target(
+        self, target: str, domain: Domain, types: Optional[Set[str]] = None
+    ) -> Optional[str]:
+        """Given the target name and domain it belongs to, return the docname its
+        definition resides in.
+
+        Parameters
+        ----------
+        target:
+           The target to search for
+        domain:
+           The domain to search within
+        types:
+           A collection of object types that the target chould have.
+        """
+
+        docname = None
+        types = types or set()
+        if not domain:
+            return []
+
+        # _, title, _, _, anchor, priority
+        for name, _, type_, doc, _, _ in domain.get_objects():
+            if types and type_ not in types:
+                continue
+
+            if name == target:
+                docname = doc
+                break
+
+        return docname

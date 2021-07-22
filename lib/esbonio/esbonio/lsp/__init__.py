@@ -139,9 +139,13 @@ def create_language_server(
 
         for feature in rst._features.values():
             for pattern in feature.definition_triggers:
-                match = pattern.search(line)
-                if match:
-                    definitions += feature.definition(match, doc, pos)
+                for match in pattern.finditer(line):
+                    if not match:
+                        continue
+
+                    start, stop = match.span()
+                    if start < pos.character and pos.character < stop:
+                        definitions += feature.definition(match, doc, pos)
 
         return definitions
 
