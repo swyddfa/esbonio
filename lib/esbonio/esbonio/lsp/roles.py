@@ -5,6 +5,7 @@ from typing import Optional
 
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
+from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
@@ -82,6 +83,54 @@ For example::
 Used when generating auto complete suggestions.
 """
 
+ROLE = re.compile(
+    r"""
+    (?P<role>:              # roles begin with a ':' character
+    (?!:)                   # the next character cannot be a ':'
+    ((?P<domain>[\w+]):)?   # roles may optionally include a domain
+    (?P<name>[\w-]*):)      # and have a name
+    `                       # the target starts with a '`'`
+    ([^<`>]*?<)?            # there may be an alias for the target
+    (?P<target>[^<`>]*)     # match the target itself
+    >?                      # an aliased target would have a closing '>'
+    `                       # the target ends with a '`'`
+    """,
+    re.MULTILINE | re.VERBOSE,
+)
+"""A regular expression that matches a complete role definition
+
+For example::
+
+   :ref:`some_target`
+   :ref:`See More <some_target>`
+   :c:func:`some_func`
+   :c:func:`This Function <some_func>`
+
+"""
+
+
+class TargetDefinition:
+    """A definition provider for role targets"""
+
+    def find_definitions(
+        self, doc: Document, match: "re.Match", name: str, domain: Optional[str] = None
+    ) -> List[Location]:
+        """Return a list of locations representing the definition of the given role
+        target.
+
+        Parameters
+        ----------
+        doc:
+           The document containing the match
+        match:
+           The match object that triggered the definition request
+        name:
+           The name of the role
+        domain:
+           The domain the role is part of, if applicable.
+        """
+        return []
+
 
 class TargetCompletion:
     """A completion provider for role targets"""
@@ -112,14 +161,42 @@ class Roles(LanguageFeature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self._definition_providers: List[TargetDefinition] = []
+        """A list of providers that locate the definition for the given role target."""
+
         self._target_providers: List[TargetCompletion] = []
         """A list of providers that give completion suggestions for role target
         objects."""
+
+    def add_definition_provider(self, provider: TargetDefinition) -> None:
+        self._definition_providers.append(provider)
 
     def add_target_provider(self, provider: TargetCompletion) -> None:
         self._target_providers.append(provider)
 
     completion_triggers = [PARTIAL_ROLE, PARTIAL_PLAIN_TARGET, PARTIAL_ALIASED_TARGET]
+    definition_triggers = [ROLE]
+
+    def definition(
+        self, match: "re.Match", doc: Document, pos: Position
+    ) -> List[Location]:
+
+        groups = match.groupdict()
+        domain = groups["domain"] or None
+        name = groups["name"]
+
+        definitions = []
+        self.logger.debug(
+            "Suggesting definitions for %s%s: %s",
+            domain or ":",
+            name,
+            match.groupdict(),
+        )
+
+        for provide in self._definition_providers:
+            definitions += provide.find_definitions(doc, match, name, domain) or []
+
+        return definitions
 
     def complete(
         self, match: "re.Match", doc: Document, position: Position
@@ -180,7 +257,7 @@ class Roles(LanguageFeature):
 
         targets = []
         self.logger.debug(
-            "Suggesting targets for %s:%s: %s", domain or "", name, match.groupdict()
+            "Suggesting targets for %s:%s: %s", domain or ":", name, match.groupdict()
         )
 
         for provide in self._target_providers:

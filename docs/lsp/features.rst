@@ -7,7 +7,7 @@ Server
 Completion
 ----------
 
-The Language Server can offer auto complete suggestions in a variety of contexts
+The language server can offer auto complete suggestions in a variety of contexts
 
 .. figure:: ../../resources/images/completion-demo.gif
    :align: center
@@ -22,3 +22,12 @@ building and publish them as diagnostic messages
    :align: center
 
    Example diagnostic messages from Sphinx
+
+Goto Definition
+---------------
+
+The language server can look up the definition of certain role targets.
+Currently this is limited to just the ``:ref:`` and ``:doc:`` roles.
+
+.. figure:: ../../resources/images/definition-demo.gif
+   :align: center

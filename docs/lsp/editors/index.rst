@@ -19,7 +19,7 @@ Common Setup
 ------------
 
 The language server works by creating an instance of Sphinx's application object and
-inspecting it in order to provide completion suggestions etc.  In order for this
+inspecting it in order to provide completion suggestions etc. In order for this
 application instance to have the correct configuration, the language server needs to be
 installed into and used from the same Python environment that you use when building your
 documentation.

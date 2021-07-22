@@ -1,8 +1,12 @@
 import itertools
 
 import py.test
+from pygls.lsp.types import Location
+from pygls.lsp.types import Position
+from pygls.lsp.types import Range
 
 from esbonio.lsp.testing import completion_request
+from esbonio.lsp.testing import definition_request
 from esbonio.lsp.testing import intersphinx_target_patterns
 from esbonio.lsp.testing import role_patterns
 from esbonio.lsp.testing import role_target_patterns
@@ -69,6 +73,93 @@ async def test_role_completions(client_server, text, setup):
     else:
         assert expected == items & expected
         assert set() == items & unexpected
+
+
+WELCOME_LABEL = Location(
+    uri="index.rst",
+    range=Range(
+        start=Position(line=5, character=0),
+        end=Position(line=6, character=0),
+    ),
+)
+
+
+@py.test.mark.asyncio
+@py.test.mark.parametrize(
+    "project,path,position,expected",
+    [
+        ("sphinx-default", "definitions.rst", Position(line=3, character=33), None),
+        ("sphinx-default", "definitions.rst", Position(line=5, character=13), None),
+        ("sphinx-default", "definitions.rst", Position(line=7, character=33), None),
+        ("sphinx-default", "definitions.rst", Position(line=9, character=42), None),
+        (
+            "sphinx-default",
+            "definitions.rst",
+            Position(line=5, character=33),
+            WELCOME_LABEL,
+        ),
+        (
+            "sphinx-default",
+            "definitions.rst",
+            Position(line=9, character=35),
+            WELCOME_LABEL,
+        ),
+        (
+            "sphinx-default",
+            "definitions.rst",
+            Position(line=11, character=28),
+            WELCOME_LABEL,
+        ),
+        (
+            "sphinx-default",
+            "definitions.rst",
+            Position(line=11, character=35),
+            WELCOME_LABEL,
+        ),
+        (
+            "sphinx-default",
+            "definitions.rst",
+            Position(line=9, character=56),
+            Location(
+                uri="theorems/pythagoras.rst",
+                range=Range(
+                    start=Position(line=0, character=0),
+                    end=Position(line=1, character=0),
+                ),
+            ),
+        ),
+        (
+            "sphinx-default",
+            "definitions.rst",
+            Position(line=13, character=36),
+            Location(
+                uri="changelog.rst",
+                range=Range(
+                    start=Position(line=0, character=0),
+                    end=Position(line=1, character=0),
+                ),
+            ),
+        ),
+    ],
+)
+async def test_role_target_definitions(
+    client_server, project, path, position, expected
+):
+    """Ensure that we can offer the correct definitions for role targets."""
+
+    test = await client_server(project)
+    test_uri = test.server.workspace.root_uri + f"/{path}"
+
+    results = await definition_request(test, test_uri, position)
+
+    if expected is None:
+        assert len(results) == 0
+    else:
+        assert len(results) == 1
+        result = results[0]
+
+        assert result.uri == test.server.workspace.root_uri + f"/{expected.uri}"
+        assert result.range == expected.range
 
 
 @py.test.mark.asyncio
