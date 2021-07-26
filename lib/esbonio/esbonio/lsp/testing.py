@@ -276,11 +276,14 @@ async def completion_request(
     logger.debug("Insertion text: '%s'", text)
     assert "\n" not in text, "Insertion text cannot contain newlines"
 
+    ext = pathlib.Path(Uri.to_fs_path(test_uri)).suffix
+    lang_id = "python" if ext == ".py" else "rst"
+
     test.client.lsp.notify(
         TEXT_DOCUMENT_DID_OPEN,
         DidOpenTextDocumentParams(
             text_document=TextDocumentItem(
-                uri=test_uri, language_id="rst", version=1, text=contents
+                uri=test_uri, language_id=lang_id, version=1, text=contents
             )
         ),
     )

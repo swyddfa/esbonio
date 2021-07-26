@@ -251,7 +251,15 @@ class RstLanguageServer(LanguageServer):
         return "rst"
 
     def line_at_position(self, doc: Document, position: Position) -> str:
-        """Return the contents of the line corresponding to the given position."""
+        """Return the contents of the line corresponding to the given position.
+
+        Parameters
+        ----------
+        doc:
+           The document associated with the given position
+        position:
+           The position representing the line to retrieve
+        """
 
         try:
             return doc.lines[position.line]
@@ -259,7 +267,15 @@ class RstLanguageServer(LanguageServer):
             return ""
 
     def line_to_position(self, doc: Document, position: Position) -> str:
-        """Return the contents of the line up until the given position."""
+        """Return the contents of the line up until the given position.
+
+        Parameters
+        ----------
+        doc:
+           The document associated with the given position.
+        position:
+           The position representing the line to retrieve.
+        """
 
         line = self.line_at_position(doc, position)
         return line[: position.character]

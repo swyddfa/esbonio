@@ -12,6 +12,7 @@ from pygls.lsp.types import TextEdit
 from pygls.workspace import Document
 
 from .directives import DIRECTIVE
+from .feature import CompletionContext
 from .feature import LanguageFeature
 from .rst import RstLanguageServer
 
@@ -135,22 +136,14 @@ class TargetDefinition:
 class TargetCompletion:
     """A completion provider for role targets"""
 
-    def complete_targets(
-        self, doc: Document, match: "re.Match", name: str, domain: Optional[str] = None
-    ) -> List[CompletionItem]:
+    def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
         """Return a list of completion items representing valid targets for the given
         role.
 
         Parameters
         ----------
-        doc:
-           The document containing the match
-        match:
-           The match object that triggered the completion
-        name:
-           The name of the role
-        domain:
-           The domain the role is part of, if applicable.
+        context:
+           The completion context
         """
         return []
 
@@ -198,43 +191,43 @@ class Roles(LanguageFeature):
 
         return definitions
 
-    def complete(
-        self, match: "re.Match", doc: Document, position: Position
-    ) -> List[CompletionItem]:
-        indent = match.group(1)
+    def complete(self, context: CompletionContext) -> List[CompletionItem]:
 
-        if "target" in match.groupdict():
-            return self.complete_targets(doc, match, position)
+        # Do not suggest completions within the middle of Python code.
+        if context.location == "py":
+            return []
+
+        if "target" in context.match.groupdict():
+            return self.complete_targets(context)
 
         # If there's no indent, then this can only be a role defn
+        indent = context.match.group(1)
         if indent == "":
-            return self.complete_roles(match, position)
+            return self.complete_roles(context)
 
         # Otherwise, search backwards until we find a blank line or an unindent
         # so that we can determine the appropriate context.
-        linum = position.line - 1
+        linum = context.position.line - 1
 
         try:
-            line = doc.lines[linum]
+            line = context.doc.lines[linum]
         except IndexError:
-            return self.complete_roles(match, position)
+            return self.complete_roles(context)
 
         while linum >= 0 and line.startswith(indent):
             linum -= 1
-            line = doc.lines[linum]
+            line = context.doc.lines[linum]
 
         # Unless we are within a directive's options block, we should offer role
         # suggestions
         if DIRECTIVE.match(line):
             return []
 
-        return self.complete_roles(match, position)
+        return self.complete_roles(context)
 
-    def complete_roles(
-        self, match: "re.Match", position: Position
-    ) -> List[CompletionItem]:
+    def complete_roles(self, context: CompletionContext) -> List[CompletionItem]:
 
-        domain = match.groupdict()["domain"] or ""
+        domain = context.match.groupdict()["domain"] or ""
         items = []
 
         for name, role in self.rst.get_roles().items():
@@ -242,31 +235,22 @@ class Roles(LanguageFeature):
             if not name.startswith(domain):
                 continue
 
-            item = self.role_to_completion_item(name, role, match, position)
+            item = self.role_to_completion_item(name, role, context)
             items.append(item)
 
         return items
 
-    def complete_targets(
-        self, doc: Document, match: "re.Match", position: Position
-    ) -> List[CompletionItem]:
-
-        groups = match.groupdict()
-        domain = groups["domain"] or None
-        name = groups["name"]
+    def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
 
         targets = []
-        self.logger.debug(
-            "Suggesting targets for %s:%s: %s", domain or ":", name, match.groupdict()
-        )
 
         for provide in self._target_providers:
-            targets += provide.complete_targets(doc, match, name, domain) or []
+            targets += provide.complete_targets(context) or []
 
         return targets
 
     def role_to_completion_item(
-        self, name: str, role, match: "re.Match", position: Position
+        self, name: str, role, context: CompletionContext
     ) -> CompletionItem:
         """Convert an rst role to its CompletionItem representation.
 
@@ -284,19 +268,15 @@ class Roles(LanguageFeature):
            The name of the role as a user would type into an reStructuredText document.
         role:
            The implementation of the role.
-        match:
-           The regular expression match object that represents the line we are providing
-           the autocomplete suggestions for.
-        position:
-           The position in the source code where the autocompletion request was sent
-           from.
+        context:
+           The completion context
         """
 
-        groups = match.groupdict()
+        groups = context.match.groupdict()
 
-        line = position.line
-        start = position.character - len(groups["role"])
-        end = position.character
+        line = context.position.line
+        start = context.position.character - len(groups["role"])
+        end = context.position.character
 
         insert_text = f":{name}:"
 

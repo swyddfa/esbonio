@@ -1,10 +1,14 @@
 import itertools
+from typing import Optional
+from typing import Set
+from typing import Tuple
 
 import py.test
 from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 
+from esbonio.lsp.testing import ClientServer
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import definition_request
 from esbonio.lsp.testing import intersphinx_target_patterns
@@ -55,8 +59,44 @@ PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
         ),
     ],
 )
-async def test_role_completions(client_server, text, setup):
-    """Ensure that we can offer correct role suggestions."""
+async def test_role_completions(
+    client_server: ClientServer,
+    text: str,
+    setup: Tuple[str, Optional[Set[str]], Optional[Set[str]]],
+):
+    """Ensure that we can offer correct role suggestions.
+
+    This test case is focused on the list of completion items we return for a
+    given completion request. This ensures we correctly handle differing sphinx
+    configurations and extensions while discovering the available roles.
+
+    Cases are parameterized and the inputs are expected to have the following format::
+
+       ("more info :", ("sphinx-project", {'expected'}, {'unexpected'}))
+
+    where:
+
+    - ``"sphinx-project"`` corresponds to the name of one of the example Sphinx projects
+      in the ``tests/data/`` folder.
+    - ``{'expected'}`` is the set of completion item labels you expect to see returned
+      from the completion request. Can be ``None`` which will assert that no completions
+      are returned.
+    - ``{'unexpected'}`` is the set of completion item labels you **do not** expect to
+      see returned from the completion request.
+
+    A common pattern where a number of different values for ``text`` should produce the
+    same set of results within a given setup, is to make use of
+    :func:`python:itertools.product` to generate all combinations of setups.
+
+    Parameters
+    ----------
+    client_server:
+       The client_server fixture used to drive the test.
+    text:
+       The text providing the context of the completion request.
+    setup:
+       The tuple providing the rest of the setup for the test.
+    """
 
     project, expected, unexpected = setup
 
@@ -73,6 +113,42 @@ async def test_role_completions(client_server, text, setup):
     else:
         assert expected == items & expected
         assert set() == items & unexpected
+
+
+@py.test.mark.asyncio
+@py.test.mark.parametrize(
+    "extension,setup",
+    [
+        *itertools.product(["rst"], [(":", True), (":ref:`", True)]),
+        *itertools.product(
+            ["py"],
+            [
+                (":", False),
+                (":ref:`", False),
+                ('""":', True),
+                ('"""\n\f:', True),
+                ('""":ref:`', True),
+                ('"""\na docstring.\n"""\n\f:', False),
+                ('"""\na docstring.\n"""\n\f:ref:`', False),
+            ],
+        ),
+    ],
+)
+async def test_completion_suppression(client_server, extension, setup):
+    """Ensure that we only offer completions when appropriate.
+
+    Rather than focus on the actual completion items themselves, this test case is
+    concerned with ensuring that role suggestions are only offered at an appropriate
+    time i.e. within ``*.rst`` files and docstrings and not within python code.
+    """
+
+    test = await client_server("sphinx-default")
+    test_uri = test.server.workspace.root_uri + f"/test.{extension}"
+
+    text, expected = setup
+
+    results = await completion_request(test, test_uri, text)
+    assert (len(results.items) > 0) == expected
 
 
 WELCOME_LABEL = Location(

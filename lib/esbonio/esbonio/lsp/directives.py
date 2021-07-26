@@ -2,7 +2,6 @@
 import inspect
 import re
 from typing import List
-from typing import Optional
 
 from docutils.parsers.rst import Directive
 from pygls.lsp.types import CompletionItem
@@ -11,8 +10,8 @@ from pygls.lsp.types import InsertTextFormat
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
-from pygls.workspace import Document
 
+from esbonio.lsp import CompletionContext
 from esbonio.lsp import LanguageFeature
 from esbonio.lsp import RstLanguageServer
 
@@ -64,22 +63,14 @@ auto complete suggestions."""
 class ArgumentCompletion:
     """A completion provider for directive arguments."""
 
-    def complete_arguments(
-        self, doc: Document, match: "re.Match", name: str, domain: Optional[str] = None
-    ) -> List[CompletionItem]:
+    def complete_arguments(self, context: CompletionContext) -> List[CompletionItem]:
         """Return a list of completion items representing valid targets for the given
         directive.
 
         Parameters
         ----------
-        doc:
-           The document containing the match
-        match:
-           The match object that triggered the completion
-        name:
-           The name of the directive
-        domain:
-           The domain the directive is part of, if applicable.
+        context:
+           The completion context
         """
         return []
 
@@ -99,44 +90,34 @@ class Directives(LanguageFeature):
 
     completion_triggers = [DIRECTIVE, PARTIAL_DIRECTIVE, PARTIAL_DIRECTIVE_OPTION]
 
-    def complete(
-        self, match: "re.Match", doc: Document, position: Position
-    ) -> List[CompletionItem]:
-        self.logger.debug("Trigger match: %s", match)
-        groups = match.groupdict()
+    def complete(self, context: CompletionContext) -> List[CompletionItem]:
+
+        # Do not suggest completions within the middle of Python code.
+        if context.location == "py":
+            return []
+
+        groups = context.match.groupdict()
 
         if "argument" in groups:
-            return self.complete_arguments(doc, match)
+            return self.complete_arguments(context)
 
         if "domain" in groups:
-            return self.complete_directives(match, position)
+            return self.complete_directives(context)
 
-        return self.complete_options(doc, match, position)
+        return self.complete_options(context)
 
-    def complete_arguments(
-        self, doc: Document, match: "re.Match"
-    ) -> List[CompletionItem]:
-
-        groups = match.groupdict()
-        domain = groups["domain"] or None
-        name = groups["name"]
+    def complete_arguments(self, context: CompletionContext) -> List[CompletionItem]:
 
         arguments = []
-        self.logger.debug(
-            "Suggesting arguments for %s:%s:: %s", domain or "", name, match.groupdict()
-        )
 
         for provide in self._argument_providers:
-            arguments += provide.complete_arguments(doc, match, name, domain) or []
+            arguments += provide.complete_arguments(context) or []
 
         return arguments
 
-    def complete_directives(
-        self, match: "re.Match", position: Position
-    ) -> List[CompletionItem]:
-        self.logger.debug("Suggesting directives")
+    def complete_directives(self, context: CompletionContext) -> List[CompletionItem]:
 
-        domain = match.groupdict()["domain"] or ""
+        domain = context.match.groupdict()["domain"] or ""
         items = []
 
         for name, directive in self.rst.get_directives().items():
@@ -144,16 +125,14 @@ class Directives(LanguageFeature):
             if not name.startswith(domain):
                 continue
 
-            item = self.directive_to_completion_item(name, directive, match, position)
+            item = self.directive_to_completion_item(name, directive, context)
             items.append(item)
 
         return items
 
-    def complete_options(
-        self, doc: Document, match: "re.Match", position: Position
-    ) -> List[CompletionItem]:
+    def complete_options(self, context: CompletionContext) -> List[CompletionItem]:
 
-        groups = match.groupdict()
+        groups = context.match.groupdict()
 
         self.logger.info("Suggesting options")
         self.logger.debug("Match groups: %s", groups)
@@ -161,12 +140,12 @@ class Directives(LanguageFeature):
         indent = groups["indent"]
 
         # Search backwards so that we can determine the context for our completion
-        linum = position.line - 1
-        line = doc.lines[linum]
+        linum = context.position.line - 1
+        line = context.doc.lines[linum]
 
         while linum >= 0 and line.startswith(indent):
             linum -= 1
-            line = doc.lines[linum]
+            line = context.doc.lines[linum]
 
         # Only offer completions if we're within a directive's option block
         match = DIRECTIVE.match(line)
@@ -184,7 +163,7 @@ class Directives(LanguageFeature):
         return self.options_to_completion_items(options)
 
     def directive_to_completion_item(
-        self, name: str, directive: Directive, match: "re.Match", position: Position
+        self, name: str, directive: Directive, context: CompletionContext
     ) -> CompletionItem:
         """Convert an rst directive to its CompletionItem representation.
 
@@ -238,14 +217,11 @@ class Directives(LanguageFeature):
            document
         directive:
            The class definition that implements the Directive's behavior
-        match:
-           The regular expression match object that represents the line we are providing
-           the autocomplete suggestions for.
-        position:
-           The position in the source code where the autocompletion request was sent
-           from.
+        context:
+           The completion context
         """
-        groups = match.groupdict()
+        position = context.position
+        groups = context.match.groupdict()
         prefix = groups["prefix"]
         indent = groups["indent"]
 

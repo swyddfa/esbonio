@@ -2,7 +2,6 @@
 import pathlib
 import re
 from typing import List
-from typing import Optional
 
 import pygls.uris as uri
 from pygls.lsp.types import CompletionItem
@@ -10,6 +9,7 @@ from pygls.lsp.types import CompletionItemKind
 from pygls.workspace import Document
 
 from esbonio.lsp.directives import ArgumentCompletion
+from esbonio.lsp.feature import CompletionContext
 from esbonio.lsp.roles import TargetCompletion
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
@@ -31,19 +31,17 @@ class Filepath(ArgumentCompletion, TargetCompletion):
         self.rst = rst
         self.logger = rst.logger.getChild(self.__class__.__name__)
 
-    def complete_arguments(
-        self, doc: Document, match: "re.Match", name: str, domain: Optional[str]
-    ) -> List[CompletionItem]:
+    def complete_arguments(self, context: CompletionContext) -> List[CompletionItem]:
 
+        name = context.match.groupdict()["name"]
         if name in {"image", "figure", "include", "literalinclude"}:
-            return self.complete_filepaths(doc, match)
+            return self.complete_filepaths(context.doc, context.match)
 
-    def complete_targets(
-        self, doc: Document, match: "re.Match", name: str, domain: Optional[str]
-    ) -> List[CompletionItem]:
+    def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
 
+        name = context.match.groupdict()["name"]
         if name in {"download"}:
-            return self.complete_filepaths(doc, match)
+            return self.complete_filepaths(context.doc, context.match)
 
     def complete_filepaths(
         self, doc: Document, match: "re.Match"

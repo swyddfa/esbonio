@@ -1,12 +1,10 @@
 """Completion provider for Sphinx domains."""
-import re
 from typing import List
-from typing import Optional
 
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
-from pygls.workspace import Document
 
+from esbonio.lsp.feature import CompletionContext
 from esbonio.lsp.roles import TargetCompletion
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
@@ -70,11 +68,11 @@ class Domain(TargetCompletion):
         self.rst = rst
         self.logger = rst.logger.getChild(self.__class__.__name__)
 
-    def complete_targets(
-        self, doc: Document, match: "re.Match", name: str, domain: Optional[str]
-    ) -> List[CompletionItem]:
+    def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
 
-        groups = match.groupdict()
+        groups = context.match.groupdict()
+        name = groups["name"]
+        domain = groups["domain"] or None
         target = groups["target"]
 
         if ":" in target:
