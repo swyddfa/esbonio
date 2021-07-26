@@ -14,6 +14,28 @@ if typing.TYPE_CHECKING:
     from .rst import RstLanguageServer
 
 
+class CompletionContext:
+    """A class that captures the context within which a completion request has been
+    made."""
+
+    def __init__(
+        self, *, doc: Document, location: str, match: "re.Match", position: Position
+    ):
+
+        self.doc = doc
+        """The document within which the completion request was made."""
+
+        self.location = location
+        """The location type where the request was made.
+        See :meth:`~esbonio.lsp.rst.RstLanguageServer.get_location_type` for details."""
+
+        self.match = match
+        """The match object describing the site of the completion request."""
+
+        self.position = position
+        """The position at which the completion request was made."""
+
+
 class LanguageFeature:
     """Base class for language features."""
 
@@ -35,21 +57,15 @@ class LanguageFeature:
     :meth`~esbonio.lsp.feature.LanguageFeature.complete` method should be called on the
     current line."""
 
-    def complete(
-        self, match: "re.Match", doc: Document, pos: Position
-    ) -> List[CompletionItem]:
+    def complete(self, context: CompletionContext) -> List[CompletionItem]:
         """Called if any of the given ``completion_triggers`` match the current line.
 
         This method should return a list of ``CompletionItem`` objects.
 
         Parameters
         ----------
-        match:
-           The match object generated from the corresponding regular expression.
-        doc:
-           The document the completion has been requested within
-        pos:
-           The position of the request within the document.
+        context:
+           The context of the completion request
         """
         return []
 

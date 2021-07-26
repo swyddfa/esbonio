@@ -1,6 +1,8 @@
 import collections
 import importlib
 import logging
+import pathlib
+import re
 import typing
 from typing import Any
 from typing import Dict
@@ -30,6 +32,9 @@ from .log import LspHandler
 
 if typing.TYPE_CHECKING:
     from .feature import LanguageFeature
+
+TRIPLE_QUOTE = re.compile("(\"\"\"|''')")
+"""A regular expression matching the triple quotes used to delimit python docstrings."""
 
 
 class DiagnosticList(collections.UserList):
@@ -209,6 +214,42 @@ class RstLanguageServer(LanguageServer):
             self.logger.debug("Publishing %d diagnostics for: %s", len(diags), uri)
             self.publish_diagnostics(uri, diags.data)
 
+    def get_location_type(self, doc: Document, position: Position) -> str:
+        """Given a document and a position, return the kind of location that
+        represents.
+
+        This will return one of the following values:
+
+        - ``rst``: Indicates that the position is within an ``*.rst`` document
+        - ``py``: Indicates that the position is within code in a ``*.py`` document
+        - ``docstring``: Indicates that the position is within a docstring in a
+          ``*.py`` document.
+
+        Parameters
+        ----------
+        doc:
+           The document associated with the given position
+        position:
+           The position to determine the type of.
+        """
+        ext = pathlib.Path(Uri.to_fs_path(doc.uri)).suffix
+
+        if ext == ".rst":
+            return "rst"
+
+        if ext == ".py":
+
+            # Let's count how many pairs of triple quotes are "above" us in the file
+            # even => we're outside a docstring
+            # odd  => we're within a docstring
+            source = self.text_to_position(doc, position)
+            count = len(TRIPLE_QUOTE.findall(source))
+            return "py" if count % 2 == 0 else "docstring"
+
+        # Fallback to rst
+        self.logger.debug("Unable to determine location type for uri: %s", doc.uri)
+        return "rst"
+
     def line_at_position(self, doc: Document, position: Position) -> str:
         """Return the contents of the line corresponding to the given position."""
 
@@ -222,6 +263,19 @@ class RstLanguageServer(LanguageServer):
 
         line = self.line_at_position(doc, position)
         return line[: position.character]
+
+    def text_to_position(self, doc: Document, position: Position) -> str:
+        """Return the contents of the document up until the given position.
+
+        Parameters
+        ----------
+        doc:
+           The document associated with the given position
+        position:
+           The position representing the point at which to stop gathering text.
+        """
+        idx = doc.offset_at_position(position)
+        return doc.source[:idx]
 
     def _configure_logging(self, config: ServerConfig):
 

@@ -23,6 +23,7 @@ from pygls.lsp.types import DidSaveTextDocumentParams
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 
+from .feature import CompletionContext
 from .feature import LanguageFeature
 from .rst import RstLanguageServer
 from .sphinx import SphinxLanguageServer
@@ -114,6 +115,7 @@ def create_language_server(
 
         doc = rst.workspace.get_document(uri)
         line = rst.line_to_position(doc, pos)
+        location = rst.get_location_type(doc, pos)
 
         items = []
 
@@ -121,7 +123,10 @@ def create_language_server(
             for pattern in feature.completion_triggers:
                 match = pattern.match(line)
                 if match:
-                    items += feature.complete(match, doc, pos)
+                    context = CompletionContext(
+                        doc=doc, location=location, match=match, position=pos
+                    )
+                    items += feature.complete(context)
 
         return CompletionList(is_incomplete=False, items=items)
 
