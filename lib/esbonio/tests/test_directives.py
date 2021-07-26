@@ -1,3 +1,5 @@
+import itertools
+
 import py.test
 
 from esbonio.lsp.testing import completion_request
@@ -230,3 +232,45 @@ async def test_directive_option_completions(
     else:
         assert expected == items & expected
         assert set() == items & unexpected
+
+
+@py.test.mark.asyncio
+@py.test.mark.parametrize(
+    "extension,setup",
+    [
+        *itertools.product(
+            ["rst"],
+            [
+                ("..", True),
+                (".. image:: ", True),
+                (".. image:: filename.png\n   \f:", True),
+            ],
+        ),
+        *itertools.product(
+            ["py"],
+            [
+                ("..", False),
+                (".. image:: ", False),
+                (".. image:: filename.png\n   \f:", False),
+                ('"""\n\f..', True),
+                ('"""\n\f.. image:: ', True),
+                ('"""\n.. image:: filename.png\n   \f:', True),
+            ],
+        ),
+    ],
+)
+async def test_completion_suppression(client_server, extension, setup):
+    """Ensure that we only offer completions when appropriate.
+
+    Rather than focus on the actual completion items themselves, this test case is
+    concerned with ensuring that role suggestions are only offered at an appropriate
+    time i.e. within ``*.rst`` files and docstrings and not within python code.
+    """
+
+    test = await client_server("sphinx-default")
+    test_uri = test.server.workspace.root_uri + f"/test.{extension}"
+
+    text, expected = setup
+
+    results = await completion_request(test, test_uri, text)
+    assert (len(results.items) > 0) == expected
