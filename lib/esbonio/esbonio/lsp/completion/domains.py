@@ -46,11 +46,23 @@ def object_to_completion_item(object_: tuple) -> CompletionItem:
 
     # _, _, _, docname, anchor, priority
     name, display_name, type_, _, _, _ = object_
+    insert_text = name
 
     key = type_.split(":")[1] if ":" in type_ else type_
     kind = TARGET_KINDS.get(key, CompletionItemKind.Reference)
 
-    insert_text = f"/{name}" if type_ == "doc" else name
+    # ensure :doc: targets are inserted as an absolute path - that way the reference
+    # will always work regardless of the file's location.
+    if type_ == "doc":
+        insert_text = f"/{name}"
+
+    # :option: targets need to be inserted as `<progname> <option>` in order to resolve
+    # correctly. However, this only seems to be the case "locally" as
+    # `<progname>.<option>` seems to resolve fine when using intersphinx...
+    if type_ == "cmdoption":
+        name = " ".join(name.split("."))
+        display_name = name
+        insert_text = name
 
     return CompletionItem(
         label=name, kind=kind, detail=str(display_name), insert_text=insert_text
