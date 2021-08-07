@@ -209,11 +209,9 @@ class SphinxLanguageServer(RstLanguageServer):
         self.user_config = InitializationOptions(**params.initialization_options)
 
         self.app = self._initialize_sphinx()
-        self.build()
 
     def initialized(self, params: InitializedParams):
-        # Diagnostics cannot be reported during initialize, so report them now
-        self.sync_diagnostics()
+        self.build()
 
     def _initialize_sphinx(self):
 
