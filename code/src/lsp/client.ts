@@ -130,7 +130,7 @@ export class EsbonioClient {
    * Start the language client.
    */
   async start(): Promise<void> {
-    this.statusBar.text = "$(sync~spin) Starting."
+    this.statusBar.text = "$(sync~spin) Starting..."
     this.statusBar.show()
     if (DEBUG) {
       this.client = await this.getTcpClient()
@@ -160,21 +160,11 @@ export class EsbonioClient {
       }
 
       await this.client.onReady()
-      this.client.onNotification("esbonio/sphinxConfiguration", params => {
-        this.sphinxConfig = params
-        this.statusBar.text = `$(check) Sphinx v${this.sphinxConfig.version}`
-      })
+      this.configureHandlers()
 
-      this.client.onNotification("esbonio/buildComplete", params => {
-        this.logger.debug("Build complete")
-        if (this.buildCompleteCallback) {
-          this.buildCompleteCallback()
-        }
-      })
-
-      return
     } catch (err) {
       this.statusBar.text = "$(error) Failed."
+      this.logger.error(err)
     }
   }
 
@@ -239,6 +229,35 @@ export class EsbonioClient {
       serverOptions,
       this.getLanguageClientOptions()
     )
+  }
+
+  private configureHandlers() {
+
+    this.client.onNotification("esbonio/buildStart", params => {
+      this.statusBar.text = "$(sync~spin) Building..."
+      this.logger.debug("Build start.")
+    })
+
+    this.client.onNotification("esbonio/buildComplete", params => {
+      this.logger.debug(`Build complete ${JSON.stringify(params)}`)
+      this.sphinxConfig = params.config.sphinx
+
+      let icon;
+
+      if (params.error) {
+        icon = "$(error)"
+      } else if (params.warnings > 0) {
+        icon = `$(warning) ${params.warnings}`
+      } else {
+        icon = "$(check)"
+      }
+
+      this.statusBar.text = `${icon} Sphinx[${this.sphinxConfig.builderName}] v${this.sphinxConfig.version}`
+
+      if (this.buildCompleteCallback) {
+        this.buildCompleteCallback()
+      }
+    })
   }
 
   /**
