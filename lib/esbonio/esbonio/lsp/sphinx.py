@@ -250,19 +250,23 @@ class SphinxLanguageServer(RstLanguageServer):
         self.build()
 
     def build(self):
-        self.logger.debug("Building...")
 
         if not self.app:
             return
 
+        self.logger.debug("Building...")
+        self.send_notification("esbonio/buildStart", {})
+
         # Reset the warnings counter
         self.app._warncount = 0
+        error = False
         self.sphinx_log.diagnostics = {}
 
         try:
             self.app.build()
         except Exception:
             message = "Unable to build documentation, see output window for details."
+            error = True
 
             self.logger.error(traceback.format_exc())
             self.show_message(message=message, msg_type=MessageType.Error)
@@ -271,8 +275,15 @@ class SphinxLanguageServer(RstLanguageServer):
             self.logger.debug("Found %d problems for %s", len(diagnostics), doc)
             self.set_diagnostics("sphinx", doc, diagnostics)
 
-        self.send_notification("esbonio/buildComplete", {})
         self.sync_diagnostics()
+        self.send_notification(
+            "esbonio/buildComplete",
+            {
+                "config": self.configuration,
+                "error": error,
+                "warnings": self.app._warncount,
+            },
+        )
 
     def create_sphinx_app(self, options: InitializationOptions) -> Optional[Sphinx]:
         """Create a Sphinx application instance with the given config."""
