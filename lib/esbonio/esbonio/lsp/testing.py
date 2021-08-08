@@ -4,16 +4,20 @@ import logging
 import os
 import pathlib
 import threading
+from concurrent.futures import Future
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 
 import pygls.uris as Uri
+from pygls.exceptions import JsonRpcMethodNotFound
+from pygls.lsp.methods import CANCEL_REQUEST
 from pygls.lsp.methods import COMPLETION
 from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import EXIT
 from pygls.lsp.methods import INITIALIZE
+from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import SHUTDOWN
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_CLOSE
@@ -37,6 +41,7 @@ from pygls.lsp.types import TextDocumentContentChangeEvent
 from pygls.lsp.types import TextDocumentIdentifier
 from pygls.lsp.types import TextDocumentItem
 from pygls.lsp.types import VersionedTextDocumentIdentifier
+from pygls.protocol import LanguageServerProtocol
 from pygls.server import LanguageServer
 from sphinx import __version__ as __sphinx_version__
 
@@ -78,8 +83,35 @@ class ClientServer:
         self.client_thread.daemon = True
 
     async def start(
-        self, root_uri: str, initialization_options: Optional[Dict[str, Any]] = None
+        self,
+        root_uri: str,
+        initialization_options: Optional[Dict[str, Any]] = None,
+        wait=True,
     ):
+        """Start the client and server components ready for testing.
+
+        As well as starting the event loops for them both it also
+        initializes the server based on the ``root_uri`` and
+        ``initialization_options`` parameters. Once the response for
+        the ``initialize`` request is received, it will proceed to send the
+        ``initialized`` notification to trigger the initial build of the
+        documentation.
+
+        By default this method will ``await`` until the client receives the
+        ``esbonio/buildComplete`` notification, though this can be disabled
+        by passing ``wait=False`` (useful for preventing deadlocks in situations
+        where the server is not expected to start successfully).
+
+        Parameters
+        ----------
+        root_uri:
+           The root uri of the project to initialize the server within
+        initialization_options:
+           The initializaion options to pass to the server
+        wait:
+           If ``True``, await until the client receives the ``esbonio/buildComplete``
+           notification.
+        """
         self.server_thread.start()
         self.client_thread.start()
 
@@ -94,6 +126,13 @@ class ClientServer:
         )
 
         assert "capabilities" in response
+
+        self.client.lsp.notify(INITIALIZED)
+
+        if wait:
+            await self.client.lsp.wait_for_notification_async("esbonio/buildComplete")
+
+        return
 
     async def stop(self):
         response = await self.client.lsp.send_request_async(SHUTDOWN)
@@ -370,7 +409,55 @@ async def definition_request(
     return [Location(**obj) for obj in response]
 
 
-class TestClient(LanguageServer):
+class ClientProtocol(LanguageServerProtocol):
+    """A slightly modified version of the base protocol that allows
+    us to await on notifications."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self._notification_futures = {}
+
+    def _handle_notification(self, method_name, params):
+
+        if method_name == CANCEL_REQUEST:
+            self._handle_cancel_notification(params.id)
+            return
+
+        future = self._notification_futures.pop(method_name, None)
+        if future:
+            future.set_result(params)
+
+        try:
+            handler = self._get_handler(method_name)
+            self._execute_notification(handler, params)
+        except (KeyError, JsonRpcMethodNotFound):
+            logger.warning('Ignoring notification for unknown method "%s"', method_name)
+        except Exception:
+            logger.exception(
+                'Failed to handle notification "%s": %s', method_name, params
+            )
+
+    def wait_for_notification(self, method, callback=None):
+
+        future = Future()
+        if callback:
+
+            def wrapper(future: Future):
+                result = future.result()
+                callback(result)
+
+            future.add_done_callback(wrapper)
+
+        self._notification_futures[method] = future
+        return future
+
+    def wait_for_notification_async(self, method):
+        fut = self.wait_for_notification(method)
+        return asyncio.wrap_future(fut)
+
+
+class Client(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -378,24 +465,28 @@ class TestClient(LanguageServer):
         self.diagnostics: Dict[str, List[Diagnostic]] = {}
 
 
-def new_test_client() -> TestClient:
+def new_test_client() -> Client:
 
-    client = TestClient(asyncio.new_event_loop())
+    client = Client(protocol_cls=ClientProtocol, loop=asyncio.new_event_loop())
 
     @client.feature(TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS)
-    def publish_diagnostics(client: TestClient, params):
+    def publish_diagnostics(client: Client, params):
         client.diagnostics[params.uri] = params.diagnostics
 
     @client.feature(WINDOW_LOG_MESSAGE)
-    def log_message(client: TestClient, params):
+    def log_message(client: Client, params):
         pass
 
     @client.feature(WINDOW_SHOW_MESSAGE)
-    def show_message(client: TestClient, params):
+    def show_message(client: Client, params):
         client.messages.append(params)
 
+    @client.feature("esbonio/buildStart")
+    def build_start(client: Client, params):
+        pass
+
     @client.feature("esbonio/buildComplete")
-    def build_complete(client: TestClient, params):
+    def build_complete(client: Client, params):
         pass
 
     return client
