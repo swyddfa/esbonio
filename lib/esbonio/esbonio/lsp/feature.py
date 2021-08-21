@@ -35,6 +35,12 @@ class CompletionContext:
         self.position = position
         """The position at which the completion request was made."""
 
+    def __repr__(self):
+        p = f"{self.position.line}:{self.position.character}"
+        return (
+            f"CompletionContext<{self.doc.uri}:{p} ({self.location}) -- {self.match}>"
+        )
+
 
 class LanguageFeature:
     """Base class for language features."""
