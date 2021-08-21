@@ -22,7 +22,7 @@ TARGET_KINDS = {
 
 
 def intersphinx_target_to_completion_item(
-    label: str, target: tuple, type_: str
+    project: str, label: str, target: tuple, type_: str
 ) -> CompletionItem:
 
     # _. _. url, _
@@ -38,7 +38,7 @@ def intersphinx_target_to_completion_item(
         label=label,
         detail=f"{display_name} - {source}{version}",
         kind=TARGET_KINDS.get(completion_kind, CompletionItemKind.Reference),
-        insert_text=label,
+        insert_text=f"{project}:{label}",
     )
 
 
@@ -110,7 +110,7 @@ class Domain(TargetCompletion):
 
         for type_, targets in intersphinx_targets.items():
             items += [
-                intersphinx_target_to_completion_item(label, target, type_)
+                intersphinx_target_to_completion_item(project, label, target, type_)
                 for label, target in targets.items()
             ]
 
