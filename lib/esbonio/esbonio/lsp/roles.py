@@ -16,97 +16,29 @@ from .feature import CompletionContext
 from .feature import LanguageFeature
 from .rst import RstLanguageServer
 
-PARTIAL_ROLE = re.compile(
-    r"""
-    (^|.*[^\w:])          # roles cannot be preceeded by certain characters
-    (?P<role>:            # roles start with the ':' character
-    (?!:)                 # make sure the next character is not ':'
-    (?P<domain>[\w]+:)?   # there may be a domain namespace
-    (?P<name>[\w-]*))     # match the role name
-    $                     # ensure pattern only matches incomplete roles
-    """,
-    re.MULTILINE | re.VERBOSE,
-)
-"""A regular expression that matches a partial role.
-
-For example::
-
-   :re
-
-Used when generating auto complete suggestions.
-"""
-
-
-PARTIAL_PLAIN_TARGET = re.compile(
-    r"""
-    (^|.*[^\w:])            # roles cannot be preceeded by certain chars
-    (?P<role>:              # roles start with the ':' character
-    (?!:)                   # make sure the next character is not ':'
-    ((?P<domain>[\w]+):)?   # there may be a domain namespace
-    (?P<name>[\w-]*)        # followed by the role name
-    :)                      # the role name ends with a ':'
-    `                       # the target begins with a '`'
-    (?P<target>[^<`]*)      # match "plain link" targets
-    `?                      # may end with a '`'`
-    """,
-    re.MULTILINE | re.VERBOSE,
-)
-"""A regular expression that matches a partial "plain" role target.
-
-For example::
-
-   :ref:`som
-
-Used when generating auto complete suggestions.
-"""
-
-PARTIAL_ALIASED_TARGET = re.compile(
-    r"""
-    (^|.*[^\w:])            # roles cannot be preceeded by certain chars
-    (?P<role>:              # roles start with the ':' character
-    (?!:)                   # make sure the next character is not ':'
-    ((?P<domain>[\w]+):)?   # there may be a domain namespace
-    (?P<name>[\w-]*)        # followed by the role name
-    :)                      # the role name ends with a ':'
-    `                       # the target begins with a '`'`
-    (?P<alias>.*)<          # the actual target name starts after a '<'
-    (?P<target>[^`]*)       # match "aliased" targets
-    >?`?                    # may end with '>`'
-    """,
-    re.MULTILINE | re.VERBOSE,
-)
-"""A regular expression that matches an "aliased" role target.
-
-For example::
-
-   :ref:`More info <som
-
-Used when generating auto complete suggestions.
-"""
-
 ROLE = re.compile(
     r"""
-    (?P<role>:              # roles begin with a ':' character
-    (?!:)                   # the next character cannot be a ':'
-    ((?P<domain>[\w+]):)?   # roles may optionally include a domain
-    (?P<name>[\w-]*):)      # and have a name
-    `                       # the target starts with a '`'`
-    ([^<`>]*?<)?            # there may be an alias for the target
-    (?P<target>[^<`>]*)     # match the target itself
-    >?                      # an aliased target would have a closing '>'
-    `                       # the target ends with a '`'`
+    (?P<role>
+      ([^\w:]|^)                       # roles cannot be preceeded by letter chars
+      :                               # roles begin with a ':' character
+      (?!:)                           # the next character cannot be a ':'
+      ((?P<domain>[\w]+):(?=\w))?     # roles may include a domain (that must be followed by a word character)
+      ((?P<name>[\w-]+):?)?           # roles have a name
+    )
+    (?P<target>
+      `                               # targets begin with a '`' character
+      ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
+      (?P<label>[^<`>]*)?             # targets contain a label
+      >?                              # labels end with a '>' when there's an alias
+      `?                              # targets end with a '`' character
+    )?
     """,
-    re.MULTILINE | re.VERBOSE,
+    re.VERBOSE,
 )
-"""A regular expression that matches a complete role definition
+"""A regular expression to detect and parse parial and complete roles.
 
-For example::
-
-   :ref:`some_target`
-   :ref:`See More <some_target>`
-   :c:func:`some_func`
-   :c:func:`This Function <some_func>`
-
+See :func:`tests.test_roles.test_role_regex` for a list of example strings this pattern
+matches.
 """
 
 
@@ -167,7 +99,7 @@ class Roles(LanguageFeature):
     def add_target_provider(self, provider: TargetCompletion) -> None:
         self._target_providers.append(provider)
 
-    completion_triggers = [PARTIAL_ROLE, PARTIAL_ALIASED_TARGET, PARTIAL_PLAIN_TARGET]
+    completion_triggers = [ROLE]
     definition_triggers = [ROLE]
 
     def definition(
@@ -197,7 +129,8 @@ class Roles(LanguageFeature):
         if context.location == "py":
             return []
 
-        if "target" in context.match.groupdict():
+        groups = context.match.groupdict()
+        if groups["target"]:
             return self.complete_targets(context)
 
         # If there's no indent, then this can only be a role defn
@@ -246,11 +179,11 @@ class Roles(LanguageFeature):
         targets = []
 
         groups = context.match.groupdict()
-        startchar = "<" if "alias" in groups else "`"
-        endchars = ">`" if "alias" in groups else "`"
+        startchar = "<" if "<" in groups["target"] else "`"
+        endchars = ">`" if "<" in groups["target"] else "`"
 
-        start = context.match.group(0).index(startchar) + 1
-        _, end = context.match.span()
+        start, end = context.match.span()
+        start += context.match.group(0).index(startchar) + 1
         range_ = Range(
             start=Position(line=context.position.line, character=start),
             end=Position(line=context.position.line, character=end),

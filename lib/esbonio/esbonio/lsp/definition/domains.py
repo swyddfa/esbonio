@@ -27,26 +27,26 @@ class Domain(TargetDefinition):
         self, doc: Document, match: "re.Match", name: str, domain: Optional[str]
     ) -> List[Location]:
 
-        target = match.groupdict()["target"]
+        label = match.groupdict()["label"]
 
         if name == "ref":
-            return self.ref_definition(target)
+            return self.ref_definition(label)
 
         if name == "doc":
-            return self.doc_definition(doc, target)
+            return self.doc_definition(doc, label)
 
         return super().find_definitions(doc, match, name, domain=domain)
 
-    def doc_definition(self, doc: Document, target: str) -> List[Location]:
+    def doc_definition(self, doc: Document, label: str) -> List[Location]:
         """Goto definition implementation for ``:doc:`` targets"""
 
         srcdir = self.rst.app.srcdir
         currentdir = pathlib.Path(Uri.to_fs_path(doc.uri)).parent
 
-        if target.startswith("/"):
-            path = str(pathlib.Path(srcdir, target[1:] + ".rst"))
+        if label.startswith("/"):
+            path = str(pathlib.Path(srcdir, label[1:] + ".rst"))
         else:
-            path = str(pathlib.Path(currentdir, target + ".rst"))
+            path = str(pathlib.Path(currentdir, label + ".rst"))
 
         return [
             Location(
@@ -58,13 +58,13 @@ class Domain(TargetDefinition):
             )
         ]
 
-    def ref_definition(self, target: str) -> List[Location]:
+    def ref_definition(self, label: str) -> List[Location]:
         """Goto definition implementation for ``:ref:`` targets"""
 
         std = self.rst.get_domain("std")
         types = set(self.rst.get_role_target_types("ref"))
 
-        docname = self.find_docname_for_target(target, std, types)
+        docname = self.find_docname_for_label(label, std, types)
         if docname is None:
             return []
 
@@ -80,7 +80,7 @@ class Domain(TargetDefinition):
             if "refid" not in node:
                 continue
 
-            if target == node["refid"].replace("-", "_"):
+            if label == node["refid"].replace("-", "_"):
                 uri = Uri.from_fs_path(node.source)
                 line = node.line
                 break
@@ -98,20 +98,20 @@ class Domain(TargetDefinition):
             )
         ]
 
-    def find_docname_for_target(
-        self, target: str, domain: Domain, types: Optional[Set[str]] = None
+    def find_docname_for_label(
+        self, label: str, domain: Domain, types: Optional[Set[str]] = None
     ) -> Optional[str]:
-        """Given the target name and domain it belongs to, return the docname its
+        """Given the label name and domain it belongs to, return the docname its
         definition resides in.
 
         Parameters
         ----------
-        target:
-           The target to search for
+        label:
+           The label to search for
         domain:
            The domain to search within
         types:
-           A collection of object types that the target chould have.
+           A collection of object types that the label chould have.
         """
 
         docname = None
@@ -124,7 +124,7 @@ class Domain(TargetDefinition):
             if types and type_ not in types:
                 continue
 
-            if name == target:
+            if name == label:
                 docname = doc
                 break
 

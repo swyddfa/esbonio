@@ -103,8 +103,8 @@ class Filepath(ArgumentCompletion, TargetCompletion):
 
         groups = context.match.groupdict()
 
-        if "target" in groups:
-            partial_path = groups["target"]
+        if "role" in groups:
+            partial_path = groups["label"]
         else:
             partial_path = groups["argument"]
 

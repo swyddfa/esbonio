@@ -8,6 +8,7 @@ from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 
+from esbonio.lsp.roles import ROLE
 from esbonio.lsp.testing import ClientServer
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import definition_request
@@ -16,7 +17,7 @@ from esbonio.lsp.testing import role_patterns
 from esbonio.lsp.testing import role_target_patterns
 
 C_EXPECTED = {"c:func", "c:macro"}
-C_UNEXPECTED = {"ref", "doc", "py:func", "py:mod"}
+C_UNEXPECTED = {"py:func", "py:mod"}
 
 DEFAULT_EXPECTED = {"doc", "func", "mod", "ref", "c:func"}
 DEFAULT_UNEXPECTED = {"py:func", "py:mod", "restructuredtext-unimplemented-role"}
@@ -25,7 +26,7 @@ EXT_EXPECTED = {"doc", "py:func", "py:mod", "ref", "func"}
 EXT_UNEXPECTED = {"c:func", "c:macro", "restructuredtext-unimplemented-role"}
 
 PY_EXPECTED = {"py:func", "py:mod"}
-PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
+PY_UNEXPECTED = {"c:func", "c:macro"}
 
 
 @py.test.mark.asyncio
@@ -33,20 +34,20 @@ PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
     "text,setup",
     [
         *itertools.product(
-            role_patterns(":") + role_patterns(":r"),
+            role_patterns(":") + role_patterns(":r") + role_patterns(":ref:"),
             [
                 ("sphinx-default", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
                 ("sphinx-extensions", EXT_EXPECTED, EXT_UNEXPECTED),
             ],
         ),
         *itertools.product(
-            role_patterns(":ref:") + role_patterns("a:") + role_patterns("figure::"),
+            role_patterns("a:") + role_patterns("figure::"),
             [("sphinx-default", None, None), ("sphinx-extensions", None, None)],
         ),
         *itertools.product(
             role_patterns(":py:"),
             [
-                ("sphinx-default", None, None),
+                ("sphinx-default", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
                 ("sphinx-extensions", PY_EXPECTED, PY_UNEXPECTED),
             ],
         ),
@@ -54,7 +55,7 @@ PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
             role_patterns(":c:"),
             [
                 ("sphinx-default", C_EXPECTED, C_UNEXPECTED),
-                ("sphinx-extensions", None, None),
+                ("sphinx-extensions", EXT_EXPECTED, EXT_UNEXPECTED),
             ],
         ),
     ],
@@ -145,6 +146,7 @@ async def test_completion_suppression(client_server, extension, setup):
     test = await client_server("sphinx-default")
     test_uri = test.server.workspace.root_uri + f"/test.{extension}"
 
+    print(extension, setup)
     text, expected = setup
 
     results = await completion_request(test, test_uri, text)
@@ -609,3 +611,236 @@ async def test_role_target_insert_range(
     for item in results.items:
         assert item.text_edit.new_text.endswith(ending)
         assert item.text_edit.range == expected_range
+
+
+@py.test.mark.parametrize(
+    "string, expected",
+    [
+        ("::", None),
+        (":", {"role": ":"}),
+        (":ref", {"name": "ref", "role": ":ref"}),
+        (":code-block", {"name": "code-block", "role": ":code-block"}),
+        (":c:func:", {"name": "func", "domain": "c", "role": ":c:func:"}),
+        (":cpp:func:", {"name": "func", "domain": "cpp", "role": ":cpp:func:"}),
+        (":ref:`", {"name": "ref", "role": ":ref:", "target": "`"}),
+        (
+            ":code-block:`",
+            {"name": "code-block", "role": ":code-block:", "target": "`"},
+        ),
+        (
+            ":c:func:`",
+            {"name": "func", "domain": "c", "role": ":c:func:", "target": "`"},
+        ),
+        (
+            ":ref:`some_label",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "label": "some_label",
+                "target": "`some_label",
+            },
+        ),
+        (
+            ":code-block:`some_label",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "label": "some_label",
+                "target": "`some_label",
+            },
+        ),
+        (
+            ":c:func:`some_label",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "label": "some_label",
+                "target": "`some_label",
+            },
+        ),
+        (
+            ":ref:`some_label`",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "label": "some_label",
+                "target": "`some_label`",
+            },
+        ),
+        (
+            ":code-block:`some_label`",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "label": "some_label",
+                "target": "`some_label`",
+            },
+        ),
+        (
+            ":c:func:`some_label`",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "label": "some_label",
+                "target": "`some_label`",
+            },
+        ),
+        (
+            ":ref:`see more <",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "alias": "see more ",
+                "target": "`see more <",
+            },
+        ),
+        (
+            ":code-block:`see more <",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "alias": "see more ",
+                "target": "`see more <",
+            },
+        ),
+        (
+            ":c:func:`see more <",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "alias": "see more ",
+                "target": "`see more <",
+            },
+        ),
+        (
+            ":ref:`see more <some_label",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label",
+            },
+        ),
+        (
+            ":code-block:`see more <some_label",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label",
+            },
+        ),
+        (
+            ":c:func:`see more <some_label",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label",
+            },
+        ),
+        (
+            ":ref:`see more <some_label>",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>",
+            },
+        ),
+        (
+            ":code-block:`see more <some_label>",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>",
+            },
+        ),
+        (
+            ":c:func:`see more <some_label>",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>",
+            },
+        ),
+        (
+            ":ref:`see more <some_label>`",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>`",
+            },
+        ),
+        (
+            ":code-block:`see more <some_label>`",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>`",
+            },
+        ),
+        (
+            ":c:func:`see more <some_label>`",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>`",
+            },
+        ),
+    ],
+)
+def test_role_regex(string, expected):
+    """Ensure that the regular expression we use to detect and parse roles works as
+    expected.
+
+    As a general rule, it's better to write tests at the LSP protocol level as that
+    decouples the test cases from the implementation. However, roles and the
+    corresponding regular expression are complex enough to warrant test case on its own.
+
+    As with most test cases, this one is parameterized with the following arguments::
+
+        (":ref:", {"name": "ref"}),
+        (".. directive::", None)
+
+    The first argument is the string to test the pattern against, the second a
+    dictionary containing the groups we expect to see in the resulting match object.
+    Groups that appear in the resulting match object but not in the expected result will
+    **not** fail the test.
+
+    To test situations where the pattern should **not** match the input, pass ``None``
+    as the second argument.
+
+    To test situaions where the pattern should match, but we don't expect to see any
+    groups pass an empty dictionary as the second argument.
+    """
+
+    match = ROLE.match(string)
+
+    if expected is None:
+        assert match is None
+    else:
+        assert match is not None
+
+        for name, value in expected.items():
+            assert match.groupdict().get(name, None) == value
