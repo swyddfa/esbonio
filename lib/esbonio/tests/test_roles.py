@@ -547,3 +547,65 @@ async def test_role_target_completions(client_server, text, setup):
     else:
         assert expected == items & expected
         assert set() == items & unexpected
+
+
+@py.test.mark.asyncio
+@py.test.mark.parametrize(
+    "project,text,ending,expected_range",
+    [
+        (
+            "sphinx-default",
+            ":ref:`some_text",
+            "`",
+            Range(
+                start=Position(line=0, character=6), end=Position(line=0, character=15)
+            ),
+        ),
+        (
+            "sphinx-default",
+            "find out more :ref:`some_text",
+            "`",
+            Range(
+                start=Position(line=0, character=20), end=Position(line=0, character=29)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":ref:`more info <some_text",
+            ">`",
+            Range(
+                start=Position(line=0, character=17), end=Position(line=0, character=26)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":download:`_static/vscode_screenshot.png",
+            "`",
+            Range(
+                start=Position(line=0, character=19), end=Position(line=0, character=40)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":download:`this link <_static/vscode_screenshot.png",
+            ">`",
+            Range(
+                start=Position(line=0, character=30), end=Position(line=0, character=51)
+            ),
+        ),
+    ],
+)
+async def test_role_target_insert_range(
+    client_server, project, text, ending, expected_range
+):
+    """Ensure that we generate completion items that work well with existing text."""
+
+    test = await client_server(project)  # type: ClientServer
+    test_uri = test.server.workspace.root_uri + "/test.rst"
+
+    results = await completion_request(test, test_uri, text)
+    assert len(results.items) > 0
+
+    for item in results.items:
+        assert item.text_edit.new_text.endswith(ending)
+        assert item.text_edit.range == expected_range

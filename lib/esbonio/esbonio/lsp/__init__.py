@@ -114,19 +114,26 @@ def create_language_server(
         pos = params.position
 
         doc = rst.workspace.get_document(uri)
-        line = rst.line_to_position(doc, pos)
+        line = rst.line_at_position(doc, pos)
         location = rst.get_location_type(doc, pos)
 
         items = []
 
         for feature in rst._features.values():
             for pattern in feature.completion_triggers:
-                match = pattern.match(line)
-                if match:
-                    context = CompletionContext(
-                        doc=doc, location=location, match=match, position=pos
-                    )
-                    items += feature.complete(context)
+                for match in pattern.finditer(line):
+                    if not match:
+                        continue
+
+                    # Only trigger completions if the position of the request is within
+                    # the match.
+                    start, stop = match.span()
+                    if start <= pos.character <= stop:
+                        context = CompletionContext(
+                            doc=doc, location=location, match=match, position=pos
+                        )
+                        rst.logger.debug("Completion context: %s", context)
+                        items += feature.complete(context)
 
         return CompletionList(is_incomplete=False, items=items)
 
