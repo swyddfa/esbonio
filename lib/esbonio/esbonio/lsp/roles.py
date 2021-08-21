@@ -47,7 +47,7 @@ PARTIAL_PLAIN_TARGET = re.compile(
     :)                      # the role name ends with a ':'
     `                       # the target begins with a '`'
     (?P<target>[^<`]*)      # match "plain link" targets
-    $
+    `?                      # may end with a '`'`
     """,
     re.MULTILINE | re.VERBOSE,
 )
@@ -69,9 +69,9 @@ PARTIAL_ALIASED_TARGET = re.compile(
     (?P<name>[\w-]*)        # followed by the role name
     :)                      # the role name ends with a ':'
     `                       # the target begins with a '`'`
-    .*<                     # the actual target name starts after a '<'
+    (?P<alias>.*)<          # the actual target name starts after a '<'
     (?P<target>[^`]*)       # match "aliased" targets
-    $
+    >?`?                    # may end with '>`'
     """,
     re.MULTILINE | re.VERBOSE,
 )
@@ -167,7 +167,7 @@ class Roles(LanguageFeature):
     def add_target_provider(self, provider: TargetCompletion) -> None:
         self._target_providers.append(provider)
 
-    completion_triggers = [PARTIAL_ROLE, PARTIAL_PLAIN_TARGET, PARTIAL_ALIASED_TARGET]
+    completion_triggers = [PARTIAL_ROLE, PARTIAL_ALIASED_TARGET, PARTIAL_PLAIN_TARGET]
     definition_triggers = [ROLE]
 
     def definition(
@@ -241,11 +241,44 @@ class Roles(LanguageFeature):
         return items
 
     def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
+        """Generate the list of role target completion suggestions."""
 
         targets = []
 
+        groups = context.match.groupdict()
+        startchar = "<" if "alias" in groups else "`"
+        endchars = ">`" if "alias" in groups else "`"
+
+        start = context.match.group(0).index(startchar) + 1
+        _, end = context.match.span()
+        range_ = Range(
+            start=Position(line=context.position.line, character=start),
+            end=Position(line=context.position.line, character=end),
+        )
+        prefix = context.match.group(0)[start:]
+
         for provide in self._target_providers:
-            targets += provide.complete_targets(context) or []
+            candidates = provide.complete_targets(context) or []
+
+            for candidate in candidates:
+
+                # Don't interfere with items that already carry a `text_edit`, allowing
+                # some providers (like intersphinx) to do something special.
+                if not candidate.text_edit:
+                    new_text = candidate.insert_text or candidate.label
+
+                    # This is rather annoying, but `filter_text` needs to start with
+                    # the text we are going to replace, otherwise VSCode won't show our
+                    # suggestions!
+                    candidate.filter_text = f"{prefix}{new_text}"
+
+                    candidate.text_edit = TextEdit(range=range_, new_text=new_text)
+                    candidate.insert_text = None
+
+                if not candidate.text_edit.new_text.endswith(endchars):
+                    candidate.text_edit.new_text += endchars
+
+                targets.append(candidate)
 
         return targets
 
