@@ -267,9 +267,7 @@ def intersphinx_target_patterns(name: str, project: str) -> List[str]:
 
 
 async def completion_request(
-    test: ClientServer,
-    test_uri: str,
-    text: str,
+    test: ClientServer, test_uri: str, text: str, character: Optional[int] = None
 ) -> CompletionList:
     """Make a completion request to a language server.
 
@@ -304,6 +302,9 @@ async def completion_request(
        The uri the completion request should be made within.
     text
        The text that provides the context for the completion request.
+    character:
+       The character index at which to make the completion request from.
+       If ``None``, it will default to the end of the inserted text.
     """
 
     if "\f" in text:
@@ -329,9 +330,9 @@ async def completion_request(
 
     lines = contents.split("\n")
     line = len(lines) - 1
-    character = len(lines[-1])
+    insertion_point = len(lines[-1])
 
-    logger.debug("Insertion pos: (%d, %d)", line, character)
+    logger.debug("Insertion pos: (%d, %d)", line, insertion_point)
 
     test.client.lsp.notify(
         TEXT_DOCUMENT_DID_CHANGE,
@@ -340,8 +341,8 @@ async def completion_request(
             content_changes=[
                 TextDocumentContentChangeEvent(
                     range=Range(
-                        start=Position(line=line, character=character),
-                        end=Position(line=line, character=character + len(text)),
+                        start=Position(line=line, character=insertion_point),
+                        end=Position(line=line, character=insertion_point + len(text)),
                     ),
                     text=text,
                 )
@@ -349,11 +350,12 @@ async def completion_request(
         ),
     )
 
+    character = character or insertion_point + len(text)
     response = await test.client.lsp.send_request_async(
         COMPLETION,
         CompletionParams(
             text_document=TextDocumentIdentifier(uri=test_uri),
-            position=Position(line=line, character=character + len(text)),
+            position=Position(line=line, character=character),
         ),
     )
 
