@@ -118,6 +118,108 @@ async def test_role_completions(
 
 @py.test.mark.asyncio
 @py.test.mark.parametrize(
+    "project,text,character,expected_range",
+    [
+        (
+            "sphinx-default",
+            ":ref",
+            None,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=4)
+            ),
+        ),
+        (
+            "sphinx-default",
+            "some :ref",
+            None,
+            Range(
+                start=Position(line=0, character=5), end=Position(line=0, character=9)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":ref:",
+            None,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=5)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":c:func",
+            None,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=7)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":c:func:",
+            None,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=8)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":func:`some_func`",
+            5,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=6)
+            ),
+        ),
+    ],
+)
+async def test_role_insert_range(
+    client_server, project, text, character, expected_range
+):
+    """Ensure that we generate completion items that work well with existing text.
+
+    This test case is focused on the range of text a ``CompletionItem`` will modify if
+    selected. This is to ensure that we don't create more work for the end user by
+    corrupting the line we edit, or leaving additional characters that are not
+    required.
+
+    Cases are parameterized and the inputs are expected to have the following format::
+
+       ("sphinx-default", "some :ref", 7, Range(...))
+
+    where:
+
+    - ``"sphinx-default"`` corresponds to the Sphinx project to execute the test case
+      within.
+    - ``"some :ref"`` corresponds to the text to insert to the test file.
+    - ``7`` is the character index to trigger the completion request at.
+    - ``Range(...)`` the expected range the resulting ``CompletionItems`` should modify
+
+    Parameters
+    ----------
+    client_server:
+       The ``client_server`` fixure used to drive the test.
+    project:
+       The name of the Sphinx project to use as listed in the ``tests/data`` folder.
+    text:
+       The text providing the context for the completion request
+    character:
+       The index at which to make the completion request, if ``None`` it will default
+       to the end of the line.
+    expected_range:
+       The range the resulting ``CompletionItems`` should modify.
+    """
+
+    test = await client_server(project)  # type: ClientServer
+    test_uri = test.server.workspace.root_uri + "/test.rst"
+
+    results = await completion_request(test, test_uri, text, character=character)
+    assert len(results.items) > 0
+
+    for item in results.items:
+        assert item.text_edit.range == expected_range
+        assert item.text_edit.new_text.endswith(":")
+
+
+@py.test.mark.asyncio
+@py.test.mark.parametrize(
     "extension,setup",
     [
         *itertools.product(["rst"], [(":", True), (":ref:`", True)]),
