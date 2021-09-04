@@ -157,6 +157,12 @@ C_FUNC_OPTS = {"noindex"} if sphinx_version(eq=2) else {"noindexentry"}
     "project,text,expected,unexpected",
     [
         ("sphinx-default", ".. image:: f.png\n\f   :", IMAGE_OPTS, {"ref", "func"}),
+        (
+            "sphinx-default",
+            ".. image:: f.png\n   :align:\n\f   :",
+            IMAGE_OPTS,
+            {"ref", "func"},
+        ),
         ("sphinx-default", ".. function:: foo\n\f   :", PY_FUNC_OPTS, {"ref", "func"}),
         (
             "sphinx-default",

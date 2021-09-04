@@ -222,17 +222,25 @@ async def test_role_insert_range(
 @py.test.mark.parametrize(
     "extension,setup",
     [
-        *itertools.product(["rst"], [(":", True), (":ref:`", True)]),
+        *itertools.product(
+            ["rst"],
+            [
+                (":", True, None),
+                (":ref:`", True, None),
+                (":ref:`some text <example>`", True, 17),
+                (":ref:`some text <example>`", False, 6),
+            ],
+        ),
         *itertools.product(
             ["py"],
             [
-                (":", False),
-                (":ref:`", False),
-                ('""":', True),
-                ('"""\n\f:', True),
-                ('""":ref:`', True),
-                ('"""\na docstring.\n"""\n\f:', False),
-                ('"""\na docstring.\n"""\n\f:ref:`', False),
+                (":", False, None),
+                (":ref:`", False, None),
+                ('""":', True, None),
+                ('"""\n\f:', True, None),
+                ('""":ref:`', True, None),
+                ('"""\na docstring.\n"""\n\f:', False, None),
+                ('"""\na docstring.\n"""\n\f:ref:`', False, None),
             ],
         ),
     ],
@@ -242,16 +250,34 @@ async def test_completion_suppression(client_server, extension, setup):
 
     Rather than focus on the actual completion items themselves, this test case is
     concerned with ensuring that role suggestions are only offered at an appropriate
-    time i.e. within ``*.rst`` files and docstrings and not within python code.
+    time e.g. within ``*.rst`` files and docstrings and not within python code.
+
+    Cases are parameterized and inputs are expected to have the following format::
+
+       ("rst", ":ref", True, 1)
+
+    where:
+
+    - ``"rst"`` corresponds to the file extension of the file the completion request
+      should be made from.
+    - ``":ref"`` is the text that provides the context of the completion request
+    - ``True`` is a flag that indicates if we expect to see completion suggestions
+      generated or not.
+    - ``12`` is used to indicate the character index the completion request should
+      be made from. If ``None`` the request will default to the end of the given text.
+
+    A common pattern for when multiple test cases are paired with the same file
+    extension is to make use of :func:`python:itertools.product` to "broadcast" the
+    file extension across a number of setups.
     """
 
     test = await client_server("sphinx-default")
     test_uri = test.server.workspace.root_uri + f"/test.{extension}"
 
     print(extension, setup)
-    text, expected = setup
+    text, expected, character = setup
 
-    results = await completion_request(test, test_uri, text)
+    results = await completion_request(test, test_uri, text, character=character)
     assert (len(results.items) > 0) == expected
 
 

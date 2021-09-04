@@ -18,8 +18,8 @@ from .rst import RstLanguageServer
 
 ROLE = re.compile(
     r"""
+    ([^\w:]|^\s*)                     # roles cannot be preceeded by letter chars
     (?P<role>
-      ([^\w:]|^)                       # roles cannot be preceeded by letter chars
       :                               # roles begin with a ':' character
       (?!:)                           # the next character cannot be a ':'
       ((?P<domain>[\w]+):(?=\w))?     # roles may include a domain (that must be followed by a word character)
@@ -206,19 +206,15 @@ class Roles(LanguageFeature):
 
     def complete_roles(self, context: CompletionContext) -> List[CompletionItem]:
 
-        groups = context.match.groupdict()
+        match = context.match
+        groups = match.groupdict()
         domain = groups["domain"] or ""
         items = []
 
-        start, _ = context.match.span()
+        # Insert text starting from the starting ':' character of the role.
+        start = match.span()[0] + match.group(0).find(":")
         end = start + len(groups["role"])
 
-        # Hack around the fact the the ROLE regex includes the character that preceeds
-        # the actual role declaration
-        if not groups["role"].startswith(":"):
-            start += 1
-
-        self.logger.debug("%s %s %s-%s", context, groups, start, end)
         range_ = Range(
             start=Position(line=context.position.line, character=start),
             end=Position(line=context.position.line, character=end),
@@ -240,9 +236,20 @@ class Roles(LanguageFeature):
     def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
         """Generate the list of role target completion suggestions."""
 
+        groups = context.match.groupdict()
+
+        # Only generate suggestions for "aliased" targets, if the request comes from
+        # within the <> chars.
+        if groups["alias"]:
+            text = context.match.group(0)
+            start = context.match.span()[0] + text.find(groups["alias"])
+            end = start + len(groups["alias"])
+
+            if start <= context.position.character <= end:
+                return []
+
         targets = []
 
-        groups = context.match.groupdict()
         startchar = "<" if "<" in groups["target"] else "`"
         endchars = ">`" if "<" in groups["target"] else "`"
 
