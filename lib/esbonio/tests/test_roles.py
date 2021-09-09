@@ -188,7 +188,7 @@ async def test_role_insert_range(
 
     - ``"sphinx-default"`` corresponds to the Sphinx project to execute the test case
       within.
-    - ``"some :ref"`` corresponds to the text to insert to the test file.
+    - ``"some :ref"`` corresponds to the text to insert into the test file.
     - ``7`` is the character index to trigger the completion request at.
     - ``Range(...)`` the expected range the resulting ``CompletionItems`` should modify
 
@@ -944,7 +944,8 @@ def test_role_regex(string, expected):
 
     As a general rule, it's better to write tests at the LSP protocol level as that
     decouples the test cases from the implementation. However, roles and the
-    corresponding regular expression are complex enough to warrant test case on its own.
+    corresponding regular expression are complex enough to warrant a test case on its
+    own.
 
     As with most test cases, this one is parameterized with the following arguments::
 

@@ -1,7 +1,11 @@
 import itertools
 
 import py.test
+from pygls.lsp.types import Position
+from pygls.lsp.types import Range
 
+from esbonio.lsp.directives import DIRECTIVE
+from esbonio.lsp.testing import ClientServer
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import sphinx_version
 
@@ -57,7 +61,7 @@ EXTENSIONS_UNEXPECTED = {
         ("sphinx-default", ".. ", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
         ("sphinx-default", ".. d", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
         ("sphinx-default", ".. code-b", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", ".. code-block::", None, None),
+        ("sphinx-default", ".. code-block:: ", None, None),
         ("sphinx-default", ".. py:", None, None),
         (
             "sphinx-default",
@@ -70,9 +74,9 @@ EXTENSIONS_UNEXPECTED = {
         ("sphinx-default", "   ..", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
         ("sphinx-default", "   .. ", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
         ("sphinx-default", "   .. d", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", "   .. doctest::", None, None),
+        ("sphinx-default", "   .. doctest:: ", None, None),
         ("sphinx-default", "   .. code-b", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", "   .. code-block::", None, None),
+        ("sphinx-default", "   .. code-block:: ", None, None),
         ("sphinx-default", "   .. py:", None, None),
         ("sphinx-default", "   .. _some_label:", None, None),
         (
@@ -86,7 +90,7 @@ EXTENSIONS_UNEXPECTED = {
         ("sphinx-extensions", ".. ", EXTENSIONS_EXPECTED, EXTENSIONS_UNEXPECTED),
         ("sphinx-extensions", ".. d", EXTENSIONS_EXPECTED, EXTENSIONS_UNEXPECTED),
         ("sphinx-extensions", ".. code-b", EXTENSIONS_EXPECTED, EXTENSIONS_UNEXPECTED),
-        ("sphinx-extensions", ".. code-block::", None, None),
+        ("sphinx-extensions", ".. code-block:: ", None, None),
         ("sphinx-extensions", ".. _some_label:", None, None),
         (
             "sphinx-extensions",
@@ -99,7 +103,7 @@ EXTENSIONS_UNEXPECTED = {
         ("sphinx-extensions", "   ..", EXTENSIONS_EXPECTED, EXTENSIONS_UNEXPECTED),
         ("sphinx-extensions", "   .. ", EXTENSIONS_EXPECTED, EXTENSIONS_UNEXPECTED),
         ("sphinx-extensions", "   .. d", EXTENSIONS_EXPECTED, EXTENSIONS_UNEXPECTED),
-        ("sphinx-extensions", "   .. doctest::", None, None),
+        ("sphinx-extensions", "   .. doctest:: ", None, None),
         ("sphinx-extensions", "   .. _some_label:", None, None),
         (
             "sphinx-extensions",
@@ -107,7 +111,7 @@ EXTENSIONS_UNEXPECTED = {
             EXTENSIONS_EXPECTED,
             EXTENSIONS_UNEXPECTED,
         ),
-        ("sphinx-extensions", "   .. code-block::", None, None),
+        ("sphinx-extensions", "   .. code-block:: ", None, None),
         (
             "sphinx-extensions",
             ".. py:",
@@ -280,3 +284,142 @@ async def test_completion_suppression(client_server, extension, setup):
 
     results = await completion_request(test, test_uri, text)
     assert (len(results.items) > 0) == expected
+
+
+@py.test.mark.asyncio
+@py.test.mark.parametrize(
+    "project,text,character,expected_range",
+    [
+        (
+            "sphinx-default",
+            "..",
+            None,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=2)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ".. function",
+            None,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=11)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ".. function::",
+            3,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=13)
+            ),
+        ),
+    ],
+)
+async def test_directive_insert_range(
+    client_server, project, text, character, expected_range
+):
+    """Ensure that we generate completion items that work well with existing text.
+
+    This test case is focused on the range of text a ``CompletionItem`` will modify
+    if selected. This is to ensure that we don't create more work for the end user by
+    corrupting the line we edit or leaving additional characters that are not required.
+
+    Cases are parameterized and the inputs are expected to have the following format::
+
+       ("sphinx-default", ".. image", 3, Range(...))
+
+    where:
+
+    - ``"sphinx-default"`` corresponds to the Sphinx project to execute the test case
+      within.
+    - ``".. image"`` corresponds to the text to insert into the test file
+    - ``7`` is the character index to trigger the completion request at. If ``None`` it
+      will default to the end of the line
+    - ``Range(...)`` is the expected range the resulting ``CompletionItem`` should
+      modify
+    """
+
+    test = await client_server(project)  # type: ClientServer
+    test_uri = test.server.workspace.root_uri + "/test.rst"
+
+    results = await completion_request(test, test_uri, text, character=character)
+    assert len(results.items) > 0
+
+    for item in results.items:
+        assert item.text_edit.range == expected_range
+
+
+@py.test.mark.parametrize(
+    "string, expected",
+    [
+        (".", None),
+        ("..", {"directive": ".."}),
+        (".. image::", {"name": "image", "directive": ".. image::"}),
+        (".. c:", {"domain": "c", "directive": ".. c:"}),
+        (
+            ".. c:function::",
+            {"name": "function", "domain": "c", "directive": ".. c:function::"},
+        ),
+        (
+            ".. image:: filename.png",
+            {"name": "image", "argument": "filename.png", "directive": ".. image::"},
+        ),
+        (
+            ".. cpp:function:: malloc",
+            {
+                "name": "function",
+                "domain": "cpp",
+                "argument": "malloc",
+                "directive": ".. cpp:function::",
+            },
+        ),
+        (
+            "   .. image:: filename.png",
+            {"name": "image", "argument": "filename.png", "directive": ".. image::"},
+        ),
+        (
+            "   .. cpp:function:: malloc",
+            {
+                "name": "function",
+                "domain": "cpp",
+                "argument": "malloc",
+                "directive": ".. cpp:function::",
+            },
+        ),
+    ],
+)
+def test_directive_regex(string, expected):
+    """Ensure that the regular expression we use to detect and parse directives
+    works as expected.
+
+    As a general rule, it's better to write tests at the LSP protocol level as that
+    decouples the test cases from the implementation. However, directives and the
+    corresponding regular expression are complex enough to warrant a test case on its
+    own.
+
+    As with most test cases, this one is parameterized with the following arguments::
+
+       (".. figure::", {"name": "figure"})
+
+    The first argument is the string to test the pattern against, the second a
+    dictionary containing the groups we expect to see in the resulting match object.
+    Groups that appear in the resulting match object but not in the expected result
+    will **not** fail the test.
+
+    To test situations where the pattern should **not** match the input, pass ``None``
+    as the second argument.
+
+    To test situaions where the pattern should match, but we don't expect to see any
+    groups pass an empty dictionary as the second argument.
+    """
+
+    match = DIRECTIVE.match(string)
+
+    if expected is None:
+        assert match is None
+    else:
+        assert match is not None
+
+        for name, value in expected.items():
+            assert match.groupdict().get(name, None) == value

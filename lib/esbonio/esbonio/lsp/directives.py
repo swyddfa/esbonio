@@ -18,33 +18,30 @@ from esbonio.lsp import RstLanguageServer
 
 DIRECTIVE = re.compile(
     r"""
-    (?P<indent>\s*)             # directives can be indented
-    (?P<directive>\.\.          # start with a comment
-    [ ]                         # separated by a space
-    (?P<domain>[\w]+:)?         # with an optional domain namespace
-    (?P<name>[\w-]+))           # with a name
-    ::
-    ([\s]+(?P<argument>.*$))?   # some directives may take an argument
+    (\s*)                           # directives can be indented
+    (?P<directive>
+      \.\.                          # directives start with a comment
+      [ ]?                          # followed by a space
+      ((?P<domain>[\w]+):(?!:))?    # directives may include a domain
+      (?P<name>[\w-]+)?             # directives have a name
+      (::)?                         # directives end with '::'
+    )
+    ([\s]+(?P<argument>.*$))?       # directives may take an argument
     """,
     re.VERBOSE,
 )
-"""A regular expression that matches a complete, valid directive declaration. Not
-including any options or content."""
+"""A regular expression to detect and parse partial and complete directives.
 
+This does **not** include any options or content that may be included underneath
+the initial declaration. The language server breaks a directive down into a number
+of parts::
 
-PARTIAL_DIRECTIVE = re.compile(
-    r"""
-    (?P<indent>^\s*)          # directives can be indented
-    \.\.                      # start with a commment
-    (?P<prefix>[ ]?)          # may have a space
-    (?P<domain>[\w]+:)?       # with an optional domain namespace
-    (?P<name>[\w-]+)?         # with an optional name
-    $
-    """,
-    re.VERBOSE,
-)
-"""A regular expression that matches a partial directive declaraiton. Used when
-generating auto complete suggestions."""
+                   vvvvvv argument
+   .. c:function:: malloc
+   ^^^^^^^^^^^^^^^ directive
+        ^^^^^^^^ name
+      ^ domain (optional)
+"""
 
 
 PARTIAL_DIRECTIVE_OPTION = re.compile(
@@ -88,7 +85,7 @@ class Directives(LanguageFeature):
     def add_argument_provider(self, provider: ArgumentCompletion) -> None:
         self._argument_providers.append(provider)
 
-    completion_triggers = [DIRECTIVE, PARTIAL_DIRECTIVE, PARTIAL_DIRECTIVE_OPTION]
+    completion_triggers = [DIRECTIVE, PARTIAL_DIRECTIVE_OPTION]
 
     def complete(self, context: CompletionContext) -> List[CompletionItem]:
 
@@ -98,16 +95,21 @@ class Directives(LanguageFeature):
 
         groups = context.match.groupdict()
 
-        if "argument" in groups:
+        # Are we completing a directive's options?
+        if "directive" not in groups:
+            return self.complete_options(context)
+
+        # Are we completing the directive's argument?
+        directive_end = context.match.span()[0] + len(groups["directive"])
+        complete_directive = groups["directive"].endswith("::")
+
+        if complete_directive and directive_end < context.position.character:
             return self.complete_arguments(context)
 
-        if "domain" in groups:
-            return self.complete_directives(context)
-
-        return self.complete_options(context)
+        return self.complete_directives(context)
 
     def complete_arguments(self, context: CompletionContext) -> List[CompletionItem]:
-
+        self.logger.debug("Completing arguments")
         arguments = []
 
         for provide in self._argument_providers:
@@ -116,25 +118,52 @@ class Directives(LanguageFeature):
         return arguments
 
     def complete_directives(self, context: CompletionContext) -> List[CompletionItem]:
+        self.logger.debug("Completing directives")
 
-        domain = context.match.groupdict()["domain"] or ""
         items = []
+        match = context.match
+        groups = match.groupdict()
+
+        domain = ""
+        if groups["domain"]:
+            domain = f'{groups["domain"]}:'
+
+        # Calculate the range of text the CompletionItems should edit.
+        # If there is an existing argument to the directive, we should leave it untouched
+        # otherwise, edit the whole line to insert any required arguments.
+        start = match.span()[0] + match.group(0).find(".")
+        include_argument = True
+        end = match.span()[1]
+
+        if groups["argument"]:
+            include_argument = False
+            end = match.span()[0] + match.group(0).find("::") + 2
+
+        range_ = Range(
+            start=Position(line=context.position.line, character=start),
+            end=Position(line=context.position.line, character=end),
+        )
 
         for name, directive in self.rst.get_directives().items():
 
             if not name.startswith(domain):
                 continue
 
-            item = self.directive_to_completion_item(name, directive, context)
+            item = self.directive_to_completion_item(
+                name, directive, context, include_argument=include_argument
+            )
+            item.text_edit = TextEdit(range=range_, new_text=item.insert_text)
+            item.insert_text = None
+
+            self.logger.debug(item)
             items.append(item)
 
         return items
 
     def complete_options(self, context: CompletionContext) -> List[CompletionItem]:
-
+        self.logger.debug("Completing options")
         groups = context.match.groupdict()
 
-        self.logger.info("Suggesting options")
         self.logger.debug("Match groups: %s", groups)
 
         indent = groups["indent"]
@@ -163,52 +192,13 @@ class Directives(LanguageFeature):
         return self.options_to_completion_items(options)
 
     def directive_to_completion_item(
-        self, name: str, directive: Directive, context: CompletionContext
+        self,
+        name: str,
+        directive: Directive,
+        context: CompletionContext,
+        include_argument: bool = True,
     ) -> CompletionItem:
         """Convert an rst directive to its CompletionItem representation.
-
-        Previously, it was fine to pre-convert directives into their completion item
-        representation during the :meth:`discover` phase. However a number of factors
-        combined to force this to be something we have to compute specifically for each
-        completion site.
-
-        It all stems from directives that live under a namespaced domain e.g.
-        ``.. c:macro::``. First in order to get trigger character completions for
-        directives, we need to allow users to start typing the directive name
-        immediately after the second dot and have the CompletionItem insert the leading
-        space. Which is exactly what we used to do, setting
-        ``insert_text=" directive::"`` and we were done.
-
-        However with domain support, we introduced the possibility of a ``:`` character
-        in the name of a directive. You can imagine a scenario where a user types in a
-        domain namespace, say ``py:`` in order to filter down the list of options to
-        directives that belong to that namespace. With ``:`` being a trigger character
-        for role completions and the like, this would cause editors like VSCode to issue
-        a new completion request ignoring the old one.
-
-        That isn't necessarily the end of the world, but with CompletionItems assuming
-        that they were following the ``..`` characters, the ``insert_text`` was no
-        longer correct leading to broken completions like ``..py: py:function::``.
-
-        In order to handle the two scenarios, conceptually the easiest approach is to
-        switch to using a ``text_edit`` and replace the entire line with the correct
-        text. Unfortunately in practice this was rather fiddly.
-
-        Upon first setting the ``text_edit`` field VSCode suddenly stopped presenting
-        any options! After much debugging, head scratching and searching, I eventually
-        found a `couple <https://github.com/microsoft/vscode/issues/38982>`_ of
-        `issues <https://github.com/microsoft/vscode/issues/41208>`_ that hinted as to
-        what was happening.
-
-        I **think** what happens is that since the ``range`` of the text edit extends
-        back to the start of the line VSCode considers the entire line to be the filter
-        for the CompletionItems so it's looking to select items that start with ``..``
-        - which is none of them!
-
-        To work around this, we additionaly need to set the ``filter_text`` field so
-        that VSCode computes matches against that instead of the label. Then in order
-        for the items to be shown the value of that field needs to be ``..my:directive``
-        so it corresponds with what the user has actually written.
 
         Parameters
         ----------
@@ -219,13 +209,13 @@ class Directives(LanguageFeature):
            The class definition that implements the Directive's behavior
         context:
            The completion context
+        include_argument:
+           A flag that indicates if a placholder for any directive arguments should
+           be included
         """
-        position = context.position
-        groups = context.match.groupdict()
-        prefix = groups["prefix"]
-        indent = groups["indent"]
-
+        args = ""
         documentation = inspect.getdoc(directive)
+        insert_format = InsertTextFormat.PlainText
 
         # Ignore directives that do not provide their own documentation.
         if any(
@@ -237,25 +227,23 @@ class Directives(LanguageFeature):
             documentation = None
 
         # TODO: Give better names to arguments based on what they represent.
-        args = " ".join(
-            "${{{0}:arg{0}}}".format(i)
-            for i in range(1, directive.required_arguments + 1)
-        )
+        if include_argument:
+            insert_format = InsertTextFormat.Snippet
+            args = " " + " ".join(
+                "${{{0}:arg{0}}}".format(i)
+                for i in range(1, directive.required_arguments + 1)
+            )
+
+        insert_text = f".. {name}::{args}"
 
         return CompletionItem(
             label=name,
             kind=CompletionItemKind.Class,
             detail="directive",
             documentation=documentation,
-            filter_text=f"..{prefix}{name}",
-            insert_text_format=InsertTextFormat.Snippet,
-            text_edit=TextEdit(
-                range=Range(
-                    start=Position(line=position.line, character=0),
-                    end=Position(line=position.line, character=position.character - 1),
-                ),
-                new_text=f"{indent}.. {name}:: {args}",
-            ),
+            filter_text=insert_text,
+            insert_text=insert_text,
+            insert_text_format=insert_format,
         )
 
     def options_to_completion_items(self, options) -> List[CompletionItem]:
