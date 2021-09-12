@@ -8,6 +8,7 @@ from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 
+from esbonio.lsp.roles import ROLE
 from esbonio.lsp.testing import ClientServer
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import definition_request
@@ -16,7 +17,7 @@ from esbonio.lsp.testing import role_patterns
 from esbonio.lsp.testing import role_target_patterns
 
 C_EXPECTED = {"c:func", "c:macro"}
-C_UNEXPECTED = {"ref", "doc", "py:func", "py:mod"}
+C_UNEXPECTED = {"py:func", "py:mod"}
 
 DEFAULT_EXPECTED = {"doc", "func", "mod", "ref", "c:func"}
 DEFAULT_UNEXPECTED = {"py:func", "py:mod", "restructuredtext-unimplemented-role"}
@@ -25,7 +26,7 @@ EXT_EXPECTED = {"doc", "py:func", "py:mod", "ref", "func"}
 EXT_UNEXPECTED = {"c:func", "c:macro", "restructuredtext-unimplemented-role"}
 
 PY_EXPECTED = {"py:func", "py:mod"}
-PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
+PY_UNEXPECTED = {"c:func", "c:macro"}
 
 
 @py.test.mark.asyncio
@@ -33,20 +34,20 @@ PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
     "text,setup",
     [
         *itertools.product(
-            role_patterns(":") + role_patterns(":r"),
+            role_patterns(":") + role_patterns(":r") + role_patterns(":ref:"),
             [
                 ("sphinx-default", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
                 ("sphinx-extensions", EXT_EXPECTED, EXT_UNEXPECTED),
             ],
         ),
         *itertools.product(
-            role_patterns(":ref:") + role_patterns("a:") + role_patterns("figure::"),
+            role_patterns("a:") + role_patterns("figure::"),
             [("sphinx-default", None, None), ("sphinx-extensions", None, None)],
         ),
         *itertools.product(
             role_patterns(":py:"),
             [
-                ("sphinx-default", None, None),
+                ("sphinx-default", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
                 ("sphinx-extensions", PY_EXPECTED, PY_UNEXPECTED),
             ],
         ),
@@ -54,7 +55,7 @@ PY_UNEXPECTED = {"ref", "doc", "c:func", "c:macro"}
             role_patterns(":c:"),
             [
                 ("sphinx-default", C_EXPECTED, C_UNEXPECTED),
-                ("sphinx-extensions", None, None),
+                ("sphinx-extensions", EXT_EXPECTED, EXT_UNEXPECTED),
             ],
         ),
     ],
@@ -117,19 +118,129 @@ async def test_role_completions(
 
 @py.test.mark.asyncio
 @py.test.mark.parametrize(
+    "project,text,character,expected_range",
+    [
+        (
+            "sphinx-default",
+            ":ref",
+            None,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=4)
+            ),
+        ),
+        (
+            "sphinx-default",
+            "some :ref",
+            None,
+            Range(
+                start=Position(line=0, character=5), end=Position(line=0, character=9)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":ref:",
+            None,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=5)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":c:func",
+            None,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=7)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":c:func:",
+            None,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=8)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":func:`some_func`",
+            5,
+            Range(
+                start=Position(line=0, character=0), end=Position(line=0, character=6)
+            ),
+        ),
+    ],
+)
+async def test_role_insert_range(
+    client_server, project, text, character, expected_range
+):
+    """Ensure that we generate completion items that work well with existing text.
+
+    This test case is focused on the range of text a ``CompletionItem`` will modify if
+    selected. This is to ensure that we don't create more work for the end user by
+    corrupting the line we edit, or leaving additional characters that are not
+    required.
+
+    Cases are parameterized and the inputs are expected to have the following format::
+
+       ("sphinx-default", "some :ref", 7, Range(...))
+
+    where:
+
+    - ``"sphinx-default"`` corresponds to the Sphinx project to execute the test case
+      within.
+    - ``"some :ref"`` corresponds to the text to insert into the test file.
+    - ``7`` is the character index to trigger the completion request at.
+    - ``Range(...)`` the expected range the resulting ``CompletionItems`` should modify
+
+    Parameters
+    ----------
+    client_server:
+       The ``client_server`` fixure used to drive the test.
+    project:
+       The name of the Sphinx project to use as listed in the ``tests/data`` folder.
+    text:
+       The text providing the context for the completion request
+    character:
+       The index at which to make the completion request, if ``None`` it will default
+       to the end of the line.
+    expected_range:
+       The range the resulting ``CompletionItems`` should modify.
+    """
+
+    test = await client_server(project)  # type: ClientServer
+    test_uri = test.server.workspace.root_uri + "/test.rst"
+
+    results = await completion_request(test, test_uri, text, character=character)
+    assert len(results.items) > 0
+
+    for item in results.items:
+        assert item.text_edit.range == expected_range
+        assert item.text_edit.new_text.endswith(":")
+
+
+@py.test.mark.asyncio
+@py.test.mark.parametrize(
     "extension,setup",
     [
-        *itertools.product(["rst"], [(":", True), (":ref:`", True)]),
+        *itertools.product(
+            ["rst"],
+            [
+                (":", True, None),
+                (":ref:`", True, None),
+                (":ref:`some text <example>`", True, 17),
+                (":ref:`some text <example>`", False, 6),
+            ],
+        ),
         *itertools.product(
             ["py"],
             [
-                (":", False),
-                (":ref:`", False),
-                ('""":', True),
-                ('"""\n\f:', True),
-                ('""":ref:`', True),
-                ('"""\na docstring.\n"""\n\f:', False),
-                ('"""\na docstring.\n"""\n\f:ref:`', False),
+                (":", False, None),
+                (":ref:`", False, None),
+                ('""":', True, None),
+                ('"""\n\f:', True, None),
+                ('""":ref:`', True, None),
+                ('"""\na docstring.\n"""\n\f:', False, None),
+                ('"""\na docstring.\n"""\n\f:ref:`', False, None),
             ],
         ),
     ],
@@ -139,15 +250,33 @@ async def test_completion_suppression(client_server, extension, setup):
 
     Rather than focus on the actual completion items themselves, this test case is
     concerned with ensuring that role suggestions are only offered at an appropriate
-    time i.e. within ``*.rst`` files and docstrings and not within python code.
+    time e.g. within ``*.rst`` files and docstrings and not within python code.
+
+    Cases are parameterized and inputs are expected to have the following format::
+
+       ("rst", ":ref", True, 1)
+
+    where:
+
+    - ``"rst"`` corresponds to the file extension of the file the completion request
+      should be made from.
+    - ``":ref"`` is the text that provides the context of the completion request
+    - ``True`` is a flag that indicates if we expect to see completion suggestions
+      generated or not.
+    - ``12`` is used to indicate the character index the completion request should
+      be made from. If ``None`` the request will default to the end of the given text.
+
+    A common pattern for when multiple test cases are paired with the same file
+    extension is to make use of :func:`python:itertools.product` to "broadcast" the
+    file extension across a number of setups.
     """
 
     test = await client_server("sphinx-default")
     test_uri = test.server.workspace.root_uri + f"/test.{extension}"
 
-    text, expected = setup
+    text, expected, character = setup
 
-    results = await completion_request(test, test_uri, text)
+    results = await completion_request(test, test_uri, text, character=character)
     assert (len(results.items) > 0) == expected
 
 
@@ -547,3 +676,299 @@ async def test_role_target_completions(client_server, text, setup):
     else:
         assert expected == items & expected
         assert set() == items & unexpected
+
+
+@py.test.mark.asyncio
+@py.test.mark.parametrize(
+    "project,text,ending,expected_range",
+    [
+        (
+            "sphinx-default",
+            ":ref:`some_text",
+            "`",
+            Range(
+                start=Position(line=0, character=6), end=Position(line=0, character=15)
+            ),
+        ),
+        (
+            "sphinx-default",
+            "find out more :ref:`some_text",
+            "`",
+            Range(
+                start=Position(line=0, character=20), end=Position(line=0, character=29)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":ref:`more info <some_text",
+            ">`",
+            Range(
+                start=Position(line=0, character=17), end=Position(line=0, character=26)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":download:`_static/vscode_screenshot.png",
+            "`",
+            Range(
+                start=Position(line=0, character=19), end=Position(line=0, character=40)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":download:`this link <_static/vscode_screenshot.png",
+            ">`",
+            Range(
+                start=Position(line=0, character=30), end=Position(line=0, character=51)
+            ),
+        ),
+    ],
+)
+async def test_role_target_insert_range(
+    client_server, project, text, ending, expected_range
+):
+    """Ensure that we generate completion items that work well with existing text."""
+
+    test = await client_server(project)  # type: ClientServer
+    test_uri = test.server.workspace.root_uri + "/test.rst"
+
+    results = await completion_request(test, test_uri, text)
+    assert len(results.items) > 0
+
+    for item in results.items:
+        assert item.text_edit.new_text.endswith(ending)
+        assert item.text_edit.range == expected_range
+
+
+@py.test.mark.parametrize(
+    "string, expected",
+    [
+        ("::", None),
+        (":", {"role": ":"}),
+        (":ref", {"name": "ref", "role": ":ref"}),
+        (":code-block", {"name": "code-block", "role": ":code-block"}),
+        (":c:func:", {"name": "func", "domain": "c", "role": ":c:func:"}),
+        (":cpp:func:", {"name": "func", "domain": "cpp", "role": ":cpp:func:"}),
+        (":ref:`", {"name": "ref", "role": ":ref:", "target": "`"}),
+        (
+            ":code-block:`",
+            {"name": "code-block", "role": ":code-block:", "target": "`"},
+        ),
+        (
+            ":c:func:`",
+            {"name": "func", "domain": "c", "role": ":c:func:", "target": "`"},
+        ),
+        (
+            ":ref:`some_label",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "label": "some_label",
+                "target": "`some_label",
+            },
+        ),
+        (
+            ":code-block:`some_label",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "label": "some_label",
+                "target": "`some_label",
+            },
+        ),
+        (
+            ":c:func:`some_label",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "label": "some_label",
+                "target": "`some_label",
+            },
+        ),
+        (
+            ":ref:`some_label`",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "label": "some_label",
+                "target": "`some_label`",
+            },
+        ),
+        (
+            ":code-block:`some_label`",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "label": "some_label",
+                "target": "`some_label`",
+            },
+        ),
+        (
+            ":c:func:`some_label`",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "label": "some_label",
+                "target": "`some_label`",
+            },
+        ),
+        (
+            ":ref:`see more <",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "alias": "see more ",
+                "target": "`see more <",
+            },
+        ),
+        (
+            ":code-block:`see more <",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "alias": "see more ",
+                "target": "`see more <",
+            },
+        ),
+        (
+            ":c:func:`see more <",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "alias": "see more ",
+                "target": "`see more <",
+            },
+        ),
+        (
+            ":ref:`see more <some_label",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label",
+            },
+        ),
+        (
+            ":code-block:`see more <some_label",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label",
+            },
+        ),
+        (
+            ":c:func:`see more <some_label",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label",
+            },
+        ),
+        (
+            ":ref:`see more <some_label>",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>",
+            },
+        ),
+        (
+            ":code-block:`see more <some_label>",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>",
+            },
+        ),
+        (
+            ":c:func:`see more <some_label>",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>",
+            },
+        ),
+        (
+            ":ref:`see more <some_label>`",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>`",
+            },
+        ),
+        (
+            ":code-block:`see more <some_label>`",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>`",
+            },
+        ),
+        (
+            ":c:func:`see more <some_label>`",
+            {
+                "name": "func",
+                "domain": "c",
+                "role": ":c:func:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>`",
+            },
+        ),
+    ],
+)
+def test_role_regex(string, expected):
+    """Ensure that the regular expression we use to detect and parse roles works as
+    expected.
+
+    As a general rule, it's better to write tests at the LSP protocol level as that
+    decouples the test cases from the implementation. However, roles and the
+    corresponding regular expression are complex enough to warrant a test case on its
+    own.
+
+    As with most test cases, this one is parameterized with the following arguments::
+
+        (":ref:", {"name": "ref"}),
+        (".. directive::", None)
+
+    The first argument is the string to test the pattern against, the second a
+    dictionary containing the groups we expect to see in the resulting match object.
+    Groups that appear in the resulting match object but not in the expected result will
+    **not** fail the test.
+
+    To test situations where the pattern should **not** match the input, pass ``None``
+    as the second argument.
+
+    To test situaions where the pattern should match, but we don't expect to see any
+    groups pass an empty dictionary as the second argument.
+    """
+
+    match = ROLE.match(string)
+
+    if expected is None:
+        assert match is None
+    else:
+        assert match is not None
+
+        for name, value in expected.items():
+            assert match.groupdict().get(name, None) == value

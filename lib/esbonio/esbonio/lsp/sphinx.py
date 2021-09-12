@@ -98,11 +98,17 @@ class SphinxLogHandler(LspHandler):
     def __init__(self, app, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self.app = app
         self.translator = WarningLogRecordTranslator(app)
         self.only_once = OnceFilter()
         self.diagnostics: Dict[str, List[Diagnostic]] = {}
 
     def get_location(self, location: str) -> Tuple[str, Optional[int]]:
+
+        if not location:
+            conf = pathlib.Path(self.app.confdir, "conf.py")
+            return (str(conf), None)
+
         path, *parts = location.split(":")
         lineno = None
 

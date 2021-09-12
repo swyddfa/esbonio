@@ -22,7 +22,7 @@ TARGET_KINDS = {
 
 
 def intersphinx_target_to_completion_item(
-    label: str, target: tuple, type_: str
+    project: str, label: str, target: tuple, type_: str
 ) -> CompletionItem:
 
     # _. _. url, _
@@ -38,7 +38,7 @@ def intersphinx_target_to_completion_item(
         label=label,
         detail=f"{display_name} - {source}{version}",
         kind=TARGET_KINDS.get(completion_kind, CompletionItemKind.Reference),
-        insert_text=label,
+        insert_text=f"{project}:{label}",
     )
 
 
@@ -85,10 +85,10 @@ class Domain(TargetCompletion):
         groups = context.match.groupdict()
         name = groups["name"]
         domain = groups["domain"] or None
-        target = groups["target"]
+        label = groups["label"]
 
-        if ":" in target:
-            return self.complete_intersphinx_targets(name, domain, target)
+        if ":" in label:
+            return self.complete_intersphinx_targets(name, domain, label)
 
         items = [
             object_to_completion_item(o)
@@ -102,15 +102,15 @@ class Domain(TargetCompletion):
         return items
 
     def complete_intersphinx_targets(
-        self, name, domain, target
+        self, name: str, domain: str, label: str
     ) -> List[CompletionItem]:
         items = []
-        project, *_ = target.split(":")
+        project, *_ = label.split(":")
         intersphinx_targets = self.rst.get_intersphinx_targets(project, name, domain)
 
         for type_, targets in intersphinx_targets.items():
             items += [
-                intersphinx_target_to_completion_item(label, target, type_)
+                intersphinx_target_to_completion_item(project, label, target, type_)
                 for label, target in targets.items()
             ]
 

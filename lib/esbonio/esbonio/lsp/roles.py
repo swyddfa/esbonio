@@ -16,97 +16,52 @@ from .feature import CompletionContext
 from .feature import LanguageFeature
 from .rst import RstLanguageServer
 
-PARTIAL_ROLE = re.compile(
-    r"""
-    (^|.*[^\w:])          # roles cannot be preceeded by certain characters
-    (?P<role>:            # roles start with the ':' character
-    (?!:)                 # make sure the next character is not ':'
-    (?P<domain>[\w]+:)?   # there may be a domain namespace
-    (?P<name>[\w-]*))     # match the role name
-    $                     # ensure pattern only matches incomplete roles
-    """,
-    re.MULTILINE | re.VERBOSE,
-)
-"""A regular expression that matches a partial role.
-
-For example::
-
-   :re
-
-Used when generating auto complete suggestions.
-"""
-
-
-PARTIAL_PLAIN_TARGET = re.compile(
-    r"""
-    (^|.*[^\w:])            # roles cannot be preceeded by certain chars
-    (?P<role>:              # roles start with the ':' character
-    (?!:)                   # make sure the next character is not ':'
-    ((?P<domain>[\w]+):)?   # there may be a domain namespace
-    (?P<name>[\w-]*)        # followed by the role name
-    :)                      # the role name ends with a ':'
-    `                       # the target begins with a '`'
-    (?P<target>[^<`]*)      # match "plain link" targets
-    $
-    """,
-    re.MULTILINE | re.VERBOSE,
-)
-"""A regular expression that matches a partial "plain" role target.
-
-For example::
-
-   :ref:`som
-
-Used when generating auto complete suggestions.
-"""
-
-PARTIAL_ALIASED_TARGET = re.compile(
-    r"""
-    (^|.*[^\w:])            # roles cannot be preceeded by certain chars
-    (?P<role>:              # roles start with the ':' character
-    (?!:)                   # make sure the next character is not ':'
-    ((?P<domain>[\w]+):)?   # there may be a domain namespace
-    (?P<name>[\w-]*)        # followed by the role name
-    :)                      # the role name ends with a ':'
-    `                       # the target begins with a '`'`
-    .*<                     # the actual target name starts after a '<'
-    (?P<target>[^`]*)       # match "aliased" targets
-    $
-    """,
-    re.MULTILINE | re.VERBOSE,
-)
-"""A regular expression that matches an "aliased" role target.
-
-For example::
-
-   :ref:`More info <som
-
-Used when generating auto complete suggestions.
-"""
-
 ROLE = re.compile(
     r"""
-    (?P<role>:              # roles begin with a ':' character
-    (?!:)                   # the next character cannot be a ':'
-    ((?P<domain>[\w+]):)?   # roles may optionally include a domain
-    (?P<name>[\w-]*):)      # and have a name
-    `                       # the target starts with a '`'`
-    ([^<`>]*?<)?            # there may be an alias for the target
-    (?P<target>[^<`>]*)     # match the target itself
-    >?                      # an aliased target would have a closing '>'
-    `                       # the target ends with a '`'`
+    ([^\w:]|^\s*)                     # roles cannot be preceeded by letter chars
+    (?P<role>
+      :                               # roles begin with a ':' character
+      (?!:)                           # the next character cannot be a ':'
+      ((?P<domain>[\w]+):(?=\w))?     # roles may include a domain (that must be followed by a word character)
+      ((?P<name>[\w-]+):?)?           # roles have a name
+    )
+    (?P<target>
+      `                               # targets begin with a '`' character
+      ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
+      (?P<label>[^<`>]*)?             # targets contain a label
+      >?                              # labels end with a '>' when there's an alias
+      `?                              # targets end with a '`' character
+    )?
     """,
-    re.MULTILINE | re.VERBOSE,
+    re.VERBOSE,
 )
-"""A regular expression that matches a complete role definition
+"""A regular expression to detect and parse parial and complete roles.
 
-For example::
+I'm not sure if there are offical names for the components of a role, but the
+language server breaks a role down into a number of parts::
 
-   :ref:`some_target`
-   :ref:`See More <some_target>`
-   :c:func:`some_func`
-   :c:func:`This Function <some_func>`
+                vvvvvv label
+               vvvvvvvv target
+   :c:function:`malloc`
+   ^^^^^^^^^^^^ role
+      ^^^^^^^^ name
+    ^ domain (optional)
 
+The language server sometimes refers to the above as a "plain" role, in that the
+role's target contains just the label of the object it is linking to. However it's
+also possible to define "aliased" roles, where the link text in the final document
+is overriden, for example::
+
+                vvvvvvvvvvvvvvvvvvvvvvvv alias
+                                         vvvvvv label
+               vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv target
+   :c:function:`used to allocate memory <malloc>`
+   ^^^^^^^^^^^^ role
+      ^^^^^^^^ name
+    ^ domain (optional)
+
+See :func:`tests.test_roles.test_role_regex` for a list of example strings this pattern
+is expected to match.
 """
 
 
@@ -167,7 +122,7 @@ class Roles(LanguageFeature):
     def add_target_provider(self, provider: TargetCompletion) -> None:
         self._target_providers.append(provider)
 
-    completion_triggers = [PARTIAL_ROLE, PARTIAL_PLAIN_TARGET, PARTIAL_ALIASED_TARGET]
+    completion_triggers = [ROLE]
     definition_triggers = [ROLE]
 
     def definition(
@@ -192,15 +147,39 @@ class Roles(LanguageFeature):
         return definitions
 
     def complete(self, context: CompletionContext) -> List[CompletionItem]:
+        """Generate completion suggestions relevant to the current context.
+
+        This function is a little intense, but its sole purpose is to determine the
+        context in which the completion request is being made and either return
+        nothing, or the results of :meth:`~esbonio.lsp.roles.Roles.complete_roles` or
+        :meth:`esbonio.lsp.roles.Roles.complete_targets` whichever is appropriate.
+
+        Parameters
+        ----------
+        context:
+           The context of the completion request.
+        """
 
         # Do not suggest completions within the middle of Python code.
         if context.location == "py":
             return []
 
-        if "target" in context.match.groupdict():
-            return self.complete_targets(context)
+        groups = context.match.groupdict()
+        target = groups["target"]
 
-        # If there's no indent, then this can only be a role defn
+        # All text matched by the regex
+        text = context.match.group(0)
+        start, end = context.match.span()
+
+        if target:
+            target_index = start + text.find(target)
+
+            # Only trigger target completions if the request was made from within
+            # the target part of the role.
+            if target_index <= context.position.character <= end:
+                return self.complete_targets(context)
+
+        # If there's no indent, then this can only be a role definition
         indent = context.match.group(1)
         if indent == "":
             return self.complete_roles(context)
@@ -227,8 +206,19 @@ class Roles(LanguageFeature):
 
     def complete_roles(self, context: CompletionContext) -> List[CompletionItem]:
 
-        domain = context.match.groupdict()["domain"] or ""
+        match = context.match
+        groups = match.groupdict()
+        domain = groups["domain"] or ""
         items = []
+
+        # Insert text starting from the starting ':' character of the role.
+        start = match.span()[0] + match.group(0).find(":")
+        end = start + len(groups["role"])
+
+        range_ = Range(
+            start=Position(line=context.position.line, character=start),
+            end=Position(line=context.position.line, character=end),
+        )
 
         for name, role in self.rst.get_roles().items():
 
@@ -236,16 +226,63 @@ class Roles(LanguageFeature):
                 continue
 
             item = self.role_to_completion_item(name, role, context)
+            item.text_edit = TextEdit(range=range_, new_text=item.insert_text)
+            item.insert_text = None
+
             items.append(item)
 
         return items
 
     def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
+        """Generate the list of role target completion suggestions."""
+
+        groups = context.match.groupdict()
+
+        # Only generate suggestions for "aliased" targets, if the request comes from
+        # within the <> chars.
+        if groups["alias"]:
+            text = context.match.group(0)
+            start = context.match.span()[0] + text.find(groups["alias"])
+            end = start + len(groups["alias"])
+
+            if start <= context.position.character <= end:
+                return []
 
         targets = []
 
+        startchar = "<" if "<" in groups["target"] else "`"
+        endchars = ">`" if "<" in groups["target"] else "`"
+
+        start, end = context.match.span()
+        start += context.match.group(0).index(startchar) + 1
+        range_ = Range(
+            start=Position(line=context.position.line, character=start),
+            end=Position(line=context.position.line, character=end),
+        )
+        prefix = context.match.group(0)[start:]
+
         for provide in self._target_providers:
-            targets += provide.complete_targets(context) or []
+            candidates = provide.complete_targets(context) or []
+
+            for candidate in candidates:
+
+                # Don't interfere with items that already carry a `text_edit`, allowing
+                # some providers (like intersphinx) to do something special.
+                if not candidate.text_edit:
+                    new_text = candidate.insert_text or candidate.label
+
+                    # This is rather annoying, but `filter_text` needs to start with
+                    # the text we are going to replace, otherwise VSCode won't show our
+                    # suggestions!
+                    candidate.filter_text = f"{prefix}{new_text}"
+
+                    candidate.text_edit = TextEdit(range=range_, new_text=new_text)
+                    candidate.insert_text = None
+
+                if not candidate.text_edit.new_text.endswith(endchars):
+                    candidate.text_edit.new_text += endchars
+
+                targets.append(candidate)
 
         return targets
 
@@ -253,14 +290,6 @@ class Roles(LanguageFeature):
         self, name: str, role, context: CompletionContext
     ) -> CompletionItem:
         """Convert an rst role to its CompletionItem representation.
-
-        With domain support it's necessary to compute the CompletionItem representation
-        specifically for each completion site. See
-        :meth:`~esbonio.lsp.directives.Directives.directive_to_completion_item` for
-        more historical information.
-
-        For some reason, even though these completion items are constructed in the same
-        manner as the ones for directives using them in VSCode does not feel as nice....
 
         Parameters
         ----------
@@ -272,26 +301,13 @@ class Roles(LanguageFeature):
            The completion context
         """
 
-        groups = context.match.groupdict()
-
-        line = context.position.line
-        start = context.position.character - len(groups["role"])
-        end = context.position.character
-
         insert_text = f":{name}:"
-
         item = CompletionItem(
             label=name,
             kind=CompletionItemKind.Function,
-            filter_text=insert_text,
             detail="role",
-            text_edit=TextEdit(
-                range=Range(
-                    start=Position(line=line, character=start),
-                    end=Position(line=line, character=end),
-                ),
-                new_text=insert_text,
-            ),
+            filter_text=insert_text,
+            insert_text=insert_text,
         )
 
         return item
