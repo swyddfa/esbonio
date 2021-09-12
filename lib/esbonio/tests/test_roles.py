@@ -274,7 +274,6 @@ async def test_completion_suppression(client_server, extension, setup):
     test = await client_server("sphinx-default")
     test_uri = test.server.workspace.root_uri + f"/test.{extension}"
 
-    print(extension, setup)
     text, expected, character = setup
 
     results = await completion_request(test, test_uri, text, character=character)

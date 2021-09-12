@@ -5,6 +5,7 @@ from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 
 from esbonio.lsp.directives import DIRECTIVE
+from esbonio.lsp.directives import DIRECTIVE_OPTION
 from esbonio.lsp.testing import ClientServer
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import sphinx_version
@@ -188,6 +189,12 @@ C_FUNC_OPTS = {"noindex"} if sphinx_version(eq=2) else {"noindexentry"}
         ),
         (
             "sphinx-default",
+            "   .. c:function:: foo\n\f      :",
+            C_FUNC_OPTS,
+            {"ref", "func"},
+        ),
+        (
+            "sphinx-default",
             "   .. autoclass:: x.y.A\n\f      :",
             set(),
             {"ref", "func"} | AUTOCLASS_OPTS,
@@ -197,6 +204,12 @@ C_FUNC_OPTS = {"noindex"} if sphinx_version(eq=2) else {"noindexentry"}
             "sphinx-extensions",
             ".. function:: foo\n\f   :",
             C_FUNC_OPTS,
+            {"ref", "func"},
+        ),
+        (
+            "sphinx-extensions",
+            ".. py:function:: foo\n\f   :",
+            PY_FUNC_OPTS,
             {"ref", "func"},
         ),
         (
@@ -251,20 +264,24 @@ async def test_directive_option_completions(
         *itertools.product(
             ["rst"],
             [
-                ("..", True),
-                (".. image:: ", True),
-                (".. image:: filename.png\n   \f:", True),
+                ("..", True, None),
+                (".. image:: ", True, None),
+                (".. image:: filename.png\n   \f:", True, None),
+                (".. image:: filename.png\n\f   :align", False, 1),
+                (".. image:: filename.png\n\f   :align", True, 5),
+                (".. image:: filename.png\n\f   :align:", True, 5),
+                (".. image:: filename.png\n\f   :align: center", False, 12),
             ],
         ),
         *itertools.product(
             ["py"],
             [
-                ("..", False),
-                (".. image:: ", False),
-                (".. image:: filename.png\n   \f:", False),
-                ('"""\n\f..', True),
-                ('"""\n\f.. image:: ', True),
-                ('"""\n.. image:: filename.png\n   \f:', True),
+                ("..", False, None),
+                (".. image:: ", False, None),
+                (".. image:: filename.png\n   \f:", False, None),
+                ('"""\n\f..', True, None),
+                ('"""\n\f.. image:: ', True, None),
+                ('"""\n.. image:: filename.png\n   \f:', True, None),
             ],
         ),
     ],
@@ -274,15 +291,33 @@ async def test_completion_suppression(client_server, extension, setup):
 
     Rather than focus on the actual completion items themselves, this test case is
     concerned with ensuring that role suggestions are only offered at an appropriate
-    time i.e. within ``*.rst`` files and docstrings and not within python code.
+    time e.g. within ``*.rst`` files and docstrings and not within python code.
+
+    Cases are parameterized and inputs are expected to have the following format::
+
+       ("rst", "   :align:", False, 1)
+
+    where:
+
+    - ``"rst"`` corresponds to the file extension of the file the completion request
+      should be made from.
+    - ``"   :align:"`` is the text that provides the context of the completion request
+    - ``False`` is a flag that indicates if we expect to see completion suggestions
+      generated or not.
+    - ``1`` is used to indicate the character index the completion request should be
+      made from. If ``None`` the request will default to the end of the given text.
+
+    A common pattern for when multiple test cases are paired with the same file
+    extension is to make use of :func:`python:itertools.product` to "broadcast" the
+    file extension across a number of setups.
     """
 
     test = await client_server("sphinx-default")
     test_uri = test.server.workspace.root_uri + f"/test.{extension}"
 
-    text, expected = setup
+    text, expected, character = setup
 
-    results = await completion_request(test, test_uri, text)
+    results = await completion_request(test, test_uri, text, character=character)
     assert (len(results.items) > 0) == expected
 
 
@@ -314,11 +349,33 @@ async def test_completion_suppression(client_server, extension, setup):
                 start=Position(line=0, character=0), end=Position(line=0, character=13)
             ),
         ),
+        (
+            "sphinx-default",
+            ".. function::\n\f   :",
+            4,
+            Range(
+                start=Position(line=1, character=3), end=Position(line=1, character=4)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ".. function::\n\f   :align",
+            4,
+            Range(
+                start=Position(line=1, character=3), end=Position(line=1, character=9)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ".. function::\n\f   :align: center",
+            4,
+            Range(
+                start=Position(line=1, character=3), end=Position(line=1, character=10)
+            ),
+        ),
     ],
 )
-async def test_directive_insert_range(
-    client_server, project, text, character, expected_range
-):
+async def test_insert_range(client_server, project, text, character, expected_range):
     """Ensure that we generate completion items that work well with existing text.
 
     This test case is focused on the range of text a ``CompletionItem`` will modify
@@ -393,11 +450,6 @@ def test_directive_regex(string, expected):
     """Ensure that the regular expression we use to detect and parse directives
     works as expected.
 
-    As a general rule, it's better to write tests at the LSP protocol level as that
-    decouples the test cases from the implementation. However, directives and the
-    corresponding regular expression are complex enough to warrant a test case on its
-    own.
-
     As with most test cases, this one is parameterized with the following arguments::
 
        (".. figure::", {"name": "figure"})
@@ -415,6 +467,53 @@ def test_directive_regex(string, expected):
     """
 
     match = DIRECTIVE.match(string)
+
+    if expected is None:
+        assert match is None
+    else:
+        assert match is not None
+
+        for name, value in expected.items():
+            assert match.groupdict().get(name, None) == value
+
+
+@py.test.mark.parametrize(
+    "string, expected",
+    [
+        (":", None),
+        (":align", None),
+        (":align:", None),
+        (":align: center", None),
+        ("   :", {"indent": "   ", "option": ":"}),
+        ("   :align", {"indent": "   ", "option": ":align", "name": "align"}),
+        ("   :align:", {"indent": "   ", "option": ":align:", "name": "align"}),
+        (
+            "   :align: center",
+            {"indent": "   ", "option": ":align:", "name": "align", "value": "center"},
+        ),
+    ],
+)
+def test_directive_option_regex(string, expected):
+    """Ensure that the regular expression we use to detect and parse directive
+    options works as expected.
+
+    As with most test cases, this one is parameterized with the following arguments::
+
+       ("   :align:", {"name": "align"})
+
+    The first argument is the string to test the pattern against, the second a
+    dictionary containing the groups we expect to see in the resulting match object.
+    Groups that appear in the resulting match object but not in the expected result
+    will **not** fail the test.
+
+    To test situations where the pattern should **not** match the input, pass ``None``
+    as the second argument.
+
+    To test situaions where the pattern should match, but we don't expect to see any
+    groups pass an empty dictionary as the second argument.
+    """
+
+    match = DIRECTIVE_OPTION.match(string)
 
     if expected is None:
         assert match is None

@@ -2,6 +2,7 @@
 import inspect
 import re
 from typing import List
+from typing import Optional
 
 from docutils.parsers.rst import Directive
 from pygls.lsp.types import CompletionItem
@@ -44,17 +45,30 @@ of parts::
 """
 
 
-PARTIAL_DIRECTIVE_OPTION = re.compile(
+DIRECTIVE_OPTION = re.compile(
     r"""
-    (?P<indent>\s+)   # directive options must only be preceeded by whitespace
-    :                 # they start with a ':'
-    (?P<name>[\w-]*)  # they have a name
-    $
+    (?P<indent>\s+)       # directive options must be indented
+    (?P<option>
+      :                   # options start with a ':'
+      (?P<name>[\w-]+)?   # options have a name
+      :?                  # options end with a ':'
+    )
+    (\s*
+      (?P<value>.*)       # options can have a value
+    )?
     """,
     re.VERBOSE,
 )
-"""A regular expression that matches a partial directive option. Used when generating
-auto complete suggestions."""
+"""A regular expression used to detect and parse partial and complete directive options.
+
+The language server breaks an option down into a number of parts::
+
+               vvvvvv value
+   |   :align: center
+       ^^^^^^^ option
+        ^^^^^ name
+    ^^^ indent
+"""
 
 
 class ArgumentCompletion:
@@ -85,7 +99,7 @@ class Directives(LanguageFeature):
     def add_argument_provider(self, provider: ArgumentCompletion) -> None:
         self._argument_providers.append(provider)
 
-    completion_triggers = [DIRECTIVE, PARTIAL_DIRECTIVE_OPTION]
+    completion_triggers = [DIRECTIVE, DIRECTIVE_OPTION]
 
     def complete(self, context: CompletionContext) -> List[CompletionItem]:
 
@@ -155,18 +169,65 @@ class Directives(LanguageFeature):
             item.text_edit = TextEdit(range=range_, new_text=item.insert_text)
             item.insert_text = None
 
-            self.logger.debug(item)
             items.append(item)
 
         return items
 
     def complete_options(self, context: CompletionContext) -> List[CompletionItem]:
+
+        directive = self.get_directive_context(context)
+        if not directive:
+            return []
+
         self.logger.debug("Completing options")
-        groups = context.match.groupdict()
+
+        domain = ""
+        if directive.group("domain"):
+            domain = f'{directive.group("domain")}:'
+
+        name = f"{domain}{directive.group('name')}"
+
+        items = []
+        match = context.match
+        groups = match.groupdict()
+
+        option = groups["option"]
+        start = match.span()[0] + match.group(0).find(option)
+        end = start + len(option)
+
+        range_ = Range(
+            start=Position(line=context.position.line, character=start),
+            end=Position(line=context.position.line, character=end),
+        )
+
+        for option in self.rst.get_directive_options(name):
+            item = self.option_to_completion_item(option)
+            item.text_edit = TextEdit(range=range_, new_text=item.insert_text)
+            item.insert_text = None
+
+            items.append(item)
+
+        self.logger.debug(items)
+        return items
+
+    def get_directive_context(self, context: CompletionContext) -> Optional["re.Match"]:
+        """Used to determine which directive we should be offering completions for.
+
+        When suggestions should be generated this returns an :class:`python:re.Match`
+        object representing the directive the options are associated with. In the
+        case where suggestions should not be generated this will return ``None``
+
+        Parameters
+        ----------
+        context:
+          The completion context
+        """
+
+        match = context.match
+        groups = match.groupdict()
+        indent = groups["indent"]
 
         self.logger.debug("Match groups: %s", groups)
-
-        indent = groups["indent"]
 
         # Search backwards so that we can determine the context for our completion
         linum = context.position.line - 1
@@ -177,19 +238,23 @@ class Directives(LanguageFeature):
             line = context.doc.lines[linum]
 
         # Only offer completions if we're within a directive's option block
-        match = DIRECTIVE.match(line)
-
+        directive = DIRECTIVE.match(line)
         self.logger.debug("Context line:  %s", line)
-        self.logger.debug("Context match: %s", match)
+        self.logger.debug("Context match: %s", directive)
 
-        if not match:
-            return []
+        if not directive:
+            return None
 
-        domain = match.group("domain") or ""
-        name = f"{domain}{match.group('name')}"
+        # Now that we know we're in a directive's option block, is the completion
+        # request coming from a valid position on the line?
+        option = groups["option"]
+        start = match.span()[0] + match.group(0).find(option)
+        end = start + len(option) + 1
 
-        options = self.rst.get_directive_options(name)
-        return self.options_to_completion_items(options)
+        if start <= context.position.character <= end:
+            return directive
+
+        return None
 
     def directive_to_completion_item(
         self,
@@ -246,16 +311,23 @@ class Directives(LanguageFeature):
             insert_text_format=insert_format,
         )
 
-    def options_to_completion_items(self, options) -> List[CompletionItem]:
-        return [
-            CompletionItem(
-                label=opt,
-                detail="option",
-                kind=CompletionItemKind.Field,
-                insert_text=f"{opt}: ",
-            )
-            for opt in options
-        ]
+    def option_to_completion_item(self, option: str) -> CompletionItem:
+        """Convert an directive option to its CompletionItem representation.
+
+        Parameters
+        ----------
+        option:
+           The option's name
+        """
+        insert_text = f":{option}:"
+
+        return CompletionItem(
+            label=option,
+            detail="option",
+            kind=CompletionItemKind.Field,
+            filter_text=insert_text,
+            insert_text=insert_text,
+        )
 
 
 def esbonio_setup(rst: RstLanguageServer):
