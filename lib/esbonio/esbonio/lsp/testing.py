@@ -115,6 +115,10 @@ class ClientServer:
         self.server_thread.start()
         self.client_thread.start()
 
+        # Give the client and server some time to initialize
+        while self.server.lsp.transport is None or self.client.lsp.transport is None:
+            await asyncio.sleep(0.1)
+
         response = await self.client.lsp.send_request_async(
             INITIALIZE,
             InitializeParams(

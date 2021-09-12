@@ -60,6 +60,7 @@ deps =
     pytest
     pytest-asyncio
     pytest-cov
+    pytest-timeout
 commands =
     pytest --tb=short --cov=esbonio.lsp {posargs}
 

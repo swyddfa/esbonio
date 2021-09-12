@@ -54,6 +54,7 @@ async def cs():
 
 
 @py.test.mark.asyncio
+@py.test.mark.timeout(10)
 @py.test.mark.parametrize(
     "root,options,expected",
     [
@@ -287,6 +288,7 @@ async def test_initialization_missing_conf(cs, testdata):
 
 
 @py.test.mark.asyncio
+@py.test.mark.timeout(10)
 @py.test.mark.parametrize(
     "good,bad,expected",
     [
