@@ -7,6 +7,27 @@ import { Logger } from "../log";
 import { PythonCommand, PythonManager } from "./python";
 
 /**
+ * Used to indicate what the next course of action should be.
+ */
+enum NextAction {
+
+  /**
+   * The process was cancelled or an error occurred and we should abort
+   */
+  Abort = 0,
+
+  /**
+   * Something changed or we couldn't make progress, we should try again
+   */
+  Retry = 1,
+
+  /**
+   * All is well, carry on.
+   */
+  Continue = 2
+}
+
+/**
  * Class responsible for managing the Language server. i.e. installation & updates of the
  * esbonio Python package.
  */
@@ -181,14 +202,52 @@ export class ServerManager {
       // Try installing the language server.
       let config = vscode.workspace.getConfiguration("esbonio")
       let installBehavior = config.get<string>('server.installBehavior')
+      let nextAction = await this.shouldInstall(installBehavior)
 
-      if (!await shouldInstall(installBehavior)) {
-        return undefined
+      switch (nextAction) {
+        case NextAction.Continue:
+          await this.installServer()
+          return await this.getServerVersion(retry - 1)
+        case NextAction.Retry:
+          return await this.getServerVersion(retry)
+        default:
+          return undefined
       }
 
-      await this.installServer()
-      return await this.getServerVersion(retry - 1)
     }
+  }
+
+  private async shouldInstall(installBehavior: string): Promise<NextAction> {
+    if (installBehavior === "nothing") {
+      return NextAction.Abort
+    }
+
+    if (installBehavior === "automatic") {
+      return NextAction.Continue
+    }
+
+    let message = `The Esbonio Language Server is not installed in your current environment.
+    Would you like to install it?`
+
+    let options = [{ title: "Yes" }, { title: "No" }]
+    if (await this.python.hasPythonExtension()) {
+      options.push({ title: "Switch Environments" })
+    }
+
+    let response = await vscode.window.showWarningMessage(
+      message, ...options
+    )
+
+    if (response && (response.title === "Yes")) {
+      return NextAction.Continue
+    }
+
+    if (response && (response.title === "Switch Environments")) {
+      await this.python.changeEnvironment()
+      return NextAction.Retry
+    }
+
+    return NextAction.Abort
   }
 
   /**
@@ -230,43 +289,48 @@ export class ServerManager {
    */
   private async checkPythonVersion(): Promise<string | undefined> {
     let pythonVersion = await this.python.getVersion()
+    let hasPythonExt = await this.python.hasPythonExtension()
+
+
     if (!pythonVersion) {
       let message = "No Python envrionment configured."
-      await vscode.window.showErrorMessage(message, { title: "Close" })
+      let options = []
+
+      if (hasPythonExt) {
+        options.push({ title: "Pick Environment" })
+      }
+
+      let response = await vscode.window.showErrorMessage(message, ...options)
+      if (response && response.title === "Pick Environment") {
+        await this.python.changeEnvironment()
+        return await this.checkPythonVersion()
+      }
+
       return undefined
     }
 
     if (semver.lt(pythonVersion, Server.REQUIRED_PYTHON)) {
+      let options = []
       let message = `Your configured Python version is v${pythonVersion} which is incompatible with the
       Esbonio Lanuage Server.
 
       Please choose an environment that has a Python version of at least v${Server.REQUIRED_PYTHON}`
-      await vscode.window.showErrorMessage(message, { title: "Close" })
 
-      // TODO: Add a "pick interpreter" button that will automatically call the following
-      //       command. (Of course this should only be added if the python extension is available)
-      // await vscode.commands.executeCommand("python.setInterpreter")
+      if (hasPythonExt) {
+        options.push({ title: "Switch Environment" })
+      }
+
+      let response = await vscode.window.showErrorMessage(message, ...options)
+      if (response && response.title === "Switch Environment") {
+        await this.python.changeEnvironment()
+        return await this.checkPythonVersion()
+      }
+
       return undefined
     }
 
     return pythonVersion
   }
-}
-
-export async function shouldInstall(installBehavior: string): Promise<boolean> {
-  if (installBehavior === "nothing") {
-    return false
-  }
-
-  if (installBehavior === "automatic") {
-    return true
-  }
-
-  let message = `The Esbonio Language Server is not installed in your current environment.
-  Would you like to install it?`
-
-  let response = await vscode.window.showWarningMessage(message, { title: "Yes" }, { title: "No" })
-  return response && (response.title === "Yes")
 }
 
 export function shouldPromptUpdate(updateBehavior: string, currentVersion: string, latestVersion: string) {

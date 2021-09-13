@@ -66,6 +66,29 @@ export class PythonManager {
   }
 
   /**
+   * Returns true if the user has the Python Extension available.
+   */
+  async hasPythonExtension(): Promise<boolean> {
+    await this.ensurePythonExtension()
+    if (this.pythonExtension) {
+      return true
+    }
+
+    return false
+  }
+
+  /**
+   * If the Python extension is available, change the active environment.
+   */
+  async changeEnvironment(): Promise<any> {
+    await this.ensurePythonExtension()
+    if (this.pythonExtension) {
+      return await vscode.commands.executeCommand("python.setInterpreter")
+    }
+
+  }
+
+  /**
    * Get the version of the configured Python interpreter.
    */
   async getVersion(): Promise<string | undefined> {
