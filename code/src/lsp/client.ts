@@ -142,7 +142,7 @@ export class EsbonioClient {
       let message = "Unable to start language server.\n" +
         "See output window for more details"
       vscode.window.showErrorMessage(message, { title: "Show Output" }).then(opt => {
-        if (opt.title === "Show Output") {
+        if (opt && opt.title === "Show Output") {
           getOutputLogger().show()
         }
       })
