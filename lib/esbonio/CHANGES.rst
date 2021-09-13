@@ -1,3 +1,28 @@
+v0.7.0 - 2021-09-13
+-------------------
+
+Features
+^^^^^^^^
+
+- Add initial goto definition support.
+  Currently only support definitions for ``:ref:`` and ``:doc:`` role targets. (`#209 <https://github.com/swyddfa/esbonio/issues/209>`_)
+
+
+Fixes
+^^^^^
+
+- Completion suggestions for ``:option:`` targets now insert text in the correct format (``<progname> <option>``) (`#212 <https://github.com/swyddfa/esbonio/issues/212>`_)
+- Diagnostics are now correctly cleared on Windows (`#213 <https://github.com/swyddfa/esbonio/issues/213>`_)
+- Completion suggestions are no longer given in the middle of Python code. (`#215 <https://github.com/swyddfa/esbonio/issues/215>`_)
+- ``CompletionItems`` should no longer corrupt existing text when selected. (`#223 <https://github.com/swyddfa/esbonio/issues/223>`_)
+
+
+Misc
+^^^^
+
+- Updated ``pygls`` to ``v0.11.0`` (`#218 <https://github.com/swyddfa/esbonio/issues/218>`_)
+
+
 v0.6.2 - 2021-06-05
 -------------------
 

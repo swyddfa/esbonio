@@ -1,1 +1,0 @@
-Completion suggestions for ``:option:`` targets now insert text in the correct format (``<progname> <option>``)

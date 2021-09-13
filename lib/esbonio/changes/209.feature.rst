@@ -1,2 +1,0 @@
-Add initial goto definition support.
-Currently only support definitions for ``:ref:`` and ``:doc:`` role targets.

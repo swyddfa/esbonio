@@ -1,1 +1,0 @@
-Completion suggestions are no longer given in the middle of Python code.

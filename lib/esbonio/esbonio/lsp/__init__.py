@@ -28,7 +28,7 @@ from .feature import LanguageFeature
 from .rst import RstLanguageServer
 from .sphinx import SphinxLanguageServer
 
-__version__ = "0.6.2"
+__version__ = "0.7.0"
 
 __all__ = [
     "BUILTIN_MODULES",

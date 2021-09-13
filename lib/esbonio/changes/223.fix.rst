@@ -1,1 +1,0 @@
-``CompletionItems`` should no longer corrupt existing text when selected.
