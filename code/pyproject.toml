@@ -21,6 +21,11 @@ underlines = ["-", "^", "\""]
      showcontent = true
 
 [[tool.towncrier.type]]
+     directory = "enhancement"
+     name = "Enhancements"
+     showcontent = true
+
+[[tool.towncrier.type]]
      directory = "breaking"
      name = "Breaking Changes"
      showcontent = true
