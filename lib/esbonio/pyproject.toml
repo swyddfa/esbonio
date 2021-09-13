@@ -3,8 +3,9 @@ requires = ["setuptools >= 35.0.2", "wheel >= 0.29.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-markers = [
-        "integration: mark for integration tests"
+filterwarnings = [
+     "ignore:'contextfunction' is renamed to 'pass_context',*:DeprecationWarning",
+     "ignore:'environmentfilter' is renamed to 'pass_environment',*:DeprecationWarning"
 ]
 
 [tool.towncrier]
@@ -57,7 +58,9 @@ deps =
     sphinx3: sphinx>=3,<4
     sphinx4: sphinx>=4,<5
     pytest
+    pytest-asyncio
     pytest-cov
+    pytest-timeout
 commands =
     pytest --tb=short --cov=esbonio.lsp {posargs}
 

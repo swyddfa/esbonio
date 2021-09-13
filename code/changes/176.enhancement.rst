@@ -1,0 +1,2 @@
+When the user is using an environment with an incompatible Python version but have
+the Python extension available, they are given the option of picking a new environment to use.

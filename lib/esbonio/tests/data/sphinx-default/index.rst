@@ -13,12 +13,13 @@ Welcome to Defaults's documentation!
    :caption: Contents:
 
    theorems/index
+   definitions
    glossary
 
 Setup
 =====
 
-In order to run the program you need a few environment variables set.
+The program supports specifying configuration values through environment variables.
 
 .. envvar:: ANGLE_UNIT
 
@@ -30,3 +31,19 @@ In order to run the program you need a few environment variables set.
    Use this to set the level of precision used when manipulating floating point numbers.
    Its value is an integer which represents the number of decimal places to use, default
    value is ``2``
+
+Alternatively they can be set through command line options
+
+.. program:: pythag
+
+.. option:: -e, --exact
+
+   Output results exactly (as a rational number)
+
+.. option:: -u <unit>, --unit <unit>
+
+   Specify the angle units to use can be one of ``degrees``, ``radians`` or ``gradians``.
+
+.. option:: -p <prescision>, --precision <precision>
+
+   The number of decimal places to use. This option is ignored when using :option:`pythag --exact`
