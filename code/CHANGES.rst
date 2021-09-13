@@ -1,3 +1,28 @@
+v0.7.1 - 2021-09-13
+-------------------
+
+Fixes
+^^^^^
+
+- Fix handling of ``<script>`` tags without a ``src`` attribute when generating the
+  HTML preview of a page. (`#214 <https://github.com/swyddfa/esbonio/issues/214>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- When the user is using an environment with an incompatible Python version but have
+  the Python extension available, they are given the option of picking a new environment to use. (`#176 <https://github.com/swyddfa/esbonio/issues/176>`_)
+- When the user is prompted to install the language server in the current environment,
+  they now also have the option of picking a new environment to use instead. (`#224 <https://github.com/swyddfa/esbonio/issues/224>`_)
+
+
+Misc
+^^^^
+
+- This extension does not support untrusted workspaces. (`#217 <https://github.com/swyddfa/esbonio/issues/217>`_)
+
+
 v0.7.0 - 2021-06-05
 -------------------
 

@@ -1,1 +1,0 @@
-This extension does not support untrusted workspaces.

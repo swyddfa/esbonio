@@ -1,2 +1,0 @@
-Fix handling of ``<script>`` tags without a ``src`` attribute when generating the
-HTML preview of a page.
