@@ -130,6 +130,11 @@ class RstLanguageServer(LanguageServer):
     def get_feature(self, key) -> Optional["LanguageFeature"]:
         return self._features.get(key, None)
 
+    def get_doctree(
+        self, *, docname: Optional[str] = None, uri: Optional[str] = None
+    ) -> Optional[Any]:
+        return None
+
     def get_directives(self) -> Dict[str, Directive]:
         """Return a dictionary of the known directives"""
 
