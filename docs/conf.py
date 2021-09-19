@@ -13,6 +13,7 @@ import sys
 
 sys.path.insert(0, os.path.abspath("../lib/esbonio"))
 
+from docutils.parsers.rst import nodes
 from sphinx.application import Sphinx
 
 import esbonio.lsp
@@ -78,5 +79,16 @@ html_theme_options = {
 }
 
 
+def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
+    """Link to sections within the lsp specification."""
+
+    anchor = text.replace("/", "_")
+    ref = f"https://microsoft.github.io/language-server-protocol/specifications/specification-current#{anchor}"
+
+    node = nodes.reference(rawtext, text, refuri=ref, **options)
+    return [node], []
+
+
 def setup(app: Sphinx):
     app.add_css_file("css/custom.css", priority=1000)
+    app.add_role("lsp", lsp_role)

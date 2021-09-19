@@ -11,7 +11,7 @@ from typing import Optional
 from typing import Tuple
 
 import appdirs
-import pygls.uris as uri
+import pygls.uris as Uri
 from docutils.parsers.rst import Directive
 from pydantic import BaseModel
 from pydantic import Field
@@ -133,7 +133,7 @@ class SphinxLogHandler(LspHandler):
             #       number to place a diagnostic.
             pass
 
-        return (uri.from_fs_path(path), lineno)
+        return (Uri.from_fs_path(path), lineno)
 
     def emit(self, record: logging.LogRecord) -> None:
 
@@ -238,7 +238,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def save(self, params: DidSaveTextDocumentParams):
         super().save(params)
 
-        filepath = uri.to_fs_path(params.text_document.uri)
+        filepath = Uri.to_fs_path(params.text_document.uri)
         if filepath.endswith("conf.py"):
             if self.app:
                 conf_dir = pathlib.Path(self.app.confdir)
@@ -344,7 +344,7 @@ class SphinxLanguageServer(RstLanguageServer):
         return app
 
     def get_doctree(
-        self, docname: Optional[str] = None, uri: Optional[str] = None
+        self, *, docname: Optional[str] = None, uri: Optional[str] = None
     ) -> Optional[Any]:
         """Return the doctree that corresponds with the specified document.
 
@@ -357,12 +357,24 @@ class SphinxLanguageServer(RstLanguageServer):
         docname:
            Returns the doctree that corresponds with the given docname
         uri:
-           Returns the doctree that corresponds with the given uri. (Not yet
-           implemented)
+           Returns the doctree that corresponds with the given uri.
         """
 
+        if self.app is None:
+            return None
+
         if uri is not None:
-            raise NotImplementedError()
+            srcdir = self.app.srcdir
+            fspath = Uri.to_fs_path(uri)
+
+            if not fspath.startswith(srcdir):
+                return None
+
+            docpath = pathlib.Path(fspath.replace(srcdir, ""))
+            docname = str(docpath.with_suffix(""))
+
+            if docname.startswith("/"):
+                docname = docname[1:]
 
         self.logger.debug("Getting doctree for '%s'", docname)
 
@@ -593,7 +605,7 @@ class SphinxLanguageServer(RstLanguageServer):
 def find_conf_dir(root_uri: str, config: SphinxConfig) -> Optional[pathlib.Path]:
     """Attempt to find Sphinx's configuration file within the given workspace."""
 
-    root = pathlib.Path(uri.to_fs_path(root_uri))
+    root = pathlib.Path(Uri.to_fs_path(root_uri))
 
     if config.conf_dir:
         return expand_conf_dir(root, config.conf_dir)
@@ -662,7 +674,7 @@ def get_src_dir(
         return conf_dir
 
     src_dir = config.src_dir
-    root_dir = uri.to_fs_path(root_uri)
+    root_dir = Uri.to_fs_path(root_uri)
 
     match = PATH_VAR_PATTERN.match(src_dir)
     if match and match.group(1) == "workspaceRoot":
@@ -687,5 +699,5 @@ def get_build_dir(conf_dir: pathlib.Path, config: SphinxConfig) -> pathlib.Path:
 
     # Convert path to/from uri so that any path quirks from windows are
     # automatically handled
-    build_uri = uri.from_fs_path(config.build_dir)
-    return pathlib.Path(uri.to_fs_path(build_uri))
+    build_uri = Uri.from_fs_path(config.build_dir)
+    return pathlib.Path(Uri.to_fs_path(build_uri))
