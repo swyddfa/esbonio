@@ -8,6 +8,7 @@ from typing import List
 
 from pygls.lsp.methods import COMPLETION
 from pygls.lsp.methods import DEFINITION
+from pygls.lsp.methods import DOCUMENT_SYMBOL
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
@@ -20,12 +21,14 @@ from pygls.lsp.types import DefinitionParams
 from pygls.lsp.types import DidChangeTextDocumentParams
 from pygls.lsp.types import DidOpenTextDocumentParams
 from pygls.lsp.types import DidSaveTextDocumentParams
+from pygls.lsp.types import DocumentSymbolParams
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 
 from .feature import CompletionContext
 from .feature import LanguageFeature
 from .rst import RstLanguageServer
+from .rst import SymbolVisitor
 from .sphinx import SphinxLanguageServer
 
 __version__ = "0.7.0"
@@ -160,6 +163,19 @@ def create_language_server(
                         definitions += feature.definition(match, doc, pos)
 
         return definitions
+
+    @server.feature(DOCUMENT_SYMBOL)
+    def on_document_symbol(rst: server_cls, params: DocumentSymbolParams):
+        rst.logger.debug("%s: %s", DOCUMENT_SYMBOL, params)
+
+        doctree = rst.get_doctree(uri=params.text_document.uri)
+        if doctree is None:
+            return []
+
+        visitor = SymbolVisitor(rst, doctree)
+        doctree.walkabout(visitor)
+
+        return visitor.symbols
 
     @server.command("esbonio.server.configuration")
     def get_configuration(rst: server_cls, *args):
