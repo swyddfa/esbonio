@@ -14,8 +14,8 @@ Integration with the `VSCode`_ editor is provided via the `Esbonio`_ extension.
 Configuration
 """""""""""""
 
-In addition to the following options the VSCode extension also supports
-:ref:`editor_integration_config` options.
+The VSCode extension exposes the language server's :ref:`editor_integration_config`
+under an ``esbonio.*`` prefix. It also exposes the following additional options.
 
 ``esbonio.server.pythonPath`` (string)
    If the official `Python Extension`_ is available the extension will use the same
