@@ -46,13 +46,13 @@ language server from your editor of choice.
 
 .. _editor_integration_config:
 
-Common Configuration
---------------------
+Initialization Options
+----------------------
 
-The following options are implemented directly by the language server and should be
-supported by any language client.
+The following options are exposed as ``initializationOptions`` and should be
+available in any language client.
 
-``esbonio.sphinx.confDir`` (string)
+``sphinx.confDir`` (string)
    The language server attempts to automatically find the folder which contains your
    project's ``conf.py``. If necessary this can be used to override the default discovery
    mechanism and force the server to use a folder of your choosing. Currently accepted
@@ -61,7 +61,7 @@ supported by any language client.
    - ``/path/to/docs`` - An absolute path
    - ``${workspaceRoot}/docs`` - A path relative to the root of your workspace.
 
-``esbonio.sphinx.srcDir`` (string)
+``sphinx.srcDir`` (string)
    The language server assumes that your project's ``srcDir`` (the folder containing your
    rst files) is the same as your projects's ``confDir``. If this assumption is not true,
    you can use this setting to tell the server where to look. Currently accepted values
@@ -71,12 +71,12 @@ supported by any language client.
    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
-``esbonio.sphinx.buildDir`` (string)
+``sphinx.buildDir`` (string)
    By default the language server will choose an appropriate location to cache the build
    output from Sphinx. This option can be used to force the language server to use a location
    of your choosing.
 
-``esbonio.server.logLevel`` (string)
+``server.logLevel`` (string)
    This can be used to set the level of log messages emitted by the server. This can be set
    to one of the following values.
 
@@ -84,11 +84,11 @@ supported by any language client.
    - ``info``
    - ``debug``
 
-``esbonio.server.logFilter`` (string[])
+``server.logFilter`` (string[])
    The language server will typically include log output from all of its components. This
    option can be used to restrict the log output to be only those named.
 
-``esbonio.server.hideSphinxOutput`` (boolean)
+``server.hideSphinxOutput`` (boolean)
    Normally any build output from Sphinx will be forwarded to the client as log messages.
    If you prefer this flag can be used to exclude any Sphinx output from the log.
 
