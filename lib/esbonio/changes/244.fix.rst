@@ -1,0 +1,1 @@
+Intersphinx projects are now only suggested if they contain targets relevant to the current role.

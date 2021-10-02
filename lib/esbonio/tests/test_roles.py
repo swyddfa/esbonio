@@ -442,7 +442,11 @@ async def test_role_target_definitions(
             role_target_patterns("class"),
             [
                 ("sphinx-default", {"pythagoras.Triangle"}, None),
-                ("sphinx-extensions", {"python", "sphinx"}, {"pythagoras.Triangle"}),
+                (
+                    "sphinx-extensions",
+                    set(),  # c domain has no classes.
+                    {"pythagoras.Triangle", "python", "sphinx"},
+                ),
             ],
         ),
         *itertools.product(
@@ -516,8 +520,8 @@ async def test_role_target_definitions(
                 ("sphinx-default", {"pythagoras.Triangle.is_right_angled"}, None),
                 (
                     "sphinx-extensions",
-                    {"sphinx", "python"},
-                    {"pythagoras.Triangle.is_right_angled"},
+                    set(),  # c domain has no methods.
+                    {"pythagoras.Triangle.is_right_angled", "sphinx", "python"},
                 ),
             ],
         ),
@@ -553,7 +557,7 @@ async def test_role_target_definitions(
                 ),
                 (
                     "sphinx-extensions",
-                    {"sphinx", "python"},
+                    set(),  # c domain has no objs
                     {
                         "pythagoras",
                         "pythagoras.PI",
@@ -565,6 +569,8 @@ async def test_role_target_definitions(
                         "pythagoras.Triangle.is_right_angled",
                         "pythagoras.calc_hypotenuse",
                         "pythagoras.calc_side",
+                        "sphinx",
+                        "python",
                     },
                 ),
             ],
