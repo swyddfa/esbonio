@@ -159,12 +159,20 @@ class SphinxLogHandler(LspHandler):
         line = lineno or 1
         self.server.logger.debug("Reporting diagnostic at %s:%s", doc, line)
 
+        try:
+            message = record.msg % record.args
+        except Exception:
+            message = record.msg
+            self.server.logger.debug(
+                "Unable to format diagnostic message: %s", traceback.format_exc()
+            )
+
         diagnostic = Diagnostic(
             range=Range(
                 start=Position(line=line - 1, character=0),
                 end=Position(line=line, character=0),
             ),
-            message=record.msg,
+            message=message,
             severity=DIAGNOSTIC_SEVERITY.get(
                 record.levelno, DiagnosticSeverity.Warning
             ),
