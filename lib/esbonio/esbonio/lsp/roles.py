@@ -12,8 +12,8 @@ from pygls.lsp.types import TextEdit
 from pygls.workspace import Document
 
 from .directives import DIRECTIVE
-from .feature import CompletionContext
-from .feature import LanguageFeature
+from .rst import CompletionContext
+from .rst import LanguageFeature
 from .rst import RstLanguageServer
 
 ROLE = re.compile(

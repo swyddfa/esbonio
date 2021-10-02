@@ -10,8 +10,8 @@ from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
 
 from esbonio.lsp.directives import ArgumentCompletion
-from esbonio.lsp.feature import CompletionContext
 from esbonio.lsp.roles import TargetCompletion
+from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
 
