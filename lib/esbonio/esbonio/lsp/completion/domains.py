@@ -95,9 +95,9 @@ class Domain(TargetCompletion):
             for o in self.rst.get_role_targets(name, domain)
         ]
 
-        items += [
-            project_to_completion_item(p) for p in self.rst.get_intersphinx_projects()
-        ]
+        for project in self.rst.get_intersphinx_projects():
+            if self.rst.has_intersphinx_targets(project, name, domain):
+                items.append(project_to_completion_item(project))
 
         return items
 

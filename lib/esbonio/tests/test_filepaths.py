@@ -7,12 +7,21 @@ from esbonio.lsp.testing import directive_argument_patterns
 from esbonio.lsp.testing import role_target_patterns
 
 
-ROOT_FILES = {
+DEFAULT_ROOT_FILES = {
     "_static",
     "_templates",
     "theorems",
     "conf.py",
     "index.rst",
+    "make.bat",
+    "Makefile",
+}
+
+EXT_ROOT_FILES = {
+    "theorems",
+    "conf.py",
+    "index.rst",
+    "glossary.rst",
     "make.bat",
     "Makefile",
 }
@@ -41,14 +50,20 @@ def filepath_trigger_cases(path: str = ""):
                 (
                     "sphinx-default",
                     "index.rst",
-                    ROOT_FILES,
+                    DEFAULT_ROOT_FILES,
                     None,
                 ),
                 (
                     "sphinx-default",
                     "theorems/pythagoras.rst",
-                    ROOT_FILES,
+                    DEFAULT_ROOT_FILES,
                     None,
+                ),
+                (
+                    "sphinx-extensions",
+                    "index.rst",
+                    EXT_ROOT_FILES,
+                    {"python", "sphinx"},
                 ),
             ],
         ),
@@ -58,7 +73,7 @@ def filepath_trigger_cases(path: str = ""):
                 (
                     "sphinx-default",
                     "index.rst",
-                    ROOT_FILES,
+                    DEFAULT_ROOT_FILES,
                     None,
                 ),
                 (
@@ -75,7 +90,7 @@ def filepath_trigger_cases(path: str = ""):
                 (
                     "sphinx-default",
                     "theorems/pythagoras.rst",
-                    ROOT_FILES,
+                    DEFAULT_ROOT_FILES,
                     None,
                 ),
                 (
