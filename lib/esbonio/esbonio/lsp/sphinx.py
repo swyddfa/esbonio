@@ -568,6 +568,29 @@ class SphinxLanguageServer(RstLanguageServer):
         inv = getattr(self.app.env, "intersphinx_named_inventory", {})
         return list(inv.keys())
 
+    def has_intersphinx_targets(
+        self, project: str, name: str, domain: str = ""
+    ) -> bool:
+        """Return ``True`` if the given intersphinx project has targets targeted by the
+        given role.
+
+        Parameters
+        ----------
+        project:
+           The project to check
+        name:
+           The name of the role
+        domain:
+           The domain the role is a part of, if applicable.
+        """
+
+        targets = self.get_intersphinx_targets(project, name, domain)
+
+        if len(targets) == 0:
+            return False
+
+        return any([len(items) > 0 for items in targets.values()])
+
     def get_intersphinx_targets(
         self, project: str, name: str, domain: str = ""
     ) -> Dict[str, Dict[str, tuple]]:
