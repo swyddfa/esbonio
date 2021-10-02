@@ -209,8 +209,10 @@ def role_patterns(partial: str = "") -> List[str]:
         for s in [
             "{}",
             "({}",
+            "- {}",
             "   {}",
             "   ({}",
+            "   - {}",
             "some text {}",
             "some text ({}",
             "   some text {}",
@@ -219,7 +221,9 @@ def role_patterns(partial: str = "") -> List[str]:
     ]
 
 
-def role_target_patterns(name: str, partial: str = "") -> List[str]:
+def role_target_patterns(
+    name: str, partial: str = "", include_modifiers: bool = True
+) -> List[str]:
     """Return a number of example role target patterns.
 
     These correspond to test cases where role target suggestions should be generated.
@@ -230,20 +234,31 @@ def role_target_patterns(name: str, partial: str = "") -> List[str]:
        The name of the role to generate suggestions for.
     partial:
        The partial target that the user as already entered.
+    include_modifiers:
+       A flag to indicate if additional modifiers like ``!`` and ``~`` should be
+       included in the generated patterns.
     """
-    return [
-        s.format(name, partial)
-        for s in [
-            ":{}:`{}",
-            "(:{}:`{}",
-            ":{}:`More Info <{}",
-            "(:{}:`More Info <{}",
-            "   :{}:`{}",
-            "   (:{}:`{}",
-            "   :{}:`Some Label <{}",
-            "   (:{}:`Some Label <{}",
-        ]
+
+    patterns = [
+        ":{}:`{}",
+        "(:{}:`{}",
+        "- :{}:`{}",
+        ":{}:`More Info <{}",
+        "(:{}:`More Info <{}",
+        "   :{}:`{}",
+        "   (:{}:`{}",
+        "   - :{}:`{}",
+        "   :{}:`Some Label <{}",
+        "   (:{}:`Some Label <{}",
     ]
+
+    test_cases = [p.format(name, partial) for p in patterns]
+
+    if include_modifiers:
+        test_cases += [p.format(name, "!" + partial) for p in patterns]
+        test_cases += [p.format(name, "~" + partial) for p in patterns]
+
+    return test_cases
 
 
 def intersphinx_target_patterns(name: str, project: str) -> List[str]:

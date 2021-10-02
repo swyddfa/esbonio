@@ -1,4 +1,5 @@
 import itertools
+import re
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -383,7 +384,7 @@ async def test_role_target_definitions(
             ],
         ),
         *itertools.product(
-            role_target_patterns("ref"),
+            [*role_target_patterns("ref"), *role_target_patterns("ref", "sea")],
             [
                 (
                     "sphinx-default",
@@ -680,20 +681,36 @@ async def test_role_target_completions(client_server, text, setup):
 
 @py.test.mark.asyncio
 @py.test.mark.parametrize(
-    "project,text,ending,expected_range",
+    "project,text,pattern,expected_range",
     [
         (
             "sphinx-default",
             ":ref:`some_text",
-            "`",
+            ".*`",
             Range(
                 start=Position(line=0, character=6), end=Position(line=0, character=15)
             ),
         ),
         (
             "sphinx-default",
+            ":ref:`!some_text",
+            "!.*`",
+            Range(
+                start=Position(line=0, character=6), end=Position(line=0, character=16)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":ref:`~some_text",
+            "~.*`",
+            Range(
+                start=Position(line=0, character=6), end=Position(line=0, character=16)
+            ),
+        ),
+        (
+            "sphinx-default",
             "find out more :ref:`some_text",
-            "`",
+            ".*`",
             Range(
                 start=Position(line=0, character=20), end=Position(line=0, character=29)
             ),
@@ -701,15 +718,31 @@ async def test_role_target_completions(client_server, text, setup):
         (
             "sphinx-default",
             ":ref:`more info <some_text",
-            ">`",
+            ".*>`",
             Range(
                 start=Position(line=0, character=17), end=Position(line=0, character=26)
             ),
         ),
         (
             "sphinx-default",
+            ":ref:`more info <!some_text",
+            "!.*>`",
+            Range(
+                start=Position(line=0, character=17), end=Position(line=0, character=27)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":ref:`more info <~some_text",
+            "~.*>`",
+            Range(
+                start=Position(line=0, character=17), end=Position(line=0, character=27)
+            ),
+        ),
+        (
+            "sphinx-default",
             ":download:`_static/vscode_screenshot.png",
-            "`",
+            ".*`",
             Range(
                 start=Position(line=0, character=19), end=Position(line=0, character=40)
             ),
@@ -717,7 +750,7 @@ async def test_role_target_completions(client_server, text, setup):
         (
             "sphinx-default",
             ":download:`this link <_static/vscode_screenshot.png",
-            ">`",
+            ".*>`",
             Range(
                 start=Position(line=0, character=30), end=Position(line=0, character=51)
             ),
@@ -725,18 +758,44 @@ async def test_role_target_completions(client_server, text, setup):
     ],
 )
 async def test_role_target_insert_range(
-    client_server, project, text, ending, expected_range
+    client_server, project, text, pattern, expected_range
 ):
-    """Ensure that we generate completion items that work well with existing text."""
+    """Ensure that we generate completion items that work well with existing text.
+
+    This test case is focused on the ``TextEdit`` objects returned as part of a
+    ``CompletionItem``. They need to take into account any existing text so that if an
+    item is accepted, the user is not forced to do additonal cleanups.
+
+    The test case is parameterised.
+
+    Parameters
+    ----------
+    client_server:
+       The ``client_server`` fixture used to drive the test
+    project:
+       The name of one of the example Sphinx projects found in the ``tests/data/``
+       folder e.g. ``sphinx-default``
+    text:
+       The text that provides the context for the completion request e.g.
+       ``:ref:`label``
+    pattern:
+       A regular expression used to check the value of the ``new_text`` field of
+       returned ``TextEdits``
+    expected_range:
+       A ``Range`` object to check the value of the ``range`` field of returned
+       ``TextEdits``
+    """
 
     test = await client_server(project)  # type: ClientServer
     test_uri = test.server.workspace.root_uri + "/test.rst"
+
+    pattern = re.compile(pattern)
 
     results = await completion_request(test, test_uri, text)
     assert len(results.items) > 0
 
     for item in results.items:
-        assert item.text_edit.new_text.endswith(ending)
+        assert pattern.match(item.text_edit.new_text) is not None
         assert item.text_edit.range == expected_range
 
 
@@ -765,6 +824,26 @@ async def test_role_target_insert_range(
                 "role": ":ref:",
                 "label": "some_label",
                 "target": "`some_label",
+            },
+        ),
+        (
+            ":ref:`!some_label",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "label": "some_label",
+                "target": "`!some_label",
+                "modifier": "!",
+            },
+        ),
+        (
+            ":ref:`~some_label",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "label": "some_label",
+                "target": "`~some_label",
+                "modifier": "~",
             },
         ),
         (
@@ -860,6 +939,28 @@ async def test_role_target_insert_range(
                 "alias": "see more ",
                 "label": "some_label",
                 "target": "`see more <some_label",
+            },
+        ),
+        (
+            ":ref:`see more <!some_label",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <!some_label",
+                "modifier": "!",
+            },
+        ),
+        (
+            ":code-block:`see more <~some_label",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <~some_label",
+                "modifier": "~",
             },
         ),
         (

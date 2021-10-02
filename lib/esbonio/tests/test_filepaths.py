@@ -23,7 +23,7 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
 def filepath_trigger_cases(path: str = ""):
     """Expand a path into all roles and directives we wish to test it with."""
     return [
-        *role_target_patterns("download", path),
+        *role_target_patterns("download", path, include_modifiers=False),
         *directive_argument_patterns("image", path),
         *directive_argument_patterns("figure", path),
         *directive_argument_patterns("include", path),
