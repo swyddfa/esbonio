@@ -28,6 +28,7 @@ ROLE = re.compile(
     (?P<target>
       `                               # targets begin with a '`' character
       ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
+      (?P<modifier>[!~])?             # targets may have a modifier
       (?P<label>[^<`>]*)?             # targets contain a label
       >?                              # labels end with a '>' when there's an alias
       `?                              # targets end with a '`' character
@@ -40,9 +41,10 @@ ROLE = re.compile(
 I'm not sure if there are offical names for the components of a role, but the
 language server breaks a role down into a number of parts::
 
-                vvvvvv label
+                 vvvvvv label
+                v modifier(optional)
                vvvvvvvv target
-   :c:function:`malloc`
+   :c:function:`!malloc`
    ^^^^^^^^^^^^ role
       ^^^^^^^^ name
     ^ domain (optional)
@@ -53,9 +55,10 @@ also possible to define "aliased" roles, where the link text in the final docume
 is overriden, for example::
 
                 vvvvvvvvvvvvvvvvvvvvvvvv alias
-                                         vvvvvv label
+                                          vvvvvv label
+                                         v modifier (optional)
                vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv target
-   :c:function:`used to allocate memory <malloc>`
+   :c:function:`used to allocate memory <~malloc>`
    ^^^^^^^^^^^^ role
       ^^^^^^^^ name
     ^ domain (optional)
@@ -260,6 +263,7 @@ class Roles(LanguageFeature):
             end=Position(line=context.position.line, character=end),
         )
         prefix = context.match.group(0)[start:]
+        modifier = groups.get("modifier", "")
 
         for provide in self._target_providers:
             candidates = provide.complete_targets(context) or []
@@ -267,7 +271,7 @@ class Roles(LanguageFeature):
             for candidate in candidates:
 
                 # Don't interfere with items that already carry a `text_edit`, allowing
-                # some providers (like intersphinx) to do something special.
+                # some providers (like filepaths) to do something special.
                 if not candidate.text_edit:
                     new_text = candidate.insert_text or candidate.label
 
@@ -276,7 +280,9 @@ class Roles(LanguageFeature):
                     # suggestions!
                     candidate.filter_text = f"{prefix}{new_text}"
 
-                    candidate.text_edit = TextEdit(range=range_, new_text=new_text)
+                    candidate.text_edit = TextEdit(
+                        range=range_, new_text=f"{modifier}{new_text}"
+                    )
                     candidate.insert_text = None
 
                 if not candidate.text_edit.new_text.endswith(endchars):
