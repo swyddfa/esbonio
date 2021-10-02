@@ -25,8 +25,8 @@ from pygls.lsp.types import DocumentSymbolParams
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 
-from .feature import CompletionContext
-from .feature import LanguageFeature
+from .rst import CompletionContext
+from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .rst import SymbolVisitor
 from .sphinx import SphinxLanguageServer

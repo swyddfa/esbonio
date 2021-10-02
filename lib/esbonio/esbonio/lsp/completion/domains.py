@@ -4,8 +4,8 @@ from typing import List
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 
-from esbonio.lsp.feature import CompletionContext
 from esbonio.lsp.roles import TargetCompletion
+from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
 
