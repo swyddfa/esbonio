@@ -263,7 +263,7 @@ class Roles(LanguageFeature):
             end=Position(line=context.position.line, character=end),
         )
         prefix = context.match.group(0)[start:]
-        modifier = groups.get("modifier", "")
+        modifier = groups["modifier"] or ""
 
         for provide in self._target_providers:
             candidates = provide.complete_targets(context) or []
