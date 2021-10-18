@@ -1,8 +1,10 @@
 import collections
 import importlib
+import json
 import logging
 import pathlib
 import re
+import traceback
 from typing import Any
 from typing import Dict
 from typing import List
@@ -10,6 +12,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import pkg_resources
 import pygls.uris as Uri
 from docutils.nodes import NodeVisitor
 from docutils.parsers.rst import Directive
@@ -193,6 +196,9 @@ class RstLanguageServer(LanguageServer):
         self._roles: Optional[Dict[str, Any]] = None
         """Cache for known roles."""
 
+        self._documentation: Optional[Dict[str, Any]] = None
+        """Documentation bundled with the language server."""
+
     @property
     def configuration(self) -> Dict[str, Any]:
         """Return the server's actual configuration."""
@@ -216,6 +222,25 @@ class RstLanguageServer(LanguageServer):
 
     def get_feature(self, key) -> Optional["LanguageFeature"]:
         return self._features.get(key, None)
+
+    def get_documentation(self) -> Dict[str, Any]:
+        """Return the documentation bundled with the library ready for use."""
+
+        if self._documentation is not None:
+            return self._documentation
+
+        # TODO: Add an entry point that would allow packages to contribute documentation
+        # to the language server?
+        try:
+            res = pkg_resources.resource_string("esbonio.lsp", "documentation.json")
+            self._documentation = json.loads(res.decode("utf8"))
+            return self._documentation
+        except Exception:
+            self.logger.error(
+                "Unable to load bundled documentation \n%s", traceback.format_exc()
+            )
+            self._documentation = {}
+            return self._documentation
 
     def get_doctree(
         self, *, docname: Optional[str] = None, uri: Optional[str] = None

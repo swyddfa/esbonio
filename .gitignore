@@ -16,3 +16,4 @@ dist
 
 .changes.html
 CHANGELOG.md
+lib/esbonio/esbonio/lsp/documentation.json

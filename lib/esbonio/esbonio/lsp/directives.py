@@ -1,4 +1,3 @@
-"""Logic around directive completions goes here."""
 import inspect
 import re
 from typing import List
@@ -8,6 +7,8 @@ from docutils.parsers.rst import Directive
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import InsertTextFormat
+from pygls.lsp.types import MarkupContent
+from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
@@ -201,7 +202,7 @@ class Directives(LanguageFeature):
         )
 
         for option in self.rst.get_directive_options(name):
-            item = self.option_to_completion_item(option)
+            item = self.option_to_completion_item(name, option)
             item.text_edit = TextEdit(range=range_, new_text=item.insert_text)
             item.insert_text = None
 
@@ -279,19 +280,33 @@ class Directives(LanguageFeature):
            be included
         """
         args = ""
-        documentation = inspect.getdoc(directive)
         insert_format = InsertTextFormat.PlainText
 
-        # Ignore directives that do not provide their own documentation.
-        if any(
-            [
-                documentation.startswith("Base class for reStructuredText directives."),
-                documentation.startswith("A base class for Sphinx directives."),
+        # See if the directive is included in the documentation we bundle.
+        # TODO: How to handle the case where a directive's implementation has been
+        #       overriden?
+        documentation = (
+            self.rst.get_documentation()
+            .get("directives", {})
+            .get(name, {})
+            .get("body", "")
+        )
+
+        # Use the directive's docstring as a fallback - if it's not the generic
+        # "base class" message.
+        if not documentation:
+            documentation = inspect.getdoc(directive)
+            phrases = [
+                "Base class for reStructuredText directives.",
+                "A base class for Sphinx directives.",
             ]
-        ):
-            documentation = None
+
+            for phrase in phrases:
+                if documentation.startswith(phrase):
+                    documentation = ""
 
         # TODO: Give better names to arguments based on what they represent.
+        # TODO: Check client support for snippets beforehand.
         if include_argument:
             insert_format = InsertTextFormat.Snippet
             args = " " + " ".join(
@@ -304,26 +319,37 @@ class Directives(LanguageFeature):
         return CompletionItem(
             label=name,
             kind=CompletionItemKind.Class,
-            detail="directive",
-            documentation=documentation,
+            detail=f"directive - {directive.__module__}.{directive.__name__}",
+            documentation=MarkupContent(kind=MarkupKind.Markdown, value=documentation),
             filter_text=insert_text,
             insert_text=insert_text,
             insert_text_format=insert_format,
         )
 
-    def option_to_completion_item(self, option: str) -> CompletionItem:
+    def option_to_completion_item(self, directive: str, option: str) -> CompletionItem:
         """Convert an directive option to its CompletionItem representation.
 
         Parameters
         ----------
+        directive:
+           The directive's name
         option:
            The option's name
         """
+
         insert_text = f":{option}:"
+        documentation = (
+            self.rst.get_documentation()
+            .get("directives", {})
+            .get(directive, {})
+            .get("options", {})
+            .get(option, "")
+        )
 
         return CompletionItem(
             label=option,
             detail="option",
+            documentation=MarkupContent(kind=MarkupKind.Markdown, value=documentation),
             kind=CompletionItemKind.Field,
             filter_text=insert_text,
             insert_text=insert_text,
