@@ -1,4 +1,3 @@
-"""Role support."""
 import re
 from typing import List
 from typing import Optional
@@ -6,6 +5,8 @@ from typing import Optional
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import Location
+from pygls.lsp.types import MarkupContent
+from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
@@ -308,10 +309,16 @@ class Roles(LanguageFeature):
         """
 
         insert_text = f":{name}:"
+        impl_name = getattr(role, "__name__", "") or role.__class__.__name__
+        documentation = (
+            self.rst.get_documentation().get("roles", {}).get(name, {}).get("body", "")
+        )
+
         item = CompletionItem(
             label=name,
             kind=CompletionItemKind.Function,
-            detail="role",
+            detail=f"role - {role.__module__}.{impl_name}",
+            documentation=MarkupContent(kind=MarkupKind.Markdown, value=documentation),
             filter_text=insert_text,
             insert_text=insert_text,
         )

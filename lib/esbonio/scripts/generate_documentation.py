@@ -55,6 +55,22 @@ DIRECTIVES_MAP = {
         ("topic", "-"),
         ("unicode", "-"),
         ("warning", "-"),
+    ],
+}
+
+ROLES_MAP = {
+    "https://docutils.sourceforge.io/docs/ref/rst/roles.txt": [
+        ("code", "-"),
+        ("emphasis", "-"),
+        ("literal", "-"),
+        ("math", "-"),
+        ("pep-reference", "-"),
+        ("raw", "-"),
+        ("rfc-reference", "-"),
+        ("strong", "-"),
+        ("subscript", "-"),
+        ("superscript", "-"),
+        ("title-reference", "-"),
     ]
 }
 
@@ -250,8 +266,10 @@ if __name__ == "__main__":
     level = logging.DEBUG if args.verbose else logging.INFO
     logging.basicConfig(level=level, format="[%(name)s]: %(message)s")
 
-    docs = {}
-    docs["directives"] = generate_documentation(DIRECTIVES_MAP)
+    docs = {
+        "directives": generate_documentation(DIRECTIVES_MAP),
+        "roles": generate_documentation(ROLES_MAP),
+    }
 
     with open(args.output, "w") as f:
         json.dump(docs, f, indent=2)
