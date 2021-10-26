@@ -372,21 +372,14 @@ class SphinxLanguageServer(RstLanguageServer):
             return None
 
         if uri is not None:
-            srcdir = self.app.srcdir
             fspath = Uri.to_fs_path(uri)
+            docname = self.app.env.path2doc(fspath)
 
-            if not fspath.startswith(srcdir):
-                return None
-
-            docpath = pathlib.Path(fspath.replace(srcdir, ""))
-            docname = str(docpath.with_suffix(""))
-
-            if docname.startswith("/"):
-                docname = docname[1:]
-
-        self.logger.debug("Getting doctree for '%s'", docname)
+        if docname is None:
+            return None
 
         try:
+            self.logger.debug("Getting doctree for '%s'", docname)
             return self.app.env.get_and_resolve_doctree(docname, self.app.builder)
         except FileNotFoundError:
             self.logger.debug(traceback.format_exc())

@@ -55,6 +55,7 @@ envlist = py{36,37,38,39}-sphinx{2,3,4}
 [testenv]
 deps =
     sphinx2: sphinx>=2,<3
+    sphinx2: docutils<0.18
     sphinx3: sphinx>=3,<4
     sphinx4: sphinx>=4,<5
     pytest
