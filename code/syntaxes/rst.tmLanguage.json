@@ -109,6 +109,9 @@
                     "include": "#yaml-code-block"
                 },
                 {
+                    "include": "#generic-code-block"
+                },
+                {
                     "include": "#doctest-directive"
                 },
                 {
@@ -173,6 +176,23 @@
             "patterns": [
                 {
                     "include": "#css-code"
+                }
+            ]
+        },
+        "generic-code-block": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.function"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.directive.code-block.rst",
+            "patterns": [
+                {
+                    "begin": "^(\\s+)",
+                    "end": "^(?!\\1\\s+)(?!\\s*$)",
+                    "name": "string"
                 }
             ]
         },

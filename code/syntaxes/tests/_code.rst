@@ -27,6 +27,12 @@
    import { join } from 'path';
 -- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^ source.js
 
+.. code-block:: ini
+
+   [section]
+   name = value
+-- ^^^^^^^^^^^^ string
+
 .. code-block:: js
 
    console.log("Hi there!")
