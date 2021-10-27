@@ -3,22 +3,25 @@
 This line contains an explicitly numbered footnote reference [1]_
 --                                                           ^^^^ meta.reference.footnote.rst
 --                                                           ^ ^^ keyword.operator
---                                                            ^ meta.reference.footnote.explicit.rst variable.other.label
+--                                                            ^ variable.other.label
 
 This line contains an anonymous auto numbered footnote reference [#]_
 --                                                               ^^^^ meta.reference.footnote.rst
---                                                                ^ meta.reference.footnote.automatic.rst variable.other.label
+--                                                                ^ variable.other.label
 --                                                               ^ ^^ keyword.operator
 
 This line contains a labeled auto numbered footnote reference [#test]_
 --                                                            ^^^^^^^^ meta.reference.footnote.rst
---                                                             ^^^^^ meta.reference.footnote.automatic.rst variable.other.label
+--                                                             ^^^^^ variable.other.label
 --                                                            ^     ^^ keyword.operator
 
 This line contains a citation reference [CIT2020]_
 --                                      ^^^^^^^^^^ meta.reference.footnote.rst
---                                       ^^^^^^^ meta.reference.citation.rst variable.other.label
+--                                       ^^^^^^^ variable.other.label
 --                                      ^       ^^ keyword.operator
+
+This [example] however is not highlighted as a footnote
+--   ^^^^^^^^^ -meta.reference.footnote.rst
 
 .. [1] Footnote definition
 -- <------------------------- meta.definition.footnote.rst

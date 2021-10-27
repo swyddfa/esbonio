@@ -381,54 +381,16 @@
         },
         "footnote-reference": {
             "name": "meta.reference.footnote.rst",
-            "begin": "(\\[)",
-            "beginCaptures": {
+            "match": "(\\[)(#?([-\\w\\d_]+)?)(\\]_)",
+            "captures": {
                 "1": {
                     "name": "keyword.operator"
-                }
-            },
-            "end": "(\\]_)",
-            "endCaptures": {
-                "1": {
+                },
+                "2": {
+                    "name": "variable.other.label"
+                },
+                "4": {
                     "name": "keyword.operator"
-                }
-            },
-            "patterns": [
-                {
-                    "include": "#footnote-ref-explicit"
-                },
-                {
-                    "include": "#footnote-ref-automatic"
-                },
-                {
-                    "include": "#citation-ref"
-                }
-            ]
-        },
-        "footnote-ref-explicit": {
-            "name": "meta.reference.footnote.explicit.rst",
-            "match": "(\\d+)",
-            "captures": {
-                "1": {
-                    "name": "variable.other.label"
-                }
-            }
-        },
-        "footnote-ref-automatic": {
-            "name": "meta.reference.footnote.automatic.rst",
-            "match": "(#([-\\w\\d_]+)?)",
-            "captures": {
-                "1": {
-                    "name": "variable.other.label"
-                }
-            }
-        },
-        "citation-ref": {
-            "name": "meta.reference.citation.rst",
-            "match": "([-\\w\\d_]+)",
-            "captures": {
-                "1": {
-                    "name": "variable.other.label"
                 }
             }
         },
