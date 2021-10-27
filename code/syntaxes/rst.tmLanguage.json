@@ -109,6 +109,9 @@
                     "include": "#yaml-code-block"
                 },
                 {
+                    "include": "#generic-code-block"
+                },
+                {
                     "include": "#doctest-directive"
                 },
                 {
@@ -127,6 +130,9 @@
             "name": "meta.directive.doctest.rst",
             "patterns": [
                 {
+                    "include": "#field-list"
+                },
+                {
                     "include": "#python-code"
                 }
             ]
@@ -141,6 +147,9 @@
             "end": "^(?!\\1\\s+)(?!\\s*$)",
             "name": "meta.directive.code-block.c.rst",
             "patterns": [
+                {
+                    "include": "#field-list"
+                },
                 {
                     "include": "#c-code"
                 }
@@ -157,6 +166,9 @@
             "name": "meta.directive.code-block.cpp.rst",
             "patterns": [
                 {
+                    "include": "#field-list"
+                },
+                {
                     "include": "#cpp-code"
                 }
             ]
@@ -172,7 +184,30 @@
             "name": "meta.directive.code-block.css.rst",
             "patterns": [
                 {
+                    "include": "#field-list"
+                },
+                {
                     "include": "#css-code"
+                }
+            ]
+        },
+        "generic-code-block": {
+            "begin": "(\\s*)\\.\\.\\s+(code-block)::",
+            "beginCaptures": {
+                "2": {
+                    "name": "entity.name.function"
+                }
+            },
+            "end": "^(?!\\1\\s+)(?!\\s*$)",
+            "name": "meta.directive.code-block.rst",
+            "patterns": [
+                {
+                    "include": "#field-list"
+                },
+                {
+                    "begin": "^(\\s+)",
+                    "end": "^(?!\\1\\s+)(?!\\s*$)",
+                    "name": "string"
                 }
             ]
         },
@@ -186,6 +221,9 @@
             "end": "^(?!\\1\\s+)(?!\\s*$)",
             "name": "meta.directive.code-block.html.rst",
             "patterns": [
+                {
+                    "include": "#field-list"
+                },
                 {
                     "include": "#html-code"
                 }
@@ -202,6 +240,9 @@
             "name": "meta.directive.code-block.js.rst",
             "patterns": [
                 {
+                    "include": "#field-list"
+                },
+                {
                     "include": "#js-code"
                 }
             ]
@@ -216,6 +257,9 @@
             "end": "^(?!\\1\\s+)(?!\\s*$)",
             "name": "meta.directive.code-block.json.rst",
             "patterns": [
+                {
+                    "include": "#field-list"
+                },
                 {
                     "include": "#json-code"
                 }
@@ -232,6 +276,9 @@
             "name": "meta.directive.code-block.python.rst",
             "patterns": [
                 {
+                    "include": "#field-list"
+                },
+                {
                     "include": "#python-code"
                 }
             ]
@@ -247,6 +294,9 @@
             "name": "meta.directive.code-block.ts.rst",
             "patterns": [
                 {
+                    "include": "#field-list"
+                },
+                {
                     "include": "#ts-code"
                 }
             ]
@@ -261,6 +311,9 @@
             "end": "^(?!\\1\\s+)(?!\\s*$)",
             "name": "meta.directive.code-block.yaml.rst",
             "patterns": [
+                {
+                    "include": "#field-list"
+                },
                 {
                     "include": "#yaml-code"
                 }
@@ -285,9 +338,18 @@
             ]
         },
         "literal-block": {
-            "begin": "^(\\s*).*::$",
+            "begin": "^(\\s*)(.*)::$",
             "end": "^(?!\\1\\s+)(?!\\s*$)",
             "name": "meta.literal-block.rst",
+            "beginCaptures": {
+                "2": {
+                    "patterns": [
+                        {
+                            "include": "#inline-element"
+                        }
+                    ]
+                }
+            },
             "patterns": [
                 {
                     "begin": "^(\\s+)",
@@ -361,54 +423,16 @@
         },
         "footnote-reference": {
             "name": "meta.reference.footnote.rst",
-            "begin": "(\\[)",
-            "beginCaptures": {
+            "match": "(\\[)(#?([-\\w\\d_]+)?)(\\]_)",
+            "captures": {
                 "1": {
                     "name": "keyword.operator"
-                }
-            },
-            "end": "(\\]_)",
-            "endCaptures": {
-                "1": {
+                },
+                "2": {
+                    "name": "variable.other.label"
+                },
+                "4": {
                     "name": "keyword.operator"
-                }
-            },
-            "patterns": [
-                {
-                    "include": "#footnote-ref-explicit"
-                },
-                {
-                    "include": "#footnote-ref-automatic"
-                },
-                {
-                    "include": "#citation-ref"
-                }
-            ]
-        },
-        "footnote-ref-explicit": {
-            "name": "meta.reference.footnote.explicit.rst",
-            "match": "(\\d+)",
-            "captures": {
-                "1": {
-                    "name": "variable.other.label"
-                }
-            }
-        },
-        "footnote-ref-automatic": {
-            "name": "meta.reference.footnote.automatic.rst",
-            "match": "(#([-\\w\\d_]+)?)",
-            "captures": {
-                "1": {
-                    "name": "variable.other.label"
-                }
-            }
-        },
-        "citation-ref": {
-            "name": "meta.reference.citation.rst",
-            "match": "([-\\w\\d_]+)",
-            "captures": {
-                "1": {
-                    "name": "variable.other.label"
                 }
             }
         },
