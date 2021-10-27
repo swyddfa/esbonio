@@ -3,8 +3,8 @@
     "tasks": [
         {
             "type": "npm",
-            "script": "webpack",
-            "isBackground": false,
+            "script": "watch",
+            "isBackground": true,
             "options": {
                 "cwd": "${workspaceRoot}/code"
             },
@@ -17,7 +17,14 @@
                 "reveal": "never"
             },
             "problemMatcher": [
-                "$tsc-watch"
+                {
+                    "base": "$tsc-watch",
+                    "background": {
+                        "activeOnStart": true,
+                        "beginsPattern": "asset .*",
+                        "endsPattern": "webpack .* compiled .*"
+                    }
+                }
             ]
         },
         {
