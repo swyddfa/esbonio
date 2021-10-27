@@ -285,6 +285,16 @@ The following should be highlighted as a literal block::
    I am a literal block
 -- ^^^^^^^^^^^^^^^^^^^^ meta.literal-block.rst string
 
+
+Literal blocks should **not** disable any highlighting of preceeding text::
+--                    ^^^^^^^ markup.bold
+   Another literal block
+
+::
+
+   They can start on a line by themselves
+-- ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.literal-block.rst string
+
 Literal blocks can also span multiple paragraphs::
 
    This is the first paragraph.

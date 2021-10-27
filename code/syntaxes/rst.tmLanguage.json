@@ -338,9 +338,18 @@
             ]
         },
         "literal-block": {
-            "begin": "^(\\s*).*::$",
+            "begin": "^(\\s*)(.*)::$",
             "end": "^(?!\\1\\s+)(?!\\s*$)",
             "name": "meta.literal-block.rst",
+            "beginCaptures": {
+                "2": {
+                    "patterns": [
+                        {
+                            "include": "#inline-element"
+                        }
+                    ]
+                }
+            },
             "patterns": [
                 {
                     "begin": "^(\\s+)",

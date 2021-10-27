@@ -1,0 +1,1 @@
+Literal block markers no longer disable highlighting of any preceeding content.
