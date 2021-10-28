@@ -271,11 +271,16 @@ export class EsbonioClient {
     let cache = this.context.storageUri.path
     let config = vscode.workspace.getConfiguration("esbonio")
 
+    let buildDir = config.get<string>('sphinx.buildDir')
+    if (!buildDir) {
+      buildDir = join(cache, 'sphinx')
+    }
+
     let initOptions: InitOptions = {
       sphinx: {
         srcDir: config.get<string>("sphinx.srcDir"),
         confDir: config.get<string>('sphinx.confDir'),
-        buildDir: join(cache, 'sphinx')
+        buildDir: buildDir
       },
       server: {
         logLevel: config.get<string>('server.logLevel'),
