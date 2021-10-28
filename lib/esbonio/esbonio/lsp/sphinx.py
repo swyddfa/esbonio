@@ -313,7 +313,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
         builder_name = sphinx.builder_name
         src_dir = get_src_dir(self.workspace.root_uri, conf_dir, sphinx)
-        build_dir = get_build_dir(conf_dir, sphinx)
+        build_dir = get_build_dir(self.workspace.root_uri, conf_dir, sphinx)
         doctree_dir = build_dir / "doctrees"
         build_dir /= builder_name
 
@@ -712,16 +712,54 @@ def get_src_dir(
     return src_dir
 
 
-def get_build_dir(conf_dir: pathlib.Path, config: SphinxConfig) -> pathlib.Path:
+def get_build_dir(
+    root_uri: str, conf_dir: pathlib.Path, config: SphinxConfig
+) -> pathlib.Path:
+    """Get the build dir to use based on the given conifg.
 
-    if config.build_dir is None:
+    If nothing is specified in the given ``config``, this will choose a location within
+    the user's cache dir (as determined by `appdirs <https://pypi.org/project/appdirs>`).
+    The directory name will be a hash derived from the given ``conf_dir`` for the
+    project.
+
+    Alternatively the user (or least language client) can override this by setting
+    either an absolute path, or a path based on the following "variables".
+
+    - ``${workspaceRoot}`` which expands to the workspace root as provided
+      by the language client.
+    - ``${confDir}`` which expands to the configured config dir.
+
+    Parameters
+    ----------
+    root_uri:
+       The workspace root uri
+    conf_dir:
+       The project's conf dir
+    config:
+       The user's configuration.
+    """
+
+    if not config.build_dir:
         # Try to pick a sensible dir based on the project's location
         cache = appdirs.user_cache_dir("esbonio", "swyddfa")
         project = hashlib.md5(str(conf_dir).encode()).hexdigest()
 
         return pathlib.Path(cache) / project
 
+    root_dir = Uri.to_fs_path(root_uri)
+    match = PATH_VAR_PATTERN.match(config.build_dir)
+
+    if match and match.group(1) == "workspaceRoot":
+        build = pathlib.Path(config.build_dir).parts[1:]
+        return pathlib.Path(root_dir, *build).resolve()
+
+    if match and match.group(1) == "confDir":
+        build = pathlib.Path(config.build_dir).parts[1:]
+        return pathlib.Path(conf_dir, *build).resolve()
+
     # Convert path to/from uri so that any path quirks from windows are
     # automatically handled
     build_uri = Uri.from_fs_path(config.build_dir)
-    return pathlib.Path(Uri.to_fs_path(build_uri))
+    build_dir = Uri.to_fs_path(build_uri)
+
+    return pathlib.Path(build_dir)

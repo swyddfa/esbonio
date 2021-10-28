@@ -177,8 +177,9 @@ async def test_initialization(cs, testdata, root, options, expected):
 
 
 @py.test.mark.asyncio
+@py.test.mark.timeout(10)
 async def test_initialization_build_dir(cs, testdata):
-    """Ensure that we can set the build_dir."""
+    """Ensure that we can set the build_dir to an absolute path."""
 
     root_path = str(testdata("sphinx-default", path_only=True))
     root_uri = uri.from_fs_path(root_path)
@@ -207,6 +208,71 @@ async def test_initialization_build_dir(cs, testdata):
 
 
 @py.test.mark.asyncio
+@py.test.mark.timeout(10)
+async def test_initialization_build_dir_workspace_var(cs, testdata):
+    """Ensure that we can set the build_dir relative to the workspace root."""
+
+    root_path = str(testdata("sphinx-default", path_only=True))
+    root_uri = uri.from_fs_path(root_path)
+
+    build_dir = "${workspaceRoot}/_build"
+    init_options = InitializationOptions(sphinx=SphinxConfig(buildDir=build_dir))
+
+    test = cs  # type: ClientServer
+    await test.start(root_uri, initialization_options=init_options)
+
+    configuration = await test.client.lsp.send_request_async(
+        WORKSPACE_EXECUTE_COMMAND,
+        ExecuteCommandParams(command="esbonio.server.configuration"),
+    )
+
+    assert len(test.client.messages) == 0
+
+    assert "sphinx" in configuration
+    actual = SphinxConfig(**configuration["sphinx"])
+
+    assert actual.version is not None
+    assert actual.conf_dir == root_path
+    assert actual.src_dir == root_path
+    assert actual.build_dir == str(pathlib.Path(root_path, "_build", "html"))
+    assert actual.builder_name == "html"
+
+
+@py.test.mark.asyncio
+@py.test.mark.timeout(10)
+async def test_initialization_build_dir_confdir_var(cs, testdata):
+    """Ensure that we can set the build_dir relative to the project's conf dir."""
+
+    root_path = str(testdata("sphinx-default", path_only=True))
+    root_uri = uri.from_fs_path(root_path)
+
+    build_dir = "${confDir}/../_build"
+    init_options = InitializationOptions(sphinx=SphinxConfig(buildDir=build_dir))
+
+    test = cs  # type: ClientServer
+    await test.start(root_uri, initialization_options=init_options)
+
+    configuration = await test.client.lsp.send_request_async(
+        WORKSPACE_EXECUTE_COMMAND,
+        ExecuteCommandParams(command="esbonio.server.configuration"),
+    )
+
+    assert len(test.client.messages) == 0
+
+    assert "sphinx" in configuration
+    actual = SphinxConfig(**configuration["sphinx"])
+
+    assert actual.version is not None
+    assert actual.conf_dir == root_path
+    assert actual.src_dir == root_path
+
+    expected_dir = pathlib.Path(actual.conf_dir, "..", "_build", "html").resolve()
+    assert actual.build_dir == str(expected_dir)
+    assert actual.builder_name == "html"
+
+
+@py.test.mark.asyncio
+@py.test.mark.timeout(10)
 async def test_initialization_sphinx_error(cs, testdata):
     """Ensure that the user is notified when we Sphinx throws an exception."""
 
@@ -232,6 +298,7 @@ async def test_initialization_sphinx_error(cs, testdata):
 
 
 @py.test.mark.asyncio
+@py.test.mark.timeout(10)
 async def test_initialization_build_error(cs, testdata):
     """Ensure that the user is notified when we can't build the docs."""
 
@@ -263,6 +330,7 @@ async def test_initialization_build_error(cs, testdata):
 
 
 @py.test.mark.asyncio
+@py.test.mark.timeout(10)
 async def test_initialization_missing_conf(cs, testdata):
     """Ensure that the user is notified when we can't find their 'conf.py'."""
 
@@ -328,7 +396,7 @@ image file not readable: not-an-image.png""",
         ),
     ],
 )
-async def test_diagnostics(event_loop, testdata, client_server, good, bad, expected):
+async def test_diagnostics(testdata, client_server, good, bad, expected):
     """Ensure that we can correctly convert Sphinx errors/warnings into diagnostics.
 
     This test is quite involved as we have to ensure both the language server and the

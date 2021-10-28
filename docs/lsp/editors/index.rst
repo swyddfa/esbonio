@@ -72,9 +72,14 @@ available in any language client.
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
 ``sphinx.buildDir`` (string)
-   By default the language server will choose an appropriate location to cache the build
-   output from Sphinx. This option can be used to force the language server to use a location
-   of your choosing.
+   By default the language server will choose a cache directory (as determined by
+   `appdirs <https://pypi.org/project/appdirs>`_) to put Sphinx's build output.
+   This option can be used to force the language server to use a location
+   of your choosing, currently accepted values include:
+
+   - ``/path/to/src/`` - An absolute path
+   - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
+   - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
 ``server.logLevel`` (string)
    This can be used to set the level of log messages emitted by the server. This can be set
