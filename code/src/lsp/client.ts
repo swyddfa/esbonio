@@ -119,19 +119,22 @@ export class EsbonioClient {
   }
 
   async stop() {
-    if (!this.client) {
-      return
+    this.statusBar.hide()
+
+    if (this.client) {
+      await this.client.stop()
     }
 
-    return await this.client.stop()
+    return
   }
 
   /**
    * Start the language client.
    */
   async start(): Promise<void> {
-    this.statusBar.text = "$(sync~spin) Starting..."
     this.statusBar.show()
+    this.statusBar.text = "$(sync~spin) Starting..."
+
     if (DEBUG) {
       this.client = await this.getTcpClient()
     } else {
@@ -172,13 +175,12 @@ export class EsbonioClient {
    * Restart the language server.
    */
   async restartServer() {
-    this.logger.info("Stopping Language Server")
-
-    if (this.client) {
-      await this.client.stop()
+    let config = vscode.workspace.getConfiguration("esbonio.server")
+    if (config.get("enabled")) {
+      this.logger.info("Stopping Language Server")
+      await this.stop()
+      await this.start()
     }
-
-    await this.start()
   }
 
   /**
@@ -269,11 +271,16 @@ export class EsbonioClient {
     let cache = this.context.storageUri.path
     let config = vscode.workspace.getConfiguration("esbonio")
 
+    let buildDir = config.get<string>('sphinx.buildDir')
+    if (!buildDir) {
+      buildDir = join(cache, 'sphinx')
+    }
+
     let initOptions: InitOptions = {
       sphinx: {
         srcDir: config.get<string>("sphinx.srcDir"),
         confDir: config.get<string>('sphinx.confDir'),
-        buildDir: join(cache, 'sphinx')
+        buildDir: buildDir
       },
       server: {
         logLevel: config.get<string>('server.logLevel'),
@@ -301,6 +308,11 @@ export class EsbonioClient {
     this.logger.debug(`ConfigurationChangeEvent`)
 
     let config = vscode.workspace.getConfiguration("esbonio")
+    if (!config.get("server.enabled")) {
+      await this.stop()
+      return
+    }
+
 
     let conditions = [
       event.affectsConfiguration("esbonio"),

@@ -17,6 +17,9 @@ Configuration
 The VSCode extension exposes the language server's :ref:`editor_integration_config`
 under an ``esbonio.*`` prefix. It also exposes the following additional options.
 
+``esbonio.server.enabled`` (boolean)
+   A flag that can be used to completely disable the language server, if required.
+
 ``esbonio.server.pythonPath`` (string)
    If the official `Python Extension`_ is available the extension will use the same
    Python environment as you have configured for your workspace. However, if you wish

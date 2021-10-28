@@ -103,6 +103,12 @@
             "type": "object",
             "title": "Esbonio",
             "properties": {
+                "esbonio.server.enabled": {
+                    "scope": "window",
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable/Disable the language server"
+                },
                 "esbonio.server.logLevel": {
                     "scope": "application",
                     "type": "string",
@@ -127,7 +133,7 @@
                     "scope": "window",
                     "type": "string",
                     "default": "",
-                    "markdownDescription": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the `#python.pythonPath#` option in the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
+                    "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
                 },
                 "esbonio.server.hideSphinxOutput": {
                     "scope": "application",
@@ -185,6 +191,13 @@
                     ],
                     "description": "How often should the extension check for updates to the Language Server"
                 },
+                "esbonio.sphinx.buildDir": {
+                    "scope": "window",
+                    "type": "string",
+                    "default": null,
+                    "description": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local _build/ directory.",
+                    "markdownDescription": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local `_build/` directory."
+                },
                 "esbonio.sphinx.confDir": {
                     "scope": "window",
                     "type": "string",
@@ -195,7 +208,8 @@
                     "scope": "window",
                     "type": "string",
                     "default": null,
-                    "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.srcDir#` but this opton can override this if necessary."
+                    "description": "The directory containing your rst source files. By default the Language Server will assume this is the same as `esbonio.sphinx.confDir` but this opton can override this if necessary.",
+                    "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.confDir#` but this opton can override this if necessary."
                 }
             }
         },

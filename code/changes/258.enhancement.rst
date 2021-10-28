@@ -1,0 +1,1 @@
+Add ``esbonio.sphinx.buildDir`` option which allows the user to specify where Sphinx's build files get written to.
