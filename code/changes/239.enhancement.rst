@@ -1,0 +1,1 @@
+Add ``esbonio.server.enabled`` option which gives the user the ability to disable the language sever if they wish.
