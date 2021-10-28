@@ -50,7 +50,7 @@ legacy_tox_ini = """
 [tox]
 isolated_build = True
 skip_missing_interpreters = true
-envlist = py{36,37,38,39}-sphinx{2,3,4}
+envlist = py{36,37,38,39}-sphinx{2,3,4}, py310-sphinx{2,4}
 
 [testenv]
 deps =
