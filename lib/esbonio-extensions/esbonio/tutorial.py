@@ -3,7 +3,6 @@ import re
 import textwrap
 from typing import Iterable
 from typing import List
-from typing import Literal
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -105,9 +104,7 @@ class NotebookTranslator(nodes.NodeVisitor):
         """Return the current prefix to insert at the start of the current line."""
         return "".join(item[1] for item in self._prefix)
 
-    def new_cell(
-        self, cell_type: Literal["markdown", "code"], *args, **kwargs
-    ) -> nbformat.NotebookNode:
+    def new_cell(self, cell_type: str, *args, **kwargs) -> nbformat.NotebookNode:
         """Add a new cell to the notebook.
 
         To help simplify the implementation of visitors, asking for a new ``markdown`` cell
@@ -623,3 +620,48 @@ def setup(app: Sphinx):
     app.add_directive("solution", Solution)
 
     return {"version": __version__, "parallel_read_safe": True}
+
+
+if __name__ == "__main__":
+    import argparse
+    import shutil
+    import subprocess
+    import sys
+
+    import appdirs
+    import pkg_resources
+
+    cli = argparse.ArgumentParser(description="Launch the demo tutorial.")
+    cli.add_argument(
+        "-r",
+        "--reset",
+        action="store_true",
+        help="reset the tutorial back to its default state.",
+    )
+
+    args = cli.parse_args()
+    demo = pkg_resources.resource_filename("esbonio.tutorial", "tutorial_demo")
+
+    source = pathlib.Path(demo)
+    destination = pathlib.Path(
+        appdirs.user_data_dir(appname="esbonio-tutorial", appauthor="swyddfa")
+    )
+
+    if args.reset and destination.exists():
+        print(
+            "Existing tutorial resources detected.",
+            "This command will DELETE ALL existing files",
+            "",
+            sep="\n",
+        )
+
+        response = input("Do you want to continue? [y/N] ")
+        if not response.lower() == "y":
+            sys.exit(0)
+
+        shutil.rmtree(destination)
+
+    if not destination.exists():
+        shutil.copytree(source, destination)
+
+    subprocess.run(["jupyter-lab"], cwd=destination)

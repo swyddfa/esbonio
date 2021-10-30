@@ -16,3 +16,6 @@ dist
 
 .changes.html
 CHANGELOG.md
+
+# Demo tutorial is populated during the build.
+lib/esbonio-extensions/esbonio/tutorial_demo

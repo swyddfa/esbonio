@@ -58,7 +58,7 @@ Sort the list of fruit, by the number of vowels in their name in ascending order
    them and we get our solution::
 
       def num_vowels(name: str) -> int:
-         return len([c for c in name if c in 'aeiou'])
+          return len([c for c in name if c in 'aeiou'])
 
       sorted(fruit, key=num_vowels)
 
@@ -75,6 +75,6 @@ cost, sort them from most to least expensive::
    ::
 
       def get_price(item: tuple) -> int:
-         return item[1]
+          return item[1]
 
       sorted(fruit, key=get_price, reverse=True)

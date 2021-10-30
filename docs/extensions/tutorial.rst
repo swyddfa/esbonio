@@ -145,8 +145,77 @@ the :rst:dir:`solution` directive can be used to insert solutions.
 Deploying Tutorials
 -------------------
 
+Once you've written and exported your tutorials, you probably want to make them
+accessible to your users. Below are a few examples on ways you could distribute
+them.
+
 Local
 ^^^^^
+
+Perhaps the most straightforward way is to package the tutorial alongside your
+project. You could then provide a cli command that will automate the process 
+of copying the tutorial into a location on the user's machine and starting up
+a `Jupyter Lab`_ instance.
+
+Packaging
+"""""""""
+
+.. tabbed:: setuptools
+
+   The exported tutorial can be bundled in your Python package using the 
+   `Data Files`_ support built into setuptools. This requires you to add the 
+   following flag to your ``setup.cfg`` (or ``setup.py``) file
+
+   .. code-block:: ini  
+
+      [options]
+      include_package_data = True
+
+   Additionally you need to specify the folder(s) to include in your
+   ``MANIFEST.in`` file (create one in the same folder as your ``setup.cfg``)
+   file if you don't have one already). To use the ``esbonio-extensions``
+   package as an example, you would add the following line
+
+   .. code-block:: none
+
+      recursive-include esbonio/tutorial/demo *
+      
+
+   If it's setup correctly, you should see your tutorial files listed in the 
+   build output when you run
+
+   .. code-block:: console
+      :emphasize-lines: 6-12 
+
+      $ python setup.py sdist bdist_wheel
+      ...
+      adding 'esbonio/tutorial/__init__.py'
+      adding 'esbonio/tutorial/__main__.py'
+      adding 'esbonio/tutorial/commands.py'
+      adding 'esbonio/tutorial/demo/extensions/tutorial/formatting-example.ipynb'
+      adding 'esbonio/tutorial/demo/extensions/tutorial/hello-world.ipynb'
+      adding 'esbonio/tutorial/demo/extensions/tutorial/solution-example.ipynb'
+      adding 'esbonio/tutorial/demo/resources/extensions/tutorial/formatting-example/vscode-screenshot.png'
+      adding 'esbonio/tutorial/demo/resources/extensions/tutorial/solution-example/solution-example-soln-01.py'
+      adding 'esbonio/tutorial/demo/resources/extensions/tutorial/solution-example/solution-example-soln-02.py'
+      adding 'esbonio/tutorial/demo/resources/extensions/tutorial/solution-example/solution-example-soln-03.py'
+      adding 'esbonio_extensions-0.0.2.dist-info/LICENSE'
+      adding 'esbonio_extensions-0.0.2.dist-info/METADATA'
+      adding 'esbonio_extensions-0.0.2.dist-info/WHEEL'
+      adding 'esbonio_extensions-0.0.2.dist-info/top_level.txt'
+      adding 'esbonio_extensions-0.0.2.dist-info/RECORD'
+
+.. tabbed:: poetry 
+
+   .. admonition:: TODO
+
+      Figure this out
+
+.. tabbed:: flit
+
+   .. admonition:: TODO
+
+      Figure this out
 
 Binder
 ^^^^^^
@@ -162,4 +231,6 @@ Examples
 
 
 .. _Binder: https://mybinder.org/
+.. _Data Files: https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+.. _Jupyter Lab: https://jupyterlab.readthedocs.io/en/stable/getting_started/overview.html
 .. _Jupyter Notebooks: https://jupyter.org/
