@@ -1,21 +1,55 @@
 import pathlib
 import re
+import textwrap
+from typing import Iterable
+from typing import List
+from typing import Literal
+from typing import Optional
+from typing import Set
+from typing import Tuple
+from typing import Union
 
-import docutils.nodes as nodes
-import docutils.parsers.rst as rst
-import nbformat.v4 as nbformat
+import nbformat
+import nbformat.v4 as nbf
+from docutils import nodes
+from docutils import writers
+from docutils.io import StringOutput
 from docutils.parsers.rst.directives.admonitions import BaseAdmonition
+from sphinx.application import Sphinx
+from sphinx.builders import Builder
+from sphinx.util import status_iterator
+from sphinx.util.docutils import new_document
+from sphinx.util.logging import getLogger
+from sphinx.util.osutil import copyfile
+from sphinx.util.osutil import relative_uri
 
-RESOURCES = "resources"
+__version__ = "0.0.2"
+
+logger = getLogger(__name__)
+
+
+CELL_TYPES = {"markdown": nbf.new_markdown_cell, "code": nbf.new_code_cell}
+REPL_PATTERN = re.compile(r"^(>>>|\.\.\.) ?")
 
 
 class solution(nodes.General, nodes.Element):
     pass
 
 
-class SolutionDirective(BaseAdmonition):
+def visit_solution(self, node):
+    """Vistor for the HTML builder"""
+    self.body.append('<details class="admonition note">\n')
+    self.body.append(
+        '<summary class="admonition-title"> Solution (click to reveal)</summary>\n'
+    )
 
-    NAME = "solution"
+
+def depart_solution(self, node):
+    """Depart-er for the HTML builder"""
+    self.body.append("</details>\n")
+
+
+class Solution(BaseAdmonition):
 
     has_content = True
     node_class = solution
@@ -25,226 +59,522 @@ class SolutionDirective(BaseAdmonition):
         return [soln]
 
 
-def visit_solution(self, node):
-    self.body.append('<details class="admonition note">\n')
-    self.body.append(
-        '<summary class="admonition-title"> Solution (click to reveal)</summary>\n'
-    )
-
-
-def depart_solution(self, node):
-    self.body.append("</details>\n")
-
-
-class tutorial(nodes.General, nodes.Element):
-    pass
-
-
-class TutorialDirective(rst.Directive):
-
-    NAME = "tutorial"
-
-    def run(self):
-        return [tutorial("")]
-
-
-def visit_tutorial(self, node):
-    pass
-
-
-def depart_tutorial(self, node):
-    pass
-
-
-def _no_op(self, node):
-    pass
-
-
-no_op = _no_op, _no_op
-
-
 class NotebookTranslator(nodes.NodeVisitor):
-    """Walk an rst doctree and convert it into a Jupyer Notebook."""
-
     def __init__(self, document):
         super().__init__(document)
-        self.cells = []
-        self.level = 0
-        self.prefix = None
 
-    def asnotebook(self):
-        return nbformat.new_notebook(cells=self.cells)
+        self.cells: List[nbformat.NotebookNode] = []
+        """A list of cells that have been constructed so far."""
 
-    def astext(self):
-        return nbformat.writes(self.asnotebook())
+        self.section_level = 0
+        """Used to keep track of the nested sections."""
+
+        self._list_styles: List[str] = []
+        """Used to keep track of the current list style."""
+
+        self._prefix: List[Tuple[nodes.Node, str]] = []
+        """Used to keep track of the prefix to insert before text. e.g. ``> `` for
+        markdown quote blocks."""
+
+    def asnotebook(self) -> nbformat.NotebookNode:
+        # Trim any empty cells.
+        cells = [c for c in self.cells if len(c.source) > 0]
+
+        return nbf.new_notebook(cells=cells)
+
+    def astext(self) -> str:
+        return nbf.writes(self.asnotebook())
 
     @property
-    def current_cell(self):
+    def current_cell(self) -> Optional[nbformat.NotebookNode]:
+        """Small helper for keeping track of the cell currently under construction."""
 
         if len(self.cells) == 0:
             return None
 
         return self.cells[-1]
 
-    def new_cell(self, cell_type: str):
-        current = self.current_cell
+    @property
+    def list_style(self) -> str:
+        """Return the current list style to use"""
+        return self._list_styles[-1]
 
-        if current is not None and current.cell_type == cell_type == "markdown":
+    @property
+    def prefix(self) -> str:
+        """Return the current prefix to insert at the start of the current line."""
+        return "".join(item[1] for item in self._prefix)
+
+    def new_cell(
+        self, cell_type: Literal["markdown", "code"], *args, **kwargs
+    ) -> nbformat.NotebookNode:
+        """Add a new cell to the notebook.
+
+        To help simplify the implementation of visitors, asking for a new ``markdown`` cell
+        when the current cell is also a ``markdown`` cell results in a no-op.
+
+        Parameters
+        ----------
+        cell_type:
+           The type of cell to create, can be either ``markdown`` or ``code``
+        """
+
+        if (
+            self.current_cell is not None
+            and self.current_cell.cell_type == cell_type == "markdown"
+        ):
             return
 
-        types = {"markdown": nbformat.new_markdown_cell, "code": nbformat.new_code_cell}
-        new_cell = types[cell_type]
-        self.cells.append(new_cell())
+        new_cell = CELL_TYPES[cell_type](*args, **kwargs)
+        self.cells.append(new_cell)
 
-    def append(self, text: str):
+        return new_cell
 
-        if self.prefix is not None:
-            text = text.replace("\n", "\n{}".format(self.prefix))
+    def append_text(self, text: str):
+        """Append text to the current cell."""
+
+        # On the surface it would seem that doing something like
+        #
+        #    text = textwrap.indent(text, prefix=self.prefix)
+        #
+        # would be the best approach. However, it actually makes handling situations like
+        # list items spanning multiple paragraphs *much* more difficult to handle.
+        # By not messing with the start of the string, or the final newline, we simplify
+        # the visitor code slightly.
+
+        # If the text is just a newline on its own, include the prefix
+        if text == "\n":
+            self.current_cell.source += f"\n{self.prefix}"
+            return
+
+        # Remove the final newline if it exists, we'll add it back later.
+        final_newline = text[-1] == "\n"
+        if final_newline:
+            text = text[:-1]
+
+        text = text.replace("\n", f"\n{self.prefix}")
+
+        if final_newline:
+            text += "\n"
 
         self.current_cell.source += text
 
-    # --------------------------------- Visitors --------------------------------------
-    visit_compound, depart_compound = no_op
-    visit_compact_paragraph, depart_compact_paragraph = no_op
-    visit_document, depart_document = no_op
-    visit_figure, depart_figure = no_op
-    visit_legend, depart_legend = no_op
-    visit_solution, depart_solution = no_op
-    visit_target, depart_target = no_op
-    visit_tutorial, depart_tutorial = no_op
+    def push_list_style(self, style: str):
+        """Push a style onto the list style stack."""
+        self._list_styles.append(style)
 
-    def visit_caption(self, node):
-        self.current_cell.source += "*"
+    def pop_list_style(self):
+        """Pop the most recent element off the list style stack."""
 
-    def depart_caption(self, node):
-        self.current_cell.source += "*\n"
+        if len(self._list_styles) == 0:
+            return
+
+        self._list_styles.pop()
+
+    def push_prefix(self, node: nodes.Node, prefix: str):
+        """Push a (node, prefix) pair onto the prefix stack."""
+        self._prefix.append((node, prefix))
+
+    def pop_prefix(self, node: nodes.Node):
+        """Pop the most recent element off the prefix stack, only if it corresponds to
+        the given node"""
+
+        if len(self._prefix) == 0:
+            return
+
+        if self._prefix[-1][0] == node:
+            self._prefix.pop()
+
+    # ------------------------------------ Visitors -----------------------------------
+
+    def visit_block_quote(self, node):
+        self.append_text("> ")
+        self.push_prefix(node, "> ")
+
+    def depart_block_quote(self, node):
+        self.pop_prefix(node)
 
     def visit_bullet_list(self, node):
-        self.new_cell("markdown")
-        self.current_cell.source += "\n"
+        self.push_list_style("-")
 
     def depart_bullet_list(self, node):
-        self.current_cell.source += "\n"
+        self.pop_list_style()
 
     def visit_comment(self, node):
-        self.new_cell("markdown")
+        node.children = []
 
-    def depart_comment(self, node):
-        pass
+    def visit_definition_list(self, node):
+        # self.append_text("\n")
+        self.push_list_style("-")
+
+    def depart_definition_list(self, node):
+        self.pop_list_style()
+
+    def visit_definition_list_item(self, node):
+        self.append_text(f"\n{self.list_style} ")
+        self.push_prefix(node, " " * (len(self.list_style) + 1))
+
+    def depart_definition_list_item(self, node):
+        self.pop_prefix(node)
 
     def visit_emphasis(self, node):
-        self.current_cell.source += "*"
+        self.append_text("*")
 
     def depart_emphasis(self, node):
-        self.current_cell.source += "*"
+        self.append_text("*")
+
+    def visit_enumerated_list(self, node):
+        self.push_list_style("1.")
+
+    def depart_enumerated_list(self, node):
+        self.pop_list_style()
 
     def visit_image(self, node):
-        self.new_cell("markdown")
-
-        uri = pathlib.Path(node["uri"]).name
-        fpath = pathlib.Path(RESOURCES, uri)
-        self.current_cell.source += "\n![]({})\n".format(fpath)
+        self.append_text("![")
 
     def depart_image(self, node):
-        pass
+        self.append_text(f"]({node['uri']})")
 
     def visit_inline(self, node):
-        self.current_cell.source += "["
+        self.append_text("`")
 
     def depart_inline(self, node):
-        self.current_cell.source += "]"
+        self.append_text("`")
 
-    def visit_list_item(self, node):
-        self.append("- ")
+    def visit_line(self, node):
+        self.append_text("\n")
 
-    def depart_list_item(self, node):
-        pass
+    def visit_line_block(self, node):
+        self.append_text("\n```")
+
+    def depart_line_block(self, node):
+        self.append_text("\n```\n")
 
     def visit_literal(self, node):
-        self.current_cell.source += "`"
+        self.append_text("`")
 
     def depart_literal(self, node):
-        self.current_cell.source += "`"
+        self.append_text("`")
 
     def visit_literal_block(self, node):
-        self.new_cell("code")
+        language = node.attributes.get("language", "none")
+
+        if language in {"default", "python"}:
+            self.new_cell("code")
+            return
+
+        self.new_cell("markdown")
+        self.append_text("\n```")
+
+        if language != "none":
+            self.append_text(f"{language}")
+
+        self.append_text("\n")
 
     def depart_literal_block(self, node):
-        pass
+        language = node.attributes.get("language", "none")
+        if language in {"default", "python"}:
+            self.new_cell("markdown")
+            return
 
-    def visit_note(self, node):
-        self.new_cell("markdown")
-        self.append("> **Note**\n")
-        self.prefix = "> "
+        self.append_text("\n```\n")
 
-    def depart_note(self, node):
-        self.prefix = None
+    def visit_list_item(self, node):
+        self.append_text(f"\n{self.list_style} ")
+        self.push_prefix(node, " " * (len(self.list_style) + 1))
+
+    def depart_list_item(self, node):
+        self.pop_prefix(node)
+
+    def visit_math(self, node):
+        self.append_text("$")
+
+    def depart_math(self, node):
+        self.append_text("$")
 
     def visit_paragraph(self, node):
         self.new_cell("markdown")
 
+        # The first paragraph in a list item shouldn't insert a new line.
         if isinstance(node.parent, nodes.list_item):
-            return
+            if node.parent.children.index(node) == 0:
+                return
 
-        self.append("\n")
+        self.append_text("\n")
 
     def depart_paragraph(self, node):
-        self.append("\n")
+        self.append_text("\n")
 
     def visit_reference(self, node):
-        self.current_cell.source += "["
+        # Reference nodes contain a #text node that will handle the link's label
+        self.append_text("[")
 
     def depart_reference(self, node):
-        url = node.attributes["refuri"]
-        self.current_cell.source += "]({})".format(url)
+        url = node.attributes.get("refuri", None)
+        anchor = node.attributes.get("refid", None)
+
+        uri = url or anchor or "#"
+        self.append_text(f"]({uri})")
 
     def visit_section(self, node):
-        self.level += 1
-        self.new_cell("markdown")
+        cell_id = node.attributes["ids"][0]
+        self.new_cell("markdown", id=cell_id)
+        self.section_level += 1
 
     def depart_section(self, node):
-        self.level -= 1
+        self.section_level -= 1
 
     def visit_strong(self, node):
-        self.current_cell.source += "**"
+        self.append_text("**")
 
     def depart_strong(self, node):
-        self.current_cell.source += "**"
+        self.append_text("**")
+
+    def visit_target(self, node):
+        # Do we need to handle these at all?
+        logger.debug("[tutorial]: skipping target node for now...")
+
+    def visit_term(self, node):
+        self.append_text("`")
+
+    def depart_term(self, node):
+        self.append_text("`: ")
 
     def visit_Text(self, node):
 
-        # Don't emit anything for rst comments.
-        if isinstance(node.parent, nodes.comment):
-            return
-
-        # Nothing special to do for markdown cells.
         if self.current_cell.cell_type == "markdown":
-            self.append(node.astext())
+            self.append_text(node.astext())
             return
 
-        # If we're processing code, then strip any doctest markers
-        pattern = re.compile("^(>>>|\\.\\.\\.) ?")
-        source = "\n".join(
-            [pattern.sub("", line) for line in node.astext().split("\n")]
-        )
-        self.append(source)
+        # Source code blocks need special handling in that doctest blocks will be full
+        # of `>>> ` or `... ` sequences which need to be removed if the code is to work
+        # from within a notebook.
+        source = node.astext()
+        if ">>>" not in source:
+            self.append_text(source)
+            return
 
-    def depart_Text(self, node):
-        pass
+        cleaned_source = REPL_PATTERN.sub("", source)
+        self.append_text(cleaned_source)
 
     def visit_title(self, node):
-        title = "#" * self.level
-        self.append("{} ".format(title))
+        self.append_text(f"\n{'#' * self.section_level} ")
 
     def depart_title(self, node):
-        self.append("\n")
+        self.append_text("\n")
+
+    def unknown_visit(self, node: nodes.Node) -> None:
+        logger.debug(
+            "[tutorial]: skipping unknown node type: '%s'", node.__class__.__name__
+        )
+
+    def unknown_departure(self, node: nodes.Node) -> None:
+        pass
 
 
-def setup(app):
+class NotebookWriter(writers.Writer):
+    """Converts a doctree into a notebook."""
+
+    def translate(self):
+        visitor = NotebookTranslator(self.document)
+        self.document.walkabout(visitor)
+        self.output = visitor.astext()
+
+
+class Tutorial(Builder):
+    """A builder for extracting tutorials embedded in Sphinx documentation."""
+
+    name = "tutorial"
+    format = "ipynb"
+
+    def init(self):
+        self.resources = {}
+
+        self.resource_dir = pathlib.Path(self.outdir, "resources")
+        if not self.resource_dir.exists():
+            self.resource_dir.mkdir(parents=True)
+
+    def get_target_uri(self, docname: str, typ: str = None) -> str:
+        return f"{docname}.ipynb"
+
+    def get_outdated_docs(self) -> Union[str, Iterable[str]]:
+        """This should return the outdated documents that should be processed.
+
+        For the moment, we just return everything.
+        """
+        return self.env.found_docs
+
+    def prepare_writing(self, docnames: Set[str]) -> None:
+        pass
+
+    def write_doc(self, docname: str, doctree: nodes.document) -> None:
+
+        # Only process docs that have been marked as tutorials.
+        metadata = self.env.metadata.get(docname)
+        if metadata is None or metadata.get("tutorial", "") != "notebook":
+            return
+
+        path = pathlib.Path(docname)
+        base, name = path.parent, path.stem
+        outdir = pathlib.Path(self.outdir, base)
+
+        logger.debug("[tutorial]: output directory: '%s'", outdir)
+        if not outdir.exists():
+            outdir.mkdir(parents=True)
+
+        src = self.get_target_uri(docname)
+        logger.debug("[tutorial]: src uri %s", src)
+
+        self.process_images(doctree, src)
+        self.process_solutions(doctree, src)
+
+        writer = NotebookWriter()
+        output = writer.write(doctree, StringOutput(encoding="utf-8"))
+
+        outfile = outdir / f"{name}.ipynb"
+        logger.debug("[tutorial]: writing notebook: '%s'", outfile)
+
+        with outfile.open("wb") as f:
+            f.write(output)
+
+    def process_solutions(self, doctree: nodes.document, src: str) -> None:
+        """Handle any solutions contained in the document.
+
+        This ensures that a ``*.py`` file is created in the ``resources`` directory
+        containing the actual solution.
+
+        It then also rewrites the given doctree to output a pair of code cells in
+        the resulting notebook. The first is a prompt for the user to input their
+        solution and the second contains a :magic:`ipython:load` declaration to
+        give the user the option to load in the solution if they wish to see it.
+
+        Parameters
+        ----------
+        doctree:
+           The doctree to process
+        src:
+           The path to the file containing the document being processed
+        """
+
+        docpath = pathlib.Path(src)
+        logger.debug("[tutorial]: processing solutions for: %s", docpath)
+        basename = f"{docpath.stem}-soln"
+
+        for idx, soln in enumerate(doctree.traverse(condition=solution)):
+
+            name = f"{basename}-{idx+1:02d}.py"
+            destination = pathlib.Path("resources", docpath.with_suffix(""), name)
+            refuri = relative_uri(src, str(destination))
+
+            # Convert the solution to a valid Python document that can be executed.
+            document = new_document("<solution>")
+            document += soln
+
+            # Rather than go through the trouble of maintaining 2 document translators,
+            # one for notebooks and another for Python files. Let's just use the notebook
+            # translator and do some post-processing on the result - much easier.
+            translator = NotebookTranslator(document)
+            document.walkabout(translator)
+            notebook = translator.asnotebook()
+
+            blocks = []
+            for cell in notebook.cells:
+                source = cell.source
+
+                # Comment out the lines containing markdown.
+                if cell.cell_type == "markdown":
+                    source = textwrap.indent(source, "# ")
+
+                blocks.append(source)
+
+            self.resources[str(destination)] = ("create", "\n".join(blocks))
+
+            # TODO: Expose config options for these
+            # TODO: Translations?
+            your_soln = nodes.literal_block(
+                "", "# Write your solution here...\n", language="python"
+            )
+            load_soln = nodes.literal_block(
+                "",
+                f"# Execute this cell to load the example solution\n%load {refuri}\n",
+                language="python",
+            )
+
+            # Replace the actual solution with the 2 cells defined above.
+            soln.children = [your_soln, load_soln]
+
+    def process_images(self, doctree: nodes.document, src: str) -> None:
+        """Handle any images contained in the document.
+
+        This ensures that the actual image files referenced by the document are copied
+        to the ``resources`` folder. It also ensures that the reference to the image
+        within the document is rewritten to work with the resources folder.
+
+        Parameters
+        ----------
+        doctree:
+           The doctree to process
+        src:
+           The path to the file containing the document being processed.
+        """
+
+        docpath = pathlib.Path(src)
+
+        for image in list(doctree.traverse(condition=nodes.image)):
+
+            source = pathlib.Path(self.app.srcdir, image["uri"])
+            destination = pathlib.Path(
+                "resources", docpath.with_suffix(""), source.name
+            )
+            refuri = relative_uri(src, str(destination))
+
+            logger.debug("[tutorial]: image src:  %s", source)
+            logger.debug("[tutorial]: image dest: %s", destination)
+            logger.debug("[tutorial]: image ref:  %s", refuri)
+
+            self.resources[str(destination)] = ("copy", source)
+            image["uri"] = refuri
+
+    def copy_resources(self):
+        """Copy supporting resources to the output folder."""
+
+        resource_iterator = status_iterator(
+            self.resources.items(),
+            "copying resources... ",
+            "brown",
+            len(self.resources),
+            self.app.verbosity,
+            stringify_func=lambda r: r[0],
+        )
+
+        for dest, (op, value) in resource_iterator:
+            logger.debug("[tutorial]: %s: (%s, %s)", dest, op, value)
+
+            destination = pathlib.Path(self.outdir, dest)
+            if not destination.parent.exists():
+                destination.parent.mkdir(parents=True)
+
+            if op == "copy":
+                copyfile(str(value), str(destination))
+                continue
+
+            if op == "create":
+                with destination.open("w") as f:
+                    f.write(value)
+
+                continue
+
+            raise TypeError(f"Unknown resource operation: '{op}'")
+
+    def finish(self) -> None:
+        self.finish_tasks.add_task(self.copy_resources)
+
+
+def setup(app: Sphinx):
+
     app.add_node(solution, html=(visit_solution, depart_solution))
-    app.add_node(tutorial, html=(visit_tutorial, depart_tutorial))
 
-    app.add_directive(SolutionDirective.NAME, SolutionDirective)
-    app.add_directive(TutorialDirective.NAME, TutorialDirective)
+    app.add_builder(Tutorial)
 
-    return {"version": "0.0.2", "parallel_read_safe": True}
+    app.add_directive("solution", Solution)
+
+    return {"version": __version__, "parallel_read_safe": True}
