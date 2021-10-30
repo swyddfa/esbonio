@@ -134,13 +134,77 @@ the :rst:dir:`solution` directive can be used to insert solutions.
             x = 1 + 3
             print(x)
 
-.. TODO:
+Translations
+^^^^^^^^^^^^
 
-   Translations
-   ^^^^^^^^^^^^
+Since the notebook version of the tutorial is generated from your documentation
+you can also leverage Sphinx's :ref:`sphinx:intl` support to produce translated
+versions of your tutorials!
 
-   Outline how Sphinx's built-in translation system can be used to generate translated
-   versions of tutorials.
+If you are already familair with producing translated versions of your documentation
+then the process is almost identicial, just replace your final build step with one
+that invokes the ``tutorial`` builder e.g.
+
+.. code-block:: console
+
+   $ SPHINXOPTS=-Dlanguage=cy make tutorial
+
+If you haven't worked with translations before, here is a brief overview of a potential
+translation workflow, be sure to check the :ref:`documentation <sphinx:intl>` for details.
+
+#. Install the `sphinx-intl <https://pypi.org/project/sphinx-intl>`_ package
+
+   .. code-block:: console
+
+      $ pip install sphinx-intl
+
+#. Update your ``conf.py`` to specify where to store your translation strings
+   ::
+
+      locale_dirs = ["locale/"]
+      gettext_compact = False    # optional.
+
+   See :confval:`sphinx:locale_dirs` and :confval:`sphinx:gettext_compact` for more
+   details.
+
+#. Extract your translation strings from the documentation for each of your target
+   languages
+
+   .. code-block:: console
+
+      $ make gettext
+      $ sphinx-intl update -p _build/gettext -l cy  # -l fr -l de ... etc.
+
+   This will produce a folder ``locale/<language_code>/LC_MESSAGES`` for each language
+   you specified containing ``*.po`` files ready to be translated.
+
+#. Translate each of the files in the ``locale/<language_code>/LC_MESSAGES``
+   folder for your language. A ``*.po`` file is a long sequence of ``msgid``, ``msgstr``
+   pairs.
+
+   .. code-block:: po
+
+      #: ../../extensions/tutorial/hello-world.rst:4
+      msgid "Hello World"
+      msgstr ""
+
+   Each ``msgid`` corresponds with the text to be translated, to provide a
+   translation "simply" replace the empty string next to ``msgstr`` with the
+   translation for the string above and save the file
+
+   .. literalinclude:: ../locale/cy/LC_MESSAGES/extensions/tutorial/hello-world.po
+      :language: po
+      :start-at: #: ../../extensions/tutorial/hello-world.rst:4
+      :end-before: #: ../../extensions/tutorial/hello-world.rst:6
+
+#. Assuming that you build your docs with something like the `default Makefile`_
+   you can produce a translated build by setting the ``SPHINXOPTS`` environment
+   variable to specify the language.
+
+   .. code-block:: console
+
+      $ SPHINXOPTS=-Dlanguage=cy make tutorial
+
 
 Deploying Tutorials
 -------------------
@@ -153,7 +217,7 @@ Local
 ^^^^^
 
 Perhaps the most straightforward way is to package the tutorial alongside your
-project. You could then provide a cli command that will automate the process 
+project. You could then provide a cli command that will automate the process
 of copying the tutorial into a location on the user's machine and starting up
 a `Jupyter Lab`_ instance.
 
@@ -162,11 +226,11 @@ Packaging
 
 .. tabbed:: setuptools
 
-   The exported tutorial can be bundled in your Python package using the 
-   `Data Files`_ support built into setuptools. This requires you to add the 
+   The exported tutorial can be bundled in your Python package using the
+   `Data Files`_ support built into setuptools. This requires you to add the
    following flag to your ``setup.cfg`` (or ``setup.py``) file
 
-   .. code-block:: ini  
+   .. code-block:: ini
 
       [options]
       include_package_data = True
@@ -179,13 +243,13 @@ Packaging
    .. code-block:: none
 
       recursive-include esbonio/tutorial/demo *
-      
 
-   If it's setup correctly, you should see your tutorial files listed in the 
+
+   If it's setup correctly, you should see your tutorial files listed in the
    build output when you run
 
    .. code-block:: console
-      :emphasize-lines: 6-12 
+      :emphasize-lines: 6-12
 
       $ python setup.py sdist bdist_wheel
       ...
@@ -205,17 +269,13 @@ Packaging
       adding 'esbonio_extensions-0.0.2.dist-info/top_level.txt'
       adding 'esbonio_extensions-0.0.2.dist-info/RECORD'
 
-.. tabbed:: poetry 
+.. TODO: Outline how other tools can be used to accomplish this e.g.
 
-   .. admonition:: TODO
+   .. tabbed:: poetry
 
-      Figure this out
 
-.. tabbed:: flit
+   .. tabbed:: flit
 
-   .. admonition:: TODO
-
-      Figure this out
 
 Binder
 ^^^^^^
@@ -232,5 +292,6 @@ Examples
 
 .. _Binder: https://mybinder.org/
 .. _Data Files: https://setuptools.pypa.io/en/latest/userguide/datafiles.html
+.. _default Makefile: https://github.com/sphinx-doc/sphinx/blob/4.x/sphinx/templates/quickstart/Makefile.new_t
 .. _Jupyter Lab: https://jupyterlab.readthedocs.io/en/stable/getting_started/overview.html
 .. _Jupyter Notebooks: https://jupyter.org/

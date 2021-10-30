@@ -27,6 +27,9 @@ author = ""
 # The full version, including alpha/beta/rc tags
 release = esbonio.lsp.__version__
 
+# -- i18n configuration ------------------------------------------------------
+locale_dirs = ["locale/"]
+gettext_compact = False
 
 # -- General configuration ---------------------------------------------------
 
