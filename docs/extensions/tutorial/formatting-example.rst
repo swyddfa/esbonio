@@ -147,3 +147,91 @@ Images
 
 .. image:: /images/vscode-screenshot.png
    :align: center
+
+Admonitions
+-----------
+
+Since there is no direct counterpart to admonitions in markdown, the extension does its
+best to approximate them using quoted blocks. Below are some example admonitions.
+
+Attention
+^^^^^^^^^
+
+.. attention::
+
+   Be sure to save your changes before closing.
+
+Caution
+^^^^^^^
+
+.. caution::
+
+   This feature is a work in progress, be sure to back up your data.
+
+Danger
+^^^^^^
+
+.. danger::
+
+   Migrating from v1 to v3 directly is not supported! You may experience
+   data loss!
+
+Error
+^^^^^
+
+.. error::
+
+   Something happended that prevented the configurator from configurating
+   the thing. Pray that this message might mean something to someone because
+   I can't help you.
+
+   .. code-block:: none
+
+      +----------------------------------------------------------------+
+      |                          !Error!                               |
+      |                                                                |
+      | Configurator sprocket was misaligned to the flange, revert the |
+      | combobulator to base level inductance before trying to dis     |
+      | the belated combo.                                             |
+      +----------------------------------------------------------------+
+
+Hint
+^^^^
+
+.. hint::
+
+   Try turining it off and on again.
+
+Important
+^^^^^^^^^
+
+.. important::
+
+   Switch on before use.
+
+Note
+^^^^
+
+.. note::
+
+   There are some situations where this may not apply.
+
+Tip
+^^^
+
+.. tip::
+
+   For best results:
+
+   - try on a Thursday afternoon.
+   - do not submerge in water
+   - never throw it out a window.
+
+Warning
+^^^^^^^
+
+.. warning::
+
+   This feature will be removed in future versions.
+
+   Be sure to check the release notes before upgrading.

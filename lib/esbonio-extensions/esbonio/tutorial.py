@@ -26,10 +26,11 @@ from sphinx.util.osutil import relative_uri
 __version__ = "0.0.2"
 
 logger = getLogger(__name__)
-
-
 CELL_TYPES = {"markdown": nbf.new_markdown_cell, "code": nbf.new_code_cell}
-REPL_PATTERN = re.compile(r"^(>>>|\.\.\.) ?")
+REPL_PATTERN = re.compile(r"^(>>>|\.\.\.) ?", re.MULTILINE)
+
+CODE_LANGUAGES = {"default", "python", "pycon3"}
+"""The set of languages we support being exported as a notebook."""
 
 
 class solution(nodes.General, nodes.Element):
@@ -158,18 +159,6 @@ class NotebookTranslator(nodes.NodeVisitor):
 
         self.current_cell.source += text
 
-    def push_list_style(self, style: str):
-        """Push a style onto the list style stack."""
-        self._list_styles.append(style)
-
-    def pop_list_style(self):
-        """Pop the most recent element off the list style stack."""
-
-        if len(self._list_styles) == 0:
-            return
-
-        self._list_styles.pop()
-
     def push_prefix(self, node: nodes.Node, prefix: str):
         """Push a (node, prefix) pair onto the prefix stack."""
         self._prefix.append((node, prefix))
@@ -184,30 +173,79 @@ class NotebookTranslator(nodes.NodeVisitor):
         if self._prefix[-1][0] == node:
             self._prefix.pop()
 
-    # ------------------------------------ Visitors -----------------------------------
+    # --------------------------------- Admonitions ------------------------------------
 
-    def visit_block_quote(self, node):
-        self.append_text("> ")
-        self.push_prefix(node, "> ")
+    def _visit_admonition(name):
+        def visitor(self, node):
+            self.new_cell("markdown")
+            self.append_text(f"\n> **{name}**\n>")
+            self.push_prefix(node, "> ")
 
-    def depart_block_quote(self, node):
+        return visitor
+
+    def _depart_admonition(self, node):
         self.pop_prefix(node)
+        self.append_text("\n")
 
-    def visit_bullet_list(self, node):
-        self.push_list_style("-")
+    visit_attention = _visit_admonition("Attention")
+    depart_attention = _depart_admonition
 
-    def depart_bullet_list(self, node):
+    visit_caution = _visit_admonition("Caution")
+    depart_caution = _depart_admonition
+
+    visit_danger = _visit_admonition("Danger")
+    depart_danger = _depart_admonition
+
+    visit_error = _visit_admonition("Error")
+    depart_error = _depart_admonition
+
+    visit_hint = _visit_admonition("Hint")
+    depart_hint = _depart_admonition
+
+    visit_important = _visit_admonition("Important")
+    depart_important = _depart_admonition
+
+    visit_note = _visit_admonition("Note")
+    depart_note = _depart_admonition
+
+    visit_tip = _visit_admonition("Tip")
+    depart_tip = _depart_admonition
+
+    visit_warning = _visit_admonition("Warning")
+    depart_warning = _depart_admonition
+
+    # ------------------------------------ Lists ---------------------------------------
+
+    def push_list_style(self, style: str):
+        """Push a style onto the list style stack."""
+        self._list_styles.append(style)
+
+    def pop_list_style(self):
+        """Pop the most recent element off the list style stack."""
+
+        if len(self._list_styles) == 0:
+            return
+
+        self._list_styles.pop()
+
+    def _visit_list(style: str):
+        def visitor(self, node):
+            self.new_cell("markdown")
+            self.push_list_style(style)
+
+        return visitor
+
+    def _depart_list(self, node):
         self.pop_list_style()
 
-    def visit_comment(self, node):
-        node.children = []
+    visit_bullet_list = _visit_list("-")
+    depart_bullet_list = _depart_list
 
-    def visit_definition_list(self, node):
-        # self.append_text("\n")
-        self.push_list_style("-")
+    visit_definition_list = _visit_list("-")
+    depart_definition_list = _depart_list
 
-    def depart_definition_list(self, node):
-        self.pop_list_style()
+    visit_enumerated_list = _visit_list("1.")
+    depart_enumerated_list = _depart_list
 
     def visit_definition_list_item(self, node):
         self.append_text(f"\n{self.list_style} ")
@@ -216,19 +254,33 @@ class NotebookTranslator(nodes.NodeVisitor):
     def depart_definition_list_item(self, node):
         self.pop_prefix(node)
 
+    def visit_list_item(self, node):
+        self.append_text(f"\n{self.list_style} ")
+        self.push_prefix(node, " " * (len(self.list_style) + 1))
+
+    def depart_list_item(self, node):
+        self.pop_prefix(node)
+
+    # ------------------------------------ Misc ----------------------------------------
+
+    def visit_block_quote(self, node):
+        self.append_text("> ")
+        self.push_prefix(node, "> ")
+
+    def depart_block_quote(self, node):
+        self.pop_prefix(node)
+
+    def visit_comment(self, node):
+        node.children = []
+
     def visit_emphasis(self, node):
         self.append_text("*")
 
     def depart_emphasis(self, node):
         self.append_text("*")
 
-    def visit_enumerated_list(self, node):
-        self.push_list_style("1.")
-
-    def depart_enumerated_list(self, node):
-        self.pop_list_style()
-
     def visit_image(self, node):
+        self.new_cell("markdown")
         self.append_text("![")
 
     def depart_image(self, node):
@@ -258,7 +310,7 @@ class NotebookTranslator(nodes.NodeVisitor):
     def visit_literal_block(self, node):
         language = node.attributes.get("language", "none")
 
-        if language in {"default", "python"}:
+        if language in CODE_LANGUAGES:
             self.new_cell("code")
             return
 
@@ -272,18 +324,11 @@ class NotebookTranslator(nodes.NodeVisitor):
 
     def depart_literal_block(self, node):
         language = node.attributes.get("language", "none")
-        if language in {"default", "python"}:
+        if language in CODE_LANGUAGES:
             self.new_cell("markdown")
             return
 
         self.append_text("\n```\n")
-
-    def visit_list_item(self, node):
-        self.append_text(f"\n{self.list_style} ")
-        self.push_prefix(node, " " * (len(self.list_style) + 1))
-
-    def depart_list_item(self, node):
-        self.pop_prefix(node)
 
     def visit_math(self, node):
         self.append_text("$")
