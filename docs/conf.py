@@ -27,6 +27,9 @@ author = ""
 # The full version, including alpha/beta/rc tags
 release = esbonio.lsp.__version__
 
+# -- i18n configuration ------------------------------------------------------
+locale_dirs = ["locale/"]
+gettext_compact = False
 
 # -- General configuration ---------------------------------------------------
 
@@ -50,6 +53,7 @@ autodoc_default_options = {
 autodoc_typehints = "description"
 
 intersphinx_mapping = {
+    "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
     "python": ("https://docs.python.org/3/", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master", None),
 }
@@ -60,7 +64,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**/_*.rst"]
 
 
 # -- Options for HTML output -------------------------------------------------
@@ -92,3 +96,20 @@ def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
 def setup(app: Sphinx):
     app.add_css_file("css/custom.css", priority=1000)
     app.add_role("lsp", lsp_role)
+
+    # So that it's possible to use intersphinx to link to configuration options
+    # in sphinx.
+    app.add_object_type(
+        "confval",
+        "confval",
+        objname="configuration value",
+        indextemplate="pair: %s; configuration value",
+    )
+
+    # So that it's possible to use intersphinx to link to IPython magics
+    app.add_object_type(
+        "magic",
+        "magic",
+        objname="IPython magic",
+        indextemplate="pair: %s; IPython magic",
+    )

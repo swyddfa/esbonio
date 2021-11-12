@@ -44,6 +44,7 @@ underlines = ["-", "^", "\""]
 legacy_tox_ini = """
 [tox]
 isolated_build = True
+envlist = py{37,38,39,310}
 
 [testenv]
 deps =
@@ -56,9 +57,19 @@ commands =
 
 [testenv:pkg]
 deps =
-    wheel
+    build
+    ../esbonio
+    sphinx-panels
 usedevelop = True
+allowlist_externals =
+    cp
+    mkdir
 commands =
-    python setup.py clean --all
-    python setup.py sdist bdist_wheel
+
+    sphinx-build -b tutorial ../../docs/ ../../docs/_build/tutorial
+    mkdir esbonio/tutorial_demo
+    cp -r ../../docs/_build/tutorial/extensions esbonio/tutorial_demo/extensions
+    cp -r ../../docs/_build/tutorial/resources esbonio/tutorial_demo/resources
+
+    python -m build
 """

@@ -8,8 +8,7 @@ from docutils.parsers.rst import Parser
 from docutils.readers.standalone import Reader
 from sphinx.ext.doctest import DoctestDirective
 
-from esbonio.tutorial import SolutionDirective
-from esbonio.tutorial import TutorialDirective
+from esbonio.tutorial import Solution
 
 
 @py.test.fixture(scope="session")
@@ -79,8 +78,7 @@ def parse_rst(rst_mock_settings):
 
     # Register any extended directives with docutils
     directives.register_directive("doctest", DoctestDirective)
-    directives.register_directive(SolutionDirective.NAME, SolutionDirective)
-    directives.register_directive(TutorialDirective.NAME, TutorialDirective)
+    directives.register_directive("solution", Solution)
 
     def parse(src):
         parser = Parser()
