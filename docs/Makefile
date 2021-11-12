@@ -1,20 +1,25 @@
-# Minimal makefile for Sphinx documentation
-#
 
-# You can set these variables from the command line, and also
-# from the environment for the first two.
-SPHINXOPTS    ?=
-SPHINXBUILD   ?= sphinx-build
-SOURCEDIR     = .
-BUILDDIR      = _build
+ifeq ($(CI),true)
+	BUILD=html-build
+else
+	BUILD=html-local
+endif
 
-# Put it first so that "make" without argument is like "make help".
-help:
-	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-.PHONY: help Makefile
+ifeq ($(GITHUB_REF),refs/heads/release)
+	BUILDDIR=stable
+else
+	BUILDDIR=latest
+endif
 
-# Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
-%: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+html-build:
+	sphinx-build -b html . _build/$(BUILDDIR)/en/
+	sphinx-build -b html . _build/$(BUILDDIR)/cy/ -Dlanguage=cy
+	echo "::set-output name=version::$(BUILDDIR)"
+
+
+html-local:
+	sphinx-build -M html . _build $(SPHINXOPTS)
+
+html: $(BUILD)
