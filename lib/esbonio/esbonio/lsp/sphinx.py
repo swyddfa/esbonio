@@ -379,7 +379,6 @@ class SphinxLanguageServer(RstLanguageServer):
             return None
 
         try:
-            self.logger.debug("Getting doctree for '%s'", docname)
             return self.app.env.get_and_resolve_doctree(docname, self.app.builder)
         except FileNotFoundError:
             self.logger.debug(traceback.format_exc())
@@ -484,6 +483,26 @@ class SphinxLanguageServer(RstLanguageServer):
                 self._roles[key] = role
 
         return self._roles
+
+    def get_default_role(self) -> Optional[Tuple[Optional[str], Optional[str]]]:
+        """Return the project's default role"""
+
+        if not self.app:
+            return None, None
+
+        role = self.app.config.default_role
+        if not role:
+            return None, None
+
+        if ":" in role:
+            domain, name = role.split(":")
+
+            if domain == self.app.config.primary_domain:
+                domain = ""
+
+            return domain, name
+
+        return None, role
 
     def get_role_target_types(self, name: str, domain: str = "") -> List[str]:
         """Return a map indicating which object types a role is capable of linking

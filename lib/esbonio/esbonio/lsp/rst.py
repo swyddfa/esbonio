@@ -253,6 +253,10 @@ class RstLanguageServer(LanguageServer):
 
         return self._roles
 
+    def get_default_role(self) -> Optional[Tuple[Optional[str], str]]:
+        """Return the default role for the project."""
+        return None
+
     def clear_diagnostics(self, source: str, uri: Optional[str] = None) -> None:
         """Clear diagnostics from the given source.
 
