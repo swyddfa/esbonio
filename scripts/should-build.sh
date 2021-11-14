@@ -3,7 +3,7 @@
 
 # File patterns to check for each component, if there's a match a build will be
 # triggered
-DOCS="^docs"
+DOCS="^docs|^lib/.*.py"
 LSP="^lib/esbonio/"
 EXTENSIONS="^lib/esbonio-extensions/"
 VSCODE="^code"
