@@ -9,6 +9,7 @@ from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 
+from esbonio.lsp.roles import DEFAULT_ROLE
 from esbonio.lsp.roles import ROLE
 from esbonio.lsp.testing import ClientServer
 from esbonio.lsp.testing import completion_request
@@ -631,6 +632,55 @@ async def test_role_target_definitions(
                 )
             ],
         ),
+        # Default Role
+        *itertools.product(
+            role_patterns("`"),
+            [
+                ("sphinx-default", None, None),
+                (
+                    "sphinx-extensions",
+                    {
+                        "pythagoras",
+                        "pythagoras.PI",
+                        "pythagoras.UNKNOWN",
+                        "pythagoras.Triangle",
+                        "pythagoras.Triangle.a",
+                        "pythagoras.Triangle.b",
+                        "pythagoras.Triangle.c",
+                        "pythagoras.Triangle.is_right_angled",
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                        "python",
+                        "sphinx",
+                    },
+                    None,
+                ),
+            ],
+        ),
+        *itertools.product(
+            role_patterns("`some label <"),
+            [
+                ("sphinx-default", None, None),
+                (
+                    "sphinx-extensions",
+                    {
+                        "pythagoras",
+                        "pythagoras.PI",
+                        "pythagoras.UNKNOWN",
+                        "pythagoras.Triangle",
+                        "pythagoras.Triangle.a",
+                        "pythagoras.Triangle.b",
+                        "pythagoras.Triangle.c",
+                        "pythagoras.Triangle.is_right_angled",
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                        "python",
+                        "sphinx",
+                    },
+                    None,
+                ),
+            ],
+        ),
     ],
 )
 async def test_role_target_completions(client_server, text, setup):
@@ -1066,11 +1116,144 @@ def test_role_regex(string, expected):
     To test situations where the pattern should **not** match the input, pass ``None``
     as the second argument.
 
-    To test situaions where the pattern should match, but we don't expect to see any
+    To test situations where the pattern should match, but we don't expect to see any
     groups pass an empty dictionary as the second argument.
     """
 
-    match = ROLE.match(string)
+    match = ROLE.search(string)
+
+    if expected is None:
+        assert match is None
+    else:
+        assert match is not None
+
+        for name, value in expected.items():
+            assert match.groupdict().get(name, None) == value
+
+
+@py.test.mark.parametrize(
+    "string, expected",
+    [
+        (
+            "`",
+            {"target": "`"},
+        ),
+        (
+            ":ref:`",
+            None,
+        ),
+        (
+            ":ref:``",
+            None,
+        ),
+        (
+            ":py:func:`",
+            None,
+        ),
+        (
+            ":py:func:``",
+            None,
+        ),
+        (
+            "`!some_label",
+            {
+                "label": "some_label",
+                "target": "`!some_label",
+                "modifier": "!",
+            },
+        ),
+        (
+            "`~some_label",
+            {
+                "label": "some_label",
+                "target": "`~some_label",
+                "modifier": "~",
+            },
+        ),
+        (
+            "`some_label",
+            {
+                "label": "some_label",
+                "target": "`some_label",
+            },
+        ),
+        (
+            "`some_label`",
+            {
+                "label": "some_label",
+                "target": "`some_label`",
+            },
+        ),
+        (
+            "`see more <",
+            {
+                "alias": "see more ",
+                "target": "`see more <",
+            },
+        ),
+        (
+            "`see more <!some_label",
+            {
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <!some_label",
+                "modifier": "!",
+            },
+        ),
+        (
+            "`see more <~some_label",
+            {
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <~some_label",
+                "modifier": "~",
+            },
+        ),
+        (
+            "`see more <some_label",
+            {
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label",
+            },
+        ),
+        (
+            "`see more <some_label>`",
+            {
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>`",
+            },
+        ),
+    ],
+)
+def test_default_role_regex(string, expected):
+    """Ensure that the regular expression we use to detect and parse default roles works
+    as expected.
+
+    As a general rule, it's better to write tests at the LSP protocol level as that
+    decouples the test cases from the implementation. However, roles and the
+    corresponding regular expression are complex enough to warrant a test case on its
+    own.
+
+    As with most test cases, this one is parameterized with the following arguments::
+
+        (":ref:", {"name": "ref"}),
+        (".. directive::", None)
+
+    The first argument is the string to test the pattern against, the second a
+    dictionary containing the groups we expect to see in the resulting match object.
+    Groups that appear in the resulting match object but not in the expected result will
+    **not** fail the test.
+
+    To test situations where the pattern should **not** match the input, pass ``None``
+    as the second argument.
+
+    To test situations where the pattern should match, but we don't expect to see any
+    groups pass an empty dictionary as the second argument.
+    """
+
+    match = DEFAULT_ROLE.search(string)
 
     if expected is None:
         assert match is None

@@ -83,9 +83,17 @@ class Domain(TargetCompletion):
     def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
 
         groups = context.match.groupdict()
-        name = groups["name"]
-        domain = groups["domain"] or None
         label = groups["label"]
+
+        # Handle the default role case.
+        if "role" not in groups:
+            domain, name = self.rst.get_default_role()
+
+            if not name:
+                return []
+        else:
+            name = groups["name"]
+            domain = groups["domain"] or None
 
         if ":" in label:
             return self.complete_intersphinx_targets(name, domain, label)
