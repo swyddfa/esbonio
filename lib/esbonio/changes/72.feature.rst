@@ -1,0 +1,1 @@
+The language server now respects the project's ``default_role`` setting.

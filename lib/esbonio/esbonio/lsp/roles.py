@@ -68,6 +68,26 @@ is expected to match.
 """
 
 
+DEFAULT_ROLE = re.compile(
+    r"""
+    (?<![:`])
+    (?P<target>
+      `                               # targets begin with a '`' character
+      ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
+      (?P<modifier>[!~])?             # targets may have a modifier
+      (?P<label>[^<`>]*)?             # targets contain a label
+      >?                              # labels end with a '>' when there's an alias
+      `?                              # targets end with a '`' character
+    )
+    """,
+    re.VERBOSE,
+)
+"""A regular expression to detect and parse parial and complete "default" roles.
+
+A "default" role is the target part of a normal role - but without the ``:name:`` part.
+"""
+
+
 class TargetDefinition:
     """A definition provider for role targets"""
 
@@ -125,7 +145,7 @@ class Roles(LanguageFeature):
     def add_target_provider(self, provider: TargetCompletion) -> None:
         self._target_providers.append(provider)
 
-    completion_triggers = [ROLE]
+    completion_triggers = [ROLE, DEFAULT_ROLE]
     definition_triggers = [ROLE]
 
     def definition(
