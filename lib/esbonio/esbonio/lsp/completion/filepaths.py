@@ -93,14 +93,9 @@ class Filepath(ArgumentCompletion, TargetCompletion):
         if name in {"image", "figure", "include", "literalinclude"}:
             return self.complete_filepaths(context)
 
-    def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
-
-        groups = context.match.groupdict()
-
-        if "role" not in groups:
-            _, name = self.rst.get_default_role()
-        else:
-            name = groups["name"]
+    def complete_targets(
+        self, context: CompletionContext, domain: str, name: str
+    ) -> List[CompletionItem]:
 
         if name in {"download"}:
             return self.complete_filepaths(context)

@@ -114,7 +114,9 @@ class TargetDefinition:
 class TargetCompletion:
     """A completion provider for role targets"""
 
-    def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
+    def complete_targets(
+        self, context: CompletionContext, domain: str, name: str
+    ) -> List[CompletionItem]:
         """Return a list of completion items representing valid targets for the given
         role.
 
@@ -122,6 +124,10 @@ class TargetCompletion:
         ----------
         context:
            The completion context
+        domain:
+           The name of the domain the role is a member of
+        name:
+           The name of the role to generate completion suggestions for.
         """
         return []
 
@@ -261,7 +267,16 @@ class Roles(LanguageFeature):
 
         groups = context.match.groupdict()
 
-        # Only generate suggestions for "aliased" targets, if the request comes from
+        # Handle the default role case.
+        if "role" not in groups:
+            domain, name = self.rst.get_default_role()
+            if not name:
+                return []
+        else:
+            name = groups["name"]
+            domain = groups["domain"] or ""
+
+        # Only generate suggestions for "aliased" targets if the request comes from
         # within the <> chars.
         if groups["alias"]:
             text = context.match.group(0)
@@ -286,7 +301,7 @@ class Roles(LanguageFeature):
         modifier = groups["modifier"] or ""
 
         for provide in self._target_providers:
-            candidates = provide.complete_targets(context) or []
+            candidates = provide.complete_targets(context, domain, name) or []
 
             for candidate in candidates:
 
