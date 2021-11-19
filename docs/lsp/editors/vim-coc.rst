@@ -1,32 +1,21 @@
-Vim/Neovim
-==========
-
-There are multiple ways to make use of a language server within the vim ecosystem.
-
-- `coc.nvim`_ a fully featured language client that aims to closely follow the
-  way VSCode works. Despite what the name implies it includes supports for both
-  vim8 and neovim
-- `vim-lsp`_ an async LSP plugin for vim8 and neovim.
-- `neovim`_ neovim v0.5+ comes with built-in support for the language server protocol.
-
-.. _coc.nvim: https://github.com/neoclide/coc.nvim
-.. _vim-lsp: https://github.com/prabirshrestha/vim-lsp
-.. _neovim: https://neovim.io/doc/user/lsp.html
-
-
-This page contains a number of sample configurations that you can use to get started.
-
-Coc.nvim
----------
+Vim/Neovim - coc.nvim
+=====================
 
 .. figure:: /images/nvim-coc.png
    :align: center
    :width: 80%
 
-   Using Esbonio and Neovim with the ``esbonio-coc.vim`` config.
+   Using Esbonio and Neovim with ``coc.nvim``.
+
+.. include:: _vim-intro.rst
+
+.. highlight:: none
+
+This page documents how you can use the Esbonio langauge server with `coc.nvim`_ thanks
+to the `coc-esbonio <https://github.com/yaegassy/coc-esbonio>`_ extension.
 
 Setup
-^^^^^
+-----
 
 .. tabbed:: vim-plug
 
@@ -58,7 +47,7 @@ Setup
          :CocInstall coc-esbonio
 
 Configuration
-^^^^^^^^^^^^^
+-------------
 
 The language server provides a number of :ref:`configuration <editor_integration_config>`
 values these can be set in coc.nvim's ``coc-settings.json`` configuration file, for
@@ -73,3 +62,13 @@ example
 
 See coc.nvim's `documentation <https://github.com/neoclide/coc.nvim/wiki/Using-the-configuration-file>`_
 for more details.
+
+Debugging
+---------
+
+In the event of something not working as you'd expect you can use the command
+``:CocCommand workspace.showOutput`` to view log output from Esbonio. Be sure to set the ``server.logLevel``
+initialization option to ``debug``.
+
+See coc.nvim's `readme <https://github.com/neoclide/coc.nvim#trouble-shooting>`_ and
+`wiki <https://github.com/neoclide/coc.nvim/wiki/Debug-language-server>`_ for more details.
