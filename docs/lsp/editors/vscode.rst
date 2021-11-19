@@ -8,7 +8,7 @@ VSCode
 
    The VSCode extension editing this page
 
-Integration with the `VSCode`_ editor is provided via the `Esbonio`_ extension.
+Integration with `VSCode`_ is provided by the `Esbonio`_ extension.
 
 
 Configuration

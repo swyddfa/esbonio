@@ -43,6 +43,9 @@ language server from your editor of choice.
    - :doc:`/lsp/editors/emacs`
    - :doc:`/lsp/editors/kate`
    - :doc:`/lsp/editors/vscode`
+   - :doc:`/lsp/editors/nvim`
+   - :doc:`/lsp/editors/vim-coc`
+   - :doc:`/lsp/editors/vim-lsp`
 
 .. _editor_integration_config:
 

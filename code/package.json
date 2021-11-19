@@ -9,6 +9,13 @@
     "publisher": "swyddfa",
     "license": "MIT",
     "version": "0.7.1",
+    "keywords": [
+        "sphinx",
+        "documentation"
+    ],
+    "categories": [
+        "Programming Languages"
+    ],
     "scripts": {
         "compile": "webpack --mode development",
         "compile-test": "npm run clean && tsc -p ./",
