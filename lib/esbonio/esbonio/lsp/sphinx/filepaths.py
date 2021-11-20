@@ -1,6 +1,8 @@
 """Completion provider for filepaths."""
 import pathlib
+import typing
 from typing import List
+from typing import Optional
 
 import pygls.uris as uri
 from pygls.lsp.types import CompletionItem
@@ -12,7 +14,13 @@ from pygls.lsp.types import TextEdit
 from esbonio.lsp.directives import ArgumentCompletion
 from esbonio.lsp.roles import TargetCompletion
 from esbonio.lsp.rst import CompletionContext
+from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
+
+
+if typing.TYPE_CHECKING:
+    from esbonio.lsp.directives import Directives
+    from esbonio.lsp.roles import Roles
 
 
 def path_to_completion_item(
@@ -127,3 +135,17 @@ class Filepath(ArgumentCompletion, TargetCompletion):
             candidate_dir = candidate_dir.parent
 
         return [path_to_completion_item(context, p) for p in candidate_dir.glob("*")]
+
+
+def esbonio_setup(rst: RstLanguageServer):
+
+    roles = rst.get_feature("roles")  # type: Optional[Roles]
+    directives = rst.get_feature("directives")  # type: Optional[Directives]
+
+    filepaths = Filepath(rst)
+
+    if roles and isinstance(rst, SphinxLanguageServer):
+        roles.add_target_provider(filepaths)
+
+    if directives and isinstance(rst, SphinxLanguageServer):
+        directives.add_argument_provider(filepaths)

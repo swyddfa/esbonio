@@ -44,8 +44,8 @@ __all__ = [
 BUILTIN_MODULES = [
     "esbonio.lsp.directives",
     "esbonio.lsp.roles",
-    "esbonio.lsp.completion",
-    "esbonio.lsp.definition",
+    "esbonio.lsp.sphinx.domains",
+    "esbonio.lsp.sphinx.filepaths",
 ]
 
 logger = logging.getLogger(__name__)

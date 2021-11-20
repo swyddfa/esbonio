@@ -30,9 +30,9 @@ from sphinx.domains import Domain
 from sphinx.util import console
 from sphinx.util.logging import WarningLogRecordTranslator
 
-from .log import LspHandler
-from .rst import RstLanguageServer
-from .rst import ServerConfig
+from esbonio.lsp.log import LspHandler
+from esbonio.lsp.rst import RstLanguageServer
+from esbonio.lsp.rst import ServerConfig
 
 try:
     from sphinx.util.logging import OnceFilter
