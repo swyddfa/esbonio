@@ -68,7 +68,7 @@ class Domain(TargetDefinition):
         if docname is None:
             return []
 
-        doctree = self.rst.get_doctree(docname)
+        doctree = self.rst.get_doctree(docname=docname)
         if doctree is None:
             return []
 

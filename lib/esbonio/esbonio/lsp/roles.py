@@ -12,8 +12,8 @@ from pygls.lsp.types import TextEdit
 from pygls.workspace import Document
 
 from .directives import DIRECTIVE
-from .feature import CompletionContext
-from .feature import LanguageFeature
+from .rst import CompletionContext
+from .rst import LanguageFeature
 from .rst import RstLanguageServer
 
 ROLE = re.compile(
@@ -28,6 +28,7 @@ ROLE = re.compile(
     (?P<target>
       `                               # targets begin with a '`' character
       ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
+      (?P<modifier>[!~])?             # targets may have a modifier
       (?P<label>[^<`>]*)?             # targets contain a label
       >?                              # labels end with a '>' when there's an alias
       `?                              # targets end with a '`' character
@@ -40,9 +41,10 @@ ROLE = re.compile(
 I'm not sure if there are offical names for the components of a role, but the
 language server breaks a role down into a number of parts::
 
-                vvvvvv label
+                 vvvvvv label
+                v modifier(optional)
                vvvvvvvv target
-   :c:function:`malloc`
+   :c:function:`!malloc`
    ^^^^^^^^^^^^ role
       ^^^^^^^^ name
     ^ domain (optional)
@@ -53,15 +55,36 @@ also possible to define "aliased" roles, where the link text in the final docume
 is overriden, for example::
 
                 vvvvvvvvvvvvvvvvvvvvvvvv alias
-                                         vvvvvv label
+                                          vvvvvv label
+                                         v modifier (optional)
                vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv target
-   :c:function:`used to allocate memory <malloc>`
+   :c:function:`used to allocate memory <~malloc>`
    ^^^^^^^^^^^^ role
       ^^^^^^^^ name
     ^ domain (optional)
 
 See :func:`tests.test_roles.test_role_regex` for a list of example strings this pattern
 is expected to match.
+"""
+
+
+DEFAULT_ROLE = re.compile(
+    r"""
+    (?<![:`])
+    (?P<target>
+      `                               # targets begin with a '`' character
+      ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
+      (?P<modifier>[!~])?             # targets may have a modifier
+      (?P<label>[^<`>]*)?             # targets contain a label
+      >?                              # labels end with a '>' when there's an alias
+      `?                              # targets end with a '`' character
+    )
+    """,
+    re.VERBOSE,
+)
+"""A regular expression to detect and parse parial and complete "default" roles.
+
+A "default" role is the target part of a normal role - but without the ``:name:`` part.
 """
 
 
@@ -91,7 +114,9 @@ class TargetDefinition:
 class TargetCompletion:
     """A completion provider for role targets"""
 
-    def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
+    def complete_targets(
+        self, context: CompletionContext, domain: str, name: str
+    ) -> List[CompletionItem]:
         """Return a list of completion items representing valid targets for the given
         role.
 
@@ -99,6 +124,10 @@ class TargetCompletion:
         ----------
         context:
            The completion context
+        domain:
+           The name of the domain the role is a member of
+        name:
+           The name of the role to generate completion suggestions for.
         """
         return []
 
@@ -122,7 +151,7 @@ class Roles(LanguageFeature):
     def add_target_provider(self, provider: TargetCompletion) -> None:
         self._target_providers.append(provider)
 
-    completion_triggers = [ROLE]
+    completion_triggers = [ROLE, DEFAULT_ROLE]
     definition_triggers = [ROLE]
 
     def definition(
@@ -238,7 +267,16 @@ class Roles(LanguageFeature):
 
         groups = context.match.groupdict()
 
-        # Only generate suggestions for "aliased" targets, if the request comes from
+        # Handle the default role case.
+        if "role" not in groups:
+            domain, name = self.rst.get_default_role()
+            if not name:
+                return []
+        else:
+            name = groups["name"]
+            domain = groups["domain"] or ""
+
+        # Only generate suggestions for "aliased" targets if the request comes from
         # within the <> chars.
         if groups["alias"]:
             text = context.match.group(0)
@@ -260,14 +298,15 @@ class Roles(LanguageFeature):
             end=Position(line=context.position.line, character=end),
         )
         prefix = context.match.group(0)[start:]
+        modifier = groups["modifier"] or ""
 
         for provide in self._target_providers:
-            candidates = provide.complete_targets(context) or []
+            candidates = provide.complete_targets(context, domain, name) or []
 
             for candidate in candidates:
 
                 # Don't interfere with items that already carry a `text_edit`, allowing
-                # some providers (like intersphinx) to do something special.
+                # some providers (like filepaths) to do something special.
                 if not candidate.text_edit:
                     new_text = candidate.insert_text or candidate.label
 
@@ -276,7 +315,9 @@ class Roles(LanguageFeature):
                     # suggestions!
                     candidate.filter_text = f"{prefix}{new_text}"
 
-                    candidate.text_edit = TextEdit(range=range_, new_text=new_text)
+                    candidate.text_edit = TextEdit(
+                        range=range_, new_text=f"{modifier}{new_text}"
+                    )
                     candidate.insert_text = None
 
                 if not candidate.text_edit.new_text.endswith(endchars):

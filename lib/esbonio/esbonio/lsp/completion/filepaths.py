@@ -10,8 +10,8 @@ from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
 
 from esbonio.lsp.directives import ArgumentCompletion
-from esbonio.lsp.feature import CompletionContext
 from esbonio.lsp.roles import TargetCompletion
+from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
 
@@ -93,9 +93,10 @@ class Filepath(ArgumentCompletion, TargetCompletion):
         if name in {"image", "figure", "include", "literalinclude"}:
             return self.complete_filepaths(context)
 
-    def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
+    def complete_targets(
+        self, context: CompletionContext, domain: str, name: str
+    ) -> List[CompletionItem]:
 
-        name = context.match.groupdict()["name"]
         if name in {"download"}:
             return self.complete_filepaths(context)
 

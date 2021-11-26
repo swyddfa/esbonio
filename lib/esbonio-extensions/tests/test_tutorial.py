@@ -19,7 +19,6 @@ import esbonio.tutorial as tutorial
         "inline_code",
         "inline_link",
         "italic",
-        "literal_block",
         "paragraphs",
         "note",
     ],
@@ -43,6 +42,10 @@ def test_notebook_translator(testdata, parse_rst, name):
 
     notebook = translator.asnotebook()
     notebook.nbformat_minor = None
+
+    # Don't worry about cell ids
+    for cell in notebook.cells:
+        cell.id = ""
 
     actual = nbformat.writes(notebook)
     expected = nbformat.writes(nb)

@@ -1,4 +1,5 @@
 import itertools
+import re
 from typing import Optional
 from typing import Set
 from typing import Tuple
@@ -8,6 +9,7 @@ from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 
+from esbonio.lsp.roles import DEFAULT_ROLE
 from esbonio.lsp.roles import ROLE
 from esbonio.lsp.testing import ClientServer
 from esbonio.lsp.testing import completion_request
@@ -383,7 +385,7 @@ async def test_role_target_definitions(
             ],
         ),
         *itertools.product(
-            role_target_patterns("ref"),
+            [*role_target_patterns("ref"), *role_target_patterns("ref", "sea")],
             [
                 (
                     "sphinx-default",
@@ -441,7 +443,11 @@ async def test_role_target_definitions(
             role_target_patterns("class"),
             [
                 ("sphinx-default", {"pythagoras.Triangle"}, None),
-                ("sphinx-extensions", {"python", "sphinx"}, {"pythagoras.Triangle"}),
+                (
+                    "sphinx-extensions",
+                    set(),  # c domain has no classes.
+                    {"pythagoras.Triangle", "python", "sphinx"},
+                ),
             ],
         ),
         *itertools.product(
@@ -515,8 +521,8 @@ async def test_role_target_definitions(
                 ("sphinx-default", {"pythagoras.Triangle.is_right_angled"}, None),
                 (
                     "sphinx-extensions",
-                    {"sphinx", "python"},
-                    {"pythagoras.Triangle.is_right_angled"},
+                    set(),  # c domain has no methods.
+                    {"pythagoras.Triangle.is_right_angled", "sphinx", "python"},
                 ),
             ],
         ),
@@ -552,7 +558,7 @@ async def test_role_target_definitions(
                 ),
                 (
                     "sphinx-extensions",
-                    {"sphinx", "python"},
+                    set(),  # c domain has no objs
                     {
                         "pythagoras",
                         "pythagoras.PI",
@@ -564,6 +570,8 @@ async def test_role_target_definitions(
                         "pythagoras.Triangle.is_right_angled",
                         "pythagoras.calc_hypotenuse",
                         "pythagoras.calc_side",
+                        "sphinx",
+                        "python",
                     },
                 ),
             ],
@@ -624,6 +632,55 @@ async def test_role_target_definitions(
                 )
             ],
         ),
+        # Default Role
+        *itertools.product(
+            role_patterns("`"),
+            [
+                ("sphinx-default", None, None),
+                (
+                    "sphinx-extensions",
+                    {
+                        "pythagoras",
+                        "pythagoras.PI",
+                        "pythagoras.UNKNOWN",
+                        "pythagoras.Triangle",
+                        "pythagoras.Triangle.a",
+                        "pythagoras.Triangle.b",
+                        "pythagoras.Triangle.c",
+                        "pythagoras.Triangle.is_right_angled",
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                        "python",
+                        "sphinx",
+                    },
+                    None,
+                ),
+            ],
+        ),
+        *itertools.product(
+            role_patterns("`some label <"),
+            [
+                ("sphinx-default", None, None),
+                (
+                    "sphinx-extensions",
+                    {
+                        "pythagoras",
+                        "pythagoras.PI",
+                        "pythagoras.UNKNOWN",
+                        "pythagoras.Triangle",
+                        "pythagoras.Triangle.a",
+                        "pythagoras.Triangle.b",
+                        "pythagoras.Triangle.c",
+                        "pythagoras.Triangle.is_right_angled",
+                        "pythagoras.calc_hypotenuse",
+                        "pythagoras.calc_side",
+                        "python",
+                        "sphinx",
+                    },
+                    None,
+                ),
+            ],
+        ),
     ],
 )
 async def test_role_target_completions(client_server, text, setup):
@@ -680,20 +737,36 @@ async def test_role_target_completions(client_server, text, setup):
 
 @py.test.mark.asyncio
 @py.test.mark.parametrize(
-    "project,text,ending,expected_range",
+    "project,text,pattern,expected_range",
     [
         (
             "sphinx-default",
             ":ref:`some_text",
-            "`",
+            ".*`",
             Range(
                 start=Position(line=0, character=6), end=Position(line=0, character=15)
             ),
         ),
         (
             "sphinx-default",
+            ":ref:`!some_text",
+            "!.*`",
+            Range(
+                start=Position(line=0, character=6), end=Position(line=0, character=16)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":ref:`~some_text",
+            "~.*`",
+            Range(
+                start=Position(line=0, character=6), end=Position(line=0, character=16)
+            ),
+        ),
+        (
+            "sphinx-default",
             "find out more :ref:`some_text",
-            "`",
+            ".*`",
             Range(
                 start=Position(line=0, character=20), end=Position(line=0, character=29)
             ),
@@ -701,15 +774,31 @@ async def test_role_target_completions(client_server, text, setup):
         (
             "sphinx-default",
             ":ref:`more info <some_text",
-            ">`",
+            ".*>`",
             Range(
                 start=Position(line=0, character=17), end=Position(line=0, character=26)
             ),
         ),
         (
             "sphinx-default",
+            ":ref:`more info <!some_text",
+            "!.*>`",
+            Range(
+                start=Position(line=0, character=17), end=Position(line=0, character=27)
+            ),
+        ),
+        (
+            "sphinx-default",
+            ":ref:`more info <~some_text",
+            "~.*>`",
+            Range(
+                start=Position(line=0, character=17), end=Position(line=0, character=27)
+            ),
+        ),
+        (
+            "sphinx-default",
             ":download:`_static/vscode_screenshot.png",
-            "`",
+            ".*`",
             Range(
                 start=Position(line=0, character=19), end=Position(line=0, character=40)
             ),
@@ -717,7 +806,7 @@ async def test_role_target_completions(client_server, text, setup):
         (
             "sphinx-default",
             ":download:`this link <_static/vscode_screenshot.png",
-            ">`",
+            ".*>`",
             Range(
                 start=Position(line=0, character=30), end=Position(line=0, character=51)
             ),
@@ -725,18 +814,44 @@ async def test_role_target_completions(client_server, text, setup):
     ],
 )
 async def test_role_target_insert_range(
-    client_server, project, text, ending, expected_range
+    client_server, project, text, pattern, expected_range
 ):
-    """Ensure that we generate completion items that work well with existing text."""
+    """Ensure that we generate completion items that work well with existing text.
+
+    This test case is focused on the ``TextEdit`` objects returned as part of a
+    ``CompletionItem``. They need to take into account any existing text so that if an
+    item is accepted, the user is not forced to do additonal cleanups.
+
+    The test case is parameterised.
+
+    Parameters
+    ----------
+    client_server:
+       The ``client_server`` fixture used to drive the test
+    project:
+       The name of one of the example Sphinx projects found in the ``tests/data/``
+       folder e.g. ``sphinx-default``
+    text:
+       The text that provides the context for the completion request e.g.
+       ``:ref:`label``
+    pattern:
+       A regular expression used to check the value of the ``new_text`` field of
+       returned ``TextEdits``
+    expected_range:
+       A ``Range`` object to check the value of the ``range`` field of returned
+       ``TextEdits``
+    """
 
     test = await client_server(project)  # type: ClientServer
     test_uri = test.server.workspace.root_uri + "/test.rst"
+
+    pattern = re.compile(pattern)
 
     results = await completion_request(test, test_uri, text)
     assert len(results.items) > 0
 
     for item in results.items:
-        assert item.text_edit.new_text.endswith(ending)
+        assert pattern.match(item.text_edit.new_text) is not None
         assert item.text_edit.range == expected_range
 
 
@@ -765,6 +880,26 @@ async def test_role_target_insert_range(
                 "role": ":ref:",
                 "label": "some_label",
                 "target": "`some_label",
+            },
+        ),
+        (
+            ":ref:`!some_label",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "label": "some_label",
+                "target": "`!some_label",
+                "modifier": "!",
+            },
+        ),
+        (
+            ":ref:`~some_label",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "label": "some_label",
+                "target": "`~some_label",
+                "modifier": "~",
             },
         ),
         (
@@ -860,6 +995,28 @@ async def test_role_target_insert_range(
                 "alias": "see more ",
                 "label": "some_label",
                 "target": "`see more <some_label",
+            },
+        ),
+        (
+            ":ref:`see more <!some_label",
+            {
+                "name": "ref",
+                "role": ":ref:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <!some_label",
+                "modifier": "!",
+            },
+        ),
+        (
+            ":code-block:`see more <~some_label",
+            {
+                "name": "code-block",
+                "role": ":code-block:",
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <~some_label",
+                "modifier": "~",
             },
         ),
         (
@@ -959,11 +1116,144 @@ def test_role_regex(string, expected):
     To test situations where the pattern should **not** match the input, pass ``None``
     as the second argument.
 
-    To test situaions where the pattern should match, but we don't expect to see any
+    To test situations where the pattern should match, but we don't expect to see any
     groups pass an empty dictionary as the second argument.
     """
 
-    match = ROLE.match(string)
+    match = ROLE.search(string)
+
+    if expected is None:
+        assert match is None
+    else:
+        assert match is not None
+
+        for name, value in expected.items():
+            assert match.groupdict().get(name, None) == value
+
+
+@py.test.mark.parametrize(
+    "string, expected",
+    [
+        (
+            "`",
+            {"target": "`"},
+        ),
+        (
+            ":ref:`",
+            None,
+        ),
+        (
+            ":ref:``",
+            None,
+        ),
+        (
+            ":py:func:`",
+            None,
+        ),
+        (
+            ":py:func:``",
+            None,
+        ),
+        (
+            "`!some_label",
+            {
+                "label": "some_label",
+                "target": "`!some_label",
+                "modifier": "!",
+            },
+        ),
+        (
+            "`~some_label",
+            {
+                "label": "some_label",
+                "target": "`~some_label",
+                "modifier": "~",
+            },
+        ),
+        (
+            "`some_label",
+            {
+                "label": "some_label",
+                "target": "`some_label",
+            },
+        ),
+        (
+            "`some_label`",
+            {
+                "label": "some_label",
+                "target": "`some_label`",
+            },
+        ),
+        (
+            "`see more <",
+            {
+                "alias": "see more ",
+                "target": "`see more <",
+            },
+        ),
+        (
+            "`see more <!some_label",
+            {
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <!some_label",
+                "modifier": "!",
+            },
+        ),
+        (
+            "`see more <~some_label",
+            {
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <~some_label",
+                "modifier": "~",
+            },
+        ),
+        (
+            "`see more <some_label",
+            {
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label",
+            },
+        ),
+        (
+            "`see more <some_label>`",
+            {
+                "alias": "see more ",
+                "label": "some_label",
+                "target": "`see more <some_label>`",
+            },
+        ),
+    ],
+)
+def test_default_role_regex(string, expected):
+    """Ensure that the regular expression we use to detect and parse default roles works
+    as expected.
+
+    As a general rule, it's better to write tests at the LSP protocol level as that
+    decouples the test cases from the implementation. However, roles and the
+    corresponding regular expression are complex enough to warrant a test case on its
+    own.
+
+    As with most test cases, this one is parameterized with the following arguments::
+
+        (":ref:", {"name": "ref"}),
+        (".. directive::", None)
+
+    The first argument is the string to test the pattern against, the second a
+    dictionary containing the groups we expect to see in the resulting match object.
+    Groups that appear in the resulting match object but not in the expected result will
+    **not** fail the test.
+
+    To test situations where the pattern should **not** match the input, pass ``None``
+    as the second argument.
+
+    To test situations where the pattern should match, but we don't expect to see any
+    groups pass an empty dictionary as the second argument.
+    """
+
+    match = DEFAULT_ROLE.search(string)
 
     if expected is None:
         assert match is None

@@ -9,11 +9,17 @@
     "publisher": "swyddfa",
     "license": "MIT",
     "version": "0.7.1",
+    "keywords": [
+        "sphinx",
+        "documentation"
+    ],
+    "categories": [
+        "Programming Languages"
+    ],
     "scripts": {
-        "compile": "webpack --mode production",
+        "compile": "webpack --mode development",
         "compile-test": "npm run clean && tsc -p ./",
-        "webpack": "webpack --mode development",
-        "webpack-dev": "webpack --mode development --watch",
+        "watch": "webpack --mode development --watch",
         "test": "npm run compile-test && node ./dist/test/runTests.js",
         "test-grammar": "vscode-tmgrammar-test -c -s source.rst -g syntaxes/rst.tmLanguage.json -g syntaxes/tests/c.tmLanguage.json -g syntaxes/tests/cpp.tmLanguage.json -g syntaxes/tests/css.tmLanguage.json -g syntaxes/tests/html.tmLanguage.json -g syntaxes/tests/js.tmLanguage.json -g syntaxes/tests/json.tmLanguage.json -g syntaxes/tests/python.tmLanguage.json -g syntaxes/tests/ts.tmLanguage.json -g syntaxes/tests/yaml.tmLanguage.json -t \"syntaxes/**/*.rst\"",
         "clean": "rm -r dist",
@@ -33,7 +39,7 @@
         "@types/mocha": "^8.2.3",
         "@types/node": "^14.17.15",
         "@types/semver": "^7.3.8",
-        "@types/vscode": "1.52.0",
+        "@types/vscode": "1.61.0",
         "mocha": "^8.4.0",
         "ts-loader": "^8.3.0",
         "typescript": "^4.4.3",
@@ -44,7 +50,7 @@
         "webpack-cli": "^4.8.0"
     },
     "engines": {
-        "vscode": "^1.57.0"
+        "vscode": "^1.61.0"
     },
     "capabilities": {
         "virtualWorkspaces": {
@@ -104,6 +110,12 @@
             "type": "object",
             "title": "Esbonio",
             "properties": {
+                "esbonio.server.enabled": {
+                    "scope": "window",
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable/Disable the language server"
+                },
                 "esbonio.server.logLevel": {
                     "scope": "application",
                     "type": "string",
@@ -128,7 +140,7 @@
                     "scope": "window",
                     "type": "string",
                     "default": "",
-                    "markdownDescription": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the `#python.pythonPath#` option in the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
+                    "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
                 },
                 "esbonio.server.hideSphinxOutput": {
                     "scope": "application",
@@ -186,6 +198,13 @@
                     ],
                     "description": "How often should the extension check for updates to the Language Server"
                 },
+                "esbonio.sphinx.buildDir": {
+                    "scope": "window",
+                    "type": "string",
+                    "default": null,
+                    "description": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local _build/ directory.",
+                    "markdownDescription": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local `_build/` directory."
+                },
                 "esbonio.sphinx.confDir": {
                     "scope": "window",
                     "type": "string",
@@ -196,7 +215,8 @@
                     "scope": "window",
                     "type": "string",
                     "default": null,
-                    "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.srcDir#` but this opton can override this if necessary."
+                    "description": "The directory containing your rst source files. By default the Language Server will assume this is the same as `esbonio.sphinx.confDir` but this opton can override this if necessary.",
+                    "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.confDir#` but this opton can override this if necessary."
                 }
             }
         },

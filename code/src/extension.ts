@@ -25,7 +25,10 @@ export async function activate(context: vscode.ExtensionContext) {
 
     let preview = new PreviewManager(logger, context, esbonio)
 
-    await esbonio.start()
+    let config = vscode.workspace.getConfiguration("esbonio.server")
+    if (config.get("enabled")) {
+        await esbonio.start()
+    }
 }
 
 export function deactivate(): Thenable<void> | undefined {

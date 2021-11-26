@@ -19,11 +19,24 @@ The language server can provide completion suggestions in various contexts
 
 ![Completion Demo](../resources/images/completion-demo.gif)
 
+### Goto Defintion
+
+Goto definition is currently implemented for objects linked to by
+`:ref:` and `:doc:` roles
+
+![Goto Defintion Demo](../resources/images/definition-demo.gif)
+
 ### Diagnostics
 
 Errors from a build are published to VSCode as diagnostics
 
 ![Diagnostics](../resources/images/diagnostic-sphinx-errors-demo.png)
+
+### Outline
+
+Sections within a document are displayed in the "Outline" view
+
+![Document Outline](../resources/images/document-symbols-demo.png)
 
 ### Syntax Highlighting
 

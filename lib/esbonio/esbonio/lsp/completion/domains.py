@@ -4,8 +4,8 @@ from typing import List
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 
-from esbonio.lsp.feature import CompletionContext
 from esbonio.lsp.roles import TargetCompletion
+from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
 
@@ -80,11 +80,11 @@ class Domain(TargetCompletion):
         self.rst = rst
         self.logger = rst.logger.getChild(self.__class__.__name__)
 
-    def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
+    def complete_targets(
+        self, context: CompletionContext, domain: str, name: str
+    ) -> List[CompletionItem]:
 
         groups = context.match.groupdict()
-        name = groups["name"]
-        domain = groups["domain"] or None
         label = groups["label"]
 
         if ":" in label:
@@ -95,9 +95,9 @@ class Domain(TargetCompletion):
             for o in self.rst.get_role_targets(name, domain)
         ]
 
-        items += [
-            project_to_completion_item(p) for p in self.rst.get_intersphinx_projects()
-        ]
+        for project in self.rst.get_intersphinx_projects():
+            if self.rst.has_intersphinx_targets(project, name, domain):
+                items.append(project_to_completion_item(project))
 
         return items
 

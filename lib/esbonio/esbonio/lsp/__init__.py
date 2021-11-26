@@ -8,6 +8,7 @@ from typing import List
 
 from pygls.lsp.methods import COMPLETION
 from pygls.lsp.methods import DEFINITION
+from pygls.lsp.methods import DOCUMENT_SYMBOL
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
@@ -20,12 +21,14 @@ from pygls.lsp.types import DefinitionParams
 from pygls.lsp.types import DidChangeTextDocumentParams
 from pygls.lsp.types import DidOpenTextDocumentParams
 from pygls.lsp.types import DidSaveTextDocumentParams
+from pygls.lsp.types import DocumentSymbolParams
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 
-from .feature import CompletionContext
-from .feature import LanguageFeature
+from .rst import CompletionContext
+from .rst import LanguageFeature
 from .rst import RstLanguageServer
+from .rst import SymbolVisitor
 from .sphinx import SphinxLanguageServer
 
 __version__ = "0.7.0"
@@ -74,7 +77,6 @@ def create_language_server(
 
     @server.feature(INITIALIZE)
     def on_initialize(rst: server_cls, params: InitializeParams):
-        rst.logger.debug("%s: %s", INITIALIZE, dump(params))
         rst.initialize(params)
 
         for feature in rst._features.values():
@@ -82,7 +84,6 @@ def create_language_server(
 
     @server.feature(INITIALIZED)
     def on_initialized(rst: server_cls, params: InitializedParams):
-        rst.logger.debug("%s: %s", INITIALIZED, dump(params))
         rst.initialized(params)
 
         for feature in rst._features.values():
@@ -90,15 +91,14 @@ def create_language_server(
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
     def on_open(rst: server_cls, params: DidOpenTextDocumentParams):
-        rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_OPEN, dump(params))
+        pass
 
     @server.feature(TEXT_DOCUMENT_DID_CHANGE)
     def on_change(rst: server_cls, params: DidChangeTextDocumentParams):
-        rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_CHANGE, dump(params))
+        pass
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(rst: server_cls, params: DidSaveTextDocumentParams):
-        rst.logger.debug("%s: %s", TEXT_DOCUMENT_DID_SAVE, dump(params))
         rst.save(params)
 
         for feature in rst._features.values():
@@ -108,8 +108,6 @@ def create_language_server(
         COMPLETION, CompletionOptions(trigger_characters=[".", ":", "`", "<", "/"])
     )
     def on_completion(rst: server_cls, params: CompletionParams):
-        rst.logger.debug("%s: %s", COMPLETION, dump(params))
-
         uri = params.text_document.uri
         pos = params.position
 
@@ -139,8 +137,6 @@ def create_language_server(
 
     @server.feature(DEFINITION)
     def on_definition(rst: server_cls, params: DefinitionParams):
-        rst.logger.debug("%s: %s", DEFINITION, dump(params))
-
         uri = params.text_document.uri
         pos = params.position
 
@@ -160,6 +156,18 @@ def create_language_server(
                         definitions += feature.definition(match, doc, pos)
 
         return definitions
+
+    @server.feature(DOCUMENT_SYMBOL)
+    def on_document_symbol(rst: server_cls, params: DocumentSymbolParams):
+
+        doctree = rst.get_doctree(uri=params.text_document.uri)
+        if doctree is None:
+            return []
+
+        visitor = SymbolVisitor(rst, doctree)
+        doctree.walkabout(visitor)
+
+        return visitor.symbols
 
     @server.command("esbonio.server.configuration")
     def get_configuration(rst: server_cls, *args):

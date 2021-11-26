@@ -15,6 +15,7 @@ from pygls.exceptions import JsonRpcMethodNotFound
 from pygls.lsp.methods import CANCEL_REQUEST
 from pygls.lsp.methods import COMPLETION
 from pygls.lsp.methods import DEFINITION
+from pygls.lsp.methods import DOCUMENT_SYMBOL
 from pygls.lsp.methods import EXIT
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import INITIALIZED
@@ -33,6 +34,8 @@ from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DidChangeTextDocumentParams
 from pygls.lsp.types import DidCloseTextDocumentParams
 from pygls.lsp.types import DidOpenTextDocumentParams
+from pygls.lsp.types import DocumentSymbol
+from pygls.lsp.types import DocumentSymbolParams
 from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import Location
 from pygls.lsp.types import Position
@@ -206,8 +209,10 @@ def role_patterns(partial: str = "") -> List[str]:
         for s in [
             "{}",
             "({}",
+            "- {}",
             "   {}",
             "   ({}",
+            "   - {}",
             "some text {}",
             "some text ({}",
             "   some text {}",
@@ -216,7 +221,9 @@ def role_patterns(partial: str = "") -> List[str]:
     ]
 
 
-def role_target_patterns(name: str, partial: str = "") -> List[str]:
+def role_target_patterns(
+    name: str, partial: str = "", include_modifiers: bool = True
+) -> List[str]:
     """Return a number of example role target patterns.
 
     These correspond to test cases where role target suggestions should be generated.
@@ -227,20 +234,31 @@ def role_target_patterns(name: str, partial: str = "") -> List[str]:
        The name of the role to generate suggestions for.
     partial:
        The partial target that the user as already entered.
+    include_modifiers:
+       A flag to indicate if additional modifiers like ``!`` and ``~`` should be
+       included in the generated patterns.
     """
-    return [
-        s.format(name, partial)
-        for s in [
-            ":{}:`{}",
-            "(:{}:`{}",
-            ":{}:`More Info <{}",
-            "(:{}:`More Info <{}",
-            "   :{}:`{}",
-            "   (:{}:`{}",
-            "   :{}:`Some Label <{}",
-            "   (:{}:`Some Label <{}",
-        ]
+
+    patterns = [
+        ":{}:`{}",
+        "(:{}:`{}",
+        "- :{}:`{}",
+        ":{}:`More Info <{}",
+        "(:{}:`More Info <{}",
+        "   :{}:`{}",
+        "   (:{}:`{}",
+        "   - :{}:`{}",
+        "   :{}:`Some Label <{}",
+        "   (:{}:`Some Label <{}",
     ]
+
+    test_cases = [p.format(name, partial) for p in patterns]
+
+    if include_modifiers:
+        test_cases += [p.format(name, "!" + partial) for p in patterns]
+        test_cases += [p.format(name, "~" + partial) for p in patterns]
+
+    return test_cases
 
 
 def intersphinx_target_patterns(name: str, project: str) -> List[str]:
@@ -413,6 +431,46 @@ async def definition_request(
     )
 
     return [Location(**obj) for obj in response]
+
+
+async def document_symbols_request(
+    test: ClientServer, test_uri: str
+) -> List[DocumentSymbol]:
+    """Make a ``textDocument/documentSymbols`` request to a language server.
+
+    Intended for use with test cases, this function simulates opening an existing
+    file, making a document symbols request and closing it again.
+
+    The file referenced by ``test_uri`` *must* exist as the content of the file will
+    be used by the language server.
+
+    Parameters
+    ----------
+    test:
+       The client-server pair to be used
+    test_uri:
+       The uri of the file to make the ``textDocument/documentSymbols`` request within
+    """
+
+    path = pathlib.Path(Uri.to_fs_path(test_uri))
+    with path.open() as f:
+        contents = f.read()
+
+    test.client.lsp.notify(
+        TEXT_DOCUMENT_DID_OPEN,
+        DidOpenTextDocumentParams(
+            text_document=TextDocumentItem(
+                uri=test_uri, language_id="rst", version=1, text=contents
+            )
+        ),
+    )
+
+    response = await test.client.lsp.send_request_async(
+        DOCUMENT_SYMBOL,
+        DocumentSymbolParams(text_document=TextDocumentIdentifier(uri=test_uri)),
+    )
+
+    return [DocumentSymbol(**obj) for obj in response]
 
 
 class ClientProtocol(LanguageServerProtocol):

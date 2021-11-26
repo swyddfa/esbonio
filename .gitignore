@@ -7,6 +7,7 @@
 *.pyc
 *.egg-info
 *.log
+*.mo
 
 __pycache__
 _build
@@ -16,3 +17,6 @@ dist
 
 .changes.html
 CHANGELOG.md
+
+# Demo tutorial is populated during the build.
+lib/esbonio-extensions/esbonio/tutorial_demo

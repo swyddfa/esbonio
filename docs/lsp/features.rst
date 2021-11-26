@@ -7,16 +7,26 @@ Server
 Completion
 ----------
 
-The language server can offer auto complete suggestions in a variety of contexts
+The language server implements :lsp:`textDocument/completion` and can offer suggestions
+in a variety of contexts.
 
 .. figure:: ../../resources/images/completion-demo.gif
+   :align: center
+
+Document Symbols
+----------------
+
+The language server implements :lsp:`textDocument/documentSymbol` which powers
+features like the "Outline" view in VSCode.
+
+.. figure:: ../../resources/images/document-symbols-demo.png
    :align: center
 
 Diagnostics
 -----------
 
-The language server is able to catch some of the errors Sphinx outputs while
-building and publish them as diagnostic messages
+Using :lsp:`textDocument/publishDiagnostics` the language server is able to report Sphinx
+errors that are reported during builds.
 
 .. figure:: ../../resources/images/diagnostic-sphinx-errors-demo.png
    :align: center
@@ -26,8 +36,9 @@ building and publish them as diagnostic messages
 Goto Definition
 ---------------
 
-The language server can look up the definition of certain role targets.
-Currently this is limited to just the ``:ref:`` and ``:doc:`` roles.
+The language server implements :lsp:`textDocument/definition`  to provide the location of
+objects linked to by certain roles. Currently only the ``:ref:`` and ``:doc:`` roles are
+supported.
 
 .. figure:: ../../resources/images/definition-demo.gif
    :align: center

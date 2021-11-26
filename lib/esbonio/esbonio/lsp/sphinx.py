@@ -11,7 +11,7 @@ from typing import Optional
 from typing import Tuple
 
 import appdirs
-import pygls.uris as uri
+import pygls.uris as Uri
 from docutils.parsers.rst import Directive
 from pydantic import BaseModel
 from pydantic import Field
@@ -133,7 +133,7 @@ class SphinxLogHandler(LspHandler):
             #       number to place a diagnostic.
             pass
 
-        return (uri.from_fs_path(path), lineno)
+        return (Uri.from_fs_path(path), lineno)
 
     def emit(self, record: logging.LogRecord) -> None:
 
@@ -159,12 +159,20 @@ class SphinxLogHandler(LspHandler):
         line = lineno or 1
         self.server.logger.debug("Reporting diagnostic at %s:%s", doc, line)
 
+        try:
+            message = record.msg % record.args
+        except Exception:
+            message = record.msg
+            self.server.logger.debug(
+                "Unable to format diagnostic message: %s", traceback.format_exc()
+            )
+
         diagnostic = Diagnostic(
             range=Range(
                 start=Position(line=line - 1, character=0),
                 end=Position(line=line, character=0),
             ),
-            message=record.msg,
+            message=message,
             severity=DIAGNOSTIC_SEVERITY.get(
                 record.levelno, DiagnosticSeverity.Warning
             ),
@@ -238,7 +246,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def save(self, params: DidSaveTextDocumentParams):
         super().save(params)
 
-        filepath = uri.to_fs_path(params.text_document.uri)
+        filepath = Uri.to_fs_path(params.text_document.uri)
         if filepath.endswith("conf.py"):
             if self.app:
                 conf_dir = pathlib.Path(self.app.confdir)
@@ -305,7 +313,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
         builder_name = sphinx.builder_name
         src_dir = get_src_dir(self.workspace.root_uri, conf_dir, sphinx)
-        build_dir = get_build_dir(conf_dir, sphinx)
+        build_dir = get_build_dir(self.workspace.root_uri, conf_dir, sphinx)
         doctree_dir = build_dir / "doctrees"
         build_dir /= builder_name
 
@@ -344,7 +352,7 @@ class SphinxLanguageServer(RstLanguageServer):
         return app
 
     def get_doctree(
-        self, docname: Optional[str] = None, uri: Optional[str] = None
+        self, *, docname: Optional[str] = None, uri: Optional[str] = None
     ) -> Optional[Any]:
         """Return the doctree that corresponds with the specified document.
 
@@ -357,14 +365,18 @@ class SphinxLanguageServer(RstLanguageServer):
         docname:
            Returns the doctree that corresponds with the given docname
         uri:
-           Returns the doctree that corresponds with the given uri. (Not yet
-           implemented)
+           Returns the doctree that corresponds with the given uri.
         """
 
-        if uri is not None:
-            raise NotImplementedError()
+        if self.app is None:
+            return None
 
-        self.logger.debug("Getting doctree for '%s'", docname)
+        if uri is not None:
+            fspath = Uri.to_fs_path(uri)
+            docname = self.app.env.path2doc(fspath)
+
+        if docname is None:
+            return None
 
         try:
             return self.app.env.get_and_resolve_doctree(docname, self.app.builder)
@@ -472,6 +484,26 @@ class SphinxLanguageServer(RstLanguageServer):
 
         return self._roles
 
+    def get_default_role(self) -> Optional[Tuple[Optional[str], Optional[str]]]:
+        """Return the project's default role"""
+
+        if not self.app:
+            return None, None
+
+        role = self.app.config.default_role
+        if not role:
+            return None, None
+
+        if ":" in role:
+            domain, name = role.split(":")
+
+            if domain == self.app.config.primary_domain:
+                domain = ""
+
+            return domain, name
+
+        return None, role
+
     def get_role_target_types(self, name: str, domain: str = "") -> List[str]:
         """Return a map indicating which object types a role is capable of linking
         with.
@@ -548,6 +580,29 @@ class SphinxLanguageServer(RstLanguageServer):
         inv = getattr(self.app.env, "intersphinx_named_inventory", {})
         return list(inv.keys())
 
+    def has_intersphinx_targets(
+        self, project: str, name: str, domain: str = ""
+    ) -> bool:
+        """Return ``True`` if the given intersphinx project has targets targeted by the
+        given role.
+
+        Parameters
+        ----------
+        project:
+           The project to check
+        name:
+           The name of the role
+        domain:
+           The domain the role is a part of, if applicable.
+        """
+
+        targets = self.get_intersphinx_targets(project, name, domain)
+
+        if len(targets) == 0:
+            return False
+
+        return any([len(items) > 0 for items in targets.values()])
+
     def get_intersphinx_targets(
         self, project: str, name: str, domain: str = ""
     ) -> Dict[str, Dict[str, tuple]]:
@@ -593,7 +648,7 @@ class SphinxLanguageServer(RstLanguageServer):
 def find_conf_dir(root_uri: str, config: SphinxConfig) -> Optional[pathlib.Path]:
     """Attempt to find Sphinx's configuration file within the given workspace."""
 
-    root = pathlib.Path(uri.to_fs_path(root_uri))
+    root = pathlib.Path(Uri.to_fs_path(root_uri))
 
     if config.conf_dir:
         return expand_conf_dir(root, config.conf_dir)
@@ -662,7 +717,7 @@ def get_src_dir(
         return conf_dir
 
     src_dir = config.src_dir
-    root_dir = uri.to_fs_path(root_uri)
+    root_dir = Uri.to_fs_path(root_uri)
 
     match = PATH_VAR_PATTERN.match(src_dir)
     if match and match.group(1) == "workspaceRoot":
@@ -676,16 +731,54 @@ def get_src_dir(
     return src_dir
 
 
-def get_build_dir(conf_dir: pathlib.Path, config: SphinxConfig) -> pathlib.Path:
+def get_build_dir(
+    root_uri: str, conf_dir: pathlib.Path, config: SphinxConfig
+) -> pathlib.Path:
+    """Get the build dir to use based on the given conifg.
 
-    if config.build_dir is None:
+    If nothing is specified in the given ``config``, this will choose a location within
+    the user's cache dir (as determined by `appdirs <https://pypi.org/project/appdirs>`).
+    The directory name will be a hash derived from the given ``conf_dir`` for the
+    project.
+
+    Alternatively the user (or least language client) can override this by setting
+    either an absolute path, or a path based on the following "variables".
+
+    - ``${workspaceRoot}`` which expands to the workspace root as provided
+      by the language client.
+    - ``${confDir}`` which expands to the configured config dir.
+
+    Parameters
+    ----------
+    root_uri:
+       The workspace root uri
+    conf_dir:
+       The project's conf dir
+    config:
+       The user's configuration.
+    """
+
+    if not config.build_dir:
         # Try to pick a sensible dir based on the project's location
         cache = appdirs.user_cache_dir("esbonio", "swyddfa")
         project = hashlib.md5(str(conf_dir).encode()).hexdigest()
 
         return pathlib.Path(cache) / project
 
+    root_dir = Uri.to_fs_path(root_uri)
+    match = PATH_VAR_PATTERN.match(config.build_dir)
+
+    if match and match.group(1) == "workspaceRoot":
+        build = pathlib.Path(config.build_dir).parts[1:]
+        return pathlib.Path(root_dir, *build).resolve()
+
+    if match and match.group(1) == "confDir":
+        build = pathlib.Path(config.build_dir).parts[1:]
+        return pathlib.Path(conf_dir, *build).resolve()
+
     # Convert path to/from uri so that any path quirks from windows are
     # automatically handled
-    build_uri = uri.from_fs_path(config.build_dir)
-    return pathlib.Path(uri.to_fs_path(build_uri))
+    build_uri = Uri.from_fs_path(config.build_dir)
+    build_dir = Uri.to_fs_path(build_uri)
+
+    return pathlib.Path(build_dir)

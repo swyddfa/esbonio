@@ -5,14 +5,6 @@ Welcome to the documentation
 
 .. toctree::
    :glob:
-   :maxdepth: 2
-   :hidden:
-   :caption: Extensions
-
-   extensions/*
-
-.. toctree::
-   :glob:
    :caption: Language Server
    :hidden:
    :maxdepth: 2
@@ -20,6 +12,16 @@ Welcome to the documentation
    lsp/*
    lsp/editors/index
    changelog
+
+
+.. toctree::
+   :glob:
+   :maxdepth: 2
+   :hidden:
+   :caption: Sphinx Extensions
+
+   extensions/*
+
 
 .. toctree::
    :glob:
