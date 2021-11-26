@@ -1,1 +1,0 @@
-Code blocks that contain a language that's not recognised, are now highlighted as strings.

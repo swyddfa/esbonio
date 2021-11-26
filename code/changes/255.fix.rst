@@ -1,2 +1,0 @@
-Code blocks that have injected grammars (e.g. python code blocks) now correctly highlight any options
-on the directive

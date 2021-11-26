@@ -1,3 +1,24 @@
+v0.7.2 - 2021-11-26
+-------------------
+
+Fixes
+^^^^^
+
+- Simplified highlighting of footnote references to prevent edge cases from
+  effectively disabling highlighting of a document. (`#252 <https://github.com/swyddfa/esbonio/issues/252>`_)
+- Literal block markers no longer disable highlighting of any preceeding content. (`#254 <https://github.com/swyddfa/esbonio/issues/254>`_)
+- Code blocks that have injected grammars (e.g. python code blocks) now correctly highlight any options
+  on the directive (`#255 <https://github.com/swyddfa/esbonio/issues/255>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- Add ``esbonio.server.enabled`` option which gives the user the ability to disable the language sever if they wish. (`#239 <https://github.com/swyddfa/esbonio/issues/239>`_)
+- Code blocks that contain a language that's not recognised, are now highlighted as strings. (`#253 <https://github.com/swyddfa/esbonio/issues/253>`_)
+- Add ``esbonio.sphinx.buildDir`` option which allows the user to specify where Sphinx's build files get written to. (`#258 <https://github.com/swyddfa/esbonio/issues/258>`_)
+
+
 v0.7.1 - 2021-09-13
 -------------------
 

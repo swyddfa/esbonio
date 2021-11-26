@@ -1,2 +1,0 @@
-Simplified highlighting of footnote references to prevent edge cases from
-effectively disabling highlighting of a document.
