@@ -31,7 +31,7 @@ from .rst import RstLanguageServer
 from .rst import SymbolVisitor
 from .sphinx import SphinxLanguageServer
 
-__version__ = "0.7.0"
+__version__ = "0.8.0"
 
 __all__ = [
     "BUILTIN_MODULES",

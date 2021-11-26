@@ -1,2 +1,0 @@
-Initial implementation of the ``textDocument/documentSymbols`` request which for example, powers the "Outline" view in VSCode.
-Currently only section headers are returned.

@@ -1,3 +1,23 @@
+v0.8.0 - 2021-11-26
+-------------------
+
+Features
+^^^^^^^^
+
+- The language server now respects the project's ``default_role`` setting. (`#72 <https://github.com/swyddfa/esbonio/issues/72>`_)
+- Initial implementation of the ``textDocument/documentSymbols`` request which for example, powers the "Outline" view in VSCode.
+  Currently only section headers are returned. (`#242 <https://github.com/swyddfa/esbonio/issues/242>`_)
+- The ``esbonio.sphinx.buildDir`` option now supports ``${workspaceRoot}`` and ``${confDir}`` variable expansions (`#259 <https://github.com/swyddfa/esbonio/issues/259>`_)
+
+
+Fixes
+^^^^^
+
+- Role target ``CompletionItems`` now preserve additional cross reference modifiers like ``!`` and ``~`` (`#211 <https://github.com/swyddfa/esbonio/issues/211>`_)
+- Intersphinx projects are now only suggested if they contain targets relevant to the current role. (`#244 <https://github.com/swyddfa/esbonio/issues/244>`_)
+- Variables are now properly substituted in diagnostic messages. (`#246 <https://github.com/swyddfa/esbonio/issues/246>`_)
+
+
 v0.7.0 - 2021-09-13
 -------------------
 

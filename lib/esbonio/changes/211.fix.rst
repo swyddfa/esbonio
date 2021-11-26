@@ -1,1 +1,0 @@
-Role target ``CompletionItems`` now preserve additional cross reference modifiers like ``!`` and ``~``

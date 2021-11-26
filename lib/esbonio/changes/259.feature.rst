@@ -1,1 +1,0 @@
-The ``esbonio.sphinx.buildDir`` option now supports ``${workspaceRoot}`` and ``${confDir}`` variable expansions
