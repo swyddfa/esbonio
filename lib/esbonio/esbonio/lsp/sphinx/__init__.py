@@ -30,6 +30,7 @@ from sphinx.domains import Domain
 from sphinx.util import console
 from sphinx.util.logging import WarningLogRecordTranslator
 
+from esbonio.cli import setup_cli
 from esbonio.lsp.log import LspHandler
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.rst import ServerConfig
@@ -41,6 +42,15 @@ except ImportError:
     class OnceFilter:
         def filter(self, *args, **kwargs):
             return True
+
+
+DEFAULT_MODULES = [
+    "esbonio.lsp.directives",
+    "esbonio.lsp.roles",
+    "esbonio.lsp.sphinx.domains",
+    "esbonio.lsp.sphinx.filepaths",
+]
+"""The modules to load in the default configuration of the server."""
 
 
 DIAGNOSTIC_SEVERITY = {
@@ -782,3 +792,8 @@ def get_build_dir(
     build_dir = Uri.to_fs_path(build_uri)
 
     return pathlib.Path(build_dir)
+
+
+cli = setup_cli("esbonio.lsp.sphinx", "Esbonio's Sphinx language server.")
+cli.set_defaults(modules=DEFAULT_MODULES)
+cli.set_defaults(server_cls=SphinxLanguageServer)
