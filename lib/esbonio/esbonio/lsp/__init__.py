@@ -4,7 +4,8 @@ import json
 import logging
 import textwrap
 import traceback
-from typing import List
+from typing import Iterable
+from typing import Type
 
 from pygls.lsp.methods import CODE_ACTION
 from pygls.lsp.methods import COMPLETION
@@ -31,31 +32,20 @@ from .rst import CompletionContext
 from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .rst import SymbolVisitor
-from .sphinx import SphinxLanguageServer
 
 __version__ = "0.8.0"
 
 __all__ = [
-    "BUILTIN_MODULES",
     "LanguageFeature",
     "RstLanguageServer",
-    "SphinxLanguageServer",
     "create_language_server",
-]
-
-BUILTIN_MODULES = [
-    "esbonio.lsp.directives",
-    "esbonio.lsp.roles",
-    "esbonio.lsp.spelling",
-    "esbonio.lsp.sphinx.domains",
-    "esbonio.lsp.sphinx.filepaths",
 ]
 
 logger = logging.getLogger(__name__)
 
 
 def create_language_server(
-    server_cls: RstLanguageServer, modules: List[str], *args, **kwargs
+    server_cls: Type[RstLanguageServer], modules: Iterable[str], *args, **kwargs
 ) -> RstLanguageServer:
     """Create a new language server instance.
 

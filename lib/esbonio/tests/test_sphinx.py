@@ -26,11 +26,11 @@ from pygls.lsp.types import TextDocumentIdentifier
 from pygls.lsp.types import TextDocumentItem
 from pygls.lsp.types import VersionedTextDocumentIdentifier
 
-from esbonio.lsp import BUILTIN_MODULES
 from esbonio.lsp import create_language_server
-from esbonio.lsp import SphinxLanguageServer
+from esbonio.lsp.sphinx import DEFAULT_MODULES
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxConfig
+from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.testing import ClientServer
 
 
@@ -44,7 +44,7 @@ async def cs():
     """
 
     server = create_language_server(
-        SphinxLanguageServer, BUILTIN_MODULES, loop=asyncio.new_event_loop()
+        SphinxLanguageServer, DEFAULT_MODULES, loop=asyncio.new_event_loop()
     )
 
     test = ClientServer(server)

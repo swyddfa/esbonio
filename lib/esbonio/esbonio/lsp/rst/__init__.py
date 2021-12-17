@@ -34,12 +34,19 @@ from pygls.lsp.types import SymbolKind
 from pygls.server import LanguageServer
 from pygls.workspace import Document
 
-from .log import LOG_LEVELS
-from .log import LogFilter
-from .log import LspHandler
+from esbonio.cli import setup_cli
+from esbonio.lsp.log import LOG_LEVELS
+from esbonio.lsp.log import LogFilter
+from esbonio.lsp.log import LspHandler
 
 TRIPLE_QUOTE = re.compile("(\"\"\"|''')")
 """A regular expression matching the triple quotes used to delimit python docstrings."""
+
+DEFAULT_MODULES = [
+    "esbonio.lsp.directives",
+    "esbonio.lsp.roles",
+]
+"""The modules to load in the default configuration of the server."""
 
 
 class CompletionContext:
@@ -524,3 +531,8 @@ def normalise_uri(uri: Optional[str]) -> Optional[str]:
             uri = uri.lower()
 
     return uri
+
+
+cli = setup_cli("esbonio.lsp.rst", "Esbonio's reStructuredText language server.")
+cli.set_defaults(modules=DEFAULT_MODULES)
+cli.set_defaults(server_cls=RstLanguageServer)
