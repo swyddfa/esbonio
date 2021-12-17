@@ -6,6 +6,7 @@ import textwrap
 import traceback
 from typing import List
 
+from pygls.lsp.methods import CODE_ACTION
 from pygls.lsp.methods import COMPLETION
 from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import DOCUMENT_SYMBOL
@@ -14,6 +15,7 @@ from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_SAVE
+from pygls.lsp.types import CodeActionParams
 from pygls.lsp.types import CompletionList
 from pygls.lsp.types import CompletionOptions
 from pygls.lsp.types import CompletionParams
@@ -44,6 +46,7 @@ __all__ = [
 BUILTIN_MODULES = [
     "esbonio.lsp.directives",
     "esbonio.lsp.roles",
+    "esbonio.lsp.spelling",
     "esbonio.lsp.sphinx.domains",
     "esbonio.lsp.sphinx.filepaths",
 ]
@@ -103,6 +106,15 @@ def create_language_server(
 
         for feature in rst._features.values():
             feature.save(params)
+
+    @server.feature(CODE_ACTION)
+    def on_code_action(rst: server_cls, params: CodeActionParams):
+        actions = []
+
+        for feature in rst._features.values():
+            actions += feature.code_action(params)
+
+        return actions
 
     @server.feature(
         COMPLETION, CompletionOptions(trigger_characters=[".", ":", "`", "<", "/"])

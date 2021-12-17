@@ -19,6 +19,8 @@ from docutils.parsers.rst import roles
 from pydantic import BaseModel
 from pydantic import Field
 from pygls import IS_WIN
+from pygls.lsp.types import CodeAction
+from pygls.lsp.types import CodeActionParams
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DidSaveTextDocumentParams
@@ -83,6 +85,10 @@ class LanguageFeature:
 
     def save(self, params: DidSaveTextDocumentParams) -> None:
         """Called each time a document is saved."""
+
+    def code_action(self, params: CodeActionParams) -> List[CodeAction]:
+        """Called when code actions should be computed."""
+        return []
 
     completion_triggers: List["re.Pattern"] = []
     """A list of regular expressions used to determine if the
