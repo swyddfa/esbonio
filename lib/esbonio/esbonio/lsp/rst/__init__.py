@@ -3,6 +3,7 @@ import importlib
 import logging
 import pathlib
 import re
+import typing
 from typing import Any
 from typing import Dict
 from typing import List
@@ -10,10 +11,10 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
+import docutils.parsers.rst.directives as directives  # type: ignore
 import pygls.uris as Uri
 from docutils.nodes import NodeVisitor
 from docutils.parsers.rst import Directive
-from docutils.parsers.rst import directives
 from docutils.parsers.rst import nodes
 from docutils.parsers.rst import roles
 from pydantic import BaseModel
@@ -35,9 +36,7 @@ from pygls.server import LanguageServer
 from pygls.workspace import Document
 
 from esbonio.cli import setup_cli
-from esbonio.lsp.log import LOG_LEVELS
-from esbonio.lsp.log import LogFilter
-from esbonio.lsp.log import LspHandler
+
 
 TRIPLE_QUOTE = re.compile("(\"\"\"|''')")
 """A regular expression matching the triple quotes used to delimit python docstrings."""
@@ -168,17 +167,17 @@ class DiagnosticList(collections.UserList):
 class ServerConfig(BaseModel):
     """Configuration options for the server."""
 
-    log_level: Optional[str] = Field("error", alias="logLevel")
+    log_level: str = Field("error", alias="logLevel")
     """The logging level of server messages to display."""
 
-    log_filter: Optional[List[str]] = Field(None, alias="logFilter")
+    log_filter: List[str] = Field(default_factory=list, alias="logFilter")
     """A list of logger names to restrict output to."""
 
 
 class InitializationOptions(BaseModel):
     """The initialization options we can expect to receive from a client."""
 
-    server: Optional[ServerConfig] = Field(default_factory=ServerConfig)
+    server: ServerConfig = Field(default_factory=ServerConfig)
     """The ``esbonio.server.*`` namespace of options."""
 
 
@@ -209,10 +208,15 @@ class RstLanguageServer(LanguageServer):
     @property
     def configuration(self) -> Dict[str, Any]:
         """Return the server's actual configuration."""
+        if not self.user_config:
+            return {}
+
         return self.user_config.dict()
 
     def initialize(self, params: InitializeParams):
-        self.user_config = InitializationOptions(**params.initialization_options)
+        self.user_config = InitializationOptions(
+            **typing.cast(Dict, params.initialization_options)
+        )
         self._configure_logging(self.user_config.server)
 
     def initialized(self, params: InitializedParams):
@@ -252,6 +256,15 @@ class RstLanguageServer(LanguageServer):
 
         return self._directives
 
+    def get_directive_options(self, name: str) -> Dict[str, Any]:
+        """Return the options specification for the given directive."""
+
+        directive = self.get_directives().get(name, None)
+        if directive is None:
+            return {}
+
+        return directive.option_spec or {}
+
     def get_roles(self) -> Dict[str, Any]:
         """Return a dictionary of known roles."""
 
@@ -266,9 +279,9 @@ class RstLanguageServer(LanguageServer):
 
         return self._roles
 
-    def get_default_role(self) -> Optional[Tuple[Optional[str], str]]:
+    def get_default_role(self) -> Tuple[Optional[str], Optional[str]]:
         """Return the default role for the project."""
-        return None
+        return None, None
 
     def clear_diagnostics(self, source: str, uri: Optional[str] = None) -> None:
         """Clear diagnostics from the given source.
@@ -282,7 +295,8 @@ class RstLanguageServer(LanguageServer):
            diagnostics from the given source are cleared.
         """
 
-        uri = normalise_uri(uri)
+        if uri:
+            uri = normalise_uri(uri)
 
         for key in self._diagnostics.keys():
             clear_source = source == key[0]
@@ -319,9 +333,9 @@ class RstLanguageServer(LanguageServer):
                 diag.source = source
                 diagnostics[uri].append(diag)
 
-        for uri, diags in diagnostics.items():
-            self.logger.debug("Publishing %d diagnostics for: %s", len(diags), uri)
-            self.publish_diagnostics(uri, diags.data)
+        for uri, diag_list in diagnostics.items():
+            self.logger.debug("Publishing %d diagnostics for: %s", len(diag_list), uri)
+            self.publish_diagnostics(uri, diag_list.data)
 
     def get_location_type(self, doc: Document, position: Position) -> str:
         """Given a document and a position, return the kind of location that
@@ -412,7 +426,7 @@ class RstLanguageServer(LanguageServer):
         lsp_handler = LspHandler(self)
         lsp_handler.setLevel(level)
 
-        if config.log_filter is not None and len(config.log_filter) > 0:
+        if len(config.log_filter) > 0:
             lsp_handler.addFilter(LogFilter(config.log_filter))
 
         formatter = logging.Formatter("[%(name)s] %(message)s")
@@ -435,7 +449,7 @@ class SymbolVisitor(NodeVisitor):
         self.symbol_stack = []
 
     @property
-    def current_symbol(self) -> DocumentSymbol:
+    def current_symbol(self) -> Optional[DocumentSymbol]:
 
         if len(self.symbol_stack) == 0:
             return None
@@ -477,6 +491,9 @@ class SymbolVisitor(NodeVisitor):
     def visit_title(self, node: nodes.Node) -> None:
 
         symbol = self.current_symbol
+        if not symbol:
+            raise ValueError("Missing expected current symbol")
+
         name = node.astext()
         line = node.line - 1
 
@@ -504,7 +521,43 @@ class SymbolVisitor(NodeVisitor):
         pass
 
 
-def resolve_directive(directive: Union[Directive, Tuple[str]]) -> Directive:
+LOG_LEVELS = {
+    "debug": logging.DEBUG,
+    "error": logging.ERROR,
+    "info": logging.INFO,
+}
+
+
+class LogFilter(logging.Filter):
+    """A log filter that accepts message from any of the listed logger names."""
+
+    def __init__(self, names):
+        self.names = names
+
+    def filter(self, record):
+        return any(record.name == name for name in self.names)
+
+
+class LspHandler(logging.Handler):
+    """A logging handler that will send log records to an LSP client."""
+
+    def __init__(self, server: RstLanguageServer):
+        super().__init__()
+        self.server = server
+
+    def emit(self, record: logging.LogRecord) -> None:
+        """Sends the record to the client."""
+
+        # To avoid infinite recursions, it's simpler to just ignore all log records
+        # coming from pygls...
+        if "pygls" in record.name:
+            return
+
+        log = self.format(record).strip()
+        self.server.show_message_log(log)
+
+
+def resolve_directive(directive: Union[Directive, Tuple[str, str]]) -> Directive:
     """Return the directive based on the given reference.
 
     'Core' docutils directives are returned as tuples ``(modulename, ClassName)``
@@ -516,19 +569,18 @@ def resolve_directive(directive: Union[Directive, Tuple[str]]) -> Directive:
 
         modulename = "docutils.parsers.rst.directives.{}".format(mod)
         module = importlib.import_module(modulename)
-        directive = getattr(module, cls)
+        return getattr(module, cls)
 
     return directive
 
 
-def normalise_uri(uri: Optional[str]) -> Optional[str]:
+def normalise_uri(uri: str) -> str:
 
-    if uri:
-        uri = Uri.from_fs_path(Uri.to_fs_path(uri))
+    uri = Uri.from_fs_path(Uri.to_fs_path(uri))
 
-        # Paths on windows are case insensitive.
-        if IS_WIN:
-            uri = uri.lower()
+    # Paths on windows are case insensitive.
+    if IS_WIN:
+        uri = uri.lower()
 
     return uri
 

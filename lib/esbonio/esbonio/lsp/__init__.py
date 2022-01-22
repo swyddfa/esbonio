@@ -68,40 +68,44 @@ def create_language_server(
     for module in modules:
         _load_module(server, module)
 
-    @server.feature(INITIALIZE)
-    def on_initialize(rst: server_cls, params: InitializeParams):
-        rst.initialize(params)
+    return _configure_lsp_methods(server)
 
-        for feature in rst._features.values():
+
+def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
+    @server.feature(INITIALIZE)
+    def on_initialize(ls: RstLanguageServer, params: InitializeParams):
+        ls.initialize(params)
+
+        for feature in ls._features.values():
             feature.initialize(params)
 
     @server.feature(INITIALIZED)
-    def on_initialized(rst: server_cls, params: InitializedParams):
-        rst.initialized(params)
+    def on_initialized(ls: RstLanguageServer, params: InitializedParams):
+        ls.initialized(params)
 
-        for feature in rst._features.values():
+        for feature in ls._features.values():
             feature.initialized(params)
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
-    def on_open(rst: server_cls, params: DidOpenTextDocumentParams):
+    def on_open(ls: RstLanguageServer, params: DidOpenTextDocumentParams):
         pass
 
     @server.feature(TEXT_DOCUMENT_DID_CHANGE)
-    def on_change(rst: server_cls, params: DidChangeTextDocumentParams):
+    def on_change(ls: RstLanguageServer, params: DidChangeTextDocumentParams):
         pass
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
-    def on_save(rst: server_cls, params: DidSaveTextDocumentParams):
-        rst.save(params)
+    def on_save(ls: RstLanguageServer, params: DidSaveTextDocumentParams):
+        ls.save(params)
 
-        for feature in rst._features.values():
+        for feature in ls._features.values():
             feature.save(params)
 
     @server.feature(CODE_ACTION)
-    def on_code_action(rst: server_cls, params: CodeActionParams):
+    def on_code_action(ls: RstLanguageServer, params: CodeActionParams):
         actions = []
 
-        for feature in rst._features.values():
+        for feature in ls._features.values():
             actions += feature.code_action(params)
 
         return actions
@@ -109,17 +113,17 @@ def create_language_server(
     @server.feature(
         COMPLETION, CompletionOptions(trigger_characters=[".", ":", "`", "<", "/"])
     )
-    def on_completion(rst: server_cls, params: CompletionParams):
+    def on_completion(ls: RstLanguageServer, params: CompletionParams):
         uri = params.text_document.uri
         pos = params.position
 
-        doc = rst.workspace.get_document(uri)
-        line = rst.line_at_position(doc, pos)
-        location = rst.get_location_type(doc, pos)
+        doc = ls.workspace.get_document(uri)
+        line = ls.line_at_position(doc, pos)
+        location = ls.get_location_type(doc, pos)
 
         items = []
 
-        for feature in rst._features.values():
+        for feature in ls._features.values():
             for pattern in feature.completion_triggers:
                 for match in pattern.finditer(line):
                     if not match:
@@ -132,22 +136,22 @@ def create_language_server(
                         context = CompletionContext(
                             doc=doc, location=location, match=match, position=pos
                         )
-                        rst.logger.debug("Completion context: %s", context)
+                        ls.logger.debug("Completion context: %s", context)
                         items += feature.complete(context)
 
         return CompletionList(is_incomplete=False, items=items)
 
     @server.feature(DEFINITION)
-    def on_definition(rst: server_cls, params: DefinitionParams):
+    def on_definition(ls: RstLanguageServer, params: DefinitionParams):
         uri = params.text_document.uri
         pos = params.position
 
-        doc = rst.workspace.get_document(uri)
-        line = rst.line_at_position(doc, pos)
+        doc = ls.workspace.get_document(uri)
+        line = ls.line_at_position(doc, pos)
 
         definitions = []
 
-        for feature in rst._features.values():
+        for feature in ls._features.values():
             for pattern in feature.definition_triggers:
                 for match in pattern.finditer(line):
                     if not match:
@@ -160,19 +164,19 @@ def create_language_server(
         return definitions
 
     @server.feature(DOCUMENT_SYMBOL)
-    def on_document_symbol(rst: server_cls, params: DocumentSymbolParams):
+    def on_document_symbol(ls: RstLanguageServer, params: DocumentSymbolParams):
 
-        doctree = rst.get_doctree(uri=params.text_document.uri)
+        doctree = ls.get_doctree(uri=params.text_document.uri)
         if doctree is None:
             return []
 
-        visitor = SymbolVisitor(rst, doctree)
+        visitor = SymbolVisitor(ls, doctree)
         doctree.walkabout(visitor)
 
         return visitor.symbols
 
     @server.command("esbonio.server.configuration")
-    def get_configuration(rst: server_cls, *args):
+    def get_configuration(ls: RstLanguageServer, *args):
         """Get the server's configuration.
 
         Not to be confused with the ``workspace/configuration`` request where the server
@@ -181,8 +185,8 @@ def create_language_server(
 
         As far as I know, there isn't anything built into the spec to cater for this?
         """
-        config = rst.configuration
-        rst.logger.debug("%s: %s", "esbonio.server.configuration", config)
+        config = ls.configuration
+        ls.logger.debug("%s: %s", "esbonio.server.configuration", config)
 
         return config
 

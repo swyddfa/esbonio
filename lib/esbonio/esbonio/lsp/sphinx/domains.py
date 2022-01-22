@@ -16,14 +16,12 @@ from pygls.lsp.types import Range
 from pygls.workspace import Document
 from sphinx.domains import Domain
 
+from esbonio.lsp.roles import Roles
 from esbonio.lsp.roles import TargetCompletion
 from esbonio.lsp.roles import TargetDefinition
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
-
-if typing.TYPE_CHECKING:
-    from esbonio.lsp.roles import Roles
 
 
 TARGET_KINDS = {
@@ -38,7 +36,7 @@ TARGET_KINDS = {
 }
 
 
-class Domain(TargetCompletion, TargetDefinition):
+class DomainFeatures(TargetCompletion, TargetDefinition):
     def __init__(self, rst: SphinxLanguageServer):
         self.rst = rst
         self.logger = rst.logger.getChild(self.__class__.__name__)
@@ -80,7 +78,7 @@ class Domain(TargetCompletion, TargetDefinition):
         return items
 
     def find_definitions(
-        self, doc: Document, match: "re.Match", name: str, domain: Optional[str]
+        self, doc: Document, match: "re.Match", name: str, domain: Optional[str] = None
     ) -> List[Location]:
 
         label = match.groupdict()["label"]
@@ -95,6 +93,9 @@ class Domain(TargetCompletion, TargetDefinition):
 
     def doc_definition(self, doc: Document, label: str) -> List[Location]:
         """Goto definition implementation for ``:doc:`` targets"""
+
+        if self.rst.app is None:
+            return []
 
         srcdir = self.rst.app.srcdir
         currentdir = pathlib.Path(Uri.to_fs_path(doc.uri)).parent
@@ -117,8 +118,10 @@ class Domain(TargetCompletion, TargetDefinition):
     def ref_definition(self, label: str) -> List[Location]:
         """Goto definition implementation for ``:ref:`` targets"""
 
-        std = self.rst.get_domain("std")
         types = set(self.rst.get_role_target_types("ref"))
+        std = self.rst.get_domain("std")
+        if std is None:
+            return []
 
         docname = self.find_docname_for_label(label, std, types)
         if docname is None:
@@ -172,8 +175,6 @@ class Domain(TargetCompletion, TargetDefinition):
 
         docname = None
         types = types or set()
-        if not domain:
-            return []
 
         # _, title, _, _, anchor, priority
         for name, _, type_, doc, _, _ in domain.get_objects():
@@ -243,9 +244,10 @@ def project_to_completion_item(project: str) -> CompletionItem:
 
 def esbonio_setup(rst: RstLanguageServer):
 
-    domains = Domain(rst)
-    roles = rst.get_feature("roles")  # type: Optional[Roles]
+    if isinstance(rst, SphinxLanguageServer):
+        domains = DomainFeatures(rst)
+        roles = rst.get_feature("roles")
 
-    if roles and isinstance(rst, SphinxLanguageServer):
-        roles.add_definition_provider(domains)
-        roles.add_target_provider(domains)
+        if roles:
+            typing.cast(Roles, roles).add_definition_provider(domains)
+            typing.cast(Roles, roles).add_target_provider(domains)

@@ -16,6 +16,14 @@ from .rst import CompletionContext
 from .rst import LanguageFeature
 from .rst import RstLanguageServer
 
+try:
+    from typing import Protocol
+except ImportError:
+    # Protocol is only available in Python 3.8+
+    class Protocol:  # type: ignore
+        ...
+
+
 ROLE = re.compile(
     r"""
     ([^\w:]|^\s*)                     # roles cannot be preceeded by letter chars
@@ -274,7 +282,10 @@ class Roles(LanguageFeature):
                 return []
         else:
             name = groups["name"]
-            domain = groups["domain"] or ""
+            domain = groups["domain"]
+
+        domain = domain or ""
+        name = name or ""
 
         # Only generate suggestions for "aliased" targets if the request comes from
         # within the <> chars.

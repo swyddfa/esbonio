@@ -16,6 +16,13 @@ from esbonio.lsp import CompletionContext
 from esbonio.lsp import LanguageFeature
 from esbonio.lsp import RstLanguageServer
 
+try:
+    from typing import Protocol
+except ImportError:
+    # Protocol is only available in Python 3.8+
+    class Protocol:  # type: ignore
+        ...
+
 
 DIRECTIVE = re.compile(
     r"""
@@ -279,7 +286,7 @@ class Directives(LanguageFeature):
            be included
         """
         args = ""
-        documentation = inspect.getdoc(directive)
+        documentation = inspect.getdoc(directive) or ""
         insert_format = InsertTextFormat.PlainText
 
         # Ignore directives that do not provide their own documentation.
@@ -289,7 +296,7 @@ class Directives(LanguageFeature):
                 documentation.startswith("A base class for Sphinx directives."),
             ]
         ):
-            documentation = None
+            documentation = ""
 
         # TODO: Give better names to arguments based on what they represent.
         if include_argument:
