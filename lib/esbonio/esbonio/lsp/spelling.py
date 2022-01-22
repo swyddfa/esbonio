@@ -16,7 +16,7 @@ from pygls.lsp.types.basic_structures import DiagnosticSeverity
 from pygls.lsp.types.basic_structures import Position
 from pygls.lsp.types.basic_structures import Range
 from pygls.lsp.types.workspace import DidSaveTextDocumentParams
-from spellchecker import SpellChecker
+from spellchecker import SpellChecker  # type: ignore
 
 from esbonio.lsp.rst import LanguageFeature
 from esbonio.lsp.sphinx import SphinxLanguageServer

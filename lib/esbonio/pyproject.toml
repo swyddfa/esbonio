@@ -58,11 +58,9 @@ deps =
     sphinx2: docutils<0.18
     sphinx3: sphinx>=3,<4
     sphinx4: sphinx>=4,<5
-    pytest
-    pytest-asyncio
-    pytest-cov
-    pytest-timeout
+extras= dev
 commands =
+    py{38,39,310}-sphinx4: mypy --namespace-packages --explicit-package-bases -p esbonio
     pytest --tb=short --cov=esbonio.lsp {posargs}
 
 [testenv:pkg]

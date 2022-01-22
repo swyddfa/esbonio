@@ -2,7 +2,6 @@
 import pathlib
 import typing
 from typing import List
-from typing import Optional
 
 import pygls.uris as uri
 from pygls.lsp.types import CompletionItem
@@ -12,15 +11,12 @@ from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
 
 from esbonio.lsp.directives import ArgumentCompletion
+from esbonio.lsp.directives import Directives
+from esbonio.lsp.roles import Roles
 from esbonio.lsp.roles import TargetCompletion
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
-
-
-if typing.TYPE_CHECKING:
-    from esbonio.lsp.directives import Directives
-    from esbonio.lsp.roles import Roles
 
 
 def path_to_completion_item(
@@ -101,6 +97,8 @@ class Filepath(ArgumentCompletion, TargetCompletion):
         if name in {"image", "figure", "include", "literalinclude"}:
             return self.complete_filepaths(context)
 
+        return []
+
     def complete_targets(
         self, context: CompletionContext, domain: str, name: str
     ) -> List[CompletionItem]:
@@ -108,7 +106,12 @@ class Filepath(ArgumentCompletion, TargetCompletion):
         if name in {"download"}:
             return self.complete_filepaths(context)
 
+        return []
+
     def complete_filepaths(self, context: CompletionContext) -> List[CompletionItem]:
+
+        if self.rst.app is None:
+            return []
 
         groups = context.match.groupdict()
 
@@ -139,13 +142,14 @@ class Filepath(ArgumentCompletion, TargetCompletion):
 
 def esbonio_setup(rst: RstLanguageServer):
 
-    roles = rst.get_feature("roles")  # type: Optional[Roles]
-    directives = rst.get_feature("directives")  # type: Optional[Directives]
+    roles = rst.get_feature("roles")
+    directives = rst.get_feature("directives")
 
-    filepaths = Filepath(rst)
+    if isinstance(rst, SphinxLanguageServer):
+        filepaths = Filepath(rst)
 
-    if roles and isinstance(rst, SphinxLanguageServer):
-        roles.add_target_provider(filepaths)
+        if roles:
+            typing.cast(Roles, roles).add_target_provider(filepaths)
 
-    if directives and isinstance(rst, SphinxLanguageServer):
-        directives.add_argument_provider(filepaths)
+        if directives:
+            typing.cast(Directives, directives).add_argument_provider(filepaths)

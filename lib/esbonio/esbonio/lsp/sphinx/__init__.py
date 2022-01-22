@@ -3,6 +3,7 @@ import logging
 import pathlib
 import re
 import traceback
+import typing
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -28,10 +29,11 @@ from sphinx import __version__ as __sphinx_version__
 from sphinx.application import Sphinx
 from sphinx.domains import Domain
 from sphinx.util import console
+from sphinx.util.logging import SphinxLogRecord
 from sphinx.util.logging import WarningLogRecordTranslator
 
 from esbonio.cli import setup_cli
-from esbonio.lsp.log import LspHandler
+from esbonio.lsp.rst import LspHandler
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.rst import ServerConfig
 
@@ -39,7 +41,7 @@ try:
     from sphinx.util.logging import OnceFilter
 except ImportError:
     # OnceFilter is not defined in Sphinx 2.x
-    class OnceFilter:
+    class OnceFilter:  # type: ignore
         def filter(self, *args, **kwargs):
             return True
 
@@ -54,8 +56,9 @@ DEFAULT_MODULES = [
 
 
 DIAGNOSTIC_SEVERITY = {
-    "WARNING": DiagnosticSeverity.Warning,
-    "ERROR": DiagnosticSeverity.Error,
+    logging.ERROR: DiagnosticSeverity.Error,
+    logging.INFO: DiagnosticSeverity.Information,
+    logging.WARNING: DiagnosticSeverity.Warning,
 }
 
 PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")
@@ -88,17 +91,17 @@ class SphinxConfig(BaseModel):
 
 class SphinxServerConfig(ServerConfig):
 
-    hide_sphinx_output: Optional[bool] = Field(False, alias="hideSphinxOutput")
+    hide_sphinx_output: bool = Field(False, alias="hideSphinxOutput")
     """A flag to indicate if Sphinx build output should be omitted from the log."""
 
 
 class InitializationOptions(BaseModel):
     """The initialization options we can expect to receive from a client."""
 
-    sphinx: Optional[SphinxConfig] = Field(default_factory=SphinxConfig)
+    sphinx: SphinxConfig = Field(default_factory=SphinxConfig)
     """The ``esbonio.sphinx.*`` namespace of options."""
 
-    server: Optional[SphinxServerConfig] = Field(default_factory=SphinxServerConfig)
+    server: SphinxServerConfig = Field(default_factory=SphinxServerConfig)
     """The ``esbonio.server.*`` namespace of options."""
 
 
@@ -165,7 +168,8 @@ class SphinxLogHandler(LspHandler):
         # Let sphinx do what it does to warning/error messages
         self.translator.filter(record)
 
-        doc, lineno = self.get_location(record.location)
+        loc = record.location if isinstance(record, SphinxLogRecord) else ""
+        doc, lineno = self.get_location(loc)
         line = lineno or 1
         self.server.logger.debug("Reporting diagnostic at %s:%s", doc, line)
 
@@ -208,7 +212,7 @@ class SphinxLanguageServer(RstLanguageServer):
         self._role_target_types: Optional[Dict[str, List[str]]] = None
         """Cache for role target types."""
 
-        self._role_targets: Optional[Dict[str, List[tuple]]] = None
+        self._role_targets: Dict[str, List[tuple]] = {}
         """Cache for role target objects."""
 
     @property
@@ -218,19 +222,22 @@ class SphinxLanguageServer(RstLanguageServer):
 
         if self.app:
             app = self.app
+            builder_name = None if app.builder is None else app.builder.name
             config["sphinx"] = SphinxConfig(
                 version=__sphinx_version__,
                 confDir=app.confdir,
                 srcDir=app.srcdir,
                 buildDir=app.outdir,
-                builderName=app.builder.name,
+                builderName=builder_name,
             )
 
         return config
 
     def initialize(self, params: InitializeParams):
         super().initialize(params)
-        self.user_config = InitializationOptions(**params.initialization_options)
+        self.user_config = InitializationOptions(
+            **typing.cast(Dict, params.initialization_options)
+        )
 
         self.app = self._initialize_sphinx()
 
@@ -262,9 +269,14 @@ class SphinxLanguageServer(RstLanguageServer):
                 conf_dir = pathlib.Path(self.app.confdir)
             else:
                 # The user's config is currently broken... where should their conf.py be?
-                conf_dir = (
-                    find_conf_dir(self.workspace.root_uri, self.user_config) or ""
-                )
+                if self.user_config is not None:
+                    config = typing.cast(InitializationOptions, self.user_config).sphinx
+                else:
+                    config = SphinxConfig()
+
+                conf_dir = find_conf_dir(
+                    self.workspace.root_uri, config
+                ) or pathlib.Path(".")
 
             if str(conf_dir / "conf.py") == filepath:
                 self.app = self._initialize_sphinx()
@@ -336,13 +348,13 @@ class SphinxLanguageServer(RstLanguageServer):
         console.nocolor()
 
         app = Sphinx(
-            srcdir=src_dir,
-            confdir=conf_dir,
-            outdir=build_dir,
-            doctreedir=doctree_dir,
+            srcdir=str(src_dir),
+            confdir=str(conf_dir),
+            outdir=str(build_dir),
+            doctreedir=str(doctree_dir),
             buildername=builder_name,
-            status=None,
-            warning=None,
+            status=None,  # type: ignore
+            warning=None,  # type: ignore
             freshenv=True,  # Have Sphinx reload everything on first build.
         )
 
@@ -378,7 +390,7 @@ class SphinxLanguageServer(RstLanguageServer):
            Returns the doctree that corresponds with the given uri.
         """
 
-        if self.app is None:
+        if self.app is None or self.app.env is None or self.app.builder is None:
             return None
 
         if uri is not None:
@@ -405,7 +417,7 @@ class SphinxLanguageServer(RstLanguageServer):
            The name of the domain
         """
 
-        if self.app is None:
+        if self.app is None or self.app.env is None:
             return None
 
         domains = self.app.env.domains
@@ -424,7 +436,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
         """
 
-        if self.app is None:
+        if self.app is None or self.app.env is None:
             return []
 
         domains = self.app.env.domains
@@ -456,12 +468,12 @@ class SphinxLanguageServer(RstLanguageServer):
 
         return self._directives
 
-    def get_directive_options(self, name: str):
+    def get_directive_options(self, name: str) -> Dict[str, Any]:
         """Return the options specification for the given directive."""
 
         directive = self.get_directives().get(name, None)
         if directive is None:
-            return []
+            return {}
 
         options = directive.option_spec
 
@@ -475,7 +487,7 @@ class SphinxLanguageServer(RstLanguageServer):
             if documenter is not None:
                 options = documenter.option_spec
 
-        return options or []
+        return options or {}
 
     def get_roles(self) -> Dict[str, Any]:
         """Return a dictionary of known roles."""
@@ -494,7 +506,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
         return self._roles
 
-    def get_default_role(self) -> Optional[Tuple[Optional[str], Optional[str]]]:
+    def get_default_role(self) -> Tuple[Optional[str], Optional[str]]:
         """Return the project's default role"""
 
         if not self.app:
@@ -514,7 +526,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
         return None, role
 
-    def get_role_target_types(self, name: str, domain: str = "") -> List[str]:
+    def get_role_target_types(self, name: str, domain_name: str = "") -> List[str]:
         """Return a map indicating which object types a role is capable of linking
         with.
 
@@ -528,7 +540,7 @@ class SphinxLanguageServer(RstLanguageServer):
            }
         """
 
-        key = f"{domain}:{name}" if domain else name
+        key = f"{domain_name}:{name}" if domain_name else name
 
         if self._role_target_types is not None:
             return self._role_target_types.get(key, [])
@@ -562,10 +574,10 @@ class SphinxLanguageServer(RstLanguageServer):
            The domain the role is a part of, if applicable.
         """
 
-        if self._role_targets is None:
+        if not self._role_targets:
             self._index_role_targets()
 
-        targets = []
+        targets: List[tuple] = []
         for target_type in self.get_role_target_types(name, domain):
             targets += self._role_targets.get(target_type, [])
 
@@ -586,6 +598,9 @@ class SphinxLanguageServer(RstLanguageServer):
 
     def get_intersphinx_projects(self) -> List[str]:
         """Return the list of configured intersphinx project names."""
+
+        if self.app is None:
+            return []
 
         inv = getattr(self.app.env, "intersphinx_named_inventory", {})
         return list(inv.keys())
@@ -628,6 +643,9 @@ class SphinxLanguageServer(RstLanguageServer):
            The domain the role is a part of, if applicable.
         """
 
+        if self.app is None:
+            return {}
+
         inv = getattr(self.app.env, "intersphinx_named_inventory", {})
         if project not in inv:
             return {}
@@ -658,22 +676,24 @@ class SphinxLanguageServer(RstLanguageServer):
 def find_conf_dir(root_uri: str, config: SphinxConfig) -> Optional[pathlib.Path]:
     """Attempt to find Sphinx's configuration file within the given workspace."""
 
-    root = pathlib.Path(Uri.to_fs_path(root_uri))
+    root = Uri.to_fs_path(root_uri)
 
     if config.conf_dir:
         return expand_conf_dir(root, config.conf_dir)
 
     ignore_paths = [".tox", "site-packages"]
 
-    for candidate in root.glob("**/conf.py"):
+    for candidate in pathlib.Path(root).glob("**/conf.py"):
         # Skip any files that obviously aren't part of the project
         if any(path in str(candidate) for path in ignore_paths):
             continue
 
         return candidate.parent
 
+    return None
 
-def expand_conf_dir(root_dir: str, conf_dir: str) -> str:
+
+def expand_conf_dir(root_dir: str, conf_dir: str) -> pathlib.Path:
     """Expand the user provided conf_dir into a real path.
 
     Here is where we handle "variables" that can be included in the path, currently
@@ -692,7 +712,7 @@ def expand_conf_dir(root_dir: str, conf_dir: str) -> str:
 
     match = PATH_VAR_PATTERN.match(conf_dir)
     if not match or match.group(1) != "workspaceRoot":
-        return conf_dir
+        return pathlib.Path(conf_dir)
 
     conf = pathlib.Path(conf_dir).parts[1:]
     return pathlib.Path(root_dir, *conf).resolve()
@@ -738,7 +758,7 @@ def get_src_dir(
         src = pathlib.Path(src_dir).parts[1:]
         return pathlib.Path(conf_dir, *src).resolve()
 
-    return src_dir
+    return pathlib.Path(src_dir)
 
 
 def get_build_dir(
