@@ -78,7 +78,7 @@ The language server breaks an option down into a number of parts::
 """
 
 
-class ArgumentCompletion:
+class ArgumentCompletion(Protocol):
     """A completion provider for directive arguments."""
 
     def complete_arguments(self, context: CompletionContext) -> List[CompletionItem]:
@@ -90,7 +90,6 @@ class ArgumentCompletion:
         context:
            The completion context
         """
-        return []
 
 
 class Directives(LanguageFeature):
@@ -99,12 +98,12 @@ class Directives(LanguageFeature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._argument_providers: List[ArgumentCompletion] = []
+        self._argument_completion_providers: List[ArgumentCompletion] = []
         """A list of providers that give completion suggestions for directive
         arguments."""
 
-    def add_argument_provider(self, provider: ArgumentCompletion) -> None:
-        self._argument_providers.append(provider)
+    def add_argument_completion_provider(self, provider: ArgumentCompletion) -> None:
+        self._argument_completion_providers.append(provider)
 
     completion_triggers = [DIRECTIVE, DIRECTIVE_OPTION]
 
@@ -133,7 +132,7 @@ class Directives(LanguageFeature):
         self.logger.debug("Completing arguments")
         arguments = []
 
-        for provide in self._argument_providers:
+        for provide in self._argument_completion_providers:
             arguments += provide.complete_arguments(context) or []
 
         return arguments

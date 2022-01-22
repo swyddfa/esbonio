@@ -96,7 +96,7 @@ A "default" role is the target part of a normal role - but without the ``:name:`
 """
 
 
-class TargetDefinition:
+class TargetDefinition(Protocol):
     """A definition provider for role targets"""
 
     def find_definitions(
@@ -116,10 +116,9 @@ class TargetDefinition:
         domain:
            The domain the role is part of, if applicable.
         """
-        return []
 
 
-class TargetCompletion:
+class TargetCompletion(Protocol):
     """A completion provider for role targets"""
 
     def complete_targets(
@@ -137,7 +136,6 @@ class TargetCompletion:
         name:
            The name of the role to generate completion suggestions for.
         """
-        return []
 
 
 class Roles(LanguageFeature):
@@ -146,18 +144,18 @@ class Roles(LanguageFeature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._definition_providers: List[TargetDefinition] = []
+        self._target_definition_providers: List[TargetDefinition] = []
         """A list of providers that locate the definition for the given role target."""
 
-        self._target_providers: List[TargetCompletion] = []
+        self._target_completion_providers: List[TargetCompletion] = []
         """A list of providers that give completion suggestions for role target
         objects."""
 
-    def add_definition_provider(self, provider: TargetDefinition) -> None:
-        self._definition_providers.append(provider)
+    def add_target_definition_provider(self, provider: TargetDefinition) -> None:
+        self._target_definition_providers.append(provider)
 
-    def add_target_provider(self, provider: TargetCompletion) -> None:
-        self._target_providers.append(provider)
+    def add_target_completion_provider(self, provider: TargetCompletion) -> None:
+        self._target_completion_providers.append(provider)
 
     completion_triggers = [ROLE, DEFAULT_ROLE]
     definition_triggers = [ROLE]
@@ -178,7 +176,7 @@ class Roles(LanguageFeature):
             match.groupdict(),
         )
 
-        for provide in self._definition_providers:
+        for provide in self._target_definition_providers:
             definitions += provide.find_definitions(doc, match, name, domain) or []
 
         return definitions
@@ -311,7 +309,7 @@ class Roles(LanguageFeature):
         prefix = context.match.group(0)[start:]
         modifier = groups["modifier"] or ""
 
-        for provide in self._target_providers:
+        for provide in self._target_completion_providers:
             candidates = provide.complete_targets(context, domain, name) or []
 
             for candidate in candidates:

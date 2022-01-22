@@ -10,10 +10,8 @@ from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
 
-from esbonio.lsp.directives import ArgumentCompletion
 from esbonio.lsp.directives import Directives
 from esbonio.lsp.roles import Roles
-from esbonio.lsp.roles import TargetCompletion
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
@@ -84,7 +82,7 @@ def find_start_char(context: CompletionContext) -> int:
     return idx
 
 
-class Filepath(ArgumentCompletion, TargetCompletion):
+class Filepath:
     """Filepath completion support."""
 
     def __init__(self, rst: SphinxLanguageServer):
@@ -149,7 +147,9 @@ def esbonio_setup(rst: RstLanguageServer):
         filepaths = Filepath(rst)
 
         if roles:
-            typing.cast(Roles, roles).add_target_provider(filepaths)
+            typing.cast(Roles, roles).add_target_completion_provider(filepaths)
 
         if directives:
-            typing.cast(Directives, directives).add_argument_provider(filepaths)
+            typing.cast(Directives, directives).add_argument_completion_provider(
+                filepaths
+            )

@@ -17,8 +17,6 @@ from pygls.workspace import Document
 from sphinx.domains import Domain
 
 from esbonio.lsp.roles import Roles
-from esbonio.lsp.roles import TargetCompletion
-from esbonio.lsp.roles import TargetDefinition
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
@@ -36,7 +34,7 @@ TARGET_KINDS = {
 }
 
 
-class DomainFeatures(TargetCompletion, TargetDefinition):
+class DomainFeatures:
     def __init__(self, rst: SphinxLanguageServer):
         self.rst = rst
         self.logger = rst.logger.getChild(self.__class__.__name__)
@@ -89,7 +87,7 @@ class DomainFeatures(TargetCompletion, TargetDefinition):
         if name == "doc":
             return self.doc_definition(doc, label)
 
-        return super().find_definitions(doc, match, name, domain=domain)
+        return []
 
     def doc_definition(self, doc: Document, label: str) -> List[Location]:
         """Goto definition implementation for ``:doc:`` targets"""
@@ -249,5 +247,5 @@ def esbonio_setup(rst: RstLanguageServer):
         roles = rst.get_feature("roles")
 
         if roles:
-            typing.cast(Roles, roles).add_definition_provider(domains)
-            typing.cast(Roles, roles).add_target_provider(domains)
+            typing.cast(Roles, roles).add_target_definition_provider(domains)
+            typing.cast(Roles, roles).add_target_completion_provider(domains)
