@@ -130,7 +130,7 @@
                 "esbonio.server.logFilter": {
                     "scope": "application",
                     "type": "array",
-                    "default": null,
+                    "default": [],
                     "items": {
                         "type": "string"
                     },
