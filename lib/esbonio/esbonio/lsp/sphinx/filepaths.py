@@ -141,8 +141,8 @@ class Filepath:
 
 def esbonio_setup(rst: RstLanguageServer):
 
-    roles = rst.get_feature("roles")
-    directives = rst.get_feature("directives")
+    roles = rst.get_feature("esbonio.lsp.roles.Roles")
+    directives = rst.get_feature("esbonio.lsp.directives.Directives")
 
     if isinstance(rst, SphinxLanguageServer):
         filepaths = Filepath(rst)
