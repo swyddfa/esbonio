@@ -228,7 +228,7 @@ class RstLanguageServer(LanguageServer):
     def add_feature(self, feature: "LanguageFeature"):
         """Register a language feature with the server."""
 
-        key = feature.__class__.__name__.lower()
+        key = f"{feature.__module__}.{feature.__class__.__name__}"
         self._features[key] = feature
 
     def get_feature(self, key) -> Optional["LanguageFeature"]:

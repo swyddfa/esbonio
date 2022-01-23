@@ -244,7 +244,7 @@ def esbonio_setup(rst: RstLanguageServer):
 
     if isinstance(rst, SphinxLanguageServer):
         domains = DomainFeatures(rst)
-        roles = rst.get_feature("roles")
+        roles = rst.get_feature("esbonio.lsp.roles.Roles")
 
         if roles:
             typing.cast(Roles, roles).add_target_definition_provider(domains)

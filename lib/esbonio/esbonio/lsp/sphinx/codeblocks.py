@@ -64,7 +64,7 @@ class CodeBlocks:
 
 def esbonio_setup(rst: RstLanguageServer):
 
-    directives = rst.get_feature("directives")
+    directives = rst.get_feature("esbonio.lsp.directives.Directives")
 
     if isinstance(rst, SphinxLanguageServer):
         codeblocks = CodeBlocks(rst)
