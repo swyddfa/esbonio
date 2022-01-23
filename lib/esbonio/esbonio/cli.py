@@ -63,10 +63,10 @@ def main(cli: argparse.ArgumentParser):
         print(f"v{__version__}")
         sys.exit(0)
 
-    modules = set(args.modules)
+    modules = list(args.modules)
 
     for mod in args.included_modules:
-        modules.add(mod)
+        modules.append(mod)
 
     for mod in args.excluded_modules:
         modules.remove(mod)
