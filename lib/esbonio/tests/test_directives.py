@@ -62,7 +62,7 @@ EXTENSIONS_UNEXPECTED = {
         ("sphinx-default", ".. ", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
         ("sphinx-default", ".. d", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
         ("sphinx-default", ".. code-b", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", ".. code-block:: ", None, None),
+        ("sphinx-default", ".. codex-block:: ", None, None),
         ("sphinx-default", ".. py:", None, None),
         (
             "sphinx-default",
@@ -77,7 +77,7 @@ EXTENSIONS_UNEXPECTED = {
         ("sphinx-default", "   .. d", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
         ("sphinx-default", "   .. doctest:: ", None, None),
         ("sphinx-default", "   .. code-b", DEFAULT_EXPECTED, DEFAULT_UNEXPECTED),
-        ("sphinx-default", "   .. code-block:: ", None, None),
+        ("sphinx-default", "   .. codex-block:: ", None, None),
         ("sphinx-default", "   .. py:", None, None),
         ("sphinx-default", "   .. _some_label:", None, None),
         (
@@ -91,7 +91,7 @@ EXTENSIONS_UNEXPECTED = {
         ("sphinx-extensions", ".. ", EXTENSIONS_EXPECTED, EXTENSIONS_UNEXPECTED),
         ("sphinx-extensions", ".. d", EXTENSIONS_EXPECTED, EXTENSIONS_UNEXPECTED),
         ("sphinx-extensions", ".. code-b", EXTENSIONS_EXPECTED, EXTENSIONS_UNEXPECTED),
-        ("sphinx-extensions", ".. code-block:: ", None, None),
+        ("sphinx-extensions", ".. codex-block:: ", None, None),
         ("sphinx-extensions", ".. _some_label:", None, None),
         (
             "sphinx-extensions",
@@ -112,7 +112,7 @@ EXTENSIONS_UNEXPECTED = {
             EXTENSIONS_EXPECTED,
             EXTENSIONS_UNEXPECTED,
         ),
-        ("sphinx-extensions", "   .. code-block:: ", None, None),
+        ("sphinx-extensions", "   .. codex-block:: ", None, None),
         (
             "sphinx-extensions",
             ".. py:",
