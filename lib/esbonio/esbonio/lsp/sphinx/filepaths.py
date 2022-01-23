@@ -89,9 +89,10 @@ class Filepath:
         self.rst = rst
         self.logger = rst.logger.getChild(self.__class__.__name__)
 
-    def complete_arguments(self, context: CompletionContext) -> List[CompletionItem]:
+    def complete_arguments(
+        self, context: CompletionContext, domain: str, name: str
+    ) -> List[CompletionItem]:
 
-        name = context.match.groupdict()["name"]
         if name in {"image", "figure", "include", "literalinclude"}:
             return self.complete_filepaths(context)
 

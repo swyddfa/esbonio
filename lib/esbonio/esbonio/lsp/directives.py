@@ -81,7 +81,9 @@ The language server breaks an option down into a number of parts::
 class ArgumentCompletion(Protocol):
     """A completion provider for directive arguments."""
 
-    def complete_arguments(self, context: CompletionContext) -> List[CompletionItem]:
+    def complete_arguments(
+        self, context: CompletionContext, domain: str, name: str
+    ) -> List[CompletionItem]:
         """Return a list of completion items representing valid targets for the given
         directive.
 
@@ -89,6 +91,10 @@ class ArgumentCompletion(Protocol):
         ----------
         context:
            The completion context
+        domain:
+           The name of the domain the directive is a member of
+        name:
+           The name of the domain
         """
 
 
@@ -129,11 +135,12 @@ class Directives(LanguageFeature):
         return self.complete_directives(context)
 
     def complete_arguments(self, context: CompletionContext) -> List[CompletionItem]:
-        self.logger.debug("Completing arguments")
         arguments = []
+        name = context.match.group("name")
+        domain = context.match.group("domain") or ""
 
         for provide in self._argument_completion_providers:
-            arguments += provide.complete_arguments(context) or []
+            arguments += provide.complete_arguments(context, domain, name) or []
 
         return arguments
 
