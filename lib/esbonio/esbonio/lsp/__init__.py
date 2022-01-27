@@ -9,6 +9,7 @@ from typing import Type
 
 from pygls.lsp.methods import CODE_ACTION
 from pygls.lsp.methods import COMPLETION
+from pygls.lsp.methods import COMPLETION_ITEM_RESOLVE
 from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import DOCUMENT_SYMBOL
 from pygls.lsp.methods import INITIALIZE
@@ -17,6 +18,7 @@ from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_SAVE
 from pygls.lsp.types import CodeActionParams
+from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionList
 from pygls.lsp.types import CompletionOptions
 from pygls.lsp.types import CompletionParams
@@ -111,7 +113,10 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
         return actions
 
     @server.feature(
-        COMPLETION, CompletionOptions(trigger_characters=[".", ":", "`", "<", "/"])
+        COMPLETION,
+        CompletionOptions(
+            trigger_characters=[".", ":", "`", "<", "/"], resolve_provider=True
+        ),
     )
     def on_completion(ls: RstLanguageServer, params: CompletionParams):
         uri = params.text_document.uri
@@ -123,7 +128,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         items = []
 
-        for feature in ls._features.values():
+        for name, feature in ls._features.items():
             for pattern in feature.completion_triggers:
                 for match in pattern.finditer(line):
                     if not match:
@@ -137,9 +142,27 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
                             doc=doc, location=location, match=match, position=pos
                         )
                         ls.logger.debug("Completion context: %s", context)
-                        items += feature.complete(context)
+
+                        for item in feature.complete(context):
+                            item.data = {"source_feature": name, **(item.data or {})}
+                            items.append(item)
 
         return CompletionList(is_incomplete=False, items=items)
+
+    @server.feature(COMPLETION_ITEM_RESOLVE)
+    def on_completion_resolve(
+        ls: RstLanguageServer, item: CompletionItem
+    ) -> CompletionItem:
+        source = (item.data or {}).get("source_feature", "")
+        feature = ls.get_feature(source)
+
+        if not feature:
+            ls.logger.error(
+                "Unable to resolve completion item, unknown source: '%s'", source
+            )
+            return item
+
+        return feature.completion_resolve(item)
 
     @server.feature(DEFINITION)
     def on_definition(ls: RstLanguageServer, params: DefinitionParams):
