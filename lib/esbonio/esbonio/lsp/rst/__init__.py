@@ -113,6 +113,17 @@ class LanguageFeature:
         """
         return []
 
+    def completion_resolve(self, item: CompletionItem) -> CompletionItem:
+        """Called with a completion item the user has selected in the UI,
+        allowing for additional details to be provided e.g. documentation.
+
+        Parameters
+        ----------
+        item:
+            The completion item to provide additional details for.
+        """
+        return item
+
     definition_triggers: List["re.Pattern"] = []
     """A list of regular expressions used to determine if the
     :meth:`~esbonio.lsp.rst.LanguageFeature.definition` method should be called."""
