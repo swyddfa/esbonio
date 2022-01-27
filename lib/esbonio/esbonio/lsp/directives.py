@@ -1,13 +1,18 @@
 """Logic around directive completions goes here."""
-import inspect
+import json
 import re
+import typing
+from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
 
-from docutils.parsers.rst import Directive
+import pkg_resources
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import InsertTextFormat
+from pygls.lsp.types import MarkupContent
+from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
@@ -15,6 +20,7 @@ from pygls.lsp.types import TextEdit
 from esbonio.lsp import CompletionContext
 from esbonio.lsp import LanguageFeature
 from esbonio.lsp import RstLanguageServer
+from esbonio.lsp.sphinx import SphinxLanguageServer
 
 try:
     from typing import Protocol
@@ -104,14 +110,120 @@ class Directives(LanguageFeature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._argument_completion_providers: List[ArgumentCompletion] = []
+        self._documentation: Dict[str, Dict[str, str]] = {}
+        """Cache for documentation."""
+
+        self._argument_completion_providers: Dict[str, ArgumentCompletion] = {}
         """A list of providers that give completion suggestions for directive
         arguments."""
 
     def add_argument_completion_provider(self, provider: ArgumentCompletion) -> None:
-        self._argument_completion_providers.append(provider)
+        """Register an :class:`~esbonio.lsp.directives.ArgumentCompletion` provider.
+
+        Parameters
+        ----------
+        provider:
+           The provider to register.
+        """
+        key = f"{provider.__module__}.{provider.__class__.__name__}"
+        self._argument_completion_providers[key] = provider
+
+    def add_documentation(self, documentation: Dict[str, Dict[str, Any]]) -> None:
+        """Register directive documentation.
+
+        ``documentation`` should be a dictionary with the following structure ::
+
+           documentation = {
+               "raw(docutils.parsers.rst.directives.misc.Raw)": {
+                   "is_markdown": true,
+                   "license": "https://...",
+                   "source": "https://...",
+                   "description": [
+                       "# .. raw::",
+                       "The raw directive is used for...",
+                       ...
+                    ]
+                   "options": {
+                       "file": "The file option allows...",
+                       ...
+                   }
+               }
+           }
+
+        where the key has the form ``name(dotted_name)``. There are cases where a
+        directive's implementation is not sufficient to uniquely identify it as
+        multiple directives can be provided by a single class.
+
+        This means the key has to be a combination of the ``name`` the user writes
+        in a reStructuredText document and ``dotted_name`` is the fully qualified
+        class name of the directive's implementation.
+
+        .. note::
+
+           If there is a clash with an existing key, the existing value will be
+           overwritten with the new value.
+
+        The values in this dictionary are themselves dictionaries with the following
+        fields.
+
+        ``description``
+           A list of strings for the directive's main documentation.
+
+        ``options``,
+           A dictionary, with a field for the documentaton of each of the directive's
+           options.
+
+        ``is_markdown``
+           A boolean flag used to indicate whether the ``description`` and ``options``
+           are written in plain text or markdown.
+
+        ``source``
+           The url to the documentation's source
+
+        ``license``
+           The url to the documentation's license
+
+        Parameters
+        ----------
+        documentation:
+           The documentation to register.
+        """
+
+        for key, doc in documentation.items():
+            description = doc.get("description", [])
+
+            if not description:
+                continue
+
+            source = doc.get("source", "")
+            if source:
+                description.append(f"\n[Source]({source})")
+
+            license = doc.get("license", "")
+            if license:
+                description.append(f"\n[License]({license})")
+
+            doc["description"] = "\n".join(description)
+            self._documentation[key] = doc
 
     completion_triggers = [DIRECTIVE, DIRECTIVE_OPTION]
+
+    def completion_resolve(self, item: CompletionItem) -> CompletionItem:
+
+        # We need extra info to know who to call.
+        if not item.data:
+            return item
+
+        data = typing.cast(Dict, item.data)
+        ctype = data.get("completion_type", "")
+
+        if ctype == "directive":
+            return self.completion_resolve_directive(item)
+
+        if ctype == "directive_option":
+            return self.completion_resolve_option(item)
+
+        return item
 
     def complete(self, context: CompletionContext) -> List[CompletionItem]:
 
@@ -139,8 +251,8 @@ class Directives(LanguageFeature):
         name = context.match.group("name")
         domain = context.match.group("domain") or ""
 
-        for provide in self._argument_completion_providers:
-            arguments += provide.complete_arguments(context, domain, name) or []
+        for provider_name, provider in self._argument_completion_providers.items():
+            arguments += provider.complete_arguments(context, domain, name) or []
 
         return arguments
 
@@ -176,29 +288,65 @@ class Directives(LanguageFeature):
             if not name.startswith(domain):
                 continue
 
-            item = self.directive_to_completion_item(
-                name, directive, context, include_argument=include_argument
-            )
-            item.text_edit = TextEdit(range=range_, new_text=item.insert_text)
-            item.insert_text = None
+            # TODO: Give better names to arguments based on what they represent.
+            if include_argument:
+                insert_format = InsertTextFormat.Snippet
+                args = " " + " ".join(
+                    "${{{0}:arg{0}}}".format(i)
+                    for i in range(1, directive.required_arguments + 1)
+                )
+            else:
+                args = ""
+                insert_format = InsertTextFormat.PlainText
 
-            items.append(item)
+            insert_text = f".. {name}::{args}"
+
+            items.append(
+                CompletionItem(
+                    label=name,
+                    kind=CompletionItemKind.Class,
+                    detail=f"{directive.__module__}.{directive.__name__}",
+                    filter_text=insert_text,
+                    text_edit=TextEdit(range=range_, new_text=insert_text),
+                    insert_text_format=insert_format,
+                    data={"completion_type": "directive"},
+                )
+            )
 
         return items
 
+    def completion_resolve_directive(self, item: CompletionItem) -> CompletionItem:
+
+        # We need the detail field set to the implementation's fully qualified name.
+        if not item.detail:
+            return item
+
+        documentation = self.get_documentation(item.label, item.detail)
+        if not documentation:
+            return item
+
+        description = documentation.get("description", "")
+        is_markdown = documentation.get("is_markdown", False)
+        kind = MarkupKind.Markdown if is_markdown else MarkupKind.PlainText
+
+        item.documentation = MarkupContent(kind=kind, value=description)
+        return item
+
     def complete_options(self, context: CompletionContext) -> List[CompletionItem]:
 
-        directive = self.get_directive_context(context)
-        if not directive:
+        surrounding_directive = self.get_surrounding_directive(context)
+        if not surrounding_directive:
             return []
 
-        self.logger.debug("Completing options")
-
         domain = ""
-        if directive.group("domain"):
-            domain = f'{directive.group("domain")}:'
+        if surrounding_directive.group("domain"):
+            domain = f'{surrounding_directive.group("domain")}:'
 
-        name = f"{domain}{directive.group('name')}"
+        name = f"{domain}{surrounding_directive.group('name')}"
+        directive = self.rst.get_directives().get(name, None)
+
+        if not directive:
+            return []
 
         items = []
         match = context.match
@@ -214,16 +362,57 @@ class Directives(LanguageFeature):
         )
 
         for option in self.rst.get_directive_options(name):
-            item = self.option_to_completion_item(option)
-            item.text_edit = TextEdit(range=range_, new_text=item.insert_text)
-            item.insert_text = None
+            insert_text = f":{option}:"
 
-            items.append(item)
+            items.append(
+                CompletionItem(
+                    label=option,
+                    detail=f"{directive.__module__}.{directive.__name__}:{option}",
+                    kind=CompletionItemKind.Field,
+                    filter_text=insert_text,
+                    text_edit=TextEdit(range=range_, new_text=insert_text),
+                    data={"completion_type": "directive_option", "for_directive": name},
+                )
+            )
 
-        self.logger.debug(items)
         return items
 
-    def get_directive_context(self, context: CompletionContext) -> Optional["re.Match"]:
+    def completion_resolve_option(self, item: CompletionItem) -> CompletionItem:
+
+        # We need the detail field set to the implementation's fully qualified name.
+        if not item.detail or not item.data:
+            return item
+
+        directive, option = item.detail.split(":")
+        name = typing.cast(Dict, item.data).get("for_directive", "")
+
+        documentation = self.get_documentation(name, directive)
+        if not documentation:
+            return item
+
+        description = documentation.get("options", {}).get(option, None)
+        if not description:
+            return item
+
+        source = documentation.get("source", "")
+        license = documentation.get("license", "")
+
+        if source:
+            description += f"\n\n[Source]({source})"
+
+        if license:
+            description += f"\n\n[License]({license})"
+
+        kind = MarkupKind.PlainText
+        if documentation.get("is_markdown", False):
+            kind = MarkupKind.Markdown
+
+        item.documentation = MarkupContent(kind=kind, value=description)
+        return item
+
+    def get_surrounding_directive(
+        self, context: CompletionContext
+    ) -> Optional["re.Match"]:
         """Used to determine which directive we should be offering completions for.
 
         When suggestions should be generated this returns an :class:`python:re.Match`
@@ -269,81 +458,60 @@ class Directives(LanguageFeature):
 
         return None
 
-    def directive_to_completion_item(
-        self,
-        name: str,
-        directive: Directive,
-        context: CompletionContext,
-        include_argument: bool = True,
-    ) -> CompletionItem:
-        """Convert an rst directive to its CompletionItem representation.
+    def get_documentation(
+        self, label: str, implementation: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the documentation for the given directive, if available.
+
+        If documentation for the given ``label`` cannot be found, this function will also
+        look for the label under the project's :confval:`sphinx:primary_domain` followed
+        by the ``std`` domain.
 
         Parameters
         ----------
-        name:
-           The name of the directive as a user would type in an reStructuredText
-           document
-        directive:
-           The class definition that implements the Directive's behavior
-        context:
-           The completion context
-        include_argument:
-           A flag that indicates if a placholder for any directive arguments should
-           be included
+        label:
+           The name of the directive, as the user would type in an reStructuredText file.
+        implementation:
+           The full dotted name of the directive's implementation.
         """
-        args = ""
-        documentation = inspect.getdoc(directive) or ""
-        insert_format = InsertTextFormat.PlainText
 
-        # Ignore directives that do not provide their own documentation.
-        if any(
-            [
-                documentation.startswith("Base class for reStructuredText directives."),
-                documentation.startswith("A base class for Sphinx directives."),
-            ]
-        ):
-            documentation = ""
+        key = f"{label}({implementation})"
+        documentation = self._documentation.get(key, None)
+        if documentation:
+            return documentation
 
-        # TODO: Give better names to arguments based on what they represent.
-        if include_argument:
-            insert_format = InsertTextFormat.Snippet
-            args = " " + " ".join(
-                "${{{0}:arg{0}}}".format(i)
-                for i in range(1, directive.required_arguments + 1)
-            )
+        if not isinstance(self.rst, SphinxLanguageServer) or not self.rst.app:
+            return None
 
-        insert_text = f".. {name}::{args}"
+        # Nothing found, try the primary domain
+        domain = self.rst.app.config.primary_domain
+        key = f"{domain}:{label}({implementation})"
 
-        return CompletionItem(
-            label=name,
-            kind=CompletionItemKind.Class,
-            detail="directive",
-            documentation=documentation,
-            filter_text=insert_text,
-            insert_text=insert_text,
-            insert_text_format=insert_format,
-        )
+        documentation = self._documentation.get(key, None)
+        if documentation:
+            return documentation
 
-    def option_to_completion_item(self, option: str) -> CompletionItem:
-        """Convert an directive option to its CompletionItem representation.
+        # Still nothing, try the standard domain
+        key = f"std:{label}({implementation})"
 
-        Parameters
-        ----------
-        option:
-           The option's name
-        """
-        insert_text = f":{option}:"
+        documentation = self._documentation.get(key, None)
+        if documentation:
+            return documentation
 
-        return CompletionItem(
-            label=option,
-            detail="option",
-            kind=CompletionItemKind.Field,
-            filter_text=insert_text,
-            insert_text=insert_text,
-        )
+        return None
 
 
 def esbonio_setup(rst: RstLanguageServer):
+    """Configure and reigster the directives feature with the server."""
 
     directives = Directives(rst)
     rst.add_feature(directives)
+
+    docutils_docs = pkg_resources.resource_string("esbonio.lsp.rst", "directives.json")
+    directives.add_documentation(json.loads(docutils_docs.decode("utf8")))
+
+    if isinstance(rst, SphinxLanguageServer):
+        sphinx_docs = pkg_resources.resource_string(
+            "esbonio.lsp.sphinx", "directives.json"
+        )
+        directives.add_documentation(json.loads(sphinx_docs.decode("utf8")))
