@@ -412,6 +412,7 @@ async def test_insert_range(client_server, project, text, character, expected_ra
     [
         (".", None),
         ("..", {"directive": ".."}),
+        (".. d", {"directive": ".. d"}),
         (".. image::", {"name": "image", "directive": ".. image::"}),
         (".. c:", {"domain": "c", "directive": ".. c:"}),
         (
@@ -442,6 +443,31 @@ async def test_insert_range(client_server, project, text, character, expected_ra
                 "domain": "cpp",
                 "argument": "malloc",
                 "directive": ".. cpp:function::",
+            },
+        ),
+        (
+            ".. rst:directive:option::",
+            {
+                "name": "directive:option",
+                "domain": "rst",
+                "directive": ".. rst:directive:option::",
+            },
+        ),
+        (
+            "   .. rst:directive:option::",
+            {
+                "name": "directive:option",
+                "domain": "rst",
+                "directive": ".. rst:directive:option::",
+            },
+        ),
+        (
+            "   .. rst:directive:option:: height",
+            {
+                "name": "directive:option",
+                "domain": "rst",
+                "directive": ".. rst:directive:option::",
+                "argument": "height",
             },
         ),
     ],
