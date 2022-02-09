@@ -31,7 +31,7 @@ DIRECTIVE = re.compile(
       \.\.                          # directives start with a comment
       [ ]?                          # followed by a space
       ((?P<domain>[\w]+):(?!:))?    # directives may include a domain
-      (?P<name>[\w-]+)?             # directives have a name
+      (?P<name>([\w-]|:(?!:))+)?    # directives have a name
       (::)?                         # directives end with '::'
     )
     ([\s]+(?P<argument>.*$))?       # directives may take an argument
