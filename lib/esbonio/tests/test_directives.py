@@ -1,6 +1,7 @@
 import itertools
 
 import py.test
+from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 
@@ -8,6 +9,7 @@ from esbonio.lsp.directives import DIRECTIVE
 from esbonio.lsp.directives import DIRECTIVE_OPTION
 from esbonio.lsp.testing import ClientServer
 from esbonio.lsp.testing import completion_request
+from esbonio.lsp.testing import completion_resolve_request
 from esbonio.lsp.testing import sphinx_version
 
 DEFAULT_EXPECTED = {
@@ -139,6 +141,116 @@ async def test_directive_completions(
     else:
         assert expected == items & expected
         assert set() == items & unexpected
+
+
+@py.test.mark.asyncio
+@py.test.mark.parametrize(
+    "project,text,label,expected",
+    [
+        ("sphinx-default", "..", "compound", "## Compound Paragraph"),
+        ("sphinx-default", "..", "toctree", 'This directive inserts a "TOC tree" at'),
+        (
+            "sphinx-default",
+            "..",
+            "function",
+            "Describes a module-level function.  The signature",
+        ),
+        py.test.param(
+            "sphinx-default",
+            ".. function:: foo\n   \f:",
+            "async",
+            "Describes a module-level function.  The signature",
+            marks=py.test.mark.xfail(
+                reason="generate_sphinx_documentation.py doesn't extract options yet."
+            ),
+        ),
+        py.test.param(
+            "sphinx-default",
+            "..",
+            "c:function",
+            "Describes a C function. The signature",
+            marks=py.test.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
+        ),
+        (
+            "sphinx-default",
+            ".. image:: filename.png\n   \f:",
+            "align",
+            '"top", "middle", "bottom"',
+        ),
+        py.test.param(
+            "sphinx-extensions",
+            "..",
+            "function",
+            "Describes a C function. The signature",
+            marks=py.test.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
+        ),
+        (
+            "sphinx-extensions",
+            "..",
+            "py:function",
+            "Describes a module-level function.  The signature",
+        ),
+        py.test.param(
+            "sphinx-default",
+            ".. py:function:: foo\n   \f:",
+            "async",
+            "Describes a module-level function.  The signature",
+            marks=py.test.mark.xfail(
+                reason="generate_sphinx_documentation.py doesn't extract options yet."
+            ),
+        ),
+    ],
+)
+async def test_directive_completion_resolve(
+    client_server, project, text, label, expected
+):
+    """Ensure that we handle ``completionItem/resolve`` requests correctly.
+
+    This test case is focused on filling out additional fields of a ``CompletionItem``
+    that is selected in some language client.
+
+    Cases are parameterized with the inputs are expected to have the following format::
+
+       ("sphinx-project", ".. example::", "example", "## Example")
+
+    where:
+
+    - ``"sphinx-project"`` corresponds to the name of one of the example Sphinx projects
+      in the ``tests/data/`` folder.
+    - ``.. example::`` is the text used when making the initial
+      ``textDocument/completion`` request
+    - ``example`` is the label of the ``CompletionItem`` we want to "select".
+    - ``## Example`` is the expected documentation we want to test for.
+
+    Parameters
+    ----------
+    client_server:
+       The ``client_server`` fixture used to drive the test
+    project:
+       The name of the example sphinx project to use.
+    text:
+       The text providing the context of the completion request
+    label:
+       The label of the ``CompletionItem`` to select
+    expected:
+       The documentation to look for, will be passed to :func:`python:str.startswith`
+    """
+
+    test = await client_server(project)
+    test_uri = test.server.workspace.root_uri + "/test.rst"
+
+    results = await completion_request(test, test_uri, text)
+    items = {item.label: item for item in results.items}
+
+    assert label in items, f"Missing expected CompletionItem {label}"
+    item = items[label]
+
+    # Server should not be filling out docs by default
+    assert item.documentation is None, "Unexpected documentation text."
+
+    item = await completion_resolve_request(test, item)
+    assert item.documentation.kind == MarkupKind.Markdown
+    assert item.documentation.value.startswith(expected)
 
 
 AUTOCLASS_OPTS = {
