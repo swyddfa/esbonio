@@ -68,6 +68,23 @@
             }
         },
         {
+            "label": "MyPy",
+            "type": "process",
+            "group": "test",
+            "command": "${command:python.interpreterPath}",
+            "args": [
+                "-m",
+                "mypy",
+                "--namespace-packages",
+                "--explicit-package-bases",
+                "-p",
+                "esbonio"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            }
+        },
+        {
             "label": "Regen Sphinx Docs",
             "type": "process",
             "group": "build",
@@ -84,7 +101,11 @@
         {
             "label": "pytest file",
             "type": "shell",
-            "command": "source ${workspaceRoot}/.env/bin/activate && pytest ${file}",
+            "command": "${command:python.interpreterPath}",
+            "args": [
+                "pytest",
+                "${file}"
+            ],
             "group": "test",
             "problemMatcher": [],
         },
