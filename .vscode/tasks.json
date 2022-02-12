@@ -54,6 +54,20 @@
             }
         },
         {
+            "label": "Regen Docutils Docs",
+            "type": "process",
+            "group": "build",
+            "command": "${command:python.interpreterPath}",
+            "args": [
+                "${workspaceRoot}/scripts/generate_docutils_documentation.py",
+                "-o",
+                "lib/esbonio/esbonio/lsp/rst/"
+            ],
+            "options": {
+                "cwd": "${workspaceRoot}"
+            }
+        },
+        {
             "label": "pytest file",
             "type": "shell",
             "command": "source ${workspaceRoot}/.env/bin/activate && pytest ${file}",
