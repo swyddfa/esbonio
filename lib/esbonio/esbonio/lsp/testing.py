@@ -14,6 +14,7 @@ import pygls.uris as Uri
 from pygls.exceptions import JsonRpcMethodNotFound
 from pygls.lsp.methods import CANCEL_REQUEST
 from pygls.lsp.methods import COMPLETION
+from pygls.lsp.methods import COMPLETION_ITEM_RESOLVE
 from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import DOCUMENT_SYMBOL
 from pygls.lsp.methods import EXIT
@@ -27,6 +28,7 @@ from pygls.lsp.methods import TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
 from pygls.lsp.methods import WINDOW_LOG_MESSAGE
 from pygls.lsp.methods import WINDOW_SHOW_MESSAGE
 from pygls.lsp.types import ClientCapabilities
+from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionList
 from pygls.lsp.types import CompletionParams
 from pygls.lsp.types import DefinitionParams
@@ -387,6 +389,21 @@ async def completion_request(
     )
 
     return CompletionList(**response)
+
+
+async def completion_resolve_request(
+    test: ClientServer, item: CompletionItem
+) -> CompletionItem:
+    """Make a ``completionItem/resolve`` request to a language server.
+
+    Intented for use within test cases, this function assumes that a
+    ``textDocument/completion`` request has already been performed resulting in a list
+    of ``CompletionItem`` candidates being generated. This function can then be used
+    to simulate the user selecting an item and the client making a follow up
+    ``completionItem/resolve`` request to the server.
+    """
+    response = await test.client.lsp.send_request_async(COMPLETION_ITEM_RESOLVE, item)
+    return CompletionItem(**response)
 
 
 async def definition_request(
