@@ -106,9 +106,9 @@
                 "category": "Esbonio"
             }
         ],
-        "configuration": {
-            "type": "object",
-            "title": "Esbonio",
+        "configuration": [
+            {
+                "title": "Server",
             "properties": {
                 "esbonio.server.enabled": {
                     "scope": "window",
@@ -197,7 +197,12 @@
                         "Check for updates daily"
                     ],
                     "description": "How often should the extension check for updates to the Language Server"
+                    }
+                }
                 },
+            {
+                "title": "Sphinx",
+                "properties": {
                 "esbonio.sphinx.buildDir": {
                     "scope": "window",
                     "type": "string",
@@ -219,7 +224,8 @@
                     "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.confDir#` but this opton can override this if necessary."
                 }
             }
-        },
+            }
+        ],
         "grammars": [
             {
                 "language": "rst",
