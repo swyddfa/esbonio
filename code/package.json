@@ -109,121 +109,139 @@
         "configuration": [
             {
                 "title": "Server",
-            "properties": {
-                "esbonio.server.enabled": {
-                    "scope": "window",
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Enable/Disable the language server"
-                },
-                "esbonio.server.logLevel": {
-                    "scope": "application",
-                    "type": "string",
-                    "default": "error",
-                    "enum": [
-                        "debug",
-                        "info",
-                        "error"
-                    ],
-                    "description": "The level of log message to show in the log"
-                },
-                "esbonio.server.logFilter": {
-                    "scope": "application",
-                    "type": "array",
-                    "default": [],
-                    "items": {
-                        "type": "string"
+                "properties": {
+                    "esbonio.server.enabled": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Enable/Disable the language server"
                     },
-                    "description": "A list of logger names to limit output from"
-                },
-                "esbonio.server.pythonPath": {
-                    "scope": "window",
-                    "type": "string",
-                    "default": "",
-                    "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
-                },
-                "esbonio.server.hideSphinxOutput": {
-                    "scope": "application",
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Hide Sphinx build output from the Language Server log."
-                },
-                "esbonio.server.installBehavior": {
-                    "scope": "application",
-                    "type": "string",
-                    "default": "prompt",
-                    "enum": [
-                        "nothing",
-                        "prompt",
-                        "automatic"
-                    ],
-                    "enumDescriptions": [
-                        "Don't attempt to install the Language Server if it's missing",
-                        "Ask for confirmation before installing the Language Server",
-                        "Never ask for confirmation, the Language Server will be installed automatically in new environments"
-                    ],
-                    "description": "When the Language Server is missing from an environment, how should the extension handle it"
-                },
-                "esbonio.server.updateBehavior": {
-                    "scope": "application",
-                    "type": "string",
-                    "default": "promptMajor",
-                    "enum": [
-                        "promptAlways",
-                        "promptMajor",
-                        "automatic"
-                    ],
-                    "enumDescriptions": [
-                        "Always ask for confirmation when applying updates.",
-                        "Only ask for confirmation on major updates, minor versions will be installed automatically",
-                        "Never ask for confirmation, updates will always be installed automatically"
-                    ],
-                    "description": "When an update to the Language Server is detected, how should the extension handle it"
-                },
-                "esbonio.server.updateFrequency": {
-                    "scope": "application",
-                    "type": "string",
-                    "default": "weekly",
-                    "enum": [
-                        "never",
-                        "monthly",
-                        "weekly",
-                        "daily"
-                    ],
-                    "enumDescriptions": [
-                        "Never check for updates. Updates can still be triggered manually through the command palette.",
-                        "Check for updates monthly",
-                        "Check for updates weekly",
-                        "Check for updates daily"
-                    ],
-                    "description": "How often should the extension check for updates to the Language Server"
+                    "esbonio.server.excludedModules": {
+                        "scope": "window",
+                        "type": "array",
+                        "default": [],
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "A list of modules to exclude from the server's configuration"
+                    },
+                    "esbonio.server.includedModules": {
+                        "scope": "window",
+                        "type": "array",
+                        "default": [],
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "A list of additional modules to include in the server's configuration"
+                    },
+                    "esbonio.server.logLevel": {
+                        "scope": "application",
+                        "type": "string",
+                        "default": "error",
+                        "enum": [
+                            "debug",
+                            "info",
+                            "error"
+                        ],
+                        "description": "The level of log message to show in the log"
+                    },
+                    "esbonio.server.logFilter": {
+                        "scope": "application",
+                        "type": "array",
+                        "default": [],
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "A list of logger names to limit output from"
+                    },
+                    "esbonio.server.pythonPath": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "",
+                        "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
+                    },
+                    "esbonio.server.hideSphinxOutput": {
+                        "scope": "application",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Hide Sphinx build output from the Language Server log."
+                    },
+                    "esbonio.server.installBehavior": {
+                        "scope": "application",
+                        "type": "string",
+                        "default": "prompt",
+                        "enum": [
+                            "nothing",
+                            "prompt",
+                            "automatic"
+                        ],
+                        "enumDescriptions": [
+                            "Don't attempt to install the Language Server if it's missing",
+                            "Ask for confirmation before installing the Language Server",
+                            "Never ask for confirmation, the Language Server will be installed automatically in new environments"
+                        ],
+                        "description": "When the Language Server is missing from an environment, how should the extension handle it"
+                    },
+                    "esbonio.server.updateBehavior": {
+                        "scope": "application",
+                        "type": "string",
+                        "default": "promptMajor",
+                        "enum": [
+                            "promptAlways",
+                            "promptMajor",
+                            "automatic"
+                        ],
+                        "enumDescriptions": [
+                            "Always ask for confirmation when applying updates.",
+                            "Only ask for confirmation on major updates, minor versions will be installed automatically",
+                            "Never ask for confirmation, updates will always be installed automatically"
+                        ],
+                        "description": "When an update to the Language Server is detected, how should the extension handle it"
+                    },
+                    "esbonio.server.updateFrequency": {
+                        "scope": "application",
+                        "type": "string",
+                        "default": "weekly",
+                        "enum": [
+                            "never",
+                            "monthly",
+                            "weekly",
+                            "daily"
+                        ],
+                        "enumDescriptions": [
+                            "Never check for updates. Updates can still be triggered manually through the command palette.",
+                            "Check for updates monthly",
+                            "Check for updates weekly",
+                            "Check for updates daily"
+                        ],
+                        "description": "How often should the extension check for updates to the Language Server"
                     }
                 }
-                },
+            },
             {
                 "title": "Sphinx",
                 "properties": {
-                "esbonio.sphinx.buildDir": {
-                    "scope": "window",
-                    "type": "string",
-                    "default": null,
-                    "description": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local _build/ directory.",
-                    "markdownDescription": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local `_build/` directory."
-                },
-                "esbonio.sphinx.confDir": {
-                    "scope": "window",
-                    "type": "string",
-                    "default": null,
-                    "description": "The Language Server should be able to automatically find the folder containing your project's 'conf.py' file. However this setting can be used to force the Language Server to use a particular directory if required."
-                },
-                "esbonio.sphinx.srcDir": {
-                    "scope": "window",
-                    "type": "string",
-                    "default": null,
-                    "description": "The directory containing your rst source files. By default the Language Server will assume this is the same as `esbonio.sphinx.confDir` but this opton can override this if necessary.",
-                    "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.confDir#` but this opton can override this if necessary."
+                    "esbonio.sphinx.buildDir": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": null,
+                        "description": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local _build/ directory.",
+                        "markdownDescription": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local `_build/` directory."
+                    },
+                    "esbonio.sphinx.confDir": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": null,
+                        "description": "The Language Server should be able to automatically find the folder containing your project's 'conf.py' file. However this setting can be used to force the Language Server to use a particular directory if required."
+                    },
+                    "esbonio.sphinx.srcDir": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": null,
+                        "description": "The directory containing your rst source files. By default the Language Server will assume this is the same as `esbonio.sphinx.confDir` but this opton can override this if necessary.",
+                        "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.confDir#` but this opton can override this if necessary."
+                    }
                 }
-            }
             }
         ],
         "grammars": [

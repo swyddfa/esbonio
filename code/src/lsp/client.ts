@@ -194,17 +194,26 @@ export class EsbonioClient {
       return undefined
     }
 
+    let config = vscode.workspace.getConfiguration("esbonio")
     let command = await this.python.getCmd()
     command.push(
       "-m", "esbonio",
     )
+
+    config.get<string[]>('server.includedModules').forEach(mod => {
+      command.push('--include', mod)
+    })
+
+    config.get<string[]>('server.excludedModules').forEach(mod => {
+      command.push('--exclude', mod)
+    })
 
     this.logger.debug(`Server start command: ${command.join(" ")}`)
 
     return new LanguageClient(
       'esbonio', 'Esbonio Language Server',
       { command: command[0], args: command.slice(1) },
-      this.getLanguageClientOptions()
+      this.getLanguageClientOptions(config)
     )
   }
 
@@ -213,6 +222,7 @@ export class EsbonioClient {
    * Typically used while debugging.
    */
   private async getTcpClient(): Promise<LanguageClient | undefined> {
+    let config = vscode.workspace.getConfiguration("esbonio")
 
     let serverOptions: ServerOptions = () => {
       return new Promise((resolve) => {
@@ -229,7 +239,7 @@ export class EsbonioClient {
     return new LanguageClient(
       "esbonio", "Esbonio Language Server",
       serverOptions,
-      this.getLanguageClientOptions()
+      this.getLanguageClientOptions(config)
     )
   }
 
@@ -266,10 +276,9 @@ export class EsbonioClient {
    * Returns the LanguageClient options that are common to both modes of
    * transport.
    */
-  private getLanguageClientOptions(): LanguageClientOptions {
+  private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
 
     let cache = this.context.storageUri.path
-    let config = vscode.workspace.getConfiguration("esbonio")
 
     let buildDir = config.get<string>('sphinx.buildDir')
     if (!buildDir) {
