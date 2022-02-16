@@ -304,11 +304,18 @@ export class EsbonioClient {
       }
     }
 
-    let clientOptions: LanguageClientOptions = {
-      documentSelector: [
-        { scheme: 'file', language: 'rst' },
+    let documentSelector = [
+      { scheme: 'file', language: 'rst' },
+    ]
+
+    if (config.get<boolean>('server.enabledInPyFiles')) {
+      documentSelector.push(
         { scheme: 'file', language: 'python' }
-      ],
+      )
+    }
+
+    let clientOptions: LanguageClientOptions = {
+      documentSelector: documentSelector,
       initializationOptions: initOptions
     }
     this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions)}`)
