@@ -194,11 +194,17 @@ export class EsbonioClient {
       return undefined
     }
 
-    let config = vscode.workspace.getConfiguration("esbonio")
     let command = await this.python.getCmd()
-    command.push(
-      "-m", "esbonio",
-    )
+    let config = vscode.workspace.getConfiguration("esbonio")
+
+    let entryPoint = config.get<string>("server.entryPoint")
+
+    // Entry point can either be a script, or it can be a python module.
+    if (entryPoint.endsWith(".py") || entryPoint.includes("/") || entryPoint.includes("\\")) {
+      command.push(entryPoint)
+    } else {
+      command.push("-m", entryPoint)
+    }
 
     config.get<string[]>('server.includedModules').forEach(mod => {
       command.push('--include', mod)

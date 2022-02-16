@@ -116,6 +116,12 @@
                         "default": true,
                         "description": "Enable/Disable the language server"
                     },
+                    "esbonio.server.entryPoint": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "esbonio",
+                        "description": "The entry point to use when launching the server."
+                    },
                     "esbonio.server.excludedModules": {
                         "scope": "window",
                         "type": "array",
