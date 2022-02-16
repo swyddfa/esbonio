@@ -1,0 +1,1 @@
+Add option ``esbonio.server.enabledInPyFiles`` which allows the user to disable the language server in Python files.

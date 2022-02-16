@@ -116,6 +116,12 @@
                         "default": true,
                         "description": "Enable/Disable the language server"
                     },
+                    "esbonio.server.enabledInPyFiles": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Enable/Disable the language server in Python files."
+                    },
                     "esbonio.server.entryPoint": {
                         "scope": "window",
                         "type": "string",
