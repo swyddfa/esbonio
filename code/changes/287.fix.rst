@@ -1,0 +1,1 @@
+Duplicate output channels are no longer created in the event of a language server crash.

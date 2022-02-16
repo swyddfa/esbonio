@@ -33,11 +33,9 @@ export abstract class Logger {
 }
 
 class OutputChannelLogger extends Logger {
-  private channel: vscode.OutputChannel
 
-  constructor(name: string, level: LogLevel) {
+  constructor(private channel: vscode.OutputChannel, level: LogLevel) {
     super(level)
-    this.channel = vscode.window.createOutputChannel(name)
   }
 
   log(message: string): void {
@@ -52,7 +50,7 @@ class OutputChannelLogger extends Logger {
 /**
  * Return the logger that logs to the output window.
  */
-export function getOutputLogger() {
+export function getOutputLogger(channel: vscode.OutputChannel) {
   if (!channelLogger) {
     let logLevel: LogLevel
 
@@ -69,7 +67,7 @@ export function getOutputLogger() {
         break
     }
 
-    channelLogger = new OutputChannelLogger('Esbonio', logLevel)
+    channelLogger = new OutputChannelLogger(channel, logLevel)
   }
 
   return channelLogger

@@ -105,6 +105,7 @@ export class EsbonioClient {
     private logger: Logger,
     private python: PythonManager,
     private server: ServerManager,
+    private channel: vscode.OutputChannel,
     private context: vscode.ExtensionContext
   ) {
     context.subscriptions.push(
@@ -146,7 +147,7 @@ export class EsbonioClient {
         "See output window for more details"
       vscode.window.showErrorMessage(message, { title: "Show Output" }).then(opt => {
         if (opt && opt.title === "Show Output") {
-          getOutputLogger().show()
+          this.channel.show()
         }
       })
       this.statusBar.text = "$(error) Failed."
@@ -177,7 +178,7 @@ export class EsbonioClient {
   async restartServer() {
     let config = vscode.workspace.getConfiguration("esbonio.server")
     if (config.get("enabled")) {
-      this.logger.info("Stopping Language Server")
+      this.logger.info("==================== RESTARTING SERVER =====================")
       await this.stop()
       await this.start()
     }
@@ -316,7 +317,8 @@ export class EsbonioClient {
 
     let clientOptions: LanguageClientOptions = {
       documentSelector: documentSelector,
-      initializationOptions: initOptions
+      initializationOptions: initOptions,
+      outputChannel: this.channel
     }
     this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions)}`)
     return clientOptions

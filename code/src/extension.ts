@@ -13,7 +13,8 @@ let esbonio: EsbonioClient
 
 export async function activate(context: vscode.ExtensionContext) {
 
-    let logger = getOutputLogger()
+    let outputChannel = vscode.window.createOutputChannel('Esbonio')
+    let logger = getOutputLogger(outputChannel)
     logger.debug("Extension activated.")
 
     let editorCommands = new EditorCommands(new VSCodeInput())
@@ -21,7 +22,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     let python = new PythonManager(logger)
     let server = new ServerManager(logger, python, context)
-    esbonio = new EsbonioClient(logger, python, server, context)
+    esbonio = new EsbonioClient(logger, python, server, outputChannel, context)
 
     let preview = new PreviewManager(logger, context, esbonio)
 
