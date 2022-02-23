@@ -1,19 +1,4 @@
-Kate
-====
-
-.. figure:: /images/kate-screenshot.png
-   :align: center
-
-   Editing this page with Kate and Esbonio
-
-`Kate`_ is a text editor from the KDE project and comes with LSP support.
-
-Setup
------
-
-Be sure that you have followed the :ref:`editor_integration_setup`
-
-Kate's LSP client is provided via a plugin which needs to be enabled if you're using
+Kate's LSP client is provided via a plugin that needs to be enabled if you're using
 it for the first time.
 
 1. Open Kate's settings through the :guilabel:`Settings -> Configure Kate...` menu,
@@ -53,9 +38,8 @@ it for the first time.
         }
       }
 
-   For details on what can be passed as ``initializationOptions`` be sure to check out
-   the section on :ref:`editor_integration_config` and have a look at `Kate's LSP Client`_
-   documentation for more details on general LSP configuration.
+   For more details general LSP configuration have a look at `Kate's LSP Client`_
+   documentation.
 
 5. Once you're happy with your configuration be sure to hit the :guilabel:`Apply` button for
    it to take effect!
@@ -80,5 +64,4 @@ it for the first time.
 
       (.env) $ kate
 
-.. _Kate: https://kate-editor.org/en-gb/
 .. _Kate's LSP Client: https://docs.kde.org/stable5/en/kate/kate/kate-application-plugin-lspclient.html

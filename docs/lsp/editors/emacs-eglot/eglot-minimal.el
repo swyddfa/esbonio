@@ -12,13 +12,10 @@
 ;;
 ;;    (.env) $ pip install esbonio
 ;;
-;; 3. Save the 'eglot-minimal.el' config to a folder of your choosing. Edit the
-;;    path to the Python executable to be the one in your virtual environment.
+;; 3. Run the following command from a terminal in the folder where you have
+;;    saved this file ('eglot-minimal.el')
 ;;
-;; 4. Run the following command from a terminal in the folder where you have
-;;    saved 'eglot-minimal.el'
-;;
-;;    emacs -Q -l eglot-minimal.el
+;;    (.env) $ emacs -Q -l eglot-minimal.el
 ;;
 ;;; Code:
 (require 'package)
@@ -43,8 +40,7 @@
 ;; files.
 (require 'eglot)
 (add-to-list 'eglot-server-programs
-             `(rst-mode . ("/path/to/virtualenv/bin/python"
-                           "-m" "esbonio")))
+             `(rst-mode . (,(executable-find "python3") "-m" "esbonio")))
 (add-hook 'rst-mode-hook 'eglot-ensure)
 
 ;; Setup some keybindings

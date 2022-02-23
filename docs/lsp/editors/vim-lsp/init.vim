@@ -10,7 +10,7 @@
 "     following command to load this config isolated from your existing
 "     configuration.
 "
-"        (n)vim -u vim-lsp.vim
+"        (n)vim -u init.vim
 "
 "  3. Install the required plugins.
 "
@@ -21,7 +21,7 @@
 "  1. Open a terminal in the directory containing this file and run the
 "     following command to load it.
 "
-"     (n)vim -u vim-lsp.vim
+"     (n)vim -u init.vim
 
 set expandtab
 set tabstop=3

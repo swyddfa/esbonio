@@ -1,4 +1,4 @@
-;;; lsp-mode-extended.el --- Extended exmaple config for using Esbonio with LSP Mode
+;;; eglot-extended.el --- Extended exmaple config for using Esbonio with Eglot
 
 ;;; Commentary:
 ;;
@@ -12,13 +12,12 @@
 ;;
 ;;    (.env) $ pip install esbonio
 ;;
-;; 3. Save the 'lsp-mode-extended.el' config to a folder of your choosing. Edit the
-;;    path to the Python executable to be the one in your virtual environment.
+;; 3. Save the 'eglot-extended.el' config to a folder of your choosing.
 ;;
 ;; 4. Run the following command from a terminal in the folder where you have
-;;    saved 'lsp-mode-extended.el'
+;;    saved 'eglot-extended.el'
 ;;
-;;    emacs -Q -l lsp-mode-extended.el
+;;    emacs -Q -l eglot-extended.el
 ;;
 ;;; Code:
 (require 'package)
@@ -33,7 +32,7 @@
 (setq custom-file (concat user-emacs-directory "custom.el"))
 (load custom-file 'noerror)
 
-;; Enable the MELPA repository
+;; Enable the MELPA package archive
 (setq package-archives '(("elpa"  . "https://elpa.gnu.org/packages/")
                          ("melpa" . "https://melpa.org/packages/")))
 
@@ -43,23 +42,26 @@
   (package-refresh-contents)
   (package-install 'use-package))
 
-;; Most important, ensure that lsp-mode is available and configured.
-(use-package lsp-mode
+;; Most important, ensure the eglot is available and configured.
+(use-package eglot
   :ensure t
   :config
-  (add-to-list 'lsp-language-id-configuration '(rst-mode . "rst"))
-  (lsp-register-client
-   (make-lsp-client :new-connection
-		    (lsp-stdio-connection
-                     '("/path/to/virtualenv/bin/python" "-m" "esbonio"))
-                    :activation-fn (lsp-activate-on "rst")
-                    :initialization-options (lambda () `((sphinx . ((confDir . "${workspaceRoot}")
-                                                                    (srcDir . "${confDir}")))
-                                                         (server . ((logLevel . "debug")))))
-                    :server-id 'esbonio)))
+  (defclass eglot-esbonio (eglot-lsp-server) ()
+    :documentation "Esbonio Language Server.")
+
+  (cl-defmethod eglot-initialization-options ((server eglot-esbonio))
+    "Passes the initializationOptions required to run the server."
+    `(:sphinx (:confDir "${workspaceRoot}"
+               :srcDir "${confDir}" )
+      :server (:logLevel "debug")))
+
+  (add-to-list 'eglot-server-programs
+               `(rst-mode . (eglot-esbonio
+                             ,(executable-find "python3")
+                             "-m" "esbonio"))))
 
 (use-package rst
-  :hook (rst-mode . lsp))
+  :hook (rst-mode . eglot-ensure))
 
 ;; UI Tweaks
 (scroll-bar-mode -1)
@@ -91,18 +93,3 @@
         doom-modeline-major-mode-icon t
         doom-modeline-major-mode-color-icont t
         doom-modeline-minor-modes nil))
-
-(use-package solaire-mode
-  :ensure t
-  :init
-  (solaire-global-mode))
-
-(use-package treemacs
-  :ensure t
-  :init
-  (treemacs)
-  (treemacs-follow-mode))
-
-(use-package yasnippet
-  :ensure t
-  :hook (lsp-mode . yas-minor-mode))
