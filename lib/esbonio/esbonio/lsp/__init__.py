@@ -112,6 +112,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         return actions
 
+    # <engine-example>
     @server.feature(
         COMPLETION,
         CompletionOptions(
@@ -148,6 +149,8 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
                             items.append(item)
 
         return CompletionList(is_incomplete=False, items=items)
+
+    # </engine-example>
 
     @server.feature(COMPLETION_ITEM_RESOLVE)
     def on_completion_resolve(
