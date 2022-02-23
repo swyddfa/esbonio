@@ -78,6 +78,21 @@
             ],
             "python": "${command:python.interpreterPath}",
             "cwd": "${workspaceRoot}"
+        },
+        {
+            "name": "Docs",
+            "type": "python",
+            "request": "launch",
+            "module": "sphinx.cmd.build",
+            "args": [
+                "-M",
+                "html",
+                ".",
+                "_build",
+                "-Ea"
+            ],
+            "python": "${command:python.interpreterPath}",
+            "cwd": "${workspaceFolder}/docs"
         }
     ],
     "compounds": [
