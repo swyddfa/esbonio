@@ -1,7 +1,7 @@
 # This assumes you are running the pip install command from the root of the repo e.g.
 # $ pip install -r docs/requirements.txt
 sphinx
-sphinx-book-theme
 sphinx-panels
-lib/esbonio
-lib/esbonio-extensions
+furo
+-e lib/esbonio
+-e lib/esbonio-extensions
