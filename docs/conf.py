@@ -22,10 +22,8 @@ import esbonio.lsp
 # -- Project information -----------------------------------------------------
 
 project = "Esbonio"
-copyright = "2021, Alex Carney"
-author = ""
-
-# The full version, including alpha/beta/rc tags
+copyright = "2022"
+author = "the Esbonio project"
 release = esbonio.lsp.__version__
 
 # -- i18n configuration ------------------------------------------------------
@@ -70,7 +68,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**/_*.rst"]
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = "sphinx_book_theme"
+html_theme = "furo"
+html_title = "Esbonio"
 html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
 html_favicon = "favicon.svg"
 html_static_path = ["_static"]
@@ -95,7 +94,6 @@ def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
 
 
 def setup(app: Sphinx):
-    app.add_css_file("css/custom.css", priority=1000)
     app.add_role("lsp", lsp_role)
 
     # So that it's possible to use intersphinx to link to configuration options
