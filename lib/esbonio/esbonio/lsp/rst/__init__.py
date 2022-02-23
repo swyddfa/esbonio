@@ -13,9 +13,9 @@ from typing import Union
 
 import docutils.parsers.rst.directives as directives  # type: ignore
 import pygls.uris as Uri
+from docutils import nodes
 from docutils.nodes import NodeVisitor
 from docutils.parsers.rst import Directive
-from docutils.parsers.rst import nodes
 from docutils.parsers.rst import roles
 from pydantic import BaseModel
 from pydantic import Field
@@ -506,7 +506,7 @@ class SymbolVisitor(NodeVisitor):
             raise ValueError("Missing expected current symbol")
 
         name = node.astext()
-        line = node.line - 1
+        line = node.line - 1  # type: ignore
 
         symbol.name = name
         symbol.range.start.line = line

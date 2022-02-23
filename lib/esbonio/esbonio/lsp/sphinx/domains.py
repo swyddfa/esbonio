@@ -7,7 +7,7 @@ from typing import Optional
 from typing import Set
 
 import pygls.uris as Uri
-from docutils.parsers.rst import nodes
+from docutils import nodes
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import Location

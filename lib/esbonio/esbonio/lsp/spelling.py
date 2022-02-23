@@ -5,7 +5,7 @@ from typing import List
 from typing import Optional
 
 import pygls.uris as Uri
-from docutils.parsers.rst import nodes
+from docutils import nodes
 from pygls.lsp.types import CodeAction
 from pygls.lsp.types import CodeActionKind
 from pygls.lsp.types import CodeActionParams
