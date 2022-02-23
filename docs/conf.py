@@ -26,6 +26,8 @@ copyright = "2022"
 author = "the Esbonio project"
 release = esbonio.lsp.__version__
 
+DEV_BUILD = os.getenv("BUILDDIR", None) == "latest"
+
 # -- i18n configuration ------------------------------------------------------
 locale_dirs = ["locale/"]
 gettext_compact = False
@@ -73,14 +75,13 @@ html_title = "Esbonio"
 html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
 html_favicon = "favicon.svg"
 html_static_path = ["_static"]
-html_theme_options = {
-    "repository_url": "https://github.com/swyddfa/esbonio",
-    "use_repository_button": True,
-    "use_issues_button": True,
-    "use_edit_page_button": True,
-    "repository_branch": "release",
-    "path_to_docs": "docs/",
-}
+html_theme_options = {}
+
+if DEV_BUILD:
+    html_theme_options["announcement"] = (
+        "This is the unstable version of the documentation, features may change or be removed without warning. "
+        '<a href="/esbonio/docs/latest/en/">Click here</a> to view the released version'
+    )
 
 
 def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
