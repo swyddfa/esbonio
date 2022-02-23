@@ -44,13 +44,9 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_panels",
     "esbonio.tutorial",
+    "collection_items",
 ]
 
-autodoc_default_options = {
-    "members": True,
-    "member-order": "bysource",
-    "undoc-members": True,
-}
 autodoc_typehints = "description"
 
 intersphinx_mapping = {
