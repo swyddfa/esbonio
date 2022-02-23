@@ -12,8 +12,7 @@
 ;;
 ;;    (.env) $ pip install esbonio
 ;;
-;; 3. Save the 'lsp-mode-minimal.el' config to a folder of your choosing. Edit the
-;;    path to the Python executable to be the one in your virtual environment.
+;; 3. Save the 'lsp-mode-minimal.el' config to a folder of your choosing.
 ;;
 ;; 4. Run the following command from a terminal in the folder where you have
 ;;    saved 'lsp-mode-minimal.el'
@@ -50,7 +49,7 @@
 (lsp-register-client
  (make-lsp-client :new-connection
 		  (lsp-stdio-connection
-                   '("/path/to/virtualenv/bin/python" "-m" "esbonio"))
+                   `(,(executable-find "python3") "-m" "esbonio"))
                   :activation-fn (lsp-activate-on "rst")
                   :server-id 'esbonio))
 
