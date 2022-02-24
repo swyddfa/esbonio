@@ -46,12 +46,14 @@ except ImportError:
             return True
 
 
+# Order matters!
 DEFAULT_MODULES = [
     "esbonio.lsp.directives",
     "esbonio.lsp.roles",
     "esbonio.lsp.sphinx.codeblocks",
     "esbonio.lsp.sphinx.domains",
     "esbonio.lsp.sphinx.images",
+    "esbonio.lsp.sphinx.includes",
     "esbonio.lsp.sphinx.roles",
 ]
 """The modules to load in the default configuration of the server."""
