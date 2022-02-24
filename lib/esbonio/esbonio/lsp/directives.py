@@ -11,6 +11,7 @@ import pkg_resources
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import InsertTextFormat
+from pygls.lsp.types import Location
 from pygls.lsp.types import MarkupContent
 from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
@@ -18,6 +19,7 @@ from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
 
 from esbonio.lsp import CompletionContext
+from esbonio.lsp import DefinitionContext
 from esbonio.lsp import LanguageFeature
 from esbonio.lsp import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
@@ -104,6 +106,31 @@ class ArgumentCompletion(Protocol):
         """
 
 
+class ArgumentDefinition(Protocol):
+    """A definition provider for directive arguments."""
+
+    def find_definitions(
+        self,
+        context: DefinitionContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> List[Location]:
+        """Return a list of locations representing definitions of the given argument.
+
+        Parameters
+        ----------
+        context:
+           The context of the definition request.
+        directive:
+           The name of the directive the argument is associated with.
+        domain:
+           The name of the domain the directive belongs to, if applicable.
+        argument:
+           The argument to find the definition of.
+        """
+
+
 class Directives(LanguageFeature):
     """Directive support for the language server."""
 
@@ -114,7 +141,11 @@ class Directives(LanguageFeature):
         """Cache for documentation."""
 
         self._argument_completion_providers: Dict[str, ArgumentCompletion] = {}
-        """A list of providers that give completion suggestions for directive
+        """A dictionary of providers that give completion suggestions for directive
+        arguments."""
+
+        self._argument_definition_providers: Dict[str, ArgumentDefinition] = {}
+        """A dictionary of providers that give completion suggestions for directive
         arguments."""
 
     def add_argument_completion_provider(self, provider: ArgumentCompletion) -> None:
@@ -127,6 +158,17 @@ class Directives(LanguageFeature):
         """
         key = f"{provider.__module__}.{provider.__class__.__name__}"
         self._argument_completion_providers[key] = provider
+
+    def add_argument_definition_provider(self, provider: ArgumentDefinition) -> None:
+        """Register an :class:`~esbonio.lsp.directives.ArgumentCompletion` provider.
+
+        Parameters
+        ----------
+        provider:
+           The provider to register.
+        """
+        key = f"{provider.__module__}.{provider.__class__.__name__}"
+        self._argument_definition_providers[key] = provider
 
     def add_documentation(self, documentation: Dict[str, Dict[str, Any]]) -> None:
         """Register directive documentation.
@@ -409,6 +451,42 @@ class Directives(LanguageFeature):
 
         item.documentation = MarkupContent(kind=kind, value=description)
         return item
+
+    definition_triggers = [DIRECTIVE]
+
+    def definition(self, context: DefinitionContext) -> List[Location]:
+        self.rst.logger.debug("%s", context)
+
+        directive = context.match.group("name")
+        domain = context.match.group("domain")
+        argument = context.match.group("argument")
+
+        if not argument:
+            return []
+
+        start = context.match.group(0).index(argument)
+        end = start + len(argument)
+
+        if start <= context.position.character <= end:
+            return self.find_argument_definition(context, directive, domain, argument)
+
+        return []
+
+    def find_argument_definition(
+        self,
+        context: DefinitionContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> List[Location]:
+        definitions = []
+
+        for _, provider in self._argument_definition_providers.items():
+            definitions += (
+                provider.find_definitions(context, directive, domain, argument) or []
+            )
+
+        return definitions
 
     def get_surrounding_directive(
         self, context: CompletionContext
