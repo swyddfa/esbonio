@@ -76,6 +76,34 @@ class CompletionContext:
         )
 
 
+class DefinitionContext:
+    """A class that captures the context within which a definition request has been
+    made."""
+
+    def __init__(
+        self, *, doc: Document, location: str, match: "re.Match", position: Position
+    ):
+
+        self.doc = doc
+        """The document within which the definition request was made."""
+
+        self.location = location
+        """The location type where the request was made.
+        See :meth:`~esbonio.lsp.rst.RstLanguageServer.get_location_type` for details."""
+
+        self.match = match
+        """The match object describing the site of the definition request."""
+
+        self.position = position
+        """The position at which the definition request was made."""
+
+    def __repr__(self):
+        p = f"{self.position.line}:{self.position.character}"
+        return (
+            f"DefinitionContext<{self.doc.uri}:{p} ({self.location}) -- {self.match}>"
+        )
+
+
 class LanguageFeature:
     """Base class for language features."""
 
@@ -128,21 +156,15 @@ class LanguageFeature:
     """A list of regular expressions used to determine if the
     :meth:`~esbonio.lsp.rst.LanguageFeature.definition` method should be called."""
 
-    def definition(
-        self, match: "re.Match", doc: Document, pos: Position
-    ) -> List[Location]:
+    def definition(self, context: DefinitionContext) -> List[Location]:
         """Called if any of the given ``definition_triggers`` match the current line.
 
         This method should return a list of ``Location`` objects.
 
         Parameters
         ----------
-        match:
-           The match object generated from the corresponding regular expression.
-        doc:
-           The document the definition has been requested within
-        pos:
-           The position of the request within the document.
+        context:
+           The context of the definition request.
         """
         return []
 

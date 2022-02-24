@@ -18,6 +18,7 @@ from sphinx.domains import Domain
 
 from esbonio.lsp.roles import Roles
 from esbonio.lsp.rst import CompletionContext
+from esbonio.lsp.rst import DefinitionContext
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
@@ -40,7 +41,7 @@ class DomainFeatures:
         self.logger = rst.logger.getChild(self.__class__.__name__)
 
     def complete_targets(
-        self, context: CompletionContext, domain: str, name: str
+        self, context: CompletionContext, name: str, domain: Optional[str]
     ) -> List[CompletionItem]:
 
         groups = context.match.groupdict()
@@ -76,16 +77,16 @@ class DomainFeatures:
         return items
 
     def find_definitions(
-        self, doc: Document, match: "re.Match", name: str, domain: Optional[str] = None
+        self, context: DefinitionContext, name: str, domain: Optional[str]
     ) -> List[Location]:
 
-        label = match.groupdict()["label"]
+        label = context.match.group("label")
 
-        if name == "ref":
+        if not domain and name == "ref":
             return self.ref_definition(label)
 
-        if name == "doc":
-            return self.doc_definition(doc, label)
+        if not domain and name == "doc":
+            return self.doc_definition(context.doc, label)
 
         return []
 
