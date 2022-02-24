@@ -2,6 +2,7 @@
 import pathlib
 import typing
 from typing import List
+from typing import Optional
 
 import pygls.uris as uri
 from pygls.lsp.types import CompletionItem
@@ -99,10 +100,10 @@ class Filepath:
         return []
 
     def complete_targets(
-        self, context: CompletionContext, domain: str, name: str
+        self, context: CompletionContext, name: str, domain: Optional[str]
     ) -> List[CompletionItem]:
 
-        if name in {"download"}:
+        if not domain and name in {"download"}:
             return self.complete_filepaths(context)
 
         return []

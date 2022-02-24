@@ -16,10 +16,10 @@ from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
-from pygls.workspace import Document
 
 from esbonio.lsp.directives import DIRECTIVE
 from esbonio.lsp.rst import CompletionContext
+from esbonio.lsp.rst import DefinitionContext
 from esbonio.lsp.rst import LanguageFeature
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
@@ -108,7 +108,7 @@ class TargetDefinition(Protocol):
     """A definition provider for role targets"""
 
     def find_definitions(
-        self, doc: Document, match: "re.Match", name: str, domain: Optional[str] = None
+        self, context: DefinitionContext, name: str, domain: Optional[str]
     ) -> List[Location]:
         """Return a list of locations representing the definition of the given role
         target.
@@ -130,7 +130,7 @@ class TargetCompletion(Protocol):
     """A completion provider for role targets"""
 
     def complete_targets(
-        self, context: CompletionContext, domain: str, name: str
+        self, context: CompletionContext, name: str, domain: Optional[str]
     ) -> List[CompletionItem]:
         """Return a list of completion items representing valid targets for the given
         role.
@@ -240,24 +240,15 @@ class Roles(LanguageFeature):
     completion_triggers = [ROLE, DEFAULT_ROLE]
     definition_triggers = [ROLE]
 
-    def definition(
-        self, match: "re.Match", doc: Document, pos: Position
-    ) -> List[Location]:
+    def definition(self, context: DefinitionContext) -> List[Location]:
 
-        groups = match.groupdict()
-        domain = groups["domain"] or None
-        name = groups["name"]
+        domain = context.match.group("domain") or None
+        name = context.match.group("name")
 
         definitions = []
-        self.logger.debug(
-            "Suggesting definitions for %s%s: %s",
-            domain or ":",
-            name,
-            match.groupdict(),
-        )
 
         for provide in self._target_definition_providers:
-            definitions += provide.find_definitions(doc, match, name, domain) or []
+            definitions += provide.find_definitions(context, name, domain) or []
 
         return definitions
 
@@ -432,7 +423,7 @@ class Roles(LanguageFeature):
         modifier = groups["modifier"] or ""
 
         for provide in self._target_completion_providers:
-            candidates = provide.complete_targets(context, domain, name) or []
+            candidates = provide.complete_targets(context, name, domain) or []
 
             for candidate in candidates:
 

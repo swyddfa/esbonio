@@ -31,6 +31,7 @@ from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 
 from .rst import CompletionContext
+from .rst import DefinitionContext
 from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .rst import SymbolVisitor
@@ -174,6 +175,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         doc = ls.workspace.get_document(uri)
         line = ls.line_at_position(doc, pos)
+        location = ls.get_location_type(doc, pos)
 
         definitions = []
 
@@ -184,8 +186,11 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
                         continue
 
                     start, stop = match.span()
-                    if start < pos.character and pos.character < stop:
-                        definitions += feature.definition(match, doc, pos)
+                    if start <= pos.character and pos.character <= stop:
+                        context = DefinitionContext(
+                            doc=doc, location=location, match=match, position=pos
+                        )
+                        definitions += feature.definition(context)
 
         return definitions
 
