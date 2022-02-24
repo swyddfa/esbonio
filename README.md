@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./resources/io.github.swyddfa.Esbonio.svg"></img>
+  <img src="./resources/io.github.swyddfa.Esbonio.svg" alt="Esbonio Project Logo"></img>
 </p>
 <h1 align="center">Esbonio</h1>
 
@@ -14,7 +14,7 @@ The Esbonio project is made up from a number of sub-projects
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/swyddfa.esbonio?style=flat-square)![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/swyddfa.esbonio?style=flat-square)![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/swyddfa.esbonio?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/code/LICENSE)
 
 <p align="center">
-   <img src="./resources/images/vscode-preview-demo.gif"></img>
+   <img src="./resources/images/vscode-preview-demo.gif" alt="HTML Preview Demo"></img>
 </p>
 
 Most of the extension's functionality is provided through...
@@ -27,15 +27,26 @@ The language server is still in early development, but already provides the foll
 **Completion**
 
 <p align="center">
-  <img src="./resources/images/completion-demo.gif"></img>
+  <img src="./resources/images/completion-demo.gif" alt="Completion Suggestions Demo"></img>
 </p>
 
-**Goto Definition**
+**Definitions**
 
 <p align="center">
-  <img src="./resources/images/definition-demo.gif"></img>
+  <img src="./resources/images/definition-demo.gif" alt="Goto Definition Demo"></img>
 </p>
 
+**Diagnostics**
+
+<p align="center">
+  <img src="./resources/images/diagnostic-sphinx-errors-demo.png" alt="Diagnostics Demo"></img>
+</p>
+
+**Document Symbols**
+
+<p align="center">
+  <img src="./resources/images/document-symbols-demo.png" alt="Document Symbols Demo"></img>
+</p>
 
 ## `lib/esbonio-extensions/` - A collection of Sphinx extensions
-[![PyPI](https://img.shields.io/pypi/v/esbonio-extensions?style=flat-square)![PyPI - Downloads](https://img.shields.io/pypi/dm/esbonio-extensions?style=flat-square)](https://pypistats.org/packages/esbonio-extensions)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/lib/esbonio-extensions/LICENSE) 
+[![PyPI](https://img.shields.io/pypi/v/esbonio-extensions?style=flat-square)![PyPI - Downloads](https://img.shields.io/pypi/dm/esbonio-extensions?style=flat-square)](https://pypistats.org/packages/esbonio-extensions)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/lib/esbonio-extensions/LICENSE)
