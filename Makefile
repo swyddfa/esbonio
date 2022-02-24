@@ -1,4 +1,4 @@
-.PHONY: preview-completion-docs completion-docs
+.PHONY: preview-completion-docs completion-docs venv npm
 
 VENV := .env
 
@@ -20,6 +20,15 @@ $(VENV)/bin/python:
 	$@ -m pip install -e lib/esbonio-extensions[dev]
 
 venv: $(VENV)/bin/python
+
+code/node_modules: code/package.json code/package-lock.json
+	npm --prefix ./code/ install
+
+npm: code/node_modules
+
+# ---------------------------------------- Tests, Lints, Tools etc. -------------------------------------------
+mypy: $(PYTHON)
+	mypy --namespace-packages --explicit-package-bases -p esbonio
 
 # ---------------------------------------- CompletionItem Documentation ---------------------------------------
 DOCUTILS_COMPLETION_DOCS=lib/esbonio/esbonio/lsp/rst/roles.json lib/esbonio/esbonio/lsp/rst/directives.json
