@@ -77,7 +77,7 @@ html_theme_options = {}
 if DEV_BUILD:
     html_theme_options["announcement"] = (
         "This is the unstable version of the documentation, features may change or be removed without warning. "
-        '<a href="/esbonio/docs/latest/en/">Click here</a> to view the released version'
+        '<a href="/esbonio/docs/stable/en/">Click here</a> to view the released version'
     )
 
 
