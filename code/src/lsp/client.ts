@@ -306,7 +306,7 @@ export class EsbonioClient {
     }
 
     let documentSelector = [
-      { scheme: 'file', language: 'rst' },
+      { scheme: 'file', language: 'restructuredtext' },
     ]
 
     if (config.get<boolean>('server.enabledInPyFiles')) {

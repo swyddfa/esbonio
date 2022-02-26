@@ -24,7 +24,7 @@ suite('EditorCommands', () => {
   let editor: vscode.TextEditor
 
   before(async () => {
-    const document = await vscode.workspace.openTextDocument({ language: 'rst' })
+    const document = await vscode.workspace.openTextDocument({ language: 'restructuredtext' })
     editor = await vscode.window.showTextDocument(document)
   })
 
