@@ -63,7 +63,7 @@
     },
     "icon": "icon.png",
     "activationEvents": [
-        "onLanguage:rst",
+        "onLanguage:restructuredtext",
         "workspaceContains:**/conf.py"
     ],
     "contributes": {
@@ -258,7 +258,7 @@
         ],
         "grammars": [
             {
-                "language": "rst",
+                "language": "restructuredtext",
                 "scopeName": "source.rst",
                 "path": "./syntaxes/rst.tmLanguage.json",
                 "embeddedLanguages": {
@@ -270,32 +270,39 @@
             {
                 "command": "esbonio.insert.inlineLink",
                 "key": "alt+l",
-                "when": "editorTextFocus && editorLangId == rst"
+                "when": "editorTextFocus && editorLangId == restructuredtext"
             },
             {
                 "command": "esbonio.insert.link",
                 "key": "alt+shift+l",
-                "when": "editorTextFocus && editorLangId == rst"
+                "when": "editorTextFocus && editorLangId == restructuredtext"
             },
             {
                 "command": "esbonio.preview.open",
                 "key": "ctrl+shift+v",
-                "when": "editorTextFocus && editorLangId == rst"
+                "when": "editorTextFocus && editorLangId == restructuredtext"
             },
             {
                 "command": "esbonio.preview.openSide",
                 "key": "ctrl+k v",
-                "when": "editorTextFocus && editorLangId == rst"
+                "when": "editorTextFocus && editorLangId == restructuredtext"
             }
         ],
         "languages": [
             {
-                "id": "rst",
+                "id": "restructuredtext",
                 "extensions": [
-                    ".rst"
+                    ".rst",
+                    ".rest"
                 ],
                 "aliases": [
-                    "reStructuredText"
+                    "reStructuredText",
+                    "restructuredtext",
+                    "ReStructured Text",
+                    "reStructured Text",
+                    "RST",
+                    "ReST",
+                    "reST"
                 ],
                 "configuration": "./rst-language-configuration.json"
             }
@@ -306,7 +313,7 @@
                     "command": "esbonio.preview.openSide",
                     "alt": "esbonio.preview.open",
                     "group": "navigation",
-                    "when": "resourceLangId == rst"
+                    "when": "resourceLangId == restructuredtext"
                 }
             ]
         }
