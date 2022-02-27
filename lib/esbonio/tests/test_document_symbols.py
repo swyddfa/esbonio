@@ -8,7 +8,7 @@ from esbonio.lsp.testing import ClientServer
 from esbonio.lsp.testing import document_symbols_request
 
 
-@py.test.mark.asyncio
+@py.test.mark.skip
 @py.test.mark.parametrize(
     "filepath,expected",
     [
