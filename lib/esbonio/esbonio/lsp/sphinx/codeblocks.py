@@ -64,12 +64,12 @@ class CodeBlocks:
 
 def esbonio_setup(rst: RstLanguageServer):
 
-    directives = rst.get_feature("esbonio.lsp.directives.Directives")
+    name = "esbonio.lsp.directives.Directives"
+    directives = rst.get_feature(name)
 
-    if isinstance(rst, SphinxLanguageServer):
-        codeblocks = CodeBlocks(rst)
+    if not isinstance(rst, SphinxLanguageServer) or not directives:
+        return
 
-        if directives:
-            typing.cast(Directives, directives).add_argument_completion_provider(
-                codeblocks
-            )
+    # To keep mypy happy.
+    directives = typing.cast(Directives, directives)
+    directives.add_argument_completion_provider(CodeBlocks(rst))
