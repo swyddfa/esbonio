@@ -51,6 +51,7 @@ DEFAULT_MODULES = [
     "esbonio.lsp.roles",
     "esbonio.lsp.sphinx.codeblocks",
     "esbonio.lsp.sphinx.domains",
+    "esbonio.lsp.sphinx.images",
 ]
 """The modules to load in the default configuration of the server."""
 
