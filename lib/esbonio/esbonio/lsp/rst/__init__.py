@@ -528,7 +528,7 @@ class SymbolVisitor(NodeVisitor):
             raise ValueError("Missing expected current symbol")
 
         name = node.astext()
-        line = node.line - 1  # type: ignore
+        line = (node.line or 1) - 1
 
         symbol.name = name
         symbol.range.start.line = line

@@ -1,6 +1,5 @@
 """Support for Sphinx domains."""
 import pathlib
-import re
 import typing
 from typing import List
 from typing import Optional
@@ -45,6 +44,7 @@ class DomainFeatures:
     ) -> List[CompletionItem]:
 
         groups = context.match.groupdict()
+        domain = domain or ""
         label = groups["label"]
 
         if ":" in label:
