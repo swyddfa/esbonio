@@ -118,7 +118,7 @@ export class PreviewManager {
     let buildDir = this.esbonio.sphinxConfig.buildDir
 
     if (!sourcePath.startsWith(srcDir)) {
-      this.logger.debug(`Ingoring ${sourcePath}`)
+      this.logger.debug(`Ignoring ${sourcePath}`)
       return undefined
     }
 
