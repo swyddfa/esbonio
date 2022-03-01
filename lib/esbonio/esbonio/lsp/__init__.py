@@ -17,6 +17,7 @@ from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_SAVE
+from pygls.lsp.methods import WORKSPACE_DID_DELETE_FILES
 from pygls.lsp.types import CodeActionParams
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionList
@@ -29,6 +30,8 @@ from pygls.lsp.types import DidSaveTextDocumentParams
 from pygls.lsp.types import DocumentSymbolParams
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
+from pygls.lsp.types import ServerCapabilities
+from pygls.protocol import LanguageServerProtocol
 
 from .rst import CompletionContext
 from .rst import DefinitionContext
@@ -45,6 +48,29 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+
+class Patched(LanguageServerProtocol):
+    """Tweaked version of the protocol allowing us to tweak how the `ServerCapabilities`
+    are constructed."""
+
+    def __init__(self, *args, **kwargs):
+        self._server_capabilities = ServerCapabilities()
+        super().__init__(*args, **kwargs)
+
+    @property
+    def server_capabilities(self):
+        return self._server_capabilities
+
+    @server_capabilities.setter
+    def server_capabilities(self, value: ServerCapabilities):
+
+        if WORKSPACE_DID_DELETE_FILES in self.fm.features:
+            opts = self.fm.feature_options.get(WORKSPACE_DID_DELETE_FILES, None)
+            if opts:
+                value.workspace.file_operations.did_delete = opts  # type: ignore
+
+        self._server_capabilities = value
 
 
 def create_language_server(
@@ -66,7 +92,7 @@ def create_language_server(
     if "logger" not in kwargs:
         kwargs["logger"] = logger
 
-    server = server_cls(*args, **kwargs)
+    server = server_cls(*args, **kwargs, protocol_cls=Patched)
 
     for module in modules:
         _load_module(server, module)
