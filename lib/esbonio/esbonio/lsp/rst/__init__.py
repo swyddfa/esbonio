@@ -23,6 +23,7 @@ from pygls import IS_WIN
 from pygls.lsp.types import CodeAction
 from pygls.lsp.types import CodeActionParams
 from pygls.lsp.types import CompletionItem
+from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DidSaveTextDocumentParams
 from pygls.lsp.types import DocumentSymbol
@@ -119,6 +120,9 @@ class LanguageFeature:
 
     def save(self, params: DidSaveTextDocumentParams) -> None:
         """Called each time a document is saved."""
+
+    def delete_files(self, params: DeleteFilesParams) -> None:
+        """Called each time files are deleted."""
 
     def code_action(self, params: CodeActionParams) -> List[CodeAction]:
         """Called when code actions should be computed."""
@@ -256,6 +260,9 @@ class RstLanguageServer(LanguageServer):
         pass
 
     def save(self, params: DidSaveTextDocumentParams):
+        pass
+
+    def delete_files(self, params: DeleteFilesParams):
         pass
 
     def add_feature(self, feature: "LanguageFeature"):

@@ -24,10 +24,14 @@ from pygls.lsp.types import CompletionList
 from pygls.lsp.types import CompletionOptions
 from pygls.lsp.types import CompletionParams
 from pygls.lsp.types import DefinitionParams
+from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import DidChangeTextDocumentParams
 from pygls.lsp.types import DidOpenTextDocumentParams
 from pygls.lsp.types import DidSaveTextDocumentParams
 from pygls.lsp.types import DocumentSymbolParams
+from pygls.lsp.types import FileOperationFilter
+from pygls.lsp.types import FileOperationPattern
+from pygls.lsp.types import FileOperationRegistrationOptions
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import ServerCapabilities
@@ -129,6 +133,22 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         for feature in ls._features.values():
             feature.save(params)
+
+    @server.feature(
+        WORKSPACE_DID_DELETE_FILES,
+        FileOperationRegistrationOptions(
+            filters=[
+                FileOperationFilter(
+                    pattern=FileOperationPattern(glob="**/*.rst"),
+                )
+            ]
+        ),
+    )
+    def on_delete_files(ls: RstLanguageServer, params: DeleteFilesParams):
+        ls.delete_files(params)
+
+        for feature in ls._features.values():
+            feature.delete_files(params)
 
     @server.feature(CODE_ACTION)
     def on_code_action(ls: RstLanguageServer, params: CodeActionParams):
