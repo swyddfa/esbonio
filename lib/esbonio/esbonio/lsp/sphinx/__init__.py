@@ -17,6 +17,7 @@ from docutils.parsers.rst import Directive
 from pydantic import BaseModel
 from pydantic import Field
 from pygls import IS_WIN
+from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DiagnosticSeverity
 from pygls.lsp.types import DidSaveTextDocumentParams
@@ -286,6 +287,15 @@ class SphinxLanguageServer(RstLanguageServer):
                 self.app = self._initialize_sphinx()
         else:
             self.clear_diagnostics("sphinx", params.text_document.uri)
+
+        self.build()
+
+    def delete_files(self, params: DeleteFilesParams):
+        self.logger.debug("Deleted files: %s", params.files)
+
+        # Files don't exist anymore, so diagnostics must be cleared.
+        for file in params.files:
+            self.clear_diagnostics("sphinx", file.uri)
 
         self.build()
 
