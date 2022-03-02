@@ -108,40 +108,6 @@
             ],
             "group": "test",
             "problemMatcher": [],
-        },
-        {
-            "label": "Grammar Tests",
-            "type": "npm",
-            "script": "test-grammar",
-            "group": "test",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "shared",
-                "showReuseMessage": false,
-                "clear": false
-            },
-            "options": {
-                "cwd": "${workspaceRoot}/code"
-            },
-            "problemMatcher": {
-                "fileLocation": [
-                    "relative",
-                    "${workspaceRoot}/code"
-                ],
-                "pattern": [
-                    {
-                        "regexp": "^(ERROR)\\s([^:]+):(\\d+):(\\d+):(\\d+)\\s(.*)$",
-                        "severity": 1,
-                        "file": 2,
-                        "line": 3,
-                        "column": 4,
-                        "endColumn": 5,
-                        "message": 6
-                    }
-                ]
-            }
         }
     ]
 }
