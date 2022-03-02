@@ -11,6 +11,11 @@ The following options are available.
    to use a different environment or do not have the Python extension installed this
    option can be set to tell the extension which environment to use.
 
+   Currently accepted values include:
+
+   - ``/path/to/python/`` - An absolute path
+   - ``${workspaceRoot}/../venv/bin/python`` - A path relative to the root of your workspace
+
 ``esbonio.server.installBehavior`` (string)
    The VSCode extension can manage the installation of the language server for you.
    If the language server is missing from your current environment the extension will prompt
