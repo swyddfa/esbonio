@@ -28,6 +28,7 @@ EXT_ROOT_FILES = {
 THEOREM_FILES = {"index.rst", "pythagoras.rst"}
 
 
+@py.test.mark.asyncio
 @py.test.mark.parametrize(
     "text,setup",
     [
@@ -60,6 +61,7 @@ async def test_codeblock_completions(client_server, text, setup):
         assert set() == items & unexpected
 
 
+@py.test.mark.asyncio
 @py.test.mark.parametrize(
     "text,setup",
     [

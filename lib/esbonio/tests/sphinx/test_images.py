@@ -35,6 +35,7 @@ def completion_trigger_cases(path: str = ""):
     ]
 
 
+@py.test.mark.asyncio
 @py.test.mark.parametrize(
     "text,setup",
     [

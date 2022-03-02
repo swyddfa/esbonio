@@ -32,6 +32,7 @@ EXT_ROOT_FILES = {
 THEOREM_FILES = {"index.rst", "pythagoras.rst"}
 
 
+@py.test.mark.asyncio
 @py.test.mark.parametrize(
     "project, path, position, expected",
     [
@@ -129,6 +130,7 @@ def completion_trigger_cases(path: str = ""):
     ]
 
 
+@py.test.mark.asyncio
 @py.test.mark.parametrize(
     "text,setup",
     [
