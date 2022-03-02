@@ -10,7 +10,9 @@ from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_CLOSE
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_SAVE
+from pygls.lsp.methods import WORKSPACE_DID_DELETE_FILES
 from pygls.lsp.methods import WORKSPACE_EXECUTE_COMMAND
+from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DiagnosticSeverity
 from pygls.lsp.types import DidChangeTextDocumentParams
@@ -18,6 +20,7 @@ from pygls.lsp.types import DidCloseTextDocumentParams
 from pygls.lsp.types import DidOpenTextDocumentParams
 from pygls.lsp.types import DidSaveTextDocumentParams
 from pygls.lsp.types import ExecuteCommandParams
+from pygls.lsp.types import FileDelete
 from pygls.lsp.types import MessageType
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
@@ -482,6 +485,118 @@ async def test_diagnostics(testdata, client_server, good, bad, expected):
         DidCloseTextDocumentParams(text_document=TextDocumentIdentifier(uri=test_uri)),
     )
     test_path.unlink()
+
+
+@py.test.mark.asyncio
+@py.test.mark.timeout(10)
+async def test_delete_clears_diagnostics(testdata, client_server):
+    """Ensure that file deletions both trigger a rebuild and clear any existing
+    diagnostics.
+
+    This test is quite involved as we have to ensure both the language server and the
+    filesystem are in agreement on the contents of the ``sphinx-srcdir/`` directory.
+    """
+
+    index = """\
+Index
+-----
+
+.. toctree::
+
+   test
+"""
+    good = """\
+Test
+----
+
+There is no image here.
+
+"""
+
+    bad = """\
+Test
+----
+
+This image does not resolve.
+
+.. figure:: /notfound.png
+
+"""
+
+    diagnostic = Diagnostic(
+        source="sphinx",
+        message="""\
+image file not readable: notfound.png""",
+        severity=DiagnosticSeverity.Warning,
+        range=Range(
+            start=Position(line=6, character=0),
+            end=Position(line=7, character=0),
+        ),
+    )
+
+    # Setup, start with the file in the "good" state.
+    workspace_root = testdata("sphinx-srcdir", path_only=True)
+    test_path = workspace_root / "test.rst"
+    index_path = workspace_root / "index.rst"
+
+    with index_path.open("w") as f:
+        f.write(index)
+
+    with test_path.open("w") as f:
+        f.write(good)
+
+    test = await client_server("sphinx-srcdir")  # type: ClientServer
+    assert test.server.workspace.root_uri == uri.from_fs_path(str(workspace_root))
+    test_uri = uri.from_fs_path(str(test_path))
+
+    test.client.lsp.notify(
+        TEXT_DOCUMENT_DID_OPEN,
+        DidOpenTextDocumentParams(
+            text_document=TextDocumentItem(
+                uri=test_uri, language_id="rst", version=1, text=good
+            )
+        ),
+    )
+
+    # Change the file so that it's in the "bad" state, we should see a diagnostic
+    # reporting the issue.
+    test.client.lsp.notify(
+        TEXT_DOCUMENT_DID_CHANGE,
+        DidChangeTextDocumentParams(
+            text_document=VersionedTextDocumentIdentifier(uri=test_uri, version=2),
+            content_changes=[TextDocumentContentChangeTextEvent(text=bad)],
+        ),
+    )
+
+    with test_path.open("w") as f:
+        f.write(bad)
+
+    test.client.lsp.notify(
+        TEXT_DOCUMENT_DID_SAVE,
+        DidSaveTextDocumentParams(
+            text_document=TextDocumentIdentifier(uri=test_uri), text=bad
+        ),
+    )
+
+    await test.client.lsp.wait_for_notification_async("esbonio/buildComplete")
+    actual = test.client.diagnostics[test_uri][0]
+
+    assert Range(**object_to_dict(actual.range)) == diagnostic.range
+    assert actual.severity == diagnostic.severity
+    assert actual.message == diagnostic.message
+    assert actual.source == diagnostic.source
+
+    # Delete the file, we should see a rebuild and the diagnostic be removed.
+    test_path.unlink()
+    test.client.lsp.notify(
+        WORKSPACE_DID_DELETE_FILES,
+        DeleteFilesParams(files=[FileDelete(uri=test_uri)]),
+    )
+
+    await test.client.lsp.wait_for_notification_async("esbonio/buildComplete")
+    assert len(test.client.diagnostics[test_uri]) == 0
+
+    index_path.unlink()
 
 
 def resolve_path(value: str, root_path: str) -> str:
