@@ -148,7 +148,7 @@
                         "description": "A list of additional modules to include in the server's configuration"
                     },
                     "esbonio.server.logLevel": {
-                        "scope": "application",
+                        "scope": "window",
                         "type": "string",
                         "default": "error",
                         "enum": [
@@ -159,7 +159,7 @@
                         "description": "The level of log message to show in the log"
                     },
                     "esbonio.server.logFilter": {
-                        "scope": "application",
+                        "scope": "window",
                         "type": "array",
                         "default": [],
                         "items": {
@@ -174,13 +174,13 @@
                         "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
                     },
                     "esbonio.server.hideSphinxOutput": {
-                        "scope": "application",
+                        "scope": "window",
                         "type": "boolean",
                         "default": false,
                         "description": "Hide Sphinx build output from the Language Server log."
                     },
                     "esbonio.server.installBehavior": {
-                        "scope": "application",
+                        "scope": "window",
                         "type": "string",
                         "default": "prompt",
                         "enum": [
@@ -196,7 +196,7 @@
                         "description": "When the Language Server is missing from an environment, how should the extension handle it"
                     },
                     "esbonio.server.updateBehavior": {
-                        "scope": "application",
+                        "scope": "window",
                         "type": "string",
                         "default": "promptMajor",
                         "enum": [
@@ -212,7 +212,7 @@
                         "description": "When an update to the Language Server is detected, how should the extension handle it"
                     },
                     "esbonio.server.updateFrequency": {
-                        "scope": "application",
+                        "scope": "window",
                         "type": "string",
                         "default": "weekly",
                         "enum": [
