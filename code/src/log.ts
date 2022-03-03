@@ -6,40 +6,53 @@ export enum LogLevel {
   ERROR = 2
 }
 
-let channelLogger: OutputChannelLogger
+let channelLogger: Logger
+export class Logger {
 
-export abstract class Logger {
-  constructor(public level: LogLevel) { }
+  public level: LogLevel
 
-  abstract log(message: string): void
+  constructor(private channel: vscode.OutputChannel) {
+    this.level = LogLevel.ERROR
+  }
 
   info(message: string): void {
     if (this.level <= LogLevel.INFO) {
-      this.log(`[INFO ] ${message}`)
+      this.log(message)
     }
   }
 
   debug(message: string): void {
     if (this.level <= LogLevel.DEBUG) {
-      this.log(`[DEBUG] ${message}`)
+      this.log(message)
     }
   }
 
   error(message: string): void {
     if (this.level <= LogLevel.ERROR) {
-      this.log(`[ERROR] ${message}`)
+      this.log(message)
     }
-  }
-}
-
-class OutputChannelLogger extends Logger {
-
-  constructor(private channel: vscode.OutputChannel, level: LogLevel) {
-    super(level)
   }
 
   log(message: string): void {
-    this.channel.appendLine(message)
+    this.channel.appendLine(`[client] ${message}`)
+  }
+
+  setLevel(level: string): void {
+    let logLevel: LogLevel
+
+    switch (level) {
+      case 'debug':
+        logLevel = LogLevel.DEBUG
+        break
+      case 'info':
+        logLevel = LogLevel.INFO
+        break
+      default:
+        logLevel = LogLevel.ERROR
+        break
+    }
+
+    this.level = logLevel
   }
 
   show() {
@@ -48,27 +61,23 @@ class OutputChannelLogger extends Logger {
 }
 
 /**
- * Return the logger that logs to the output window.
+ * Construct the logger that logs to the output window.
  */
-export function getOutputLogger(channel: vscode.OutputChannel) {
+export function createOutputLogger(channel: vscode.OutputChannel): Logger {
   if (!channelLogger) {
-    let logLevel: LogLevel
 
     let level = vscode.workspace.getConfiguration('esbonio').get<string>('server.logLevel')
-    switch (level) {
-      case 'debug':
-        logLevel = LogLevel.DEBUG
-        break
-      case 'info':
-        logLevel = LogLevel.INFO
-        break
-      case 'error':
-        logLevel = LogLevel.ERROR
-        break
-    }
 
-    channelLogger = new OutputChannelLogger(channel, logLevel)
+    channelLogger = new Logger(channel)
+    channelLogger.setLevel(level)
   }
 
+  return channelLogger
+}
+
+/**
+ * Return the active logger.
+ */
+export function getOutputLogger(): Logger {
   return channelLogger
 }

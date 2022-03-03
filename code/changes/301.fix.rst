@@ -1,0 +1,1 @@
+Changes to ``esbonio.server.logLevel`` no longer require VSCode to be restarted to take effect client side.

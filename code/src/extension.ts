@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { EditorCommands, VSCodeInput } from "./editor";
-import { getOutputLogger } from "./log";
+import { createOutputLogger, getOutputLogger } from "./log";
 import { EsbonioClient } from "./lsp/client";
 import { PythonManager } from "./lsp/python";
 import { ServerManager } from "./lsp/server";
@@ -14,8 +14,11 @@ let esbonio: EsbonioClient
 export async function activate(context: vscode.ExtensionContext) {
 
     let outputChannel = vscode.window.createOutputChannel('Esbonio')
-    let logger = getOutputLogger(outputChannel)
-    logger.debug("Extension activated.")
+    let logger = createOutputLogger(outputChannel)
+
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(configChanged)
+    )
 
     let editorCommands = new EditorCommands(new VSCodeInput())
     editorCommands.register(context)
@@ -37,4 +40,11 @@ export function deactivate(): Thenable<void> | undefined {
         return undefined
     }
     return esbonio.stop()
+}
+
+async function configChanged(event: vscode.ConfigurationChangeEvent) {
+    let config = vscode.workspace.getConfiguration('esbonio')
+
+    let logger = getOutputLogger()
+    logger.setLevel(config.get<string>('server.logLevel'))
 }
