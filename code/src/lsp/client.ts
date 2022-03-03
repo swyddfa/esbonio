@@ -5,9 +5,9 @@ import { join } from "path";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 
 import { Commands } from "../constants";
-import { getOutputLogger, Logger } from "../log";
 import { PythonManager } from "./python";
 import { ServerManager } from "./server";
+import { Logger } from "../log";
 
 
 const DEBUG = process.env.VSCODE_LSP_DEBUG === "true"
@@ -258,7 +258,7 @@ export class EsbonioClient {
     })
 
     this.client.onNotification("esbonio/buildComplete", params => {
-      this.logger.debug(`Build complete ${JSON.stringify(params)}`)
+      this.logger.debug(`Build complete ${JSON.stringify(params, null, 2)}`)
       this.sphinxConfig = params.config.sphinx
 
       let icon;
@@ -320,7 +320,7 @@ export class EsbonioClient {
       initializationOptions: initOptions,
       outputChannel: this.channel
     }
-    this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions)}`)
+    this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions, null, 2)}`)
     return clientOptions
   }
 
