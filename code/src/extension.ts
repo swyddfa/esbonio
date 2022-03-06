@@ -5,6 +5,7 @@ import { createOutputLogger, getOutputLogger } from "./log";
 import { EsbonioClient } from "./lsp/client";
 import { PythonManager } from "./lsp/python";
 import { ServerManager } from "./lsp/server";
+import { StatusManager } from "./lsp/status";
 import { PreviewManager } from "./preview/view";
 
 export const RESTART_LANGUAGE_SERVER = 'esbonio.languageServer.restart'
@@ -28,6 +29,7 @@ export async function activate(context: vscode.ExtensionContext) {
     esbonio = new EsbonioClient(logger, python, server, outputChannel, context)
 
     let preview = new PreviewManager(logger, context, esbonio)
+    let status = new StatusManager(logger, context, esbonio)
 
     let config = vscode.workspace.getConfiguration("esbonio.server")
     if (config.get("enabled")) {
