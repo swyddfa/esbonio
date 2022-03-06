@@ -263,7 +263,7 @@ class SphinxLanguageServer(RstLanguageServer):
                     "config": self.configuration,
                     "error": True,
                     "warnings": 0,
-                }
+                },
             )
         except Exception:
             self.logger.error(traceback.format_exc())
@@ -273,11 +273,7 @@ class SphinxLanguageServer(RstLanguageServer):
             )
             self.send_notification(
                 "esbonio/buildComplete",
-                {
-                    "config": self.configuration,
-                    "error": True,
-                    "warnings": 0
-                },
+                {"config": self.configuration, "error": True, "warnings": 0},
             )
 
     def save(self, params: DidSaveTextDocumentParams):
