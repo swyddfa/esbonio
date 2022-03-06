@@ -1,0 +1,1 @@
+This extension now requires the Esbonio language server version to be ``>= 0.9.0``
