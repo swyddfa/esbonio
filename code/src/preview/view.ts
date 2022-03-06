@@ -29,7 +29,7 @@ export class PreviewManager {
 
     vscode.window.onDidChangeActiveTextEditor(this.onDidChangeEditor, this)
 
-    esbonio.onBuildComplete(async () => {
+    esbonio.onBuildComplete(async (params) => {
       await this.reloadView()
     })
   }

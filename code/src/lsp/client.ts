@@ -82,6 +82,23 @@ export interface InitOptions {
   sphinx: SphinxConfig
 }
 
+export interface BuildCompleteResult {
+  /**
+   * The options representing the server's config.
+   */
+  config: InitOptions,
+
+  /**
+   * Flag indicating if the previous build resulted in an error.
+   */
+  error: boolean,
+
+  /**
+   * The number of warnings emitted in the previous build.
+   */
+  warnings: number,
+}
+
 /**
  * While the ServerManager is responsible for installation and updates of the
  * Python package containing the server. The EsbonioClient is responsible for
@@ -98,7 +115,10 @@ export class EsbonioClient {
 
   private client: LanguageClient
 
-  private buildCompleteCallback
+  private clientStartCallbacks: Array<(params: void) => void> = []
+  private clientErrorCallbacks: Array<(params: void) => void> = []
+  private buildStartCallbacks: Array<(params: void) => void> = []
+  private buildCompleteCallbacks: Array<(params: BuildCompleteResult) => void> = []
 
   constructor(
     private logger: Logger,
@@ -149,6 +169,7 @@ export class EsbonioClient {
     try {
       this.logger.info("Starting Language Server")
       this.client.start()
+      this.clientStartCallbacks.forEach(fn => fn())
 
       if (DEBUG) {
         // Auto open the output window when debugging
@@ -159,6 +180,7 @@ export class EsbonioClient {
       this.configureHandlers()
 
     } catch (err) {
+      this.clientErrorCallbacks.forEach(fn => fn(err))
       this.logger.error(err)
     }
   }
@@ -245,14 +267,14 @@ export class EsbonioClient {
 
     this.client.onNotification("esbonio/buildStart", params => {
       this.logger.debug("Build start.")
+      this.buildStartCallbacks.forEach(fn => fn())
     })
 
-    this.client.onNotification("esbonio/buildComplete", params => {
-      this.logger.debug(`Build complete ${JSON.stringify(params, null, 2)}`)
-
-      if (this.buildCompleteCallback) {
-        this.buildCompleteCallback()
-      }
+    this.client.onNotification("esbonio/buildComplete", (result: BuildCompleteResult) => {
+      this.logger.debug(`Build complete ${JSON.stringify(result, null, 2)}`)
+      this.buildCompleteCallbacks.forEach(fn => {
+        fn(result)
+      })
     })
   }
 
@@ -325,7 +347,19 @@ export class EsbonioClient {
     }
   }
 
-  onBuildComplete(callback) {
-    this.buildCompleteCallback = callback
+  onClientStart(callback: (_: void) => void) {
+    this.clientStartCallbacks.push(callback)
+  }
+
+  onClientError(callback: (_: void) => void) {
+    this.clientErrorCallbacks.push(callback)
+  }
+
+  onBuildComplete(callback: (result: BuildCompleteResult) => void) {
+    this.buildCompleteCallbacks.push(callback)
+  }
+
+  onBuildStart(callback: (_: void) => void) {
+    this.buildStartCallbacks.push(callback)
   }
 }
