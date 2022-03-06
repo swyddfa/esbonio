@@ -244,9 +244,8 @@ class SphinxLanguageServer(RstLanguageServer):
             **typing.cast(Dict, params.initialization_options)
         )
 
-        self.app = self._initialize_sphinx()
-
     def initialized(self, params: InitializedParams):
+        self.app = self._initialize_sphinx()
         self.build()
 
     def _initialize_sphinx(self):
@@ -258,11 +257,27 @@ class SphinxLanguageServer(RstLanguageServer):
                 message="Unable to find your 'conf.py', features that depend on Sphinx will be unavailable",
                 msg_type=MessageType.Warning,
             )
+            self.send_notification(
+                "esbonio/buildComplete",
+                {
+                    "config": self.configuration,
+                    "error": True,
+                    "warnings": 0,
+                }
+            )
         except Exception:
             self.logger.error(traceback.format_exc())
             self.show_message(
                 message="Unable to initialize Sphinx, see output window for details.",
                 msg_type=MessageType.Error,
+            )
+            self.send_notification(
+                "esbonio/buildComplete",
+                {
+                    "config": self.configuration,
+                    "error": True,
+                    "warnings": 0
+                },
             )
 
     def save(self, params: DidSaveTextDocumentParams):
