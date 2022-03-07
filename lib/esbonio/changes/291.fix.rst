@@ -1,1 +1,0 @@
-Diagnostics are now cleared for deleted files.

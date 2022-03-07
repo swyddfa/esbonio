@@ -1,1 +1,0 @@
-Add experimental spell checking support.

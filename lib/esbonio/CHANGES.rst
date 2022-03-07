@@ -1,3 +1,25 @@
+v0.9.0 - 2022-03-07
+-------------------
+
+Features
+^^^^^^^^
+
+- The language server now supports providing documentation on roles, directives (and their options).
+  Note however, this requires the relevant documentation to be explicitly added to the relevant ``LanguageFeatures``. (`#36 <https://github.com/swyddfa/esbonio/issues/36>`_)
+- The server now listens for ``workspace/didDeleteFiles`` notifications. (`#93 <https://github.com/swyddfa/esbonio/issues/93>`_)
+- Add experimental spell checking support. (`#271 <https://github.com/swyddfa/esbonio/issues/271>`_)
+- The language server now provides completion suggestions for ``.. code-block::`` and ``.. highlight::`` language names. (`#273 <https://github.com/swyddfa/esbonio/issues/273>`_)
+- The language server now supports ``completionItem/resolve`` requests, it is currently implemented for roles, directives and directive options. (`#274 <https://github.com/swyddfa/esbonio/issues/274>`_)
+- The language server now supports ``textDocument/definition`` requests for ``.. include::`` directive arguments. (`#276 <https://github.com/swyddfa/esbonio/issues/276>`_)
+- The language server now supports ``textDocument/definition`` requests for ``.. literalinclude::`` directive arguments. (`#277 <https://github.com/swyddfa/esbonio/issues/277>`_)
+
+
+Fixes
+^^^^^
+
+- Diagnostics are now cleared for deleted files. (`#291 <https://github.com/swyddfa/esbonio/issues/291>`_)
+
+
 v0.8.0 - 2021-11-26
 -------------------
 

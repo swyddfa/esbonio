@@ -1,1 +1,0 @@
-The server now listens for ``workspace/didDeleteFiles`` notifications.
