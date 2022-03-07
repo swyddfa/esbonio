@@ -2,10 +2,12 @@
 Configuration is handled using VSCode's settings system.
 The following options are available.
 
-``esbonio.server.enabled`` (boolean)
+.. confval:: esbonio.server.enabled (boolean)
+
    A flag that can be used to completely disable the language server, if required.
 
-``esbonio.server.pythonPath`` (string)
+.. confval:: esbonio.server.pythonPath (string)
+
    If the official `Python Extension`_ is available the extension will use the same
    Python environment as you have configured for your workspace. However, if you wish
    to use a different environment or do not have the Python extension installed this
@@ -16,7 +18,8 @@ The following options are available.
    - ``/path/to/python/`` - An absolute path
    - ``${workspaceRoot}/../venv/bin/python`` - A path relative to the root of your workspace
 
-``esbonio.server.installBehavior`` (string)
+.. confval:: esbonio.server.installBehavior (string)
+
    The VSCode extension can manage the installation of the language server for you.
    If the language server is missing from your current environment the extension will prompt
    by default to check if you want it to perform the installation. If you don't like this
@@ -27,7 +30,8 @@ The following options are available.
    - ``automatic`` - Never ask for confirmation, the language server will be installed
      automatically in new environments
 
-``esbonio.server.updateFrequency`` (string)
+.. confval:: esbonio.server.updateFrequency (string)
+
    The VSCode extension can also automatically install updates to the language server
    as they are released. By default the extension will check on start up once a week,
    alternatively you can set this setting to one of the following values
@@ -38,7 +42,8 @@ The following options are available.
    - ``weekly`` - Check for updates once a week
    - ``daily`` - Check for updates once a day
 
-``esbonio.server.updateBehavior`` (string)
+.. confval:: esbonio.server.updateBehavior (string)
+
    If an update is detected through one of the extension's automated checks this option
    controls what the extension does next. By default the extension will automatically
    install it **unless** it is a major update (e.g ``1.x.y`` -> ``2.0.0``). The following
