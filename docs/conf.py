@@ -20,7 +20,6 @@ from sphinx.application import Sphinx
 import esbonio.lsp
 
 # -- Project information -----------------------------------------------------
-
 project = "Esbonio"
 copyright = "2022"
 author = "the Esbonio project"
