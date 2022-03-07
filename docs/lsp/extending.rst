@@ -9,9 +9,7 @@ This section of the documentation outlines the server's architecture and how you
 Architecture
 ------------
 
-.. figure:: /images/architecture.svg
-
-   A rough sketch of how the language server(s) in Esbonio are architected.
+.. include:: ./_architecture.rst
 
 .. glossary::
 
