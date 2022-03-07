@@ -169,7 +169,8 @@ Configuration
 
    .. include:: ./editors/emacs-lsp-mode/_configuration.rst
 
-``sphinx.confDir`` (string)
+.. confval:: sphinx.confDir (string)
+
    The language server attempts to automatically find the folder which contains your
    project's ``conf.py``. If necessary this can be used to override the default discovery
    mechanism and force the server to use a folder of your choosing. Currently accepted
@@ -178,7 +179,8 @@ Configuration
    - ``/path/to/docs`` - An absolute path
    - ``${workspaceRoot}/docs`` - A path relative to the root of your workspace.
 
-``sphinx.srcDir`` (string)
+.. confval:: sphinx.srcDir (string)
+
    The language server assumes that your project's ``srcDir`` (the folder containing your
    rst files) is the same as your projects's ``confDir``. If this assumption is not true,
    you can use this setting to tell the server where to look. Currently accepted values
@@ -188,7 +190,8 @@ Configuration
    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
-``sphinx.buildDir`` (string)
+.. confval:: sphinx.buildDir (string)
+
    By default the language server will choose a cache directory (as determined by
    `appdirs <https://pypi.org/project/appdirs>`_) to put Sphinx's build output.
    This option can be used to force the language server to use a location
@@ -198,7 +201,8 @@ Configuration
    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
-``server.logLevel`` (string)
+.. confval:: server.logLevel (string)
+
    This can be used to set the level of log messages emitted by the server. This can be set
    to one of the following values.
 
@@ -206,11 +210,13 @@ Configuration
    - ``info``
    - ``debug``
 
-``server.logFilter`` (string[])
+.. confval:: server.logFilter (string[])
+
    The language server will typically include log output from all of its components. This
    option can be used to restrict the log output to be only those named.
 
-``server.hideSphinxOutput`` (boolean)
+.. confval:: server.hideSphinxOutput (boolean)
+
    Normally any build output from Sphinx will be forwarded to the client as log messages.
    If you prefer this flag can be used to exclude any Sphinx output from the log.
 
