@@ -101,8 +101,8 @@ COLLECTION_SCRIPT_TEMPLATE = string.Template(
         item.style.color = 'var(--color-brand-content)'
         item.style.borderColor = 'var(--color-brand-content)'
       } else {
-        item.style.color = 'black'
-        item.style.borderColor = 'white'
+        item.style.color = 'var(--color-content-foreground)'
+        item.style.borderColor = 'var(--color-content-background)'
       }
     })
   }
