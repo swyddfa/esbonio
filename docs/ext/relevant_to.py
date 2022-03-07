@@ -55,9 +55,12 @@ SELECTION_TEMPLATE = string.Template(
 
 SCRIPT_TEMPLATE = """
 <script>
+    let storage = window.localStorage
+
     function syncDropdowns(source, others) {
         others.forEach(dropdown => {
             dropdown.selectedIndex = source.selectedIndex
+            storage.setItem('selected-editor', source.selectedIndex)
 
             let option = dropdown.options[dropdown.selectedIndex]
             let parent = dropdown.parentElement
@@ -71,10 +74,12 @@ SCRIPT_TEMPLATE = """
         })
     }
 
+    let defaultIndex = storage.getItem('selected-editor') || 0
     let dropdowns = document.querySelectorAll('select[data-kind="relevant-to"]')
     dropdowns.forEach(d => {
         d.addEventListener('change', (evt) => syncDropdowns(evt.target, dropdowns))
     })
+    dropdowns[0].selectedIndex = defaultIndex
     syncDropdowns(dropdowns[0], dropdowns)
 </script>
 """
