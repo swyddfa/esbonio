@@ -71,7 +71,7 @@ html_theme = "furo"
 html_title = "Esbonio"
 html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
 html_favicon = "favicon.svg"
-html_static_path = ["_static"]
+# html_static_path = ["_static"]
 html_theme_options = {}
 
 if DEV_BUILD:

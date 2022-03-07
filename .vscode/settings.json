@@ -1,5 +1,5 @@
 {
-    "[rst]": {
+    "[restructuredtext]": {
         "editor.tabSize": 3,
     },
     "[typescript]": {
