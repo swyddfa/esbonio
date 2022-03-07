@@ -16,12 +16,14 @@
     "categories": [
         "Programming Languages"
     ],
+    "extensionPack": [
+        "trond-snekvik.simple-rst"
+    ],
     "scripts": {
         "compile": "webpack --mode development",
         "compile-test": "npm run clean && tsc -p ./",
         "watch": "webpack --mode development --watch",
         "test": "npm run compile-test && node ./dist/test/runTests.js",
-        "test-grammar": "vscode-tmgrammar-test -c -s source.rst -g syntaxes/rst.tmLanguage.json -g syntaxes/tests/c.tmLanguage.json -g syntaxes/tests/cpp.tmLanguage.json -g syntaxes/tests/css.tmLanguage.json -g syntaxes/tests/html.tmLanguage.json -g syntaxes/tests/js.tmLanguage.json -g syntaxes/tests/json.tmLanguage.json -g syntaxes/tests/python.tmLanguage.json -g syntaxes/tests/ts.tmLanguage.json -g syntaxes/tests/yaml.tmLanguage.json -t \"syntaxes/**/*.rst\"",
         "clean": "rm -r dist",
         "deploy": "vsce publish --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
@@ -39,18 +41,17 @@
         "@types/mocha": "^8.2.3",
         "@types/node": "^14.17.15",
         "@types/semver": "^7.3.8",
-        "@types/vscode": "1.61.0",
-        "mocha": "^8.4.0",
+        "@types/vscode": "1.65.0",
+        "mocha": "^9.2.0",
         "ts-loader": "^8.3.0",
         "typescript": "^4.4.3",
-        "vsce": "^1.99.0",
+        "vsce": "^2.6.7",
         "vscode-test": "^1.6.1",
-        "vscode-tmgrammar-test": "0.0.10",
         "webpack": "^5.52.1",
         "webpack-cli": "^4.8.0"
     },
     "engines": {
-        "vscode": "^1.61.0"
+        "vscode": "^1.65.0"
     },
     "capabilities": {
         "virtualWorkspaces": {
@@ -63,7 +64,7 @@
     },
     "icon": "icon.png",
     "activationEvents": [
-        "onLanguage:rst",
+        "onLanguage:restructuredtext",
         "workspaceContains:**/conf.py"
     ],
     "contributes": {
@@ -106,127 +107,153 @@
                 "category": "Esbonio"
             }
         ],
-        "configuration": {
-            "type": "object",
-            "title": "Esbonio",
-            "properties": {
-                "esbonio.server.enabled": {
-                    "scope": "window",
-                    "type": "boolean",
-                    "default": true,
-                    "description": "Enable/Disable the language server"
-                },
-                "esbonio.server.logLevel": {
-                    "scope": "application",
-                    "type": "string",
-                    "default": "error",
-                    "enum": [
-                        "debug",
-                        "info",
-                        "error"
-                    ],
-                    "description": "The level of log message to show in the log"
-                },
-                "esbonio.server.logFilter": {
-                    "scope": "application",
-                    "type": "array",
-                    "default": null,
-                    "items": {
-                        "type": "string"
-                    },
-                    "description": "A list of logger names to limit output from"
-                },
-                "esbonio.server.pythonPath": {
-                    "scope": "window",
-                    "type": "string",
-                    "default": "",
-                    "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
-                },
-                "esbonio.server.hideSphinxOutput": {
-                    "scope": "application",
-                    "type": "boolean",
-                    "default": false,
-                    "description": "Hide Sphinx build output from the Language Server log."
-                },
-                "esbonio.server.installBehavior": {
-                    "scope": "application",
-                    "type": "string",
-                    "default": "prompt",
-                    "enum": [
-                        "nothing",
-                        "prompt",
-                        "automatic"
-                    ],
-                    "enumDescriptions": [
-                        "Don't attempt to install the Language Server if it's missing",
-                        "Ask for confirmation before installing the Language Server",
-                        "Never ask for confirmation, the Language Server will be installed automatically in new environments"
-                    ],
-                    "description": "When the Language Server is missing from an environment, how should the extension handle it"
-                },
-                "esbonio.server.updateBehavior": {
-                    "scope": "application",
-                    "type": "string",
-                    "default": "promptMajor",
-                    "enum": [
-                        "promptAlways",
-                        "promptMajor",
-                        "automatic"
-                    ],
-                    "enumDescriptions": [
-                        "Always ask for confirmation when applying updates.",
-                        "Only ask for confirmation on major updates, minor versions will be installed automatically",
-                        "Never ask for confirmation, updates will always be installed automatically"
-                    ],
-                    "description": "When an update to the Language Server is detected, how should the extension handle it"
-                },
-                "esbonio.server.updateFrequency": {
-                    "scope": "application",
-                    "type": "string",
-                    "default": "weekly",
-                    "enum": [
-                        "never",
-                        "monthly",
-                        "weekly",
-                        "daily"
-                    ],
-                    "enumDescriptions": [
-                        "Never check for updates. Updates can still be triggered manually through the command palette.",
-                        "Check for updates monthly",
-                        "Check for updates weekly",
-                        "Check for updates daily"
-                    ],
-                    "description": "How often should the extension check for updates to the Language Server"
-                },
-                "esbonio.sphinx.buildDir": {
-                    "scope": "window",
-                    "type": "string",
-                    "default": null,
-                    "description": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local _build/ directory.",
-                    "markdownDescription": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local `_build/` directory."
-                },
-                "esbonio.sphinx.confDir": {
-                    "scope": "window",
-                    "type": "string",
-                    "default": null,
-                    "description": "The Language Server should be able to automatically find the folder containing your project's 'conf.py' file. However this setting can be used to force the Language Server to use a particular directory if required."
-                },
-                "esbonio.sphinx.srcDir": {
-                    "scope": "window",
-                    "type": "string",
-                    "default": null,
-                    "description": "The directory containing your rst source files. By default the Language Server will assume this is the same as `esbonio.sphinx.confDir` but this opton can override this if necessary.",
-                    "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.confDir#` but this opton can override this if necessary."
-                }
-            }
-        },
-        "grammars": [
+        "configuration": [
             {
-                "language": "rst",
-                "scopeName": "source.rst",
-                "path": "./syntaxes/rst.tmLanguage.json",
-                "embeddedLanguages": {
-                    "source.python": "python"
+                "title": "Server",
+                "properties": {
+                    "esbonio.server.enabled": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Enable/Disable the language server"
+                    },
+                    "esbonio.server.enabledInPyFiles": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Enable/Disable the language server in Python files."
+                    },
+                    "esbonio.server.entryPoint": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "esbonio",
+                        "description": "The entry point to use when launching the server."
+                    },
+                    "esbonio.server.excludedModules": {
+                        "scope": "window",
+                        "type": "array",
+                        "default": [],
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "A list of modules to exclude from the server's configuration"
+                    },
+                    "esbonio.server.includedModules": {
+                        "scope": "window",
+                        "type": "array",
+                        "default": [],
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "A list of additional modules to include in the server's configuration"
+                    },
+                    "esbonio.server.logLevel": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "error",
+                        "enum": [
+                            "debug",
+                            "info",
+                            "error"
+                        ],
+                        "description": "The level of log message to show in the log"
+                    },
+                    "esbonio.server.logFilter": {
+                        "scope": "window",
+                        "type": "array",
+                        "default": [],
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "A list of logger names to limit output from"
+                    },
+                    "esbonio.server.pythonPath": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "",
+                        "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
+                    },
+                    "esbonio.server.hideSphinxOutput": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Hide Sphinx build output from the Language Server log."
+                    },
+                    "esbonio.server.installBehavior": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "prompt",
+                        "enum": [
+                            "nothing",
+                            "prompt",
+                            "automatic"
+                        ],
+                        "enumDescriptions": [
+                            "Don't attempt to install the Language Server if it's missing",
+                            "Ask for confirmation before installing the Language Server",
+                            "Never ask for confirmation, the Language Server will be installed automatically in new environments"
+                        ],
+                        "description": "When the Language Server is missing from an environment, how should the extension handle it"
+                    },
+                    "esbonio.server.updateBehavior": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "promptMajor",
+                        "enum": [
+                            "promptAlways",
+                            "promptMajor",
+                            "automatic"
+                        ],
+                        "enumDescriptions": [
+                            "Always ask for confirmation when applying updates.",
+                            "Only ask for confirmation on major updates, minor versions will be installed automatically",
+                            "Never ask for confirmation, updates will always be installed automatically"
+                        ],
+                        "description": "When an update to the Language Server is detected, how should the extension handle it"
+                    },
+                    "esbonio.server.updateFrequency": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "weekly",
+                        "enum": [
+                            "never",
+                            "monthly",
+                            "weekly",
+                            "daily"
+                        ],
+                        "enumDescriptions": [
+                            "Never check for updates. Updates can still be triggered manually through the command palette.",
+                            "Check for updates monthly",
+                            "Check for updates weekly",
+                            "Check for updates daily"
+                        ],
+                        "description": "How often should the extension check for updates to the Language Server"
+                    }
+                }
+            },
+            {
+                "title": "Sphinx",
+                "properties": {
+                    "esbonio.sphinx.buildDir": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": null,
+                        "description": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local _build/ directory.",
+                        "markdownDescription": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local `_build/` directory."
+                    },
+                    "esbonio.sphinx.confDir": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": null,
+                        "description": "The Language Server should be able to automatically find the folder containing your project's 'conf.py' file. However this setting can be used to force the Language Server to use a particular directory if required."
+                    },
+                    "esbonio.sphinx.srcDir": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": null,
+                        "description": "The directory containing your rst source files. By default the Language Server will assume this is the same as `esbonio.sphinx.confDir` but this opton can override this if necessary.",
+                        "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.confDir#` but this opton can override this if necessary."
+                    }
                 }
             }
         ],
@@ -234,34 +261,40 @@
             {
                 "command": "esbonio.insert.inlineLink",
                 "key": "alt+l",
-                "when": "editorTextFocus && editorLangId == rst"
+                "when": "editorTextFocus && editorLangId == restructuredtext"
             },
             {
                 "command": "esbonio.insert.link",
                 "key": "alt+shift+l",
-                "when": "editorTextFocus && editorLangId == rst"
+                "when": "editorTextFocus && editorLangId == restructuredtext"
             },
             {
                 "command": "esbonio.preview.open",
                 "key": "ctrl+shift+v",
-                "when": "editorTextFocus && editorLangId == rst"
+                "when": "editorTextFocus && editorLangId == restructuredtext"
             },
             {
                 "command": "esbonio.preview.openSide",
                 "key": "ctrl+k v",
-                "when": "editorTextFocus && editorLangId == rst"
+                "when": "editorTextFocus && editorLangId == restructuredtext"
             }
         ],
         "languages": [
             {
-                "id": "rst",
+                "id": "restructuredtext",
                 "extensions": [
-                    ".rst"
+                    ".rst",
+                    ".rest"
                 ],
                 "aliases": [
-                    "reStructuredText"
-                ],
-                "configuration": "./rst-language-configuration.json"
+                    "reStructuredText",
+                    "restructuredtext",
+                    "ReStructured Text",
+                    "reStructured Text",
+                    "RST",
+                    "ReST",
+                    "reST"
+                ]
             }
         ],
         "menus": {
@@ -270,7 +303,7 @@
                     "command": "esbonio.preview.openSide",
                     "alt": "esbonio.preview.open",
                     "group": "navigation",
-                    "when": "resourceLangId == rst"
+                    "when": "resourceLangId == restructuredtext"
                 }
             ]
         }

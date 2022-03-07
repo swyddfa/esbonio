@@ -51,12 +51,6 @@ fi
 
 cd ${SRC}
 
-# Make sure there's at least some changes...
-if [ -z "$(find changes -name '*.rst')" ]; then
-    echo "There are no changes!"
-    exit 1
-fi
-
 # Use the changelog to determine the type of release to make.
 if [ ! -z "$(find changes -name '*.breaking.rst')" ]; then
     echo "Breaking changes found, doing major release!"
@@ -103,6 +97,12 @@ DATE=$(date +%Y-%m-%d)
 
 # Only if we are on the release branch.
 if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
+
+    # Make sure there's at least some changes...
+    if [ -z "$(find changes -name '*.rst')" ]; then
+        echo "There are no changes!"
+        exit 1
+    fi
 
     # Write the release notes for github
     python -m towncrier --draft --version="${VERSION}" | \

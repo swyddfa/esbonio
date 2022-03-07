@@ -29,7 +29,7 @@ export class PreviewManager {
 
     vscode.window.onDidChangeActiveTextEditor(this.onDidChangeEditor, this)
 
-    esbonio.onBuildComplete(async () => {
+    esbonio.onBuildComplete(async (params) => {
       await this.reloadView()
     })
   }
@@ -114,11 +114,15 @@ export class PreviewManager {
   private async getHtmlPath(editor: vscode.TextEditor): Promise<string | undefined> {
 
     let sourcePath = editor.document.fileName
+    if (!this.esbonio.sphinxConfig) {
+      return undefined
+    }
+
     let srcDir = this.esbonio.sphinxConfig.srcDir
     let buildDir = this.esbonio.sphinxConfig.buildDir
 
     if (!sourcePath.startsWith(srcDir)) {
-      this.logger.debug(`Ingoring ${sourcePath}`)
+      this.logger.debug(`Ignoring ${sourcePath}`)
       return undefined
     }
 

@@ -77,7 +77,7 @@ jobs:
 
     - uses: 'actions/setup-node@v1'
       with:
-        node-version: 12.x
+        node-version: 14.x
 
     - uses: 'actions/setup-python@v1'
       with:
@@ -105,7 +105,6 @@ jobs:
         npm install
 
         mkdir dist
-        npm run test-grammar
         xvfb-run -a npm test
       name: Test Extension
 
@@ -372,11 +371,10 @@ jobs:
 
     - run: |
         set -e
-        cd docs
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install -r requirements.txt
+        python -m pip install -r docs/requirements.txt
 
       name: Setup Environment
 

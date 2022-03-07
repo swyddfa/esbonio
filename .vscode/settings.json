@@ -22,8 +22,10 @@
         "**/.pytest_cache": true,
         "**/.ipynb_checkpoints": true,
         "**/.coverage": true,
-        "**/.vscode-test": true
+        "**/.vscode-test": true,
+        "**/.mypy_cache": true
     },
+    "esbonio.sphinx.buildDir": "${confDir}/_build",
     "python.defaultInterpreterPath": "${workspaceRoot}/.env/bin/python",
     "python.pythonPath": "${workspaceRoot}/.env/bin/python",
     "python.formatting.provider": "black",
@@ -31,7 +33,6 @@
         "lib/esbonio/tests"
     ],
     "python.testing.unittestEnabled": false,
-    "python.testing.nosetestsEnabled": false,
     "python.testing.pytestEnabled": true,
     //"esbonio.trace.server": "verbose"
 }

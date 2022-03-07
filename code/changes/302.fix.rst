@@ -1,0 +1,1 @@
+Options such as ``esboino.server.logLevel`` can now be set on a per-project basis.

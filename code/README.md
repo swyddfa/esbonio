@@ -38,13 +38,6 @@ Sections within a document are displayed in the "Outline" view
 
 ![Document Outline](../resources/images/document-symbols-demo.png)
 
-### Syntax Highlighting
-
-This extension also offers a simple grammar definition to enable some basic
-syntax highlighting
-
-![Syntax Highlighting](../resources/images/syntax-highlighting-demo.png)
-
 ## Setup
 
 The language server works by wrapping an instance of Sphinx's application object,

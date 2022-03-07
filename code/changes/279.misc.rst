@@ -1,0 +1,1 @@
+Add soft dependency on `trond-snekvik.simple-rst <https://marketplace.visualstudio.com/items?itemName=trond-snekvik.simple-rst>`_ in favour of using bespoke grammar rules.

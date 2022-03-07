@@ -5,9 +5,9 @@ import { join } from "path";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 
 import { Commands } from "../constants";
-import { getOutputLogger, Logger } from "../log";
 import { PythonManager } from "./python";
 import { ServerManager } from "./server";
+import { Logger } from "../log";
 
 
 const DEBUG = process.env.VSCODE_LSP_DEBUG === "true"
@@ -82,6 +82,23 @@ export interface InitOptions {
   sphinx: SphinxConfig
 }
 
+export interface BuildCompleteResult {
+  /**
+   * The options representing the server's config.
+   */
+  config: InitOptions,
+
+  /**
+   * Flag indicating if the previous build resulted in an error.
+   */
+  error: boolean,
+
+  /**
+   * The number of warnings emitted in the previous build.
+   */
+  warnings: number,
+}
+
 /**
  * While the ServerManager is responsible for installation and updates of the
  * Python package containing the server. The EsbonioClient is responsible for
@@ -97,14 +114,17 @@ export class EsbonioClient {
   public sphinxConfig?: SphinxConfig
 
   private client: LanguageClient
-  private statusBar: vscode.StatusBarItem
 
-  private buildCompleteCallback
+  private clientStartCallbacks: Array<(params: void) => void> = []
+  private clientErrorCallbacks: Array<(params: void) => void> = []
+  private buildStartCallbacks: Array<(params: void) => void> = []
+  private buildCompleteCallbacks: Array<(params: BuildCompleteResult) => void> = []
 
   constructor(
     private logger: Logger,
     private python: PythonManager,
     private server: ServerManager,
+    private channel: vscode.OutputChannel,
     private context: vscode.ExtensionContext
   ) {
     context.subscriptions.push(
@@ -113,13 +133,9 @@ export class EsbonioClient {
     context.subscriptions.push(
       vscode.workspace.onDidChangeConfiguration(this.configChanged, this)
     )
-
-    this.statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left)
-    context.subscriptions.push(this.statusBar)
   }
 
   async stop() {
-    this.statusBar.hide()
 
     if (this.client) {
       await this.client.stop()
@@ -132,8 +148,6 @@ export class EsbonioClient {
    * Start the language client.
    */
   async start(): Promise<void> {
-    this.statusBar.show()
-    this.statusBar.text = "$(sync~spin) Starting..."
 
     if (DEBUG) {
       this.client = await this.getTcpClient()
@@ -146,16 +160,16 @@ export class EsbonioClient {
         "See output window for more details"
       vscode.window.showErrorMessage(message, { title: "Show Output" }).then(opt => {
         if (opt && opt.title === "Show Output") {
-          getOutputLogger().show()
+          this.channel.show()
         }
       })
-      this.statusBar.text = "$(error) Failed."
       return
     }
 
     try {
       this.logger.info("Starting Language Server")
       this.client.start()
+      this.clientStartCallbacks.forEach(fn => fn())
 
       if (DEBUG) {
         // Auto open the output window when debugging
@@ -166,7 +180,7 @@ export class EsbonioClient {
       this.configureHandlers()
 
     } catch (err) {
-      this.statusBar.text = "$(error) Failed."
+      this.clientErrorCallbacks.forEach(fn => fn(err))
       this.logger.error(err)
     }
   }
@@ -177,7 +191,7 @@ export class EsbonioClient {
   async restartServer() {
     let config = vscode.workspace.getConfiguration("esbonio.server")
     if (config.get("enabled")) {
-      this.logger.info("Stopping Language Server")
+      this.logger.info("==================== RESTARTING SERVER =====================")
       await this.stop()
       await this.start()
     }
@@ -195,16 +209,31 @@ export class EsbonioClient {
     }
 
     let command = await this.python.getCmd()
-    command.push(
-      "-m", "esbonio",
-    )
+    let config = vscode.workspace.getConfiguration("esbonio")
+
+    let entryPoint = config.get<string>("server.entryPoint")
+
+    // Entry point can either be a script, or it can be a python module.
+    if (entryPoint.endsWith(".py") || entryPoint.includes("/") || entryPoint.includes("\\")) {
+      command.push(entryPoint)
+    } else {
+      command.push("-m", entryPoint)
+    }
+
+    config.get<string[]>('server.includedModules').forEach(mod => {
+      command.push('--include', mod)
+    })
+
+    config.get<string[]>('server.excludedModules').forEach(mod => {
+      command.push('--exclude', mod)
+    })
 
     this.logger.debug(`Server start command: ${command.join(" ")}`)
 
     return new LanguageClient(
       'esbonio', 'Esbonio Language Server',
       { command: command[0], args: command.slice(1) },
-      this.getLanguageClientOptions()
+      this.getLanguageClientOptions(config)
     )
   }
 
@@ -213,6 +242,7 @@ export class EsbonioClient {
    * Typically used while debugging.
    */
   private async getTcpClient(): Promise<LanguageClient | undefined> {
+    let config = vscode.workspace.getConfiguration("esbonio")
 
     let serverOptions: ServerOptions = () => {
       return new Promise((resolve) => {
@@ -229,36 +259,22 @@ export class EsbonioClient {
     return new LanguageClient(
       "esbonio", "Esbonio Language Server",
       serverOptions,
-      this.getLanguageClientOptions()
+      this.getLanguageClientOptions(config)
     )
   }
 
   private configureHandlers() {
 
     this.client.onNotification("esbonio/buildStart", params => {
-      this.statusBar.text = "$(sync~spin) Building..."
       this.logger.debug("Build start.")
+      this.buildStartCallbacks.forEach(fn => fn())
     })
 
-    this.client.onNotification("esbonio/buildComplete", params => {
-      this.logger.debug(`Build complete ${JSON.stringify(params)}`)
-      this.sphinxConfig = params.config.sphinx
-
-      let icon;
-
-      if (params.error) {
-        icon = "$(error)"
-      } else if (params.warnings > 0) {
-        icon = `$(warning) ${params.warnings}`
-      } else {
-        icon = "$(check)"
-      }
-
-      this.statusBar.text = `${icon} Sphinx[${this.sphinxConfig.builderName}] v${this.sphinxConfig.version}`
-
-      if (this.buildCompleteCallback) {
-        this.buildCompleteCallback()
-      }
+    this.client.onNotification("esbonio/buildComplete", (result: BuildCompleteResult) => {
+      this.logger.debug(`Build complete ${JSON.stringify(result, null, 2)}`)
+      this.buildCompleteCallbacks.forEach(fn => {
+        fn(result)
+      })
     })
   }
 
@@ -266,10 +282,9 @@ export class EsbonioClient {
    * Returns the LanguageClient options that are common to both modes of
    * transport.
    */
-  private getLanguageClientOptions(): LanguageClientOptions {
+  private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
 
     let cache = this.context.storageUri.path
-    let config = vscode.workspace.getConfiguration("esbonio")
 
     let buildDir = config.get<string>('sphinx.buildDir')
     if (!buildDir) {
@@ -289,14 +304,22 @@ export class EsbonioClient {
       }
     }
 
-    let clientOptions: LanguageClientOptions = {
-      documentSelector: [
-        { scheme: 'file', language: 'rst' },
+    let documentSelector = [
+      { scheme: 'file', language: 'restructuredtext' },
+    ]
+
+    if (config.get<boolean>('server.enabledInPyFiles')) {
+      documentSelector.push(
         { scheme: 'file', language: 'python' }
-      ],
-      initializationOptions: initOptions
+      )
     }
-    this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions)}`)
+
+    let clientOptions: LanguageClientOptions = {
+      documentSelector: documentSelector,
+      initializationOptions: initOptions,
+      outputChannel: this.channel
+    }
+    this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions, null, 2)}`)
     return clientOptions
   }
 
@@ -324,7 +347,19 @@ export class EsbonioClient {
     }
   }
 
-  onBuildComplete(callback) {
-    this.buildCompleteCallback = callback
+  onClientStart(callback: (_: void) => void) {
+    this.clientStartCallbacks.push(callback)
+  }
+
+  onClientError(callback: (_: void) => void) {
+    this.clientErrorCallbacks.push(callback)
+  }
+
+  onBuildComplete(callback: (result: BuildCompleteResult) => void) {
+    this.buildCompleteCallbacks.push(callback)
+  }
+
+  onBuildStart(callback: (_: void) => void) {
+    this.buildStartCallbacks.push(callback)
   }
 }

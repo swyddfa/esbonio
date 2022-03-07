@@ -4,9 +4,12 @@ import json
 import logging
 import textwrap
 import traceback
-from typing import List
+from typing import Iterable
+from typing import Type
 
+from pygls.lsp.methods import CODE_ACTION
 from pygls.lsp.methods import COMPLETION
+from pygls.lsp.methods import COMPLETION_ITEM_RESOLVE
 from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import DOCUMENT_SYMBOL
 from pygls.lsp.methods import INITIALIZE
@@ -14,45 +17,68 @@ from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_SAVE
+from pygls.lsp.methods import WORKSPACE_DID_DELETE_FILES
+from pygls.lsp.types import CodeActionParams
+from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionList
 from pygls.lsp.types import CompletionOptions
 from pygls.lsp.types import CompletionParams
 from pygls.lsp.types import DefinitionParams
+from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import DidChangeTextDocumentParams
 from pygls.lsp.types import DidOpenTextDocumentParams
 from pygls.lsp.types import DidSaveTextDocumentParams
 from pygls.lsp.types import DocumentSymbolParams
+from pygls.lsp.types import FileOperationFilter
+from pygls.lsp.types import FileOperationPattern
+from pygls.lsp.types import FileOperationRegistrationOptions
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
+from pygls.lsp.types import ServerCapabilities
+from pygls.protocol import LanguageServerProtocol
 
 from .rst import CompletionContext
+from .rst import DefinitionContext
 from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .rst import SymbolVisitor
-from .sphinx import SphinxLanguageServer
 
 __version__ = "0.8.0"
 
 __all__ = [
-    "BUILTIN_MODULES",
     "LanguageFeature",
     "RstLanguageServer",
-    "SphinxLanguageServer",
     "create_language_server",
-]
-
-BUILTIN_MODULES = [
-    "esbonio.lsp.directives",
-    "esbonio.lsp.roles",
-    "esbonio.lsp.completion",
-    "esbonio.lsp.definition",
 ]
 
 logger = logging.getLogger(__name__)
 
 
+class Patched(LanguageServerProtocol):
+    """Tweaked version of the protocol allowing us to tweak how the `ServerCapabilities`
+    are constructed."""
+
+    def __init__(self, *args, **kwargs):
+        self._server_capabilities = ServerCapabilities()
+        super().__init__(*args, **kwargs)
+
+    @property
+    def server_capabilities(self):
+        return self._server_capabilities
+
+    @server_capabilities.setter
+    def server_capabilities(self, value: ServerCapabilities):
+
+        if WORKSPACE_DID_DELETE_FILES in self.fm.features:
+            opts = self.fm.feature_options.get(WORKSPACE_DID_DELETE_FILES, None)
+            if opts:
+                value.workspace.file_operations.did_delete = opts  # type: ignore
+
+        self._server_capabilities = value
+
+
 def create_language_server(
-    server_cls: RstLanguageServer, modules: List[str], *args, **kwargs
+    server_cls: Type[RstLanguageServer], modules: Iterable[str], *args, **kwargs
 ) -> RstLanguageServer:
     """Create a new language server instance.
 
@@ -70,54 +96,87 @@ def create_language_server(
     if "logger" not in kwargs:
         kwargs["logger"] = logger
 
-    server = server_cls(*args, **kwargs)
+    server = server_cls(*args, **kwargs, protocol_cls=Patched)
 
     for module in modules:
         _load_module(server, module)
 
-    @server.feature(INITIALIZE)
-    def on_initialize(rst: server_cls, params: InitializeParams):
-        rst.initialize(params)
+    return _configure_lsp_methods(server)
 
-        for feature in rst._features.values():
+
+def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
+    @server.feature(INITIALIZE)
+    def on_initialize(ls: RstLanguageServer, params: InitializeParams):
+        ls.initialize(params)
+
+        for feature in ls._features.values():
             feature.initialize(params)
 
     @server.feature(INITIALIZED)
-    def on_initialized(rst: server_cls, params: InitializedParams):
-        rst.initialized(params)
+    def on_initialized(ls: RstLanguageServer, params: InitializedParams):
+        ls.initialized(params)
 
-        for feature in rst._features.values():
+        for feature in ls._features.values():
             feature.initialized(params)
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
-    def on_open(rst: server_cls, params: DidOpenTextDocumentParams):
+    def on_open(ls: RstLanguageServer, params: DidOpenTextDocumentParams):
         pass
 
     @server.feature(TEXT_DOCUMENT_DID_CHANGE)
-    def on_change(rst: server_cls, params: DidChangeTextDocumentParams):
+    def on_change(ls: RstLanguageServer, params: DidChangeTextDocumentParams):
         pass
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
-    def on_save(rst: server_cls, params: DidSaveTextDocumentParams):
-        rst.save(params)
+    def on_save(ls: RstLanguageServer, params: DidSaveTextDocumentParams):
+        ls.save(params)
 
-        for feature in rst._features.values():
+        for feature in ls._features.values():
             feature.save(params)
 
     @server.feature(
-        COMPLETION, CompletionOptions(trigger_characters=[".", ":", "`", "<", "/"])
+        WORKSPACE_DID_DELETE_FILES,
+        FileOperationRegistrationOptions(
+            filters=[
+                FileOperationFilter(
+                    pattern=FileOperationPattern(glob="**/*.rst"),
+                )
+            ]
+        ),
     )
-    def on_completion(rst: server_cls, params: CompletionParams):
+    def on_delete_files(ls: RstLanguageServer, params: DeleteFilesParams):
+        ls.delete_files(params)
+
+        for feature in ls._features.values():
+            feature.delete_files(params)
+
+    @server.feature(CODE_ACTION)
+    def on_code_action(ls: RstLanguageServer, params: CodeActionParams):
+        actions = []
+
+        for feature in ls._features.values():
+            actions += feature.code_action(params)
+
+        return actions
+
+    # <engine-example>
+    @server.feature(
+        COMPLETION,
+        CompletionOptions(
+            trigger_characters=[".", ":", "`", "<", "/"], resolve_provider=True
+        ),
+    )
+    def on_completion(ls: RstLanguageServer, params: CompletionParams):
         uri = params.text_document.uri
         pos = params.position
 
-        doc = rst.workspace.get_document(uri)
-        line = rst.line_at_position(doc, pos)
-        location = rst.get_location_type(doc, pos)
+        doc = ls.workspace.get_document(uri)
+        line = ls.line_at_position(doc, pos)
+        location = ls.get_location_type(doc, pos)
 
         items = []
 
-        for feature in rst._features.values():
+        for name, feature in ls._features.items():
             for pattern in feature.completion_triggers:
                 for match in pattern.finditer(line):
                     if not match:
@@ -130,47 +189,71 @@ def create_language_server(
                         context = CompletionContext(
                             doc=doc, location=location, match=match, position=pos
                         )
-                        rst.logger.debug("Completion context: %s", context)
-                        items += feature.complete(context)
+                        ls.logger.debug("Completion context: %s", context)
+
+                        for item in feature.complete(context):
+                            item.data = {"source_feature": name, **(item.data or {})}
+                            items.append(item)
 
         return CompletionList(is_incomplete=False, items=items)
 
+    # </engine-example>
+
+    @server.feature(COMPLETION_ITEM_RESOLVE)
+    def on_completion_resolve(
+        ls: RstLanguageServer, item: CompletionItem
+    ) -> CompletionItem:
+        source = (item.data or {}).get("source_feature", "")
+        feature = ls.get_feature(source)
+
+        if not feature:
+            ls.logger.error(
+                "Unable to resolve completion item, unknown source: '%s'", source
+            )
+            return item
+
+        return feature.completion_resolve(item)
+
     @server.feature(DEFINITION)
-    def on_definition(rst: server_cls, params: DefinitionParams):
+    def on_definition(ls: RstLanguageServer, params: DefinitionParams):
         uri = params.text_document.uri
         pos = params.position
 
-        doc = rst.workspace.get_document(uri)
-        line = rst.line_at_position(doc, pos)
+        doc = ls.workspace.get_document(uri)
+        line = ls.line_at_position(doc, pos)
+        location = ls.get_location_type(doc, pos)
 
         definitions = []
 
-        for feature in rst._features.values():
+        for feature in ls._features.values():
             for pattern in feature.definition_triggers:
                 for match in pattern.finditer(line):
                     if not match:
                         continue
 
                     start, stop = match.span()
-                    if start < pos.character and pos.character < stop:
-                        definitions += feature.definition(match, doc, pos)
+                    if start <= pos.character and pos.character <= stop:
+                        context = DefinitionContext(
+                            doc=doc, location=location, match=match, position=pos
+                        )
+                        definitions += feature.definition(context)
 
         return definitions
 
     @server.feature(DOCUMENT_SYMBOL)
-    def on_document_symbol(rst: server_cls, params: DocumentSymbolParams):
+    def on_document_symbol(ls: RstLanguageServer, params: DocumentSymbolParams):
 
-        doctree = rst.get_doctree(uri=params.text_document.uri)
+        doctree = ls.get_doctree(uri=params.text_document.uri)
         if doctree is None:
             return []
 
-        visitor = SymbolVisitor(rst, doctree)
+        visitor = SymbolVisitor(ls, doctree)
         doctree.walkabout(visitor)
 
         return visitor.symbols
 
     @server.command("esbonio.server.configuration")
-    def get_configuration(rst: server_cls, *args):
+    def get_configuration(ls: RstLanguageServer, *args):
         """Get the server's configuration.
 
         Not to be confused with the ``workspace/configuration`` request where the server
@@ -179,8 +262,8 @@ def create_language_server(
 
         As far as I know, there isn't anything built into the spec to cater for this?
         """
-        config = rst.configuration
-        rst.logger.debug("%s: %s", "esbonio.server.configuration", config)
+        config = ls.configuration
+        ls.logger.debug("%s: %s", "esbonio.server.configuration", config)
 
         return config
 

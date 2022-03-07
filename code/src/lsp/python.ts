@@ -45,14 +45,21 @@ export class PythonManager {
   async getCmd(): Promise<string[] | undefined> {
     let userPython = vscode.workspace.getConfiguration('esbonio').get<string>('server.pythonPath')
 
-    /* If the user has set a value, let's use that.
-
-       TODO: Implement variable expansions like ${workspaceRoot}, ${config:xxx} etc.
-             Ideally it would be something VSCode could do for us, but as far as I can
-             tell it's not available yet.
-             https://github.com/microsoft/vscode/issues/46471
-     */
     if (userPython) {
+
+      // Support for ${workspaceRoot}/...
+      let match = userPython.match(/^\${(\w+)}.*/)
+      if (match && match[1] === 'workspaceRoot') {
+        let workspaceRoot = ""
+        let workspaceFolders = vscode.workspace.workspaceFolders
+
+        if (workspaceFolders) {
+          workspaceRoot = workspaceFolders[0].uri.fsPath
+        }
+
+        userPython = userPython.replace("${workspaceRoot}", workspaceRoot)
+      }
+
       this.logger.debug(`Using user configured Python: ${userPython}`)
       return [userPython]
     }

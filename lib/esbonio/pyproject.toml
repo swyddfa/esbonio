@@ -3,6 +3,7 @@ requires = ["setuptools >= 35.0.2", "wheel >= 0.29.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 filterwarnings = [
      "ignore:'contextfunction' is renamed to 'pass_context',*:DeprecationWarning",
      "ignore:'environmentfilter' is renamed to 'pass_environment',*:DeprecationWarning"
@@ -58,18 +59,15 @@ deps =
     sphinx2: docutils<0.18
     sphinx3: sphinx>=3,<4
     sphinx4: sphinx>=4,<5
-    pytest
-    pytest-asyncio
-    pytest-cov
-    pytest-timeout
+extras= dev
 commands =
+    py{38,39,310}-sphinx4: mypy --namespace-packages --explicit-package-bases -p esbonio
     pytest --tb=short --cov=esbonio.lsp {posargs}
 
 [testenv:pkg]
 deps =
-    wheel
+    build
 usedevelop = True
 commands =
-    python setup.py clean --all
-    python setup.py sdist bdist_wheel
+    python -m build
 """

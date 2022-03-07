@@ -1,0 +1,2 @@
+The language server now supports providing documentation on roles, directives (and their options).
+Note however, this requires the relevant documentation to be explicitly added to the relevant ``LanguageFeatures``.

@@ -1,20 +1,36 @@
 """Role support."""
+import json
 import re
+import typing
+from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
 
+import pkg_resources
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import Location
+from pygls.lsp.types import MarkupContent
+from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
-from pygls.workspace import Document
 
-from .directives import DIRECTIVE
-from .rst import CompletionContext
-from .rst import LanguageFeature
-from .rst import RstLanguageServer
+from esbonio.lsp.directives import DIRECTIVE
+from esbonio.lsp.rst import CompletionContext
+from esbonio.lsp.rst import DefinitionContext
+from esbonio.lsp.rst import LanguageFeature
+from esbonio.lsp.rst import RstLanguageServer
+from esbonio.lsp.sphinx import SphinxLanguageServer
+
+try:
+    from typing import Protocol
+except ImportError:
+    # Protocol is only available in Python 3.8+
+    class Protocol:  # type: ignore
+        ...
+
 
 ROLE = re.compile(
     r"""
@@ -88,11 +104,11 @@ A "default" role is the target part of a normal role - but without the ``:name:`
 """
 
 
-class TargetDefinition:
+class TargetDefinition(Protocol):
     """A definition provider for role targets"""
 
     def find_definitions(
-        self, doc: Document, match: "re.Match", name: str, domain: Optional[str] = None
+        self, context: DefinitionContext, name: str, domain: Optional[str]
     ) -> List[Location]:
         """Return a list of locations representing the definition of the given role
         target.
@@ -108,14 +124,13 @@ class TargetDefinition:
         domain:
            The domain the role is part of, if applicable.
         """
-        return []
 
 
-class TargetCompletion:
+class TargetCompletion(Protocol):
     """A completion provider for role targets"""
 
     def complete_targets(
-        self, context: CompletionContext, domain: str, name: str
+        self, context: CompletionContext, name: str, domain: Optional[str]
     ) -> List[CompletionItem]:
         """Return a list of completion items representing valid targets for the given
         role.
@@ -129,7 +144,6 @@ class TargetCompletion:
         name:
            The name of the role to generate completion suggestions for.
         """
-        return []
 
 
 class Roles(LanguageFeature):
@@ -138,40 +152,103 @@ class Roles(LanguageFeature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._definition_providers: List[TargetDefinition] = []
+        self._documentation: Dict[str, Dict[str, str]] = {}
+        """Cache for documentation."""
+
+        self._target_definition_providers: List[TargetDefinition] = []
         """A list of providers that locate the definition for the given role target."""
 
-        self._target_providers: List[TargetCompletion] = []
+        self._target_completion_providers: List[TargetCompletion] = []
         """A list of providers that give completion suggestions for role target
         objects."""
 
-    def add_definition_provider(self, provider: TargetDefinition) -> None:
-        self._definition_providers.append(provider)
+    def add_target_definition_provider(self, provider: TargetDefinition) -> None:
+        self._target_definition_providers.append(provider)
 
-    def add_target_provider(self, provider: TargetCompletion) -> None:
-        self._target_providers.append(provider)
+    def add_target_completion_provider(self, provider: TargetCompletion) -> None:
+        self._target_completion_providers.append(provider)
+
+    def add_documentation(self, documentation: Dict[str, Dict[str, Any]]) -> None:
+        """Register role documentation.
+
+        ``documentation`` should be a dictionary of the form ::
+
+           documentation = {
+               "raw(docutils.parsers.rst.roles.raw_role)": {
+                   "is_markdown": true,
+                   "license": "https://...",
+                   "source": "https://...",
+                   "description": [
+                       "# :raw:",
+                       "The raw role is used for...",
+                       ...
+                   ]
+               }
+           }
+
+        where the key is of the form `name(dotted_name)`. There are cases where a role's
+        implementation is not sufficient to uniquely identify it as multiple roles can
+        be provided by a single class.
+
+        This means the key has to be a combination of the ``name`` the user writes in
+        an reStructuredText document and ``dotted_name`` is the fully qualified name of
+        the role's implementation.
+
+        .. note::
+
+           If there is a clash with an existing key, the existing value will be
+           overwritten with the new value.
+
+        The values in this dictionary are themselves dictionaries with the following
+        fields.
+
+        ``description``
+           A list of strings for the role's usage.
+
+        ``is_markdown``
+           A boolean flag used to indicate whether the ``description`` is written in
+           plain text or markdown.
+
+        ``source``
+           The url to the documentation's source.
+
+        ``license``
+           The url to the documentation's license.
+
+        Parameters
+        ----------
+        documentation:
+           The documentation to register.
+        """
+
+        for key, doc in documentation.items():
+            description = doc.get("description", [])
+            if not description:
+                continue
+
+            source = doc.get("source", "")
+            if source:
+                description.append(f"\n[Source]({source})")
+
+            license = doc.get("license", "")
+            if license:
+                description.append(f"\n[License]({license})")
+
+            doc["description"] = "\n".join(description)
+            self._documentation[key] = doc
 
     completion_triggers = [ROLE, DEFAULT_ROLE]
     definition_triggers = [ROLE]
 
-    def definition(
-        self, match: "re.Match", doc: Document, pos: Position
-    ) -> List[Location]:
+    def definition(self, context: DefinitionContext) -> List[Location]:
 
-        groups = match.groupdict()
-        domain = groups["domain"] or None
-        name = groups["name"]
+        domain = context.match.group("domain") or None
+        name = context.match.group("name")
 
         definitions = []
-        self.logger.debug(
-            "Suggesting definitions for %s%s: %s",
-            domain or ":",
-            name,
-            match.groupdict(),
-        )
 
-        for provide in self._definition_providers:
-            definitions += provide.find_definitions(doc, match, name, domain) or []
+        for provide in self._target_definition_providers:
+            definitions += provide.find_definitions(context, name, domain) or []
 
         return definitions
 
@@ -233,6 +310,20 @@ class Roles(LanguageFeature):
 
         return self.complete_roles(context)
 
+    def completion_resolve(self, item: CompletionItem) -> CompletionItem:
+
+        # We need extra info to know who to call
+        if not item.data:
+            return item
+
+        data = typing.cast(Dict, item.data)
+        ctype = data.get("completion_type", "")
+
+        if ctype == "role":
+            return self.completion_resolve_role(item)
+
+        return item
+
     def complete_roles(self, context: CompletionContext) -> List[CompletionItem]:
 
         match = context.match
@@ -254,13 +345,41 @@ class Roles(LanguageFeature):
             if not name.startswith(domain):
                 continue
 
-            item = self.role_to_completion_item(name, role, context)
-            item.text_edit = TextEdit(range=range_, new_text=item.insert_text)
-            item.insert_text = None
+            try:
+                dotted_name = f"{role.__module__}.{role.__name__}"
+            except AttributeError:
+                dotted_name = f"{role.__module__}.{role.__class__.__name__}"
+
+            insert_text = f":{name}:"
+            item = CompletionItem(
+                label=name,
+                kind=CompletionItemKind.Function,
+                detail=f"{dotted_name}",
+                filter_text=insert_text,
+                text_edit=TextEdit(range=range_, new_text=insert_text),
+                data={"completion_type": "role"},
+            )
 
             items.append(item)
 
         return items
+
+    def completion_resolve_role(self, item: CompletionItem) -> CompletionItem:
+
+        # We need the detail field set to the role implementation's fully qualified name
+        if not item.detail:
+            return item
+
+        documentation = self.get_documentation(item.label, item.detail)
+        if not documentation:
+            return item
+
+        description = documentation.get("description", "")
+        is_markdown = documentation.get("is_markdown", False)
+        kind = MarkupKind.Markdown if is_markdown else MarkupKind.PlainText
+
+        item.documentation = MarkupContent(kind=kind, value=description)
+        return item
 
     def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
         """Generate the list of role target completion suggestions."""
@@ -274,7 +393,10 @@ class Roles(LanguageFeature):
                 return []
         else:
             name = groups["name"]
-            domain = groups["domain"] or ""
+            domain = groups["domain"]
+
+        domain = domain or ""
+        name = name or ""
 
         # Only generate suggestions for "aliased" targets if the request comes from
         # within the <> chars.
@@ -300,8 +422,8 @@ class Roles(LanguageFeature):
         prefix = context.match.group(0)[start:]
         modifier = groups["modifier"] or ""
 
-        for provide in self._target_providers:
-            candidates = provide.complete_targets(context, domain, name) or []
+        for provide in self._target_completion_providers:
+            candidates = provide.complete_targets(context, name, domain) or []
 
             for candidate in candidates:
 
@@ -327,33 +449,56 @@ class Roles(LanguageFeature):
 
         return targets
 
-    def role_to_completion_item(
-        self, name: str, role, context: CompletionContext
-    ) -> CompletionItem:
-        """Convert an rst role to its CompletionItem representation.
+    def get_documentation(
+        self, label: str, implementation: str
+    ) -> Optional[Dict[str, Any]]:
+        """Return the documentation for the given role, if available.
+
+        If documentation for the given ``label`` cannot be found, this function will also
+        look for the label under the project's :confval:`sphinx:primary_domain` followed
+        by the ``std`` domain.
 
         Parameters
         ----------
-        name:
-           The name of the role as a user would type into an reStructuredText document.
-        role:
-           The implementation of the role.
-        context:
-           The completion context
+        label:
+           The name of the role, as the user would type in an reStructuredText file.
+        implementation:
+           The full dotted name of the role's implementation.
         """
 
-        insert_text = f":{name}:"
-        item = CompletionItem(
-            label=name,
-            kind=CompletionItemKind.Function,
-            detail="role",
-            filter_text=insert_text,
-            insert_text=insert_text,
-        )
+        key = f"{label}({implementation})"
+        documentation = self._documentation.get(key, None)
+        if documentation:
+            return documentation
 
-        return item
+        if not isinstance(self.rst, SphinxLanguageServer) or not self.rst.app:
+            return None
+
+        # Nothing found, try the primary domain
+        domain = self.rst.app.config.primary_domain
+        key = f"{domain}:{label}({implementation})"
+
+        documentation = self._documentation.get(key, None)
+        if documentation:
+            return documentation
+
+        # Still nothing, try the standard domain
+        key = f"std:{label}({implementation})"
+
+        documentation = self._documentation.get(key, None)
+        if documentation:
+            return documentation
+
+        return None
 
 
 def esbonio_setup(rst: RstLanguageServer):
     roles = Roles(rst)
     rst.add_feature(roles)
+
+    docutils_docs = pkg_resources.resource_string("esbonio.lsp.rst", "roles.json")
+    roles.add_documentation(json.loads(docutils_docs.decode("utf8")))
+
+    if isinstance(rst, SphinxLanguageServer):
+        sphinx_docs = pkg_resources.resource_string("esbonio.lsp.sphinx", "roles.json")
+        roles.add_documentation(json.loads(sphinx_docs.decode("utf8")))

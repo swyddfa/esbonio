@@ -5,9 +5,9 @@ import py.test
 import pygls.uris as uri
 from sphinx.application import Sphinx
 
-from esbonio.lsp import BUILTIN_MODULES
 from esbonio.lsp import create_language_server
-from esbonio.lsp import SphinxLanguageServer
+from esbonio.lsp.sphinx import DEFAULT_MODULES
+from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.testing import ClientServer
 
 # import logging
@@ -116,7 +116,7 @@ async def client_server():
 
         loop = asyncio.new_event_loop()
         server = create_language_server(
-            SphinxLanguageServer, BUILTIN_MODULES, loop=loop
+            SphinxLanguageServer, DEFAULT_MODULES, loop=loop
         )
         client_server = ClientServer(server)
         await client_server.start(root_uri)

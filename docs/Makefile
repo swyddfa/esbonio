@@ -14,8 +14,8 @@ endif
 
 
 html-build:
-	sphinx-build -b html . _build/$(BUILDDIR)/en/
-	sphinx-build -b html . _build/$(BUILDDIR)/cy/ -Dlanguage=cy
+	BUILDDIR=$(BUILDDIR) sphinx-build -b html . _build/$(BUILDDIR)/en/
+	BUILDDIR=$(BUILDDIR) sphinx-build -b html . _build/$(BUILDDIR)/cy/ -Dlanguage=cy
 	echo "::set-output name=version::$(BUILDDIR)"
 
 

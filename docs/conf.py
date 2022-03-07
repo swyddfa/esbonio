@@ -12,6 +12,7 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath("../lib/esbonio"))
+sys.path.insert(0, os.path.abspath("./ext"))
 
 from docutils.parsers.rst import nodes
 from sphinx.application import Sphinx
@@ -21,11 +22,11 @@ import esbonio.lsp
 # -- Project information -----------------------------------------------------
 
 project = "Esbonio"
-copyright = "2021, Alex Carney"
-author = ""
-
-# The full version, including alpha/beta/rc tags
+copyright = "2022"
+author = "the Esbonio project"
 release = esbonio.lsp.__version__
+
+DEV_BUILD = os.getenv("BUILDDIR", None) == "latest"
 
 # -- i18n configuration ------------------------------------------------------
 locale_dirs = ["locale/"]
@@ -43,13 +44,10 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_panels",
     "esbonio.tutorial",
+    "collection_items",
+    "relevant_to",
 ]
 
-autodoc_default_options = {
-    "members": True,
-    "member-order": "bysource",
-    "undoc-members": True,
-}
 autodoc_typehints = "description"
 
 intersphinx_mapping = {
@@ -64,23 +62,23 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**/_*.rst"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**/_*.rst", "_*.rst"]
 
 
 # -- Options for HTML output -------------------------------------------------
 
-html_theme = "sphinx_book_theme"
+html_theme = "furo"
+html_title = "Esbonio"
 html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
 html_favicon = "favicon.svg"
 html_static_path = ["_static"]
-html_theme_options = {
-    "repository_url": "https://github.com/swyddfa/esbonio",
-    "use_repository_button": True,
-    "use_issues_button": True,
-    "use_edit_page_button": True,
-    "repository_branch": "release",
-    "path_to_docs": "docs/",
-}
+html_theme_options = {}
+
+if DEV_BUILD:
+    html_theme_options["announcement"] = (
+        "This is the unstable version of the documentation, features may change or be removed without warning. "
+        '<a href="/esbonio/docs/stable/en/">Click here</a> to view the released version'
+    )
 
 
 def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
@@ -94,7 +92,6 @@ def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
 
 
 def setup(app: Sphinx):
-    app.add_css_file("css/custom.css", priority=1000)
     app.add_role("lsp", lsp_role)
 
     # So that it's possible to use intersphinx to link to configuration options

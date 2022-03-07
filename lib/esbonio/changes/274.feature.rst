@@ -1,0 +1,1 @@
+The language server now supports ``completionItem/resolve`` requests, it is currently implemented for roles, directives and directive options.

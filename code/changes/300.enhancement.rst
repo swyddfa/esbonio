@@ -1,0 +1,1 @@
+The ``esbonio.server.pythonPath`` configuration option now supports paths relative to ``${workspaceRoot}``
