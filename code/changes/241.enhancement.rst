@@ -1,1 +1,0 @@
-The server can now be restarted by clicking on the relevant language status item

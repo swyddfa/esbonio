@@ -1,1 +1,0 @@
-The status bar has been re-implemented as a collection of language status items.

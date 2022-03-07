@@ -1,2 +1,0 @@
-Add option ``esbonio.server.entryPoint`` which allows the user to set an entry point.
-Also add options ``esbonio.server.includedModules`` and ``esbonio.server.excludedModules`` to allow the user to control which modules are loaded in the server configuration.

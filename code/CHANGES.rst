@@ -1,3 +1,33 @@
+v0.7.3 - 2022-03-07
+-------------------
+
+Fixes
+^^^^^
+
+- Duplicate output channels are no longer created in the event of a language server crash. (`#287 <https://github.com/swyddfa/esbonio/issues/287>`_)
+- Changes to ``esbonio.server.logLevel`` no longer require VSCode to be restarted to take effect client side. (`#301 <https://github.com/swyddfa/esbonio/issues/301>`_)
+- Options such as ``esboino.server.logLevel`` can now be set on a per-project basis. (`#302 <https://github.com/swyddfa/esbonio/issues/302>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- The status bar has been re-implemented as a collection of language status items. (`#240 <https://github.com/swyddfa/esbonio/issues/240>`_)
+- The server can now be restarted by clicking on the relevant language status item (`#241 <https://github.com/swyddfa/esbonio/issues/241>`_)
+- Add option ``esbonio.server.enabledInPyFiles`` which allows the user to disable the language server in Python files. (`#285 <https://github.com/swyddfa/esbonio/issues/285>`_)
+- All extension log output has been unified into a single output channel. (`#287 <https://github.com/swyddfa/esbonio/issues/287>`_)
+- Add option ``esbonio.server.entryPoint`` which allows the user to set an entry point.
+  Also add options ``esbonio.server.includedModules`` and ``esbonio.server.excludedModules`` to allow the user to control which modules are loaded in the server configuration. (`#288 <https://github.com/swyddfa/esbonio/issues/288>`_)
+- The ``esbonio.server.pythonPath`` configuration option now supports paths relative to ``${workspaceRoot}`` (`#300 <https://github.com/swyddfa/esbonio/issues/300>`_)
+
+
+Misc
+^^^^
+
+- Add soft dependency on `trond-snekvik.simple-rst <https://marketplace.visualstudio.com/items?itemName=trond-snekvik.simple-rst>`_ in favour of using bespoke grammar rules. (`#279 <https://github.com/swyddfa/esbonio/issues/279>`_)
+- This extension now requires the Esbonio language server version to be ``>= 0.9.0`` (`#308 <https://github.com/swyddfa/esbonio/issues/308>`_)
+
+
 v0.7.2 - 2021-11-26
 -------------------
 

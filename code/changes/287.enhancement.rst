@@ -1,1 +1,0 @@
-All extension log output has been unified into a single output channel.
