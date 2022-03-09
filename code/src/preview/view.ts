@@ -1,4 +1,3 @@
-import * as jsom from "jsdom";
 import * as path from 'path';
 import * as vscode from 'vscode'
 
@@ -70,28 +69,32 @@ export class PreviewManager {
     }
 
     this.logger.debug(`Previewing ${htmlPath}`)
-    this.panel.webview.html = await this.getHtmlContent(htmlPath)
+    this.panel.webview.postMessage({ reload: htmlPath })
     this.htmlPath = htmlPath
   }
 
   private async previewEditor(editor: vscode.TextEditor, placement: vscode.ViewColumn) {
 
     let htmlPath = await this.getHtmlPath(editor)
+    this.logger.debug(`HTML Path '${htmlPath}'`)
     if (!htmlPath) {
       return
     }
 
-    // Currently we only support one open editor at a time.
+    let result: { port?: number } = await vscode.commands.executeCommand("esbonio.server.preview", { show: false })
+    this.logger.debug(`Result is ${JSON.stringify(result)}`)
+
+    if (!result || !result.port) { return }
+
     if (!this.panel) {
-      let buildDir = this.esbonio.sphinxConfig.buildDir
       this.panel = vscode.window.createWebviewPanel(
-        'esbonioPreview', 'Preview',
+        'esbonioPreview',
+        'Preview',
         placement,
-        {
-          enableScripts: true,
-          localResourceRoots: [vscode.Uri.file(buildDir)]
-        }
+        { enableScripts: true }
       )
+
+      this.panel.webview.html = this.getWebViewHTML(result.port)
     }
 
     this.panel.onDidDispose(() => {
@@ -101,25 +104,14 @@ export class PreviewManager {
     await this.reloadView(htmlPath)
   }
 
-  /**
-   * Translate the source *.rst (or other) filepath into the *.html path in the
-   * build directory that we want to display.
-   *
-   * @param sourcePath the path to the source file we wish to preview
-   * @param sphinx the SphinxConfig object that tells us where the directories are.
-   *
-   * @returns the translated path or undefined if the file is not part of
-   * the srcDir.
-   */
   private async getHtmlPath(editor: vscode.TextEditor): Promise<string | undefined> {
 
-    let sourcePath = editor.document.fileName
     if (!this.esbonio.sphinxConfig) {
       return undefined
     }
 
+    let sourcePath = editor.document.fileName
     let srcDir = this.esbonio.sphinxConfig.srcDir
-    let buildDir = this.esbonio.sphinxConfig.buildDir
 
     if (!sourcePath.startsWith(srcDir)) {
       this.logger.debug(`Ignoring ${sourcePath}`)
@@ -129,57 +121,64 @@ export class PreviewManager {
     let rstFile = sourcePath.replace(srcDir, '')
     let htmlFile = rstFile.replace(new RegExp(`\\${path.extname(rstFile)}`), '.html')
 
-    return path.join(buildDir, htmlFile)
+    return htmlFile
   }
 
-  /**
-   * Given a path to some HTML content load it and prepare it for display
-   * within a webview.
-   *
-   * This includes translating all css, js, image, etc. urls to be webviewuris
-   * so that they get loaded correctly.
-   */
-  private async getHtmlContent(htmlPath: string): Promise<string> {
-    // Since all sphinx generated URLs are relative to the current file (e.g. ../../xxxx)
-    // we need to join the urls with the html file's parent dir NOT the sphinx build dir.
-    let baseDir = path.dirname(htmlPath)
+  private getWebViewHTML(port: number) {
 
-    let dom = await jsom.JSDOM.fromFile(htmlPath)
-    let head = dom.window.document.head
-    let body = dom.window.document.body
+    let scriptNonce = getNonce()
+    let cssNonce = getNonce()
 
-    // Rewrite the stylesheet paths so that they pass the webview security policies
-    let styles = head.querySelectorAll('[rel="stylesheet"]')
-    styles.forEach(stylesheet => this.rewriteHrefUrl(stylesheet, baseDir))
+    return `<!DOCTYPE html>
+            <html>
 
-    // Rewrite script urls
-    let headScripts = head.querySelectorAll('script [src]')
-    let bodyScripts = body.querySelectorAll('script [src]')
-    headScripts.forEach(script => this.rewriteSrcUrl(script, baseDir))
-    bodyScripts.forEach(script => this.rewriteSrcUrl(script, baseDir))
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <meta http-equiv="Content-Security-Policy"
+                    content="default-src 'none'; style-src 'nonce-${cssNonce}'; script-src 'nonce-${scriptNonce}'; frame-src http://localhost:${port}" />
 
-    // Rewrite image urls
-    let images = body.querySelectorAll('img')
-    images.forEach(image => this.rewriteSrcUrl(image, baseDir))
+              <style nonce="${cssNonce}">
+                body {
+                  height: 100vh;
+                  padding: 0;
+                  margin: 0;
+                }
 
-    return dom.serialize()
+                iframe {
+                  height: 100%;
+                  width: 100%;
+                }
+              </style>
+            </head>
+
+            <body>
+              <iframe id="viewer"></iframe>
+              <script nonce="${scriptNonce}">
+                let frame = document.getElementById("viewer")
+                window.addEventListener('message', event => {
+
+                    const message = event.data; // The JSON data our extension sent
+                    if (!message.reload) {
+                        return
+                    }
+
+                    frame.src = "http://localhost:${port}" + message.reload
+                });
+              </script>
+            </body>
+
+            </html>`
   }
+}
 
-  private rewriteSrcUrl(element, baseDir: string) {
-    let src = element.getAttribute('src')
-
-    let uri = vscode.Uri.file(path.join(baseDir, src))
-    let newSrc = this.panel.webview.asWebviewUri(uri)
-
-    element.setAttribute('src', newSrc)
+// Taken from
+// https://github.com/microsoft/vscode-extension-samples/blob/eed9581e43a19424baa81010d072f3473eda4ccb/webview-sample/src/extension.ts
+function getNonce() {
+  let text = '';
+  const possible = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
   }
-
-  private rewriteHrefUrl(element, baseDir: string) {
-    let src = element.getAttribute('href')
-
-    let uri = vscode.Uri.file(path.join(baseDir, src))
-    let newSrc = this.panel.webview.asWebviewUri(uri)
-
-    element.setAttribute('href', newSrc)
-  }
+  return text;
 }

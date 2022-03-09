@@ -31,13 +31,11 @@
     },
     "main": "dist/extension",
     "dependencies": {
-        "jsdom": "^16.7.0",
         "semver": "^7.3.5",
         "vscode-languageclient": "^7.0.0"
     },
     "devDependencies": {
         "@types/glob": "^7.1.4",
-        "@types/jsdom": "^16.2.13",
         "@types/mocha": "^8.2.3",
         "@types/node": "^14.17.15",
         "@types/semver": "^7.3.8",
