@@ -272,6 +272,9 @@ export class EsbonioClient {
 
     this.client.onNotification("esbonio/buildComplete", (result: BuildCompleteResult) => {
       this.logger.debug(`Build complete ${JSON.stringify(result, null, 2)}`)
+      if (result.error) {
+        this.client.outputChannel.show()
+      }
       this.buildCompleteCallbacks.forEach(fn => {
         fn(result)
       })
