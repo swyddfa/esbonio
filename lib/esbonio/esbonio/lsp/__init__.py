@@ -4,6 +4,8 @@ import json
 import logging
 import textwrap
 import traceback
+from typing import Any
+from typing import Dict
 from typing import Iterable
 from typing import Type
 
@@ -257,15 +259,23 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
         """Get the server's configuration.
 
         Not to be confused with the ``workspace/configuration`` request where the server
-        can request the client's configuration. This is so client's can ask for sphinx's
+        can request the client's configuration. This is so clients can ask for sphinx's
         output path for example.
 
         As far as I know, there isn't anything built into the spec to cater for this?
         """
         config = ls.configuration
-        ls.logger.debug("%s: %s", "esbonio.server.configuration", config)
+        ls.logger.debug("%s: %s", "esbonio.server.configuration", dump(config))
 
         return config
+
+    @server.command("esbonio.server.preview")
+    def preview(ls: RstLanguageServer, *args) -> Dict[str, Any]:
+        """Start/Generate a preview of the project"""
+        params = args[0][0]
+        ls.logger.debug("esbonio.server.preview: %s", params)
+
+        return ls.preview(params._asdict()) or {}
 
     return server
 
