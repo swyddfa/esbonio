@@ -443,6 +443,15 @@ class RstLanguageServer(LanguageServer):
         line = self.line_at_position(doc, position)
         return line[: position.character]
 
+    def preview(self, options: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate a preview of the documentation."""
+        name = self.__class__.__name__
+        self.show_message(
+            f"Previews are not currently supported by {name} based servers"
+        )
+
+        return {}
+
     def text_to_position(self, doc: Document, position: Position) -> str:
         """Return the contents of the document up until the given position.
 
