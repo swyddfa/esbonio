@@ -16,6 +16,7 @@ from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import DOCUMENT_SYMBOL
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import INITIALIZED
+from pygls.lsp.methods import SHUTDOWN
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_SAVE
@@ -54,6 +55,10 @@ __all__ = [
 ]
 
 logger = logging.getLogger(__name__)
+
+# Commands
+ESBONIO_SERVER_CONFIGURATION = "esbonio.server.configuration"
+ESBONIO_SERVER_PREVIEW = "esbonio.server.preview"
 
 
 class Patched(LanguageServerProtocol):
@@ -120,6 +125,13 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         for feature in ls._features.values():
             feature.initialized(params)
+
+    @server.feature(SHUTDOWN)
+    def on_shutdown(ls: RstLanguageServer, *args):
+        ls.on_shutdown(*args)
+
+        for feature in ls._features.values():
+            feature.on_shutdown(*args)
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
     def on_open(ls: RstLanguageServer, params: DidOpenTextDocumentParams):
@@ -254,7 +266,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         return visitor.symbols
 
-    @server.command("esbonio.server.configuration")
+    @server.command(ESBONIO_SERVER_CONFIGURATION)
     def get_configuration(ls: RstLanguageServer, *args):
         """Get the server's configuration.
 
@@ -265,17 +277,17 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
         As far as I know, there isn't anything built into the spec to cater for this?
         """
         config = ls.configuration
-        ls.logger.debug("%s: %s", "esbonio.server.configuration", dump(config))
+        ls.logger.debug("%s: %s", ESBONIO_SERVER_CONFIGURATION, dump(config))
 
         return config
 
-    @server.command("esbonio.server.preview")
+    @server.command(ESBONIO_SERVER_PREVIEW)
     def preview(ls: RstLanguageServer, *args) -> Dict[str, Any]:
         """Start/Generate a preview of the project"""
-        params = args[0][0]
-        ls.logger.debug("esbonio.server.preview: %s", params)
+        params = {} if not args[0] else args[0][0]._asdict()
+        ls.logger.debug("%s: %s", ESBONIO_SERVER_PREVIEW, params)
 
-        return ls.preview(params._asdict()) or {}
+        return ls.preview(params) or {}
 
     return server
 
