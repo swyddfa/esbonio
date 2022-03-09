@@ -267,10 +267,6 @@ class SphinxLanguageServer(RstLanguageServer):
             )
         except Exception:
             self.logger.error(traceback.format_exc())
-            self.show_message(
-                message="Unable to initialize Sphinx, see output window for details.",
-                msg_type=MessageType.Error,
-            )
             self.send_notification(
                 "esbonio/buildComplete",
                 {"config": self.configuration, "error": True, "warnings": 0},
@@ -330,7 +326,6 @@ class SphinxLanguageServer(RstLanguageServer):
             error = True
 
             self.logger.error(traceback.format_exc())
-            self.show_message(message=message, msg_type=MessageType.Error)
 
         for doc, diagnostics in self.sphinx_log.diagnostics.items():
             self.logger.debug("Found %d problems for %s", len(diagnostics), doc)
