@@ -26,6 +26,7 @@ from pygls.lsp.methods import TEXT_DOCUMENT_DID_CLOSE
 from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
 from pygls.lsp.methods import TEXT_DOCUMENT_PUBLISH_DIAGNOSTICS
 from pygls.lsp.methods import WINDOW_LOG_MESSAGE
+from pygls.lsp.methods import WINDOW_SHOW_DOCUMENT
 from pygls.lsp.methods import WINDOW_SHOW_MESSAGE
 from pygls.lsp.types import ClientCapabilities
 from pygls.lsp.types import CompletionItem
@@ -42,6 +43,8 @@ from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
+from pygls.lsp.types import ShowDocumentParams
+from pygls.lsp.types import ShowMessageParams
 from pygls.lsp.types import TextDocumentContentChangeEvent
 from pygls.lsp.types import TextDocumentIdentifier
 from pygls.lsp.types import TextDocumentItem
@@ -542,8 +545,14 @@ class Client(LanguageServer):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.messages: List[Any] = []
+        self.messages: List[ShowMessageParams] = []
+        """Holds any received ``window/showMessage`` requests"""
+
         self.diagnostics: Dict[str, List[Diagnostic]] = {}
+        """Holds any received diagnostics"""
+
+        self.documents_shown: List[ShowDocumentParams] = []
+        """Holds any received ``window/showDocument`` requests"""
 
 
 def new_test_client() -> Client:
@@ -557,6 +566,10 @@ def new_test_client() -> Client:
     @client.feature(WINDOW_LOG_MESSAGE)
     def log_message(client: Client, params):
         pass
+
+    @client.feature(WINDOW_SHOW_DOCUMENT)
+    def show_document(client: Client, params: ShowDocumentParams):
+        client.documents_shown.append(params)
 
     @client.feature(WINDOW_SHOW_MESSAGE)
     def show_message(client: Client, params):
