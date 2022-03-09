@@ -24,12 +24,14 @@ from pygls.lsp.types import FileDelete
 from pygls.lsp.types import MessageType
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
+from pygls.lsp.types import ShowMessageRequestParams
 from pygls.lsp.types import TextDocumentContentChangeTextEvent
 from pygls.lsp.types import TextDocumentIdentifier
 from pygls.lsp.types import TextDocumentItem
 from pygls.lsp.types import VersionedTextDocumentIdentifier
 
 from esbonio.lsp import create_language_server
+from esbonio.lsp import ESBONIO_SERVER_PREVIEW
 from esbonio.lsp.sphinx import DEFAULT_MODULES
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxConfig
@@ -597,6 +599,133 @@ image file not readable: notfound.png""",
     assert len(test.client.diagnostics[test_uri]) == 0
 
     index_path.unlink()
+
+
+@py.test.mark.asyncio
+@py.test.mark.timeout(10)
+async def test_preview_default(cs, testdata):
+    """Ensure that the preview command returns a port number and makes a
+    ``window/showDocument`` request by default."""
+
+    root_path = str(testdata("sphinx-default", path_only=True))
+    root_uri = uri.from_fs_path(root_path)
+
+    init_options = InitializationOptions()
+
+    test = cs  # type: ClientServer
+    await test.start(root_uri, initialization_options=init_options)
+
+    result = await test.client.lsp.send_request_async(
+        WORKSPACE_EXECUTE_COMMAND, ExecuteCommandParams(command=ESBONIO_SERVER_PREVIEW)
+    )
+
+    assert "port" in result
+    port = result["port"]
+
+    assert len(test.client.messages) == 0
+    assert len(test.client.documents_shown) == 1
+
+    params = test.client.documents_shown.pop()
+    assert params.uri == f"http://localhost:{port}"
+    assert params.external, "Expected 'external' flag to be set"
+
+
+@py.test.mark.asyncio
+@py.test.mark.timeout(10)
+async def test_preview_no_show(cs, testdata):
+    """Ensure that the preview command returns a port number and does not make a
+    ``window/showDocument`` request when asked."""
+
+    root_path = str(testdata("sphinx-default", path_only=True))
+    root_uri = uri.from_fs_path(root_path)
+
+    init_options = InitializationOptions()
+
+    test = cs  # type: ClientServer
+    await test.start(root_uri, initialization_options=init_options)
+
+    result = await test.client.lsp.send_request_async(
+        WORKSPACE_EXECUTE_COMMAND,
+        ExecuteCommandParams(
+            command=ESBONIO_SERVER_PREVIEW, arguments=[{"show": False}]
+        ),
+    )
+
+    assert "port" in result
+    assert result["port"] > 0
+
+    assert len(test.client.messages) == 0
+    assert len(test.client.documents_shown) == 0
+
+
+@py.test.mark.asyncio
+@py.test.mark.timeout(10)
+async def test_preview_multiple_calls(cs, testdata):
+    """Ensure that multiple calls to the preview command returns the same port number
+    i.e. an existing server process is reused."""
+
+    root_path = str(testdata("sphinx-default", path_only=True))
+    root_uri = uri.from_fs_path(root_path)
+
+    init_options = InitializationOptions()
+
+    test = cs  # type: ClientServer
+    await test.start(root_uri, initialization_options=init_options)
+
+    result = await test.client.lsp.send_request_async(
+        WORKSPACE_EXECUTE_COMMAND,
+        ExecuteCommandParams(
+            command=ESBONIO_SERVER_PREVIEW, arguments=[{"show": False}]
+        ),
+    )
+
+    assert "port" in result
+    port = result["port"]
+    assert port > 0
+
+    assert len(test.client.messages) == 0
+    assert len(test.client.documents_shown) == 0
+
+    result = await test.client.lsp.send_request_async(
+        WORKSPACE_EXECUTE_COMMAND,
+        ExecuteCommandParams(
+            command=ESBONIO_SERVER_PREVIEW, arguments=[{"show": False}]
+        ),
+    )
+
+    assert "port" in result
+    assert port == result["port"]
+
+    assert len(test.client.messages) == 0
+    assert len(test.client.documents_shown) == 0
+
+
+@py.test.mark.asyncio
+@py.test.mark.timeout(10)
+@py.test.mark.parametrize("builder", ["epub", "man", "latex"])
+async def test_preview_wrong_builder(cs, testdata, builder):
+    """Ensure that the preview is only started for supported builders."""
+
+    root_path = str(testdata("sphinx-default", path_only=True))
+    root_uri = uri.from_fs_path(root_path)
+
+    init_options = InitializationOptions(sphinx=SphinxConfig(builderName=builder))
+
+    test = cs  # type: ClientServer
+    await test.start(root_uri, initialization_options=init_options)
+
+    result = await test.client.lsp.send_request_async(
+        WORKSPACE_EXECUTE_COMMAND, ExecuteCommandParams(command=ESBONIO_SERVER_PREVIEW)
+    )
+
+    assert result == {}
+    assert len(test.client.messages) == 1
+
+    message = ShowMessageRequestParams(**test.client.messages[0]._asdict())
+    assert (
+        message.message
+        == f"Previews are not currently supported for the '{builder}' builder."
+    )
 
 
 def resolve_path(value: str, root_path: str) -> str:

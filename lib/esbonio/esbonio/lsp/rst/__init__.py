@@ -118,6 +118,9 @@ class LanguageFeature:
     def initialized(self, params: InitializedParams) -> None:
         """Called once upon receipt of the `initialized` notification from the client."""
 
+    def on_shutdown(self, *args):
+        """Called as the server is shutting down."""
+
     def save(self, params: DidSaveTextDocumentParams) -> None:
         """Called each time a document is saved."""
 
@@ -257,6 +260,9 @@ class RstLanguageServer(LanguageServer):
         self._configure_logging(self.user_config.server)
 
     def initialized(self, params: InitializedParams):
+        pass
+
+    def on_shutdown(self, *args):
         pass
 
     def save(self, params: DidSaveTextDocumentParams):

@@ -4,6 +4,7 @@ import pathlib
 import re
 import traceback
 import typing
+from multiprocessing import Process
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -26,6 +27,7 @@ from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import MessageType
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
+from pygls.lsp.types import ShowDocumentParams
 from sphinx import __version__ as __sphinx_version__
 from sphinx.application import Sphinx
 from sphinx.domains import Domain
@@ -37,6 +39,7 @@ from esbonio.cli import setup_cli
 from esbonio.lsp.rst import LspHandler
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.rst import ServerConfig
+from esbonio.lsp.sphinx.preview import make_preview_server
 
 try:
     from sphinx.util.logging import OnceFilter
@@ -214,6 +217,12 @@ class SphinxLanguageServer(RstLanguageServer):
         self.app: Optional[Sphinx] = None
         """The Sphinx application instance."""
 
+        self.preview_process: Optional[Process] = None
+        """The process hosting the preview server."""
+
+        self.preview_port: Optional[int] = None
+        """The port the preview server is running on."""
+
         self._role_target_types: Optional[Dict[str, List[str]]] = None
         """Cache for role target types."""
 
@@ -275,6 +284,15 @@ class SphinxLanguageServer(RstLanguageServer):
                 "esbonio/buildComplete",
                 {"config": self.configuration, "error": True, "warnings": 0},
             )
+
+    def on_shutdown(self, *args):
+
+        if self.preview_process:
+
+            if not hasattr(self.preview_process, "kill"):
+                self.preview_process.terminate()
+            else:
+                self.preview_process.kill()
 
     def save(self, params: DidSaveTextDocumentParams):
         super().save(params)
@@ -398,6 +416,36 @@ class SphinxLanguageServer(RstLanguageServer):
 
         return app
 
+    def preview(self, options: Dict[str, Any]) -> Dict[str, Any]:
+
+        if not self.app or not self.app.builder:
+            return {}
+
+        builder_name = self.app.builder.name
+        if builder_name not in {"html"}:
+            self.show_message(
+                f"Previews are not currently supported for the '{builder_name}' builder."
+            )
+
+            return {}
+
+        if not self.preview_process:
+            self.logger.debug("Starting preview server.")
+            server = make_preview_server(self.app.outdir)
+            self.preview_port = server.server_port
+
+            self.preview_process = Process(target=server.serve_forever, daemon=True)
+            self.preview_process.start()
+
+        if options.get("show", True):
+            self.show_document(
+                ShowDocumentParams(
+                    uri=f"http://localhost:{self.preview_port}", external=True
+                )
+            )
+
+        return {"port": self.preview_port}
+
     def get_doctree(
         self, *, docname: Optional[str] = None, uri: Optional[str] = None
     ) -> Optional[Any]:
@@ -428,7 +476,8 @@ class SphinxLanguageServer(RstLanguageServer):
         try:
             return self.app.env.get_and_resolve_doctree(docname, self.app.builder)
         except FileNotFoundError:
-            self.logger.debug(traceback.format_exc())
+            self.logger.debug("Could not find doctree for '%s'", docname)
+            # self.logger.debug(traceback.format_exc())
             return None
 
     def get_domain(self, name: str) -> Optional[Domain]:
