@@ -69,7 +69,8 @@ def main(cli: argparse.ArgumentParser):
         modules.append(mod)
 
     for mod in args.excluded_modules:
-        modules.remove(mod)
+        if mod in modules:
+            modules.remove(mod)
 
     server = create_language_server(args.server_cls, modules)
 
