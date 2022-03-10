@@ -22,3 +22,7 @@ Some literal includes now
 .. literalinclude:: /theorems/pythagoras.rst
 
 .. literalinclude:: ../sphinx-default/index.rst
+
+.. image:: /_static/vscode-screenshot.png
+
+.. figure:: /_static/bad.png
