@@ -274,8 +274,22 @@ class SphinxLanguageServer(RstLanguageServer):
                     "warnings": 0,
                 },
             )
-        except Exception:
+        except Exception as e:
             self.logger.error(traceback.format_exc())
+            conf = pathlib.Path(self.app.confdir, "conf.py")
+            line = 0
+            message=type(e).__name__ if e.args.count== 0 else e.args[0]
+            diagnostic = Diagnostic(
+                range=Range(
+                    start=Position(line=line, character=0),
+                    end=Position(line=line, character=0),
+                ),
+                message=message,
+                severity=DiagnosticSeverity.Error,
+            )
+            self.set_diagnostics("sphinx", str(conf), [diagnostic])
+
+            self.sync_diagnostics()
             self.send_notification(
                 "esbonio/buildComplete",
                 {"config": self.configuration, "error": True, "warnings": 0},
