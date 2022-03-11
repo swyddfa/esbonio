@@ -93,9 +93,29 @@ async def cs():
                 builderName="html",
             ),
         ),
+        (  # Ensure that we can specifiy confDir relative to ${workspaceFolder}
+            ".",
+            SphinxConfig(confDir="${workspaceFolder}/sphinx-extensions"),
+            SphinxConfig(
+                confDir="ROOT/sphinx-extensions",
+                srcDir="ROOT/sphinx-extensions",
+                buildDir=".cache/esbonio",
+                builderName="html",
+            ),
+        ),
         (  # Ensure that we can specifiy confDir to be exactly ${workspaceRoot}
             "sphinx-extensions",
             SphinxConfig(confDir="${workspaceRoot}"),
+            SphinxConfig(
+                confDir="ROOT",
+                srcDir="ROOT",
+                buildDir=".cache/esbonio",
+                builderName="html",
+            ),
+        ),
+        (  # Ensure that we can specifiy confDir to be exactly ${workspaceFolder}
+            "sphinx-extensions",
+            SphinxConfig(confDir="${workspaceFolder}"),
             SphinxConfig(
                 confDir="ROOT",
                 srcDir="ROOT",
@@ -118,6 +138,19 @@ async def cs():
             SphinxConfig(
                 confDir="${workspaceRoot}/sphinx-srcdir",
                 srcDir="${workspaceRoot}/sphinx-default",
+            ),
+            SphinxConfig(
+                confDir="ROOT/sphinx-srcdir",
+                srcDir="ROOT/sphinx-default",
+                buildDir=".cache/esbonio",
+                builderName="html",
+            ),
+        ),
+        (  # Ensure that we can specify srcDir relative to ${workspaceFolder}
+            ".",
+            SphinxConfig(
+                confDir="${workspaceRoot}/sphinx-srcdir",
+                srcDir="${workspaceFolder}/sphinx-default",
             ),
             SphinxConfig(
                 confDir="ROOT/sphinx-srcdir",
@@ -221,6 +254,37 @@ async def test_initialization_build_dir_workspace_var(cs, testdata):
     root_uri = uri.from_fs_path(root_path)
 
     build_dir = "${workspaceRoot}/_build"
+    init_options = InitializationOptions(sphinx=SphinxConfig(buildDir=build_dir))
+
+    test = cs  # type: ClientServer
+    await test.start(root_uri, initialization_options=init_options)
+
+    configuration = await test.client.lsp.send_request_async(
+        WORKSPACE_EXECUTE_COMMAND,
+        ExecuteCommandParams(command="esbonio.server.configuration"),
+    )
+
+    assert len(test.client.messages) == 0
+
+    assert "sphinx" in configuration
+    actual = SphinxConfig(**configuration["sphinx"])
+
+    assert actual.version is not None
+    assert actual.conf_dir == root_path
+    assert actual.src_dir == root_path
+    assert actual.build_dir == str(pathlib.Path(root_path, "_build", "html"))
+    assert actual.builder_name == "html"
+
+
+@py.test.mark.asyncio
+@py.test.mark.timeout(10)
+async def test_initialization_build_dir_workspace_folder(cs, testdata):
+    """Ensure that we can set the build_dir relative to the workspace folder."""
+
+    root_path = str(testdata("sphinx-default", path_only=True))
+    root_uri = uri.from_fs_path(root_path)
+
+    build_dir = "${workspaceFolder}/_build"
     init_options = InitializationOptions(sphinx=SphinxConfig(buildDir=build_dir))
 
     test = cs  # type: ClientServer
