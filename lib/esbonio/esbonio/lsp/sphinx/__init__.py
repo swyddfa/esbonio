@@ -226,9 +226,6 @@ class SphinxLanguageServer(RstLanguageServer):
         self._role_target_types: Optional[Dict[str, List[str]]] = None
         """Cache for role target types."""
 
-        self._role_targets: Dict[str, List[tuple]] = {}
-        """Cache for role target objects."""
-
     @property
     def configuration(self) -> Dict[str, Any]:
         """Return the server's actual configuration."""
@@ -609,8 +606,8 @@ class SphinxLanguageServer(RstLanguageServer):
         .. code-block:: python
 
            {
-               "func": ["py:function"],
-               "class": ["py:class", "py:exception"]
+               "func": ["function"],
+               "class": ["class", "exception"]
            }
         """
 
@@ -628,7 +625,7 @@ class SphinxLanguageServer(RstLanguageServer):
                 for role in item_type.roles:
                     role_key = fmt.format(name=role, prefix=prefix)
                     target_types = self._role_target_types.get(role_key, list())
-                    target_types.append(fmt.format(name=name, prefix=prefix))
+                    target_types.append(name)
 
                     self._role_target_types[role_key] = target_types
 
@@ -648,27 +645,30 @@ class SphinxLanguageServer(RstLanguageServer):
            The domain the role is a part of, if applicable.
         """
 
-        if not self._role_targets:
-            self._index_role_targets()
-
         targets: List[tuple] = []
-        for target_type in self.get_role_target_types(name, domain):
-            targets += self._role_targets.get(target_type, [])
+        domain_obj: Optional[Domain] = None
+
+        if domain:
+            domain_obj = self.get_domain(domain)
+        else:
+            std = self.get_domain("std")
+            if std and name in std.roles:
+                domain_obj = std
+
+            elif self.app and self.app.config.primary_domain:
+                domain_obj = self.get_domain(self.app.config.primary_domain)
+
+        target_types = set(self.get_role_target_types(name, domain))
+
+        if not domain_obj:
+            self.logger.debug("Unable to find domain for role '%s:%s'", domain, name)
+            return []
+
+        for obj in domain_obj.get_objects():
+            if obj[2] in target_types:
+                targets.append(obj)
 
         return targets
-
-    def _index_role_targets(self):
-        self._role_targets = {}
-
-        for prefix, domain_obj in self.get_domains():
-            fmt = "{prefix}:{name}" if prefix else "{name}"
-
-            for obj in domain_obj.get_objects():
-                obj_key = fmt.format(name=obj[2], prefix=prefix)
-                objects = self._role_targets.get(obj_key, list())
-                objects.append(obj)
-
-                self._role_targets[obj_key] = objects
 
     def get_intersphinx_projects(self) -> List[str]:
         """Return the list of configured intersphinx project names."""
@@ -726,23 +726,22 @@ class SphinxLanguageServer(RstLanguageServer):
 
         targets = {}
         inv = inv[project]
-        primary_domain = self.app.config.primary_domain or ""
 
         for target_type in self.get_role_target_types(name, domain):
 
-            if target_type in inv:
-                targets[target_type] = inv[target_type]
+            explicit_domain = f"{domain}:{target_type}"
+            if explicit_domain in inv:
+                targets[target_type] = inv[explicit_domain]
                 continue
 
-            # Intersphinx targets are always namespaced, so we would need to be explicit
-            # about the domain the type sits in.
-            if f"{primary_domain}:{target_type}" in inv:
-                targets[target_type] = inv[f"{primary_domain}:{target_type}"]
+            primary_domain = f'{self.app.config.primary_domain or ""}:{target_type}'
+            if primary_domain in inv:
+                targets[target_type] = inv[primary_domain]
                 continue
 
-            # The 'std' domain must also be considered.
-            if f"std:{target_type}" in inv:
-                targets[target_type] = inv[f"std:{target_type}"]
+            std_domain = f"std:{target_type}"
+            if std_domain in inv:
+                targets[target_type] = inv[std_domain]
 
         return targets
 
