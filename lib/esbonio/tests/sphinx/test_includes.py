@@ -108,12 +108,7 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
                 ),
             ),
         ),
-        (
-            "sphinx-default",
-            "definitions.rst",
-            Position(line=27, character=25),
-            None
-        ),
+        ("sphinx-default", "definitions.rst", Position(line=27, character=25), None),
     ],
 )
 async def test_include_definitions(
