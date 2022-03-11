@@ -178,6 +178,8 @@ Configuration
 
    - ``/path/to/docs`` - An absolute path
    - ``${workspaceRoot}/docs`` - A path relative to the root of your workspace.
+   - ``${workspaceFolder}/docs`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
+
 
 .. confval:: sphinx.srcDir (string)
 
@@ -188,6 +190,7 @@ Configuration
 
    - ``/path/to/src/`` - An absolute path
    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
+   - ``${workspaceFolder}/docs/src`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
 .. confval:: sphinx.buildDir (string)
@@ -199,6 +202,7 @@ Configuration
 
    - ``/path/to/src/`` - An absolute path
    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
+   - ``${workspaceFolder}/docs/src`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
 .. confval:: server.logLevel (string)

@@ -774,6 +774,8 @@ def expand_conf_dir(root_dir: str, conf_dir: str) -> pathlib.Path:
 
     - ``${workspaceRoot}`` which expands to the workspace root as provided by the
       language client.
+    - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
+    multi-root support.
 
     Parameters
     ----------
@@ -784,7 +786,7 @@ def expand_conf_dir(root_dir: str, conf_dir: str) -> pathlib.Path:
     """
 
     match = PATH_VAR_PATTERN.match(conf_dir)
-    if not match or match.group(1) != "workspaceRoot":
+    if not match or match.group(1) not in {"workspaceRoot", "workspaceFolder"}:
         return pathlib.Path(conf_dir)
 
     conf = pathlib.Path(conf_dir).parts[1:]
@@ -804,6 +806,8 @@ def get_src_dir(
 
     - ``${workspaceRoot}`` which expands to the workspace root as provided
       by the language client.
+    - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
+      multi-root support.
     - ``${confDir}`` which expands to the configured config dir.
 
     Parameters
@@ -823,7 +827,7 @@ def get_src_dir(
     root_dir = Uri.to_fs_path(root_uri)
 
     match = PATH_VAR_PATTERN.match(src_dir)
-    if match and match.group(1) == "workspaceRoot":
+    if match and match.group(1) in {"workspaceRoot", "workspaceFolder"}:
         src = pathlib.Path(src_dir).parts[1:]
         return pathlib.Path(root_dir, *src).resolve()
 
@@ -849,6 +853,8 @@ def get_build_dir(
 
     - ``${workspaceRoot}`` which expands to the workspace root as provided
       by the language client.
+    - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
+      multi-root support.
     - ``${confDir}`` which expands to the configured config dir.
 
     Parameters
@@ -871,7 +877,7 @@ def get_build_dir(
     root_dir = Uri.to_fs_path(root_uri)
     match = PATH_VAR_PATTERN.match(config.build_dir)
 
-    if match and match.group(1) == "workspaceRoot":
+    if match and match.group(1) in {"workspaceRoot", "workspaceFolder"}:
         build = pathlib.Path(config.build_dir).parts[1:]
         return pathlib.Path(root_dir, *build).resolve()
 
