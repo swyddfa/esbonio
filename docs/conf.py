@@ -43,6 +43,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_panels",
     "esbonio.tutorial",
+    "cli_help",
     "collection_items",
     "relevant_to",
 ]

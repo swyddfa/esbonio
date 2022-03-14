@@ -50,18 +50,19 @@ except ImportError:
             return True
 
 
+# fmt: off
 # Order matters!
 DEFAULT_MODULES = [
-    "esbonio.lsp.directives",
-    "esbonio.lsp.roles",
-    "esbonio.lsp.sphinx.codeblocks",
-    "esbonio.lsp.sphinx.domains",
-    "esbonio.lsp.sphinx.images",
-    "esbonio.lsp.sphinx.includes",
-    "esbonio.lsp.sphinx.roles",
+    "esbonio.lsp.directives",         # Generic directive support
+    "esbonio.lsp.roles",              # Generic roles support
+    "esbonio.lsp.sphinx.codeblocks",  # Support for code-block, highlight, etc.
+    "esbonio.lsp.sphinx.domains",     # Support for Sphinx domains
+    "esbonio.lsp.sphinx.images",      # Support for image, figure etc
+    "esbonio.lsp.sphinx.includes",    # Support for include, literal-include etc.
+    "esbonio.lsp.sphinx.roles",       # Support for misc roles added by Sphinx e.g. :download:
 ]
 """The modules to load in the default configuration of the server."""
-
+# fmt: on
 
 DIAGNOSTIC_SEVERITY = {
     logging.ERROR: DiagnosticSeverity.Error,

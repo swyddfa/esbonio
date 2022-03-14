@@ -4,6 +4,11 @@ Extending
 In order to support the extensible nature of reStructuredText and Sphinx, Esbonio itself is structured so that it can be easily extended.
 This section of the documentation outlines the server's architecture and how you can write your own extensions.
 
+.. toctree::
+   :hidden:
+
+   api-reference
+
 .. _lsp_architecture:
 
 Architecture
