@@ -42,11 +42,14 @@ from esbonio.cli import setup_cli
 TRIPLE_QUOTE = re.compile("(\"\"\"|''')")
 """A regular expression matching the triple quotes used to delimit python docstrings."""
 
+# fmt: off
+# Order matters!
 DEFAULT_MODULES = [
-    "esbonio.lsp.directives",
-    "esbonio.lsp.roles",
+    "esbonio.lsp.directives",  # Generic directive support
+    "esbonio.lsp.roles",       # Generic roles support
 ]
 """The modules to load in the default configuration of the server."""
+# fmt: on
 
 
 class CompletionContext:
