@@ -104,24 +104,43 @@ export class PreviewManager {
     await this.reloadView(htmlPath)
   }
 
+  /**
+   * Get the path section of the url required to preview the file associated with the
+   * given editor.
+   *
+   * @param editor
+   * @returns
+   */
   private async getHtmlPath(editor: vscode.TextEditor): Promise<string | undefined> {
-
-    if (!this.esbonio.sphinxConfig) {
+    let config = this.esbonio.sphinxConfig
+    if (!config || !config.srcDir || !config.buildDir) {
       return undefined
     }
 
-    let sourcePath = editor.document.fileName
-    let srcDir = this.esbonio.sphinxConfig.srcDir
+    let srcDir = config.srcDir
+    let buildDir = config.buildDir
+    let sourceUri = editor.document.uri
 
-    if (!sourcePath.startsWith(srcDir)) {
-      this.logger.debug(`Ignoring ${sourcePath}`)
+    if (sourceUri.scheme !== 'file' || !sourceUri.path.startsWith(srcDir)) {
+      this.logger.debug(`Ignoring ${sourceUri}`)
       return undefined
     }
 
-    let rstFile = sourcePath.replace(srcDir, '')
-    let htmlFile = rstFile.replace(new RegExp(`\\${path.extname(rstFile)}`), '.html')
 
-    return htmlFile
+    let rstPath = sourceUri.path.replace(srcDir, '')
+    let htmlPath = rstPath.replace(new RegExp(`\\${path.extname(rstPath)}`), '.html')
+
+    // Check if the file exists.
+    let htmlUri = sourceUri.with({ path: path.join(buildDir, htmlPath) })
+
+    try {
+      await vscode.workspace.fs.stat(htmlUri)
+      return htmlPath
+    } catch (err) {
+
+      this.logger.debug(`Ignoring ${sourceUri}: ${JSON.stringify(err, null, 2)}`)
+      return undefined
+    }
   }
 
   private getWebViewHTML(port: number) {
@@ -155,7 +174,9 @@ export class PreviewManager {
             <body>
               <iframe id="viewer"></iframe>
               <script nonce="${scriptNonce}">
+                let count = 0
                 let frame = document.getElementById("viewer")
+
                 window.addEventListener('message', event => {
 
                     const message = event.data; // The JSON data our extension sent
@@ -163,7 +184,10 @@ export class PreviewManager {
                         return
                     }
 
-                    frame.src = "http://localhost:${port}" + message.reload
+                    count += 1
+                    const newUrl = "http://localhost:${port}" + message.reload + "?r=" + count
+
+                    frame.src = newUrl
                 });
               </script>
             </body>
