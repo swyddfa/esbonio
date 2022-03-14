@@ -19,6 +19,9 @@ Usage:
       ``.. select-category::``, directive allowing the user to select the category that
       suits them best.
 
+TODO: Allow categories to be re-used across pages
+TODO: Have the JS accept a query parameter from the page's URL - makes it possible to
+      link to a particular selection.
 """
 import string
 
@@ -34,7 +37,7 @@ class selection(nodes.General, nodes.Element):
     ...
 
 
-class script(nodes.General, nodes.Element):
+class relevant_to_script(nodes.General, nodes.Element):
     ...
 
 
@@ -47,8 +50,8 @@ SELECTION_TEMPLATE = string.Template(
     """
 <div class="admonition" style="font-size: var(--font-size--normal)">
  <p class="admonition-title" style="font-size: var(--font-size--normal)">
-   <label>${category}</label>
-   <select data-kind="relevant-to">${options}</select>
+   <label>${category}:</label>
+   <select data-category="${categoryId}" data-kind="relevant-to">${options}</select>
  </p>
 """
 )
@@ -58,9 +61,12 @@ SCRIPT_TEMPLATE = """
     let storage = window.localStorage
 
     function syncDropdowns(source, others) {
+        let category = source.dataset.category
+        storage.setItem(`selected-${category}`, source.selectedIndex)
+
         others.forEach(dropdown => {
             dropdown.selectedIndex = source.selectedIndex
-            storage.setItem('selected-editor', source.selectedIndex)
+
 
             let option = dropdown.options[dropdown.selectedIndex]
             let parent = dropdown.parentElement
@@ -74,13 +80,28 @@ SCRIPT_TEMPLATE = """
         })
     }
 
-    let defaultIndex = storage.getItem('selected-editor') || 0
+    let dropdownMap = new Map()
     let dropdowns = document.querySelectorAll('select[data-kind="relevant-to"]')
-    dropdowns.forEach(d => {
-        d.addEventListener('change', (evt) => syncDropdowns(evt.target, dropdowns))
+    dropdowns.forEach(dropdown => {
+        let category = dropdown.dataset.category
+        if (dropdownMap.has(category)) {
+            dropdownMap.get(category).push(dropdown)
+        } else {
+            dropdownMap.set(category, [dropdown])
+        }
     })
-    dropdowns[0].selectedIndex = defaultIndex
-    syncDropdowns(dropdowns[0], dropdowns)
+    console.debug(dropdownMap)
+
+    for (let [category, dropdowns] of dropdownMap.entries()) {
+
+        dropdowns.forEach(d => {
+            d.addEventListener('change', (evt) => syncDropdowns(evt.target, dropdowns))
+        })
+
+        let defaultIndex = storage.getItem(`selected-${category}`) || 0
+        dropdowns[0].selectedIndex = defaultIndex
+        syncDropdowns(dropdowns[0], dropdowns)
+    }
 </script>
 """
 
@@ -93,7 +114,11 @@ def visit_selection(self, node):
 
     self.body.append(
         SELECTION_TEMPLATE.safe_substitute(
-            {"category": node["category"], "options": "\n".join(options)}
+            {
+                "category": node["category"],
+                "categoryId": node["category-id"],
+                "options": "\n".join(options),
+            }
         )
     )
 
@@ -114,9 +139,12 @@ def depart_relevant_section(self, node):
 def visit_script(self, node):
     self.body.append("<style>\n[data-content] {display: none}\n")
 
-    for label in node["labels"]:
-        self.body.append(f'[data-selected="{label}"] ~ div[data-content="{label}"] {{ ')
-        self.body.append(" display: block \n}\n")
+    for options in node["options"].values():
+        for label, _ in options:
+            self.body.append(
+                f'[data-selected="{label}"] ~ div[data-content="{label}"] {{ '
+            )
+            self.body.append(" display: block \n}\n")
 
     self.body.append("</style>")
     self.body.append(SCRIPT_TEMPLATE)
@@ -147,8 +175,10 @@ class RelevantTo(Directive):
 
         section["text"] = text
         section["id"] = text.lower().replace(" ", "-")
-        # .replace("(", "").replace(")", "")
-        section["category"] = self.options.get("category", "default")
+
+        category = self.options.get("category", "default")
+        section["category"] = category
+        section["category-id"] = category.lower().replace(" ", "-")
 
         nested_parse_with_titles(self.state, self.content, section)
 
@@ -166,7 +196,7 @@ class CollectSections(Transform):
         if len(sections) == 0:
             return
 
-        all_options = set()
+        all_options = {}
         all_groups = []
         while len(sections) > 0:
 
@@ -181,11 +211,14 @@ class CollectSections(Transform):
             # We'll want to modify the parent, so lets work with a copy.
             for idx, node in enumerate(list(parent.children)):
                 if isinstance(node, relevant_section):
+                    category = node["category"]
 
                     if start_idx < 0:
                         start_idx = idx
                         last_idx = idx
-                        all_options.add((node["id"], node["text"]))
+                        all_options.setdefault(category, set()).add(
+                            (node["id"], node["text"])
+                        )
 
                         continue
 
@@ -194,7 +227,9 @@ class CollectSections(Transform):
                         break
 
                     last_idx = idx
-                    all_options.add((node["id"], node["text"]))
+                    all_options.setdefault(category, set()).add(
+                        (node["id"], node["text"])
+                    )
 
             count = last_idx - start_idx
             while count >= 0:
@@ -205,6 +240,7 @@ class CollectSections(Transform):
 
                 group += node
                 group["category"] = node["category"]
+                group["category-id"] = node["category-id"]
 
                 # Take the node out of the list to process also.
                 sections.pop(0)
@@ -214,12 +250,12 @@ class CollectSections(Transform):
             # group.children.sort(key=lambda n: n["id"])
             parent.children.insert(start_idx, group)
 
-        options = sorted(list(all_options), key=lambda o: o[0])
         for group in all_groups:
-            group["options"] = options
+            options = list(all_options[group["category"]])
+            group["options"] = sorted(options, key=lambda o: o[0])
 
-        script_ = script()
-        script_["labels"] = [id_ for id_, _ in options]
+        script_ = relevant_to_script()
+        script_["options"] = all_options
         self.document += script_
 
 
@@ -229,7 +265,7 @@ def setup(app: Sphinx):
     app.add_directive("relevant-to", RelevantTo)
 
     app.add_node(selection, html=(visit_selection, depart_selection))
-    app.add_node(script, html=(visit_script, depart_script))
+    app.add_node(relevant_to_script, html=(visit_script, depart_script))
     app.add_node(
         relevant_section, html=(visit_relevant_section, depart_relevant_section)
     )
