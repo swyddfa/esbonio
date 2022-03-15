@@ -1,0 +1,1 @@
+Goto definition on a directive's arguments is no longer foiled by trailing whitespace.

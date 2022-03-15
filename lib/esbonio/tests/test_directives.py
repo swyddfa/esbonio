@@ -536,6 +536,14 @@ async def test_insert_range(client_server, project, text, character, expected_ra
             {"name": "image", "argument": "filename.png", "directive": ".. image::"},
         ),
         (
+            ".. image:: filename.png  ",
+            {"name": "image", "argument": "filename.png", "directive": ".. image::"},
+        ),
+        (
+            ".. image:: filename.png\r",
+            {"name": "image", "argument": "filename.png", "directive": ".. image::"},
+        ),
+        (
             ".. cpp:function:: malloc",
             {
                 "name": "function",
