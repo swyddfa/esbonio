@@ -93,6 +93,21 @@
                 "command": "esbonio.server.restart",
                 "title": "Restart Language Server",
                 "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.sphinx.selectConfDir",
+                "title": "Select Conf Dir",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.sphinx.selectSrcDir",
+                "title": "Select Src Dir",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.sphinx.selectBuildDir",
+                "title": "Select Build Dir",
+                "category": "Esbonio"
             }
         ],
         "configuration": [

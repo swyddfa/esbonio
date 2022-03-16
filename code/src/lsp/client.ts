@@ -127,12 +127,12 @@ export class EsbonioClient {
     private channel: vscode.OutputChannel,
     private context: vscode.ExtensionContext
   ) {
-    context.subscriptions.push(
-      vscode.commands.registerCommand(Commands.RESTART_SERVER, this.restartServer, this)
-    )
-    context.subscriptions.push(
-      vscode.workspace.onDidChangeConfiguration(this.configChanged, this)
-    )
+    context.subscriptions.push(vscode.commands.registerCommand(Commands.RESTART_SERVER, this.restartServer, this))
+    context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_BUILDDIR, selectBuildDir))
+    context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_CONFDIR, selectConfDir))
+    context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_SRCDIR, selectSrcDir))
+
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(this.configChanged, this))
   }
 
   async stop() {
@@ -363,4 +363,36 @@ export class EsbonioClient {
   onBuildStart(callback: (_: void) => void) {
     this.buildStartCallbacks.push(callback)
   }
+}
+
+async function selectBuildDir() {
+  return await selectFolder("buildDir")
+}
+
+
+async function selectConfDir() {
+  return await selectFolder("confDir")
+}
+
+
+async function selectSrcDir() {
+  return await selectFolder("srcDir")
+}
+
+
+async function selectFolder(name: string) {
+  let rootUri
+  let config = vscode.workspace.getConfiguration("esbonio.sphinx")
+
+  let rootFolders = vscode.workspace.workspaceFolders
+  if (rootFolders) {
+    rootUri = rootFolders[0].uri
+  }
+
+  let uri = await vscode.window.showOpenDialog({ canSelectFolders: true, defaultUri: rootUri, canSelectMany: false })
+  if (!uri) {
+    return
+  }
+
+  config.update(name, uri[0].path, vscode.ConfigurationTarget.Workspace)
 }
