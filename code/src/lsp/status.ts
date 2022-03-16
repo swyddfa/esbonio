@@ -139,7 +139,7 @@ export class StatusManager {
 
     statusItem.text = value
 
-    if (params && params.severity) {
+    if (params && params.severity >= 0) {
       statusItem.severity = params.severity
     }
 
