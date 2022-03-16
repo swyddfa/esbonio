@@ -68,16 +68,6 @@
     "contributes": {
         "commands": [
             {
-                "command": "esbonio.insert.link",
-                "title": "Insert Link",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.insert.inlineLink",
-                "title": "Insert Inline Link",
-                "category": "Esbonio"
-            },
-            {
                 "command": "esbonio.preview.open",
                 "title": "Open Preview",
                 "icon": "$(preview)",
@@ -256,16 +246,6 @@
             }
         ],
         "keybindings": [
-            {
-                "command": "esbonio.insert.inlineLink",
-                "key": "alt+l",
-                "when": "editorTextFocus && editorLangId == restructuredtext"
-            },
-            {
-                "command": "esbonio.insert.link",
-                "key": "alt+shift+l",
-                "when": "editorTextFocus && editorLangId == restructuredtext"
-            },
             {
                 "command": "esbonio.preview.open",
                 "key": "ctrl+shift+v",
