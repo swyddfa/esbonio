@@ -126,11 +126,11 @@
                         "default": true,
                         "description": "Enable/Disable the language server in Python files."
                     },
-                    "esbonio.server.entryPoint": {
+                    "esbonio.server.startupModule": {
                         "scope": "window",
                         "type": "string",
                         "default": "esbonio",
-                        "description": "The entry point to use when launching the server."
+                        "description": "The module (or script) to use to launch the server."
                     },
                     "esbonio.server.excludedModules": {
                         "scope": "window",
