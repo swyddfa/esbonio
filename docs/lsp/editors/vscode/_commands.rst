@@ -12,6 +12,15 @@ palette (:kbd:`Ctrl+Shift+P`).
    between source files the preview will automatically update to show the page you are
    currently working on.
 
+``esbonio.sphinx.selectConfDir``
+   Interactively pick a new ``confDir``.
+
+``esbonio.sphinx.selectSrcDir``
+   Interactively pick a new ``srcDir``.
+
+``esbonio.sphinx.selectBuildDir``
+   Interactively pick a new ``buildDir``.
+
 ``esbonio.server.restart``
    This will kill and restart the language server
 
