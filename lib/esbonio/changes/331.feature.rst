@@ -1,0 +1,1 @@
+The language server will now look in sphinx extension modules and ``conf.py`` files for extensions to the language server.
