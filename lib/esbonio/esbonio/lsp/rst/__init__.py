@@ -239,6 +239,9 @@ class RstLanguageServer(LanguageServer):
         self._diagnostics: Dict[Tuple[str, str], List[Diagnostic]] = {}
         """Where we store and manage diagnostics."""
 
+        self._loaded_modules: Dict[str, Any] = {}
+        """Record of modules that have been loaded."""
+
         self._features: Dict[str, LanguageFeature] = {}
         """The list of language features registered with the server."""
 
