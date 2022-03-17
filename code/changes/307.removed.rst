@@ -1,2 +1,0 @@
-The editor commands ``esbonio.insert.link`` and ``esbonio.insert.inlineLink`` have been removed.
-They are however available in the `reStructuredText <https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext>`_ extension.

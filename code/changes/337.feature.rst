@@ -1,5 +1,0 @@
-Add commands ``esbonio.sphinx.selectConfDir``, ``esbonio.sphinx.selectSrcDir``, ``esbonio.sphinx.selectBuildDir``
-which allow the user to interactively select values for the ``esbonio.sphinx.confDir``, ``esbonio.sphinx.srcDir``, ``esbonio.sphinx.buildDir``
-options.
-
-The commands can be triggered through the command palette or the language status items.

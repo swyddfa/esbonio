@@ -1,3 +1,41 @@
+v0.8.0 - 2022-03-17
+-------------------
+
+Features
+^^^^^^^^
+
+- Add commands ``esbonio.sphinx.selectConfDir``, ``esbonio.sphinx.selectSrcDir``, ``esbonio.sphinx.selectBuildDir``
+  which allow the user to interactively select values for the ``esbonio.sphinx.confDir``, ``esbonio.sphinx.srcDir``, ``esbonio.sphinx.buildDir``
+  options.
+
+  The commands can be triggered through the command palette or the language status items. (`#337 <https://github.com/swyddfa/esbonio/issues/337>`_)
+
+
+Fixes
+^^^^^
+
+- Language status items now correctly remove the errored status when an issue is resolved. (`#329 <https://github.com/swyddfa/esbonio/issues/329>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- Switched to an ``<iframe>`` based approach for previews, which should improve compatability with various Sphinx themes. (`#275 <https://github.com/swyddfa/esbonio/issues/275>`_)
+
+
+Misc
+^^^^
+
+- Renamed the ``esbonio.server.entryPoint`` configuration option to ``esbonio.server.startupModule`` (`#337 <https://github.com/swyddfa/esbonio/issues/337>`_)
+
+
+Removed
+^^^^^^^
+
+- The editor commands ``esbonio.insert.link`` and ``esbonio.insert.inlineLink`` have been removed.
+  They are however available in the `reStructuredText <https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext>`_ extension. (`#307 <https://github.com/swyddfa/esbonio/issues/307>`_)
+
+
 v0.7.3 - 2022-03-07
 -------------------
 
