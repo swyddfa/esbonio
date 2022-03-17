@@ -1,0 +1,1 @@
+Language status items now correctly remove the errored status when an issue is resolved.

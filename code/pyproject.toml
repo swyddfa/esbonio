@@ -39,3 +39,8 @@ underlines = ["-", "^", "\""]
      directory = "misc"
      name = "Misc"
      showcontent = true
+
+[[tool.towncrier.type]]
+     directory = "removed"
+     name = "Removed"
+     showcontent = true

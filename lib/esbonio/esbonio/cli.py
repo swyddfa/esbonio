@@ -13,7 +13,7 @@ def setup_cli(progname: str, description: str) -> argparse.ArgumentParser:
         cli.set_defaults(configure=my_configure_function)
     """
 
-    cli = argparse.ArgumentParser(prog=progname, description=description)
+    cli = argparse.ArgumentParser(prog=f"python -m {progname}", description=description)
     cli.add_argument(
         "-p",
         "--port",
@@ -69,7 +69,8 @@ def main(cli: argparse.ArgumentParser):
         modules.append(mod)
 
     for mod in args.excluded_modules:
-        modules.remove(mod)
+        if mod in modules:
+            modules.remove(mod)
 
     server = create_language_server(args.server_cls, modules)
 

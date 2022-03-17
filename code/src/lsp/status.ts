@@ -106,9 +106,27 @@ export class StatusManager {
       }
     })
     this.setStatusItem('Builder', builderName, { busy: false })
-    this.setStatusItem('Config', confDir)
-    this.setStatusItem('Sources', srcDir)
-    this.setStatusItem("Build Files", buildDir)
+    this.setStatusItem('Config', confDir, {
+      command: {
+        title: "Select Conf Dir",
+        tooltip: "Select a new config directory",
+        command: Commands.SELECT_CONFDIR
+      }
+    })
+    this.setStatusItem('Sources', srcDir, {
+      command: {
+        title: "Select Src Dir",
+        tooltip: "Select a new sources directory",
+        command: Commands.SELECT_SRCDIR
+      }
+    })
+    this.setStatusItem("Build Files", buildDir, {
+      command: {
+        title: "Select Build Dir",
+        tooltip: "Select a new build directory",
+        command: Commands.SELECT_BUILDDIR
+      }
+    })
   }
 
   setStatusItem(name: string, value: string, params?: StatusItemFields) {
@@ -139,7 +157,7 @@ export class StatusManager {
 
     statusItem.text = value
 
-    if (params && params.severity) {
+    if (params && params.severity >= 0) {
       statusItem.severity = params.severity
     }
 

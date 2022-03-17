@@ -1,0 +1,1 @@
+The language server no longer crashes when asked to ``--exclude`` a module that would not be loaded anyway.

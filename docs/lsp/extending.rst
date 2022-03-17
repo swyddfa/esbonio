@@ -4,6 +4,11 @@ Extending
 In order to support the extensible nature of reStructuredText and Sphinx, Esbonio itself is structured so that it can be easily extended.
 This section of the documentation outlines the server's architecture and how you can write your own extensions.
 
+.. toctree::
+   :hidden:
+
+   api-reference
+
 .. _lsp_architecture:
 
 Architecture
@@ -65,11 +70,10 @@ Architecture
       The API that a provider must implement varies and is defined by the language feature that uses it. An example of such a provider it the :class:`~esbonio.lsp.directives.ArgumentCompletion`
       provider which allows extensions to provide completion suggestions for directive arguments.
 
-   Entry Point
-      As mentioned above, language servers are assembled and this is done inside an entry point.
-      Not to be confused with the entry points you find in `packaging`_, an entry point in Esbonio is any Python module runnable by a ``python -m <modulename>`` command that results in a running language server.
+   Startup Module
+      As mentioned above, language servers are assembled and this is done inside a startup module.
+      A startup module in Esbonio is any Python script or module runnable by a ``python -m <modulename>`` command that results in a running language server.
       A good use case for a custom entry point would be starting up a language server instance pre configured with all the extensions required by your project.
 
 
-.. _packaging: https://setuptools.pypa.io/en/latest/userguide/entry_point.html
 .. _pygls:  https://pygls.readthedocs.io/en/latest/index.html

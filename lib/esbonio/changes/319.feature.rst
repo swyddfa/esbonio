@@ -1,0 +1,1 @@
+The language server now supports ``textDocument/definition`` requests for ``.. figure::`` directive arguments.

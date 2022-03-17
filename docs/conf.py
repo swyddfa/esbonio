@@ -10,12 +10,20 @@
 #
 import os
 import sys
+from typing import List
 
 sys.path.insert(0, os.path.abspath("../lib/esbonio"))
 sys.path.insert(0, os.path.abspath("./ext"))
 
 from docutils.parsers.rst import nodes
 from sphinx.application import Sphinx
+
+import pygls.lsp.methods as M
+from pygls.lsp.types import CompletionItem
+from pygls.lsp.types import CompletionItemKind
+
+from esbonio.lsp.roles import TargetCompletion
+from esbonio.lsp.rst import CompletionContext
 
 import esbonio.lsp
 
@@ -43,6 +51,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx_panels",
     "esbonio.tutorial",
+    "cli_help",
     "collection_items",
     "relevant_to",
 ]
@@ -80,6 +89,33 @@ if DEV_BUILD:
     )
 
 
+class LspMethod(TargetCompletion):
+    """Provides completion suggestions for the custom ``:lsp:`` role."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self._index_methods()
+
+    def _index_methods(self):
+        self.items = []
+
+        for name, meth in M.__dict__.items():
+
+            if not isinstance(meth, str) or not name.isupper():
+                continue
+
+            item = CompletionItem(label=meth, kind=CompletionItemKind.Constant)
+            self.items.append(item)
+
+    def complete_targets(
+        self, context: CompletionContext, name: str, domain: str
+    ) -> List[CompletionItem]:
+        if name == "lsp":
+            return self.items
+
+        return []
+
+
 def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     """Link to sections within the lsp specification."""
 
@@ -109,3 +145,9 @@ def setup(app: Sphinx):
         objname="IPython magic",
         indextemplate="pair: %s; IPython magic",
     )
+
+
+def esbonio_setup(rst):
+    roles = rst.get_feature("esbonio.lsp.roles.Roles")
+    if roles:
+        roles.add_target_completion_provider(LspMethod())

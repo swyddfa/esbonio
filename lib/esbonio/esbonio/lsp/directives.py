@@ -34,15 +34,15 @@ except ImportError:
 
 DIRECTIVE = re.compile(
     r"""
-    (\s*)                           # directives can be indented
+    (\s*)                             # directives can be indented
     (?P<directive>
-      \.\.                          # directives start with a comment
-      [ ]?                          # followed by a space
-      ((?P<domain>[\w]+):(?!:))?    # directives may include a domain
-      (?P<name>([\w-]|:(?!:))+)?    # directives have a name
-      (::)?                         # directives end with '::'
+      \.\.                            # directives start with a comment
+      [ ]?                            # followed by a space
+      ((?P<domain>[\w]+):(?!:))?      # directives may include a domain
+      (?P<name>([\w-]|:(?!:))+)?      # directives have a name
+      (::)?                           # directives end with '::'
     )
-    ([\s]+(?P<argument>.*$))?       # directives may take an argument
+    ([\s]+(?P<argument>.*?)\s*$)?     # directives may take an argument
     """,
     re.VERBOSE,
 )

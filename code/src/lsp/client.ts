@@ -127,12 +127,12 @@ export class EsbonioClient {
     private channel: vscode.OutputChannel,
     private context: vscode.ExtensionContext
   ) {
-    context.subscriptions.push(
-      vscode.commands.registerCommand(Commands.RESTART_SERVER, this.restartServer, this)
-    )
-    context.subscriptions.push(
-      vscode.workspace.onDidChangeConfiguration(this.configChanged, this)
-    )
+    context.subscriptions.push(vscode.commands.registerCommand(Commands.RESTART_SERVER, this.restartServer, this))
+    context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_BUILDDIR, selectBuildDir))
+    context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_CONFDIR, selectConfDir))
+    context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_SRCDIR, selectSrcDir))
+
+    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(this.configChanged, this))
   }
 
   async stop() {
@@ -211,13 +211,13 @@ export class EsbonioClient {
     let command = await this.python.getCmd()
     let config = vscode.workspace.getConfiguration("esbonio")
 
-    let entryPoint = config.get<string>("server.entryPoint")
+    let startupModule = config.get<string>("server.startupModule")
 
     // Entry point can either be a script, or it can be a python module.
-    if (entryPoint.endsWith(".py") || entryPoint.includes("/") || entryPoint.includes("\\")) {
-      command.push(entryPoint)
+    if (startupModule.endsWith(".py") || startupModule.includes("/") || startupModule.includes("\\")) {
+      command.push(startupModule)
     } else {
-      command.push("-m", entryPoint)
+      command.push("-m", startupModule)
     }
 
     config.get<string[]>('server.includedModules').forEach(mod => {
@@ -272,6 +272,7 @@ export class EsbonioClient {
 
     this.client.onNotification("esbonio/buildComplete", (result: BuildCompleteResult) => {
       this.logger.debug(`Build complete ${JSON.stringify(result, null, 2)}`)
+      this.sphinxConfig = result.config.sphinx
       this.buildCompleteCallbacks.forEach(fn => {
         fn(result)
       })
@@ -362,4 +363,36 @@ export class EsbonioClient {
   onBuildStart(callback: (_: void) => void) {
     this.buildStartCallbacks.push(callback)
   }
+}
+
+async function selectBuildDir() {
+  return await selectFolder("buildDir")
+}
+
+
+async function selectConfDir() {
+  return await selectFolder("confDir")
+}
+
+
+async function selectSrcDir() {
+  return await selectFolder("srcDir")
+}
+
+
+async function selectFolder(name: string) {
+  let rootUri
+  let config = vscode.workspace.getConfiguration("esbonio.sphinx")
+
+  let rootFolders = vscode.workspace.workspaceFolders
+  if (rootFolders) {
+    rootUri = rootFolders[0].uri
+  }
+
+  let uri = await vscode.window.showOpenDialog({ canSelectFolders: true, defaultUri: rootUri, canSelectMany: false })
+  if (!uri) {
+    return
+  }
+
+  config.update(name, uri[0].path, vscode.ConfigurationTarget.Workspace)
 }

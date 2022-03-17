@@ -4,6 +4,7 @@ import pathlib
 import re
 import traceback
 import typing
+from multiprocessing import Process
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -26,6 +27,7 @@ from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import MessageType
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
+from pygls.lsp.types import ShowDocumentParams
 from sphinx import __version__ as __sphinx_version__
 from sphinx.application import Sphinx
 from sphinx.domains import Domain
@@ -37,6 +39,7 @@ from esbonio.cli import setup_cli
 from esbonio.lsp.rst import LspHandler
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.rst import ServerConfig
+from esbonio.lsp.sphinx.preview import make_preview_server
 
 try:
     from sphinx.util.logging import OnceFilter
@@ -47,18 +50,19 @@ except ImportError:
             return True
 
 
+# fmt: off
 # Order matters!
 DEFAULT_MODULES = [
-    "esbonio.lsp.directives",
-    "esbonio.lsp.roles",
-    "esbonio.lsp.sphinx.codeblocks",
-    "esbonio.lsp.sphinx.domains",
-    "esbonio.lsp.sphinx.images",
-    "esbonio.lsp.sphinx.includes",
-    "esbonio.lsp.sphinx.roles",
+    "esbonio.lsp.directives",         # Generic directive support
+    "esbonio.lsp.roles",              # Generic roles support
+    "esbonio.lsp.sphinx.codeblocks",  # Support for code-block, highlight, etc.
+    "esbonio.lsp.sphinx.domains",     # Support for Sphinx domains
+    "esbonio.lsp.sphinx.images",      # Support for image, figure etc
+    "esbonio.lsp.sphinx.includes",    # Support for include, literal-include etc.
+    "esbonio.lsp.sphinx.roles",       # Support for misc roles added by Sphinx e.g. :download:
 ]
 """The modules to load in the default configuration of the server."""
-
+# fmt: on
 
 DIAGNOSTIC_SEVERITY = {
     logging.ERROR: DiagnosticSeverity.Error,
@@ -214,11 +218,14 @@ class SphinxLanguageServer(RstLanguageServer):
         self.app: Optional[Sphinx] = None
         """The Sphinx application instance."""
 
+        self.preview_process: Optional[Process] = None
+        """The process hosting the preview server."""
+
+        self.preview_port: Optional[int] = None
+        """The port the preview server is running on."""
+
         self._role_target_types: Optional[Dict[str, List[str]]] = None
         """Cache for role target types."""
-
-        self._role_targets: Dict[str, List[tuple]] = {}
-        """Cache for role target objects."""
 
     @property
     def configuration(self) -> Dict[str, Any]:
@@ -275,6 +282,15 @@ class SphinxLanguageServer(RstLanguageServer):
                 "esbonio/buildComplete",
                 {"config": self.configuration, "error": True, "warnings": 0},
             )
+
+    def on_shutdown(self, *args):
+
+        if self.preview_process:
+
+            if not hasattr(self.preview_process, "kill"):
+                self.preview_process.terminate()
+            else:
+                self.preview_process.kill()
 
     def save(self, params: DidSaveTextDocumentParams):
         super().save(params)
@@ -396,7 +412,88 @@ class SphinxLanguageServer(RstLanguageServer):
             self.sphinx_log.setFormatter(formatter)
             sphinx_logger.addHandler(self.sphinx_log)
 
+        self._load_sphinx_extensions(app)
+        self._load_sphinx_config(app)
+
         return app
+
+    def _load_sphinx_extensions(self, app: Sphinx):
+        """Loop through each of Sphinx's extensions and see if any contain server
+        functionality.
+        """
+
+        for name, ext in app.extensions.items():
+            mod = ext.module
+
+            if name in self._loaded_modules:
+                self.logger.debug("Skipping previously loaded module '%s'", name)
+
+            if not hasattr(ext, "esbonio_setup"):
+                continue
+
+            self.logger.debug("Loading sphinx module '%s'", name)
+            try:
+                mod.esbonio_setup(self)
+                self._loaded_modules[name] = mod
+            except Exception:
+                self.logger.error(
+                    "Unable to load sphinx module '%s'\n%s",
+                    name,
+                    traceback.format_exc(),
+                )
+
+    def _load_sphinx_config(self, app: Sphinx):
+        """Try and load the config as an server extension."""
+
+        name = "<sphinx-config>"
+        if name in self._loaded_modules:
+            self.logger.debug("Skipping previously loaded module '%s'", name)
+            return
+
+        fn = app.config._raw_config.get("esbonio_setup", None)
+        if not fn or not callable(fn):
+            return
+
+        self.logger.debug("Loading sphinx module '%s'", name)
+        try:
+            fn(self)
+            self._loaded_modules[name] = fn
+        except Exception:
+            self.logger.error(
+                "Unable to load sphinx module '%s'\n%s",
+                name,
+                traceback.format_exc(),
+            )
+
+    def preview(self, options: Dict[str, Any]) -> Dict[str, Any]:
+
+        if not self.app or not self.app.builder:
+            return {}
+
+        builder_name = self.app.builder.name
+        if builder_name not in {"html"}:
+            self.show_message(
+                f"Previews are not currently supported for the '{builder_name}' builder."
+            )
+
+            return {}
+
+        if not self.preview_process:
+            self.logger.debug("Starting preview server.")
+            server = make_preview_server(self.app.outdir)
+            self.preview_port = server.server_port
+
+            self.preview_process = Process(target=server.serve_forever, daemon=True)
+            self.preview_process.start()
+
+        if options.get("show", True):
+            self.show_document(
+                ShowDocumentParams(
+                    uri=f"http://localhost:{self.preview_port}", external=True
+                )
+            )
+
+        return {"port": self.preview_port}
 
     def get_doctree(
         self, *, docname: Optional[str] = None, uri: Optional[str] = None
@@ -428,7 +525,8 @@ class SphinxLanguageServer(RstLanguageServer):
         try:
             return self.app.env.get_and_resolve_doctree(docname, self.app.builder)
         except FileNotFoundError:
-            self.logger.debug(traceback.format_exc())
+            self.logger.debug("Could not find doctree for '%s'", docname)
+            # self.logger.debug(traceback.format_exc())
             return None
 
     def get_domain(self, name: str) -> Optional[Domain]:
@@ -560,8 +658,8 @@ class SphinxLanguageServer(RstLanguageServer):
         .. code-block:: python
 
            {
-               "func": ["py:function"],
-               "class": ["py:class", "py:exception"]
+               "func": ["function"],
+               "class": ["class", "exception"]
            }
         """
 
@@ -579,7 +677,7 @@ class SphinxLanguageServer(RstLanguageServer):
                 for role in item_type.roles:
                     role_key = fmt.format(name=role, prefix=prefix)
                     target_types = self._role_target_types.get(role_key, list())
-                    target_types.append(fmt.format(name=name, prefix=prefix))
+                    target_types.append(name)
 
                     self._role_target_types[role_key] = target_types
 
@@ -599,27 +697,30 @@ class SphinxLanguageServer(RstLanguageServer):
            The domain the role is a part of, if applicable.
         """
 
-        if not self._role_targets:
-            self._index_role_targets()
-
         targets: List[tuple] = []
-        for target_type in self.get_role_target_types(name, domain):
-            targets += self._role_targets.get(target_type, [])
+        domain_obj: Optional[Domain] = None
+
+        if domain:
+            domain_obj = self.get_domain(domain)
+        else:
+            std = self.get_domain("std")
+            if std and name in std.roles:
+                domain_obj = std
+
+            elif self.app and self.app.config.primary_domain:
+                domain_obj = self.get_domain(self.app.config.primary_domain)
+
+        target_types = set(self.get_role_target_types(name, domain))
+
+        if not domain_obj:
+            self.logger.debug("Unable to find domain for role '%s:%s'", domain, name)
+            return []
+
+        for obj in domain_obj.get_objects():
+            if obj[2] in target_types:
+                targets.append(obj)
 
         return targets
-
-    def _index_role_targets(self):
-        self._role_targets = {}
-
-        for prefix, domain_obj in self.get_domains():
-            fmt = "{prefix}:{name}" if prefix else "{name}"
-
-            for obj in domain_obj.get_objects():
-                obj_key = fmt.format(name=obj[2], prefix=prefix)
-                objects = self._role_targets.get(obj_key, list())
-                objects.append(obj)
-
-                self._role_targets[obj_key] = objects
 
     def get_intersphinx_projects(self) -> List[str]:
         """Return the list of configured intersphinx project names."""
@@ -677,23 +778,22 @@ class SphinxLanguageServer(RstLanguageServer):
 
         targets = {}
         inv = inv[project]
-        primary_domain = self.app.config.primary_domain or ""
 
         for target_type in self.get_role_target_types(name, domain):
 
-            if target_type in inv:
-                targets[target_type] = inv[target_type]
+            explicit_domain = f"{domain}:{target_type}"
+            if explicit_domain in inv:
+                targets[target_type] = inv[explicit_domain]
                 continue
 
-            # Intersphinx targets are always namespaced, so we would need to be explicit
-            # about the domain the type sits in.
-            if f"{primary_domain}:{target_type}" in inv:
-                targets[target_type] = inv[f"{primary_domain}:{target_type}"]
+            primary_domain = f'{self.app.config.primary_domain or ""}:{target_type}'
+            if primary_domain in inv:
+                targets[target_type] = inv[primary_domain]
                 continue
 
-            # The 'std' domain must also be considered.
-            if f"std:{target_type}" in inv:
-                targets[target_type] = inv[f"std:{target_type}"]
+            std_domain = f"std:{target_type}"
+            if std_domain in inv:
+                targets[target_type] = inv[std_domain]
 
         return targets
 
@@ -726,6 +826,8 @@ def expand_conf_dir(root_dir: str, conf_dir: str) -> pathlib.Path:
 
     - ``${workspaceRoot}`` which expands to the workspace root as provided by the
       language client.
+    - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
+    multi-root support.
 
     Parameters
     ----------
@@ -736,7 +838,7 @@ def expand_conf_dir(root_dir: str, conf_dir: str) -> pathlib.Path:
     """
 
     match = PATH_VAR_PATTERN.match(conf_dir)
-    if not match or match.group(1) != "workspaceRoot":
+    if not match or match.group(1) not in {"workspaceRoot", "workspaceFolder"}:
         return pathlib.Path(conf_dir)
 
     conf = pathlib.Path(conf_dir).parts[1:]
@@ -756,6 +858,8 @@ def get_src_dir(
 
     - ``${workspaceRoot}`` which expands to the workspace root as provided
       by the language client.
+    - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
+      multi-root support.
     - ``${confDir}`` which expands to the configured config dir.
 
     Parameters
@@ -775,7 +879,7 @@ def get_src_dir(
     root_dir = Uri.to_fs_path(root_uri)
 
     match = PATH_VAR_PATTERN.match(src_dir)
-    if match and match.group(1) == "workspaceRoot":
+    if match and match.group(1) in {"workspaceRoot", "workspaceFolder"}:
         src = pathlib.Path(src_dir).parts[1:]
         return pathlib.Path(root_dir, *src).resolve()
 
@@ -801,6 +905,8 @@ def get_build_dir(
 
     - ``${workspaceRoot}`` which expands to the workspace root as provided
       by the language client.
+    - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
+      multi-root support.
     - ``${confDir}`` which expands to the configured config dir.
 
     Parameters
@@ -823,7 +929,7 @@ def get_build_dir(
     root_dir = Uri.to_fs_path(root_uri)
     match = PATH_VAR_PATTERN.match(config.build_dir)
 
-    if match and match.group(1) == "workspaceRoot":
+    if match and match.group(1) in {"workspaceRoot", "workspaceFolder"}:
         build = pathlib.Path(config.build_dir).parts[1:]
         return pathlib.Path(root_dir, *build).resolve()
 

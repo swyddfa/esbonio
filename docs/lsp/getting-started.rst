@@ -8,7 +8,7 @@ editor of choice.
 
 
 .. relevant-to:: VSCode
-   :category: Editor:
+   :category: Editor
 
    .. figure:: /images/vscode-screenshot.png
       :align: center
@@ -17,7 +17,7 @@ editor of choice.
       The VSCode extension in action.
 
 .. relevant-to:: Emacs (eglot)
-   :category: Editor:
+   :category: Editor
 
    .. figure:: /images/emacs-eglot-extended.png
       :align: center
@@ -26,7 +26,7 @@ editor of choice.
       Emacs, Esbonio and the ``eglot-extended.el`` configuration
 
 .. relevant-to:: Emacs (lsp-mode)
-   :category: Editor:
+   :category: Editor
 
    .. figure:: /images/emacs-lsp-mode-extended.png
       :align: center
@@ -35,7 +35,7 @@ editor of choice.
       Emacs, Esbonio and the ``lsp-mode-extended.el`` configuration
 
 .. relevant-to:: Kate
-   :category: Editor:
+   :category: Editor
 
    .. figure:: /images/kate-screenshot.png
       :align: center
@@ -47,7 +47,7 @@ editor of choice.
    and comes with LSP support.
 
 .. relevant-to:: Neovim (lspconfig)
-   :category: Editor:
+   :category: Editor
 
    .. figure:: /images/nvim-lspconfig.png
       :align: center
@@ -56,7 +56,7 @@ editor of choice.
       Using Esbonio with Neovim's built-in language client.
 
 .. relevant-to:: Vim (coc.nvim)
-   :category: Editor:
+   :category: Editor
 
    .. figure:: /images/nvim-coc.png
       :align: center
@@ -65,7 +65,7 @@ editor of choice.
       Using Esbonio in Neovim via ``coc.nvim`` and the ``coc-esbonio`` extension.
 
 .. relevant-to:: Vim (vim-lsp)
-   :category: Editor:
+   :category: Editor
 
    .. figure:: /images/nvim-vim-lsp.png
       :align: center
@@ -102,27 +102,27 @@ Otherwise the language server will fail to properly understand your project.
 
 
 .. relevant-to:: VSCode
-   :category: Editor:
+   :category: Editor
 
    Integration with `VSCode`_ is provided by the `Esbonio`_ extension.
 
 .. relevant-to:: Emacs (eglot)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/emacs-eglot/_installation.rst
 
 .. relevant-to:: Emacs (lsp-mode)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/emacs-lsp-mode/_installation.rst
 
 .. relevant-to:: Kate
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/kate/_installation.rst
 
 .. relevant-to:: Neovim (lspconfig)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/nvim-lspconfig/_installation.rst
 
@@ -140,32 +140,32 @@ Configuration
 -------------
 
 .. relevant-to:: VSCode
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/vscode/_configuration.rst
 
 .. relevant-to:: Neovim (lspconfig)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/nvim-lspconfig/_configuration.rst
 
 .. relevant-to:: Vim (coc.nvim)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/vim-coc/_configuration.rst
 
 .. relevant-to:: Vim (vim-lsp)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/vim-lsp/_configuration.rst
 
 .. relevant-to:: Emacs (eglot)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/emacs-eglot/_configuration.rst
 
 .. relevant-to:: Emacs (lsp-mode)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/emacs-lsp-mode/_configuration.rst
 
@@ -178,6 +178,8 @@ Configuration
 
    - ``/path/to/docs`` - An absolute path
    - ``${workspaceRoot}/docs`` - A path relative to the root of your workspace.
+   - ``${workspaceFolder}/docs`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
+
 
 .. confval:: sphinx.srcDir (string)
 
@@ -188,6 +190,7 @@ Configuration
 
    - ``/path/to/src/`` - An absolute path
    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
+   - ``${workspaceFolder}/docs/src`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
 .. confval:: sphinx.buildDir (string)
@@ -199,6 +202,7 @@ Configuration
 
    - ``/path/to/src/`` - An absolute path
    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
+   - ``${workspaceFolder}/docs/src`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
 .. confval:: server.logLevel (string)
@@ -227,27 +231,27 @@ For some editors where the setup is more manual, we do provide some example conf
 to help get you started.
 
 .. relevant-to:: Neovim (lspconfig)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/nvim-lspconfig/_examples.rst
 
 .. relevant-to:: Vim (coc.nvim)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/vim-coc/_examples.rst
 
 .. relevant-to:: Vim (vim-lsp)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/vim-lsp/_examples.rst
 
 .. relevant-to:: Emacs (eglot)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/emacs-eglot/_examples.rst
 
 .. relevant-to:: Emacs (lsp-mode)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/emacs-lsp-mode/_examples.rst
 
@@ -259,17 +263,17 @@ logging level of the server by setting the ``server.logLevel`` initialization op
 to ``debug``.
 
 .. relevant-to:: Neovim (lspconfig)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/nvim-lspconfig/_debugging.rst
 
 .. relevant-to:: Vim (coc.nvim)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/vim-coc/_debugging.rst
 
 .. relevant-to:: Vim (vim-lsp)
-   :category: Editor:
+   :category: Editor
 
    .. include:: ./editors/vim-lsp/_debugging.rst
 
@@ -277,9 +281,13 @@ Additional Details
 ------------------
 
 .. relevant-to:: VSCode
-   :category: Editor:
+   :category: Editor
 
-   .. include:: ./editors/vscode/_additional.rst
+
+   Commands
+   """"""""
+
+   .. include:: editors/vscode/_commands.rst
 
    Changelog
    """""""""

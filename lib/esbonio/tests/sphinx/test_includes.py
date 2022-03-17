@@ -96,6 +96,19 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
                 ),
             ),
         ),
+        (
+            "sphinx-default",
+            "definitions.rst",
+            Position(line=25, character=25),
+            Location(
+                uri="_static/vscode-screenshot.png",
+                range=Range(
+                    start=Position(line=0, character=0),
+                    end=Position(line=1, character=0),
+                ),
+            ),
+        ),
+        ("sphinx-default", "definitions.rst", Position(line=27, character=25), None),
     ],
 )
 async def test_include_definitions(

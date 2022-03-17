@@ -31,13 +31,11 @@
     },
     "main": "dist/extension",
     "dependencies": {
-        "jsdom": "^16.7.0",
         "semver": "^7.3.5",
         "vscode-languageclient": "^7.0.0"
     },
     "devDependencies": {
         "@types/glob": "^7.1.4",
-        "@types/jsdom": "^16.2.13",
         "@types/mocha": "^8.2.3",
         "@types/node": "^14.17.15",
         "@types/semver": "^7.3.8",
@@ -70,16 +68,6 @@
     "contributes": {
         "commands": [
             {
-                "command": "esbonio.insert.link",
-                "title": "Insert Link",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.insert.inlineLink",
-                "title": "Insert Inline Link",
-                "category": "Esbonio"
-            },
-            {
                 "command": "esbonio.preview.open",
                 "title": "Open Preview",
                 "icon": "$(preview)",
@@ -105,6 +93,21 @@
                 "command": "esbonio.server.restart",
                 "title": "Restart Language Server",
                 "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.sphinx.selectConfDir",
+                "title": "Select Conf Dir",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.sphinx.selectSrcDir",
+                "title": "Select Src Dir",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.sphinx.selectBuildDir",
+                "title": "Select Build Dir",
+                "category": "Esbonio"
             }
         ],
         "configuration": [
@@ -123,11 +126,11 @@
                         "default": true,
                         "description": "Enable/Disable the language server in Python files."
                     },
-                    "esbonio.server.entryPoint": {
+                    "esbonio.server.startupModule": {
                         "scope": "window",
                         "type": "string",
                         "default": "esbonio",
-                        "description": "The entry point to use when launching the server."
+                        "description": "The module (or script) to use to launch the server."
                     },
                     "esbonio.server.excludedModules": {
                         "scope": "window",
@@ -258,16 +261,6 @@
             }
         ],
         "keybindings": [
-            {
-                "command": "esbonio.insert.inlineLink",
-                "key": "alt+l",
-                "when": "editorTextFocus && editorLangId == restructuredtext"
-            },
-            {
-                "command": "esbonio.insert.link",
-                "key": "alt+shift+l",
-                "when": "editorTextFocus && editorLangId == restructuredtext"
-            },
             {
                 "command": "esbonio.preview.open",
                 "key": "ctrl+shift+v",

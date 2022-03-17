@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 
-import { EditorCommands, VSCodeInput } from "./editor";
 import { createOutputLogger, getOutputLogger } from "./log";
 import { EsbonioClient } from "./lsp/client";
 import { PythonManager } from "./lsp/python";
@@ -20,9 +19,6 @@ export async function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         vscode.workspace.onDidChangeConfiguration(configChanged)
     )
-
-    let editorCommands = new EditorCommands(new VSCodeInput())
-    editorCommands.register(context)
 
     let python = new PythonManager(logger)
     let server = new ServerManager(logger, python, context)

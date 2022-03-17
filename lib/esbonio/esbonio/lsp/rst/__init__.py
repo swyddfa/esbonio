@@ -42,11 +42,14 @@ from esbonio.cli import setup_cli
 TRIPLE_QUOTE = re.compile("(\"\"\"|''')")
 """A regular expression matching the triple quotes used to delimit python docstrings."""
 
+# fmt: off
+# Order matters!
 DEFAULT_MODULES = [
-    "esbonio.lsp.directives",
-    "esbonio.lsp.roles",
+    "esbonio.lsp.directives",  # Generic directive support
+    "esbonio.lsp.roles",       # Generic roles support
 ]
 """The modules to load in the default configuration of the server."""
+# fmt: on
 
 
 class CompletionContext:
@@ -117,6 +120,9 @@ class LanguageFeature:
 
     def initialized(self, params: InitializedParams) -> None:
         """Called once upon receipt of the `initialized` notification from the client."""
+
+    def on_shutdown(self, *args):
+        """Called as the server is shutting down."""
 
     def save(self, params: DidSaveTextDocumentParams) -> None:
         """Called each time a document is saved."""
@@ -233,6 +239,9 @@ class RstLanguageServer(LanguageServer):
         self._diagnostics: Dict[Tuple[str, str], List[Diagnostic]] = {}
         """Where we store and manage diagnostics."""
 
+        self._loaded_modules: Dict[str, Any] = {}
+        """Record of modules that have been loaded."""
+
         self._features: Dict[str, LanguageFeature] = {}
         """The list of language features registered with the server."""
 
@@ -257,6 +266,9 @@ class RstLanguageServer(LanguageServer):
         self._configure_logging(self.user_config.server)
 
     def initialized(self, params: InitializedParams):
+        pass
+
+    def on_shutdown(self, *args):
         pass
 
     def save(self, params: DidSaveTextDocumentParams):
@@ -442,6 +454,15 @@ class RstLanguageServer(LanguageServer):
 
         line = self.line_at_position(doc, position)
         return line[: position.character]
+
+    def preview(self, options: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate a preview of the documentation."""
+        name = self.__class__.__name__
+        self.show_message(
+            f"Previews are not currently supported by {name} based servers"
+        )
+
+        return {}
 
     def text_to_position(self, doc: Document, position: Position) -> str:
         """Return the contents of the document up until the given position.
