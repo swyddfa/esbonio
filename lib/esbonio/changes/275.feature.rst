@@ -1,1 +1,0 @@
-The server now provides an `esbonio.server.preview` command that can be used to preview HTML Sphinx projects via a local HTTP server.

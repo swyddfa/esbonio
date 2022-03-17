@@ -46,7 +46,7 @@ from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .rst import SymbolVisitor
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 
 __all__ = [
     "LanguageFeature",

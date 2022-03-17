@@ -1,1 +1,0 @@
-Completion suggestions for domain objects referenced by roles such as ``:doc:``, ``:ref:``, ``:func:`` and many more now correctly update each time a rebuild is triggered.

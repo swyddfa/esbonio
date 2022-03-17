@@ -1,3 +1,24 @@
+v0.10.0 - 2022-03-17
+--------------------
+
+Features
+^^^^^^^^
+
+- The server now provides an `esbonio.server.preview` command that can be used to preview HTML Sphinx projects via a local HTTP server. (`#275 <https://github.com/swyddfa/esbonio/issues/275>`_)
+- The language server now accepts paths relative to ``${workspaceFolder}`` for Sphinx's ``confDir``, ``srcDir`` and ``builDir`` options. (`#304 <https://github.com/swyddfa/esbonio/issues/304>`_)
+- The language server now supports ``textDocument/definition`` requests for ``.. image::`` directive arguments. (`#318 <https://github.com/swyddfa/esbonio/issues/318>`_)
+- The language server now supports ``textDocument/definition`` requests for ``.. figure::`` directive arguments. (`#319 <https://github.com/swyddfa/esbonio/issues/319>`_)
+- The language server will now look in sphinx extension modules and ``conf.py`` files for extensions to the language server. (`#331 <https://github.com/swyddfa/esbonio/issues/331>`_)
+
+
+Fixes
+^^^^^
+
+- The language server no longer crashes when asked to ``--exclude`` a module that would not be loaded anyway. (`#313 <https://github.com/swyddfa/esbonio/issues/313>`_)
+- Completion suggestions for domain objects referenced by roles such as ``:doc:``, ``:ref:``, ``:func:`` and many more now correctly update each time a rebuild is triggered. (`#317 <https://github.com/swyddfa/esbonio/issues/317>`_)
+- Goto definition on a directive's arguments is no longer foiled by trailing whitespace. (`#327 <https://github.com/swyddfa/esbonio/issues/327>`_)
+
+
 v0.9.0 - 2022-03-07
 -------------------
 
