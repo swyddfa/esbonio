@@ -1,3 +1,12 @@
+v0.10.1 - 2022-03-20
+--------------------
+
+Fixes
+^^^^^
+
+- The language server should now correctly handle ``buildDir``, ``confDir`` and ``srcDir`` config values containing paths relative to ``~`` (`#342 <https://github.com/swyddfa/esbonio/issues/342>`_)
+
+
 v0.10.0 - 2022-03-17
 --------------------
 
