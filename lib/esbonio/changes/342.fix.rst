@@ -1,0 +1,1 @@
+The language server should now correctly handle ``buildDir``, ``confDir`` and ``srcDir`` config values containing paths relative to ``~``

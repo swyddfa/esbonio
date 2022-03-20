@@ -839,7 +839,7 @@ def expand_conf_dir(root_dir: str, conf_dir: str) -> pathlib.Path:
 
     match = PATH_VAR_PATTERN.match(conf_dir)
     if not match or match.group(1) not in {"workspaceRoot", "workspaceFolder"}:
-        return pathlib.Path(conf_dir)
+        return pathlib.Path(conf_dir).expanduser()
 
     conf = pathlib.Path(conf_dir).parts[1:]
     return pathlib.Path(root_dir, *conf).resolve()
@@ -887,7 +887,7 @@ def get_src_dir(
         src = pathlib.Path(src_dir).parts[1:]
         return pathlib.Path(conf_dir, *src).resolve()
 
-    return pathlib.Path(src_dir)
+    return pathlib.Path(src_dir).expanduser()
 
 
 def get_build_dir(
@@ -942,7 +942,11 @@ def get_build_dir(
     build_uri = Uri.from_fs_path(config.build_dir)
     build_dir = Uri.to_fs_path(build_uri)
 
-    return pathlib.Path(build_dir)
+    # But make sure paths starting with '~' are not corrupted
+    if build_dir.startswith("/~"):
+        build_dir = build_dir.replace("/~", "~")
+
+    return pathlib.Path(build_dir).expanduser()
 
 
 cli = setup_cli("esbonio.lsp.sphinx", "Esbonio's Sphinx language server.")
