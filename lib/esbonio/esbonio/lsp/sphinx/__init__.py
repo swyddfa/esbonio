@@ -5,6 +5,7 @@ import re
 import traceback
 import typing
 from multiprocessing import Process
+from multiprocessing import Queue
 from typing import Any
 from typing import Dict
 from typing import Iterator
@@ -40,6 +41,7 @@ from esbonio.lsp.rst import LspHandler
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.rst import ServerConfig
 from esbonio.lsp.sphinx.preview import make_preview_server
+from esbonio.lsp.sphinx.preview import start_preview_server
 
 try:
     from sphinx.util.logging import OnceFilter
@@ -478,13 +480,23 @@ class SphinxLanguageServer(RstLanguageServer):
 
             return {}
 
-        if not self.preview_process:
+        if not self.preview_process and not IS_WIN:
             self.logger.debug("Starting preview server.")
             server = make_preview_server(self.app.outdir)
             self.preview_port = server.server_port
 
             self.preview_process = Process(target=server.serve_forever, daemon=True)
             self.preview_process.start()
+
+        if not self.preview_process and IS_WIN:
+            self.logger.debug("Starting preview server")
+
+            q: Queue = Queue()
+            self.preview_process = Process(
+                target=start_preview_server, args=(q, self.app.outdir), daemon=True
+            )
+            self.preview_process.start()
+            self.preview_port = q.get()
 
         if options.get("show", True):
             self.show_document(
