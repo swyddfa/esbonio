@@ -3,7 +3,7 @@ export const PYTHON_EXTENSION = "ms-python.python"
 
 export namespace Server {
   export const REQUIRED_PYTHON = "3.6.0"
-  export const REQUIRED_VERSION = "0.9.0"
+  export const REQUIRED_VERSION = "0.10.2"
 }
 
 export namespace Commands {

@@ -121,13 +121,13 @@ export class PreviewManager {
     let buildDir = config.buildDir
     let sourceUri = editor.document.uri
 
-    if (sourceUri.scheme !== 'file' || !sourceUri.path.startsWith(srcDir)) {
+    if (sourceUri.scheme !== 'file' || !sourceUri.fsPath.startsWith(srcDir)) {
       this.logger.debug(`Ignoring ${sourceUri}`)
       return undefined
     }
 
 
-    let rstPath = sourceUri.path.replace(srcDir, '')
+    let rstPath = sourceUri.fsPath.replace(srcDir, '')
     let htmlPath = rstPath.replace(new RegExp(`\\${path.extname(rstPath)}`), '.html')
 
     // Check if the file exists.
