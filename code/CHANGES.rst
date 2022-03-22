@@ -1,3 +1,12 @@
+v0.8.1 - 2022-03-22
+-------------------
+
+Fixes
+^^^^^
+
+- Fix handling of Windows URIs in preview code. (`#340 <https://github.com/swyddfa/esbonio/issues/340>`_)
+
+
 v0.8.0 - 2022-03-17
 -------------------
 
