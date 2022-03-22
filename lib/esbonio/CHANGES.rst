@@ -1,3 +1,12 @@
+v0.10.2 - 2022-03-22
+--------------------
+
+Fixes
+^^^^^
+
+- Previews on Windows should now start correctly (`#341 <https://github.com/swyddfa/esbonio/issues/341>`_)
+
+
 v0.10.1 - 2022-03-20
 --------------------
 
