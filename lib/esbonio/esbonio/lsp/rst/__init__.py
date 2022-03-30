@@ -20,6 +20,7 @@ from docutils.parsers.rst import roles
 from pydantic import BaseModel
 from pydantic import Field
 from pygls import IS_WIN
+from pygls.lsp.types import ClientCapabilities
 from pygls.lsp.types import CodeAction
 from pygls.lsp.types import CodeActionParams
 from pygls.lsp.types import CompletionItem
@@ -53,11 +54,16 @@ DEFAULT_MODULES = [
 
 
 class CompletionContext:
-    """A class that captures the context within which a completion request has been
-    made."""
+    """Captures the context within which a completion request has been made."""
 
     def __init__(
-        self, *, doc: Document, location: str, match: "re.Match", position: Position
+        self,
+        *,
+        doc: Document,
+        location: str,
+        match: "re.Match",
+        position: Position,
+        capabilities: ClientCapabilities,
     ):
 
         self.doc = doc
@@ -73,10 +79,20 @@ class CompletionContext:
         self.position = position
         """The position at which the completion request was made."""
 
+        self.client_capabilities = capabilities
+        """The client's capabilities"""
+
     def __repr__(self):
         p = f"{self.position.line}:{self.position.character}"
         return (
             f"CompletionContext<{self.doc.uri}:{p} ({self.location}) -- {self.match}>"
+        )
+
+    @property
+    def snippet_support(self) -> bool:
+        """Indicates if the client supports snippets"""
+        return self.client_capabilities.get_capability(
+            "text_document.completion.completion_item.snippet_support", False
         )
 
 

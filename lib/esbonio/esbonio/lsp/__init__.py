@@ -49,6 +49,8 @@ from .rst import SymbolVisitor
 __version__ = "0.10.2"
 
 __all__ = [
+    "CompletionContext",
+    "DefinitionContext",
     "LanguageFeature",
     "RstLanguageServer",
     "create_language_server",
@@ -201,7 +203,11 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
                     start, stop = match.span()
                     if start <= pos.character <= stop:
                         context = CompletionContext(
-                            doc=doc, location=location, match=match, position=pos
+                            doc=doc,
+                            location=location,
+                            match=match,
+                            position=pos,
+                            capabilities=ls.client_capabilities,
                         )
                         ls.logger.debug("Completion context: %s", context)
 
