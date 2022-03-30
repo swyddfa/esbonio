@@ -313,7 +313,7 @@ class Directives(LanguageFeature):
         # If there is an existing argument to the directive, we should leave it untouched
         # otherwise, edit the whole line to insert any required arguments.
         start = match.span()[0] + match.group(0).find(".")
-        include_argument = True
+        include_argument = context.snippet_support
         end = match.span()[1]
 
         if groups["argument"]:
