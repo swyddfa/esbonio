@@ -28,6 +28,9 @@ Language Features
 .. autoclass:: esbonio.lsp.rst.CompletionContext
    :members:
 
+.. autoclass:: esbonio.lsp.rst.DefinitionContext
+   :members:
+
 Directives
 ^^^^^^^^^^
 
