@@ -164,6 +164,7 @@ PY_FUNC_OPTS = {"annotation", "async", "module", "noindex"}
 C_FUNC_OPTS = {"noindex"} if sphinx_version(eq=2) else {"noindexentry"}
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "text, expected, unexpected",
     [
