@@ -24,6 +24,7 @@ from pygls.lsp.types import ClientCapabilities
 from pygls.lsp.types import CodeAction
 from pygls.lsp.types import CodeActionParams
 from pygls.lsp.types import CompletionItem
+from pygls.lsp.types import CompletionItemTag
 from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DidSaveTextDocumentParams
@@ -31,6 +32,7 @@ from pygls.lsp.types import DocumentSymbol
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import Location
+from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import SymbolKind
@@ -66,20 +68,20 @@ class CompletionContext:
         capabilities: ClientCapabilities,
     ):
 
-        self.doc = doc
+        self.doc: Document = doc
         """The document within which the completion request was made."""
 
-        self.location = location
+        self.location: str = location
         """The location type where the request was made.
         See :meth:`~esbonio.lsp.rst.RstLanguageServer.get_location_type` for details."""
 
-        self.match = match
+        self.match: "re.Match" = match
         """The match object describing the site of the completion request."""
 
-        self.position = position
+        self.position: Position = position
         """The position at which the completion request was made."""
 
-        self.client_capabilities = capabilities
+        self._client_capabilities: ClientCapabilities = capabilities
         """The client's capabilities"""
 
     def __repr__(self):
@@ -89,11 +91,60 @@ class CompletionContext:
         )
 
     @property
+    def commit_characters_support(self) -> bool:
+        """Indicates if the client supports commit characters."""
+        return self._client_capabilities.get_capability(
+            "text_document.completion.completion_item.commit_characters_support", False
+        )
+
+    @property
+    def deprecated_support(self) -> bool:
+        """Indicates if the client supports the deprecated field on a
+        ``CompletionItem``."""
+        return self._client_capabilities.get_capability(
+            "text_document.completion.completion_item.deprecated_support", False
+        )
+
+    @property
+    def documentation_formats(self) -> List[MarkupKind]:
+        """The list of documentation formats supported by the client."""
+        return self._client_capabilities.get_capability(
+            "text_document.completion.completion_item.documentation_format", []
+        )
+
+    @property
+    def insert_replace_support(self) -> bool:
+        """Indicates if the client supports ``InsertReplaceEdit``."""
+        return self._client_capabilities.get_capability(
+            "text_document.completion.completion_item.insert_replace_support", False
+        )
+
+    @property
+    def preselect_support(self) -> bool:
+        """Indicates if the client supports the preselect field on a
+        ``CompletionItem``."""
+        return self._client_capabilities.get_capability(
+            "text_document.completion.completion_item.preselect_support", False
+        )
+
+    @property
     def snippet_support(self) -> bool:
         """Indicates if the client supports snippets"""
-        return self.client_capabilities.get_capability(
+        return self._client_capabilities.get_capability(
             "text_document.completion.completion_item.snippet_support", False
         )
+
+    @property
+    def supported_tags(self) -> List[CompletionItemTag]:
+        """The list of ``CompletionItemTags`` supported by the client."""
+        capabilities = self._client_capabilities.get_capability(
+            "text_document.completion.completion_item.tag_support", None
+        )
+
+        if not capabilities:
+            return []
+
+        return capabilities.value_set
 
 
 class DefinitionContext:
