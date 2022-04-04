@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import pathlib
+import platform
 import re
 import traceback
 import typing
@@ -52,6 +53,8 @@ except ImportError:
         def filter(self, *args, **kwargs):
             return True
 
+
+IS_LINUX = platform.system() == "Linux"
 
 # fmt: off
 # Order matters!
@@ -485,7 +488,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
             return {}
 
-        if not self.preview_process and not IS_WIN:
+        if not self.preview_process and IS_LINUX:
             self.logger.debug("Starting preview server.")
             server = make_preview_server(self.app.outdir)
             self.preview_port = server.server_port
@@ -493,7 +496,7 @@ class SphinxLanguageServer(RstLanguageServer):
             self.preview_process = Process(target=server.serve_forever, daemon=True)
             self.preview_process.start()
 
-        if not self.preview_process and IS_WIN:
+        if not self.preview_process and not IS_LINUX:
             self.logger.debug("Starting preview server")
 
             q: Queue = Queue()
