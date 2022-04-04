@@ -1,6 +1,7 @@
 import pathlib
 import sys
 import tempfile
+from typing import List
 
 import pygls.uris as uri
 import pytest
@@ -36,9 +37,21 @@ def make_esbonio_client(*args, **kwargs):
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 @pytest.mark.parametrize(
-    "path, options, expected",
+    "command, path, options, expected",
     [
         (  # Ensure the defaults work
+            [sys.executable, "-m", "esbonio"],
+            "workspace",
+            SphinxConfig(),
+            SphinxConfig(
+                confDir="ROOT",
+                srcDir="ROOT",
+                buildDir=".cache/esbonio",
+                builderName="html",
+            ),
+        ),
+        (  # Ensure the configured entry point works
+            ["esbonio"],
             "workspace",
             SphinxConfig(),
             SphinxConfig(
@@ -49,6 +62,7 @@ def make_esbonio_client(*args, **kwargs):
             ),
         ),
         (  # Ensure that we can set confDir to be an explicit path.
+            [sys.executable, "-m", "esbonio"],
             ".",
             SphinxConfig(confDir="ROOT/workspace"),
             SphinxConfig(
@@ -59,6 +73,7 @@ def make_esbonio_client(*args, **kwargs):
             ),
         ),
         (  # Ensure that we can specifiy confDir relative to ${workspaceRoot}
+            [sys.executable, "-m", "esbonio"],
             ".",
             SphinxConfig(confDir="${workspaceRoot}/workspace"),
             SphinxConfig(
@@ -69,6 +84,7 @@ def make_esbonio_client(*args, **kwargs):
             ),
         ),
         (  # Ensure that we can specifiy confDir relative to ${workspaceFolder}
+            [sys.executable, "-m", "esbonio"],
             ".",
             SphinxConfig(confDir="${workspaceFolder}/workspace"),
             SphinxConfig(
@@ -79,6 +95,7 @@ def make_esbonio_client(*args, **kwargs):
             ),
         ),
         (  # Ensure that we can specifiy confDir to be exactly ${workspaceRoot}
+            [sys.executable, "-m", "esbonio"],
             "workspace",
             SphinxConfig(confDir="${workspaceRoot}"),
             SphinxConfig(
@@ -89,6 +106,7 @@ def make_esbonio_client(*args, **kwargs):
             ),
         ),
         (  # Ensure that we can specifiy confDir to be exactly ${workspaceFolder}
+            [sys.executable, "-m", "esbonio"],
             "workspace",
             SphinxConfig(confDir="${workspaceFolder}"),
             SphinxConfig(
@@ -99,6 +117,7 @@ def make_esbonio_client(*args, **kwargs):
             ),
         ),
         (  # Ensure that we can specifiy srcDir to be an exact path
+            [sys.executable, "-m", "esbonio"],
             "workspace-src",
             SphinxConfig(srcDir="ROOT/../workspace"),
             SphinxConfig(
@@ -109,6 +128,7 @@ def make_esbonio_client(*args, **kwargs):
             ),
         ),
         (  # Ensure that we can specify srcDir relative to ${workspaceRoot}
+            [sys.executable, "-m", "esbonio"],
             ".",
             SphinxConfig(
                 confDir="${workspaceRoot}/workspace-src",
@@ -122,6 +142,7 @@ def make_esbonio_client(*args, **kwargs):
             ),
         ),
         (  # Ensure that we can specify srcDir relative to ${workspaceFolder}
+            [sys.executable, "-m", "esbonio"],
             ".",
             SphinxConfig(
                 confDir="${workspaceRoot}/workspace-src",
@@ -135,6 +156,7 @@ def make_esbonio_client(*args, **kwargs):
             ),
         ),
         (  # Ensure that we can specify srcDir to be exactly ${confDir}
+            [sys.executable, "-m", "esbonio"],
             "workspace",
             SphinxConfig(srcDir="${confDir}"),
             SphinxConfig(
@@ -145,6 +167,7 @@ def make_esbonio_client(*args, **kwargs):
             ),
         ),
         (  # Ensure that we can specifiy srcDir to be relative to ${confDir}
+            [sys.executable, "-m", "esbonio"],
             "workspace-src",
             SphinxConfig(srcDir="${confDir}/../workspace"),
             SphinxConfig(
@@ -156,7 +179,7 @@ def make_esbonio_client(*args, **kwargs):
         ),
     ],
 )
-async def test_initialization(caplog, path, options, expected):
+async def test_initialization(caplog, command: List[str], path: str, options, expected):
     """Ensure that the server responds correctly to various initialization options."""
 
     root_path = pathlib.Path(__file__).parent / path
@@ -168,7 +191,7 @@ async def test_initialization(caplog, path, options, expected):
             setattr(options, key, str(path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
+        server_command=command,
         root_uri=root_uri,
         initialization_options=InitializationOptions(sphinx=options),
         client_factory=make_esbonio_client,
