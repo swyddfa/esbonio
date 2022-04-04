@@ -3,8 +3,10 @@ import sys
 import tempfile
 from typing import List
 
+import appdirs
 import pygls.uris as uri
 import pytest
+from pygls import IS_WIN
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DiagnosticSeverity
 from pygls.lsp.types import MessageType
@@ -47,7 +49,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT",
                 srcDir="ROOT",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -58,7 +60,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT",
                 srcDir="ROOT",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -69,7 +71,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT/workspace",
                 srcDir="ROOT/workspace",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -80,7 +82,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT/workspace",
                 srcDir="ROOT/workspace",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -91,7 +93,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT/workspace",
                 srcDir="ROOT/workspace",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -102,7 +104,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT",
                 srcDir="ROOT",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -113,7 +115,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT",
                 srcDir="ROOT",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -124,7 +126,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT",
                 srcDir="ROOT/../workspace",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -138,7 +140,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT/workspace-src",
                 srcDir="ROOT/workspace",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -152,7 +154,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT/workspace-src",
                 srcDir="ROOT/workspace",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -163,7 +165,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT",
                 srcDir="ROOT",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -174,7 +176,7 @@ def make_esbonio_client(*args, **kwargs):
             SphinxConfig(
                 confDir="ROOT",
                 srcDir="ROOT/../workspace",
-                buildDir=".cache/esbonio",
+                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
                 builderName="html",
             ),
         ),
@@ -213,10 +215,22 @@ async def test_initialization(caplog, command: List[str], path: str, options, ex
         actual = SphinxConfig(**configuration["sphinx"])
 
         assert actual.version is not None
-        assert actual.conf_dir == resolve_path(expected.conf_dir, root_path)
-        assert actual.src_dir == resolve_path(expected.src_dir, root_path)
         assert expected.build_dir in actual.build_dir
         assert actual.builder_name == expected.builder_name
+
+        # This seems hacky, but paths on windows are case insensitive...
+        if IS_WIN:
+            assert (
+                actual.conf_dir.lower()
+                == resolve_path(expected.conf_dir, root_path).lower()
+            )
+            assert (
+                actual.src_dir.lower()
+                == resolve_path(expected.src_dir, root_path).lower()
+            )
+        else:
+            assert actual.conf_dir == resolve_path(expected.conf_dir, root_path)
+            assert actual.src_dir == resolve_path(expected.src_dir, root_path)
 
     finally:
         await test.stop()
@@ -255,10 +269,20 @@ async def test_initialization_build_dir():
             actual = SphinxConfig(**configuration["sphinx"])
 
             assert actual.version is not None
-            assert actual.conf_dir == str(root_path)
-            assert actual.src_dir == str(root_path)
-            assert actual.build_dir == str(pathlib.Path(build_dir, "html"))
             assert actual.builder_name == "html"
+
+            # This seems hacky, but paths on windows are case insensitive...
+            if IS_WIN:
+                assert actual.conf_dir.lower() == str(root_path).lower()
+                assert actual.src_dir.lower() == str(root_path).lower()
+                assert (
+                    actual.build_dir.lower()
+                    == str(pathlib.Path(build_dir, "html")).lower()
+                )
+            else:
+                assert actual.conf_dir == str(root_path)
+                assert actual.src_dir == str(root_path)
+                assert actual.build_dir == str(pathlib.Path(build_dir, "html"))
 
         finally:
             await test.stop()
@@ -296,10 +320,20 @@ async def test_initialization_build_dir_workspace_var():
         actual = SphinxConfig(**configuration["sphinx"])
 
         assert actual.version is not None
-        assert actual.conf_dir == str(root_path)
-        assert actual.src_dir == str(root_path)
-        assert actual.build_dir == str(pathlib.Path(root_path, "_build", "html"))
         assert actual.builder_name == "html"
+
+        # This seems hacky, but paths on windows are case insensitive...
+        if IS_WIN:
+            assert actual.conf_dir.lower() == str(root_path).lower()
+            assert actual.src_dir.lower() == str(root_path).lower()
+            assert (
+                actual.build_dir.lower()
+                == str(pathlib.Path(root_path, "_build", "html")).lower()
+            )
+        else:
+            assert actual.conf_dir == str(root_path)
+            assert actual.src_dir == str(root_path)
+            assert actual.build_dir == str(pathlib.Path(root_path, "_build", "html"))
 
     finally:
         await test.stop()
@@ -337,10 +371,20 @@ async def test_initialization_build_dir_workspace_folder():
         actual = SphinxConfig(**configuration["sphinx"])
 
         assert actual.version is not None
-        assert actual.conf_dir == str(root_path)
-        assert actual.src_dir == str(root_path)
-        assert actual.build_dir == str(pathlib.Path(root_path, "_build", "html"))
         assert actual.builder_name == "html"
+
+        # This seems hacky, but paths on windows are case insensitive...
+        if IS_WIN:
+            assert actual.conf_dir.lower() == str(root_path).lower()
+            assert actual.src_dir.lower() == str(root_path).lower()
+            assert (
+                actual.build_dir.lower()
+                == str(pathlib.Path(root_path, "_build", "html")).lower()
+            )
+        else:
+            assert actual.conf_dir == str(root_path)
+            assert actual.src_dir == str(root_path)
+            assert actual.build_dir == str(pathlib.Path(root_path, "_build", "html"))
 
     finally:
         await test.stop()
@@ -376,15 +420,20 @@ async def test_initialization_build_dir_confdir():
 
         assert "sphinx" in configuration
         actual = SphinxConfig(**configuration["sphinx"])
+        expected_dir = pathlib.Path(actual.conf_dir, "..", "_build", "html").resolve()
 
         assert actual.version is not None
-        assert actual.conf_dir == str(root_path)
-        assert actual.src_dir == str(root_path)
-
-        expected_dir = pathlib.Path(actual.conf_dir, "..", "_build", "html").resolve()
-        assert actual.build_dir == str(expected_dir)
         assert actual.builder_name == "html"
 
+        # This seems hacky, but paths on windows are case insensitive...
+        if IS_WIN:
+            assert actual.conf_dir.lower() == str(root_path).lower()
+            assert actual.src_dir.lower() == str(root_path).lower()
+            assert actual.build_dir.lower() == str(expected_dir).lower()
+        else:
+            assert actual.conf_dir == str(root_path)
+            assert actual.src_dir == str(root_path)
+            assert actual.build_dir == str(expected_dir)
     finally:
         await test.stop()
 
@@ -418,6 +467,9 @@ async def test_initialization_sphinx_error():
         assert configuration["sphinx"]["version"] is None
 
         conf_py = root_uri + "/conf.py"
+        if IS_WIN:
+            conf_py = conf_py.lower()
+
         diagnostics = test.client.diagnostics[conf_py]
         assert len(diagnostics) == 1
 
@@ -563,6 +615,9 @@ async def test_diagnostics(good, bad, expected):
     test_path = workspace_root / "index.rst"
     test_uri = uri.from_fs_path(str(test_path))
 
+    if IS_WIN:
+        test_uri = test_uri.lower()
+
     with test_path.open("w") as f:
         f.write(good)
 
@@ -675,6 +730,8 @@ image file not readable: notfound.png""",
         f.write(good)
 
     test_uri = uri.from_fs_path(str(test_path))
+    if IS_WIN:
+        test_uri = test_uri.lower()
 
     config = ClientServerConfig(
         server_command=[sys.executable, "-m", "esbonio"],

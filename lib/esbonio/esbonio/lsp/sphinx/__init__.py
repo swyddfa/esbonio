@@ -963,6 +963,10 @@ def get_build_dir(
     if build_dir.startswith("/~"):
         build_dir = build_dir.replace("/~", "~")
 
+    # But make sure paths starting with '~' are not corrupted
+    if build_dir.startswith("\\~"):
+        build_dir = build_dir.replace("\\~", "~")
+
     return pathlib.Path(build_dir).expanduser()
 
 
