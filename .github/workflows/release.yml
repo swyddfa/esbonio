@@ -256,14 +256,23 @@ jobs:
       if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
 
   lsp:
-    name: "Language Server -- Python v${{ matrix.python-version }}"
+    name: "Language Server -- Python v${{ matrix.python-version }} -- ${{ matrix.os }}"
     needs: trigger
     if: always() && needs.trigger.outputs.lsp
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04, windows-latest, macos-latest]
+
+        # Python 3.6 is not available on Windows or MacOS runners
+        exclude:
+        - os: macos-latest
+          python-version: "3.6"
+
+        - os: windows-latest
+          python-version: "3.6"
+
     steps:
     - uses: actions/checkout@v2
 
@@ -273,9 +282,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - run: |
-        sudo apt update
-        sudo apt install pandoc
-
         python --version
         python -m pip install --upgrade pip
         python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
@@ -284,30 +290,45 @@ jobs:
     - run: |
         set -e
 
+        sudo apt update
+        sudo apt install pandoc
+
         ./scripts/make-release.sh lsp
       name: Set Version
       id: info
-      if: matrix.python-version == '3.8'
+      if: matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04'
 
     - run: |
         cd lib/esbonio
 
         version=$(echo ${{ matrix.python-version }} | tr -d .)
         python -m tox -e `tox -l | grep $version | tr '\n' ','`
-      name: Test
+      name: Run Tests (when not on Windows)
+      if: matrix.os != 'windows-latest'
+
+    - run: |
+        cd lib/esbonio
+
+        $version=$(echo "${{ matrix.python-version }}" | tr -d ".")
+        $envs=$(tox -l | grep $version)
+
+        echo $($envs -join ",")
+        python -m tox -e $($envs -join ",")
+      name: Run Tests (when on Windows)
+      if: matrix.os == 'windows-latest'
 
     - name: Package
       run: |
         cd lib/esbonio
         python -m tox -e pkg
-      if: always() && matrix.python-version == '3.8'
+      if: always() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04'
 
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v1.0.0
       with:
         name: 'dist'
         path: lib/esbonio/dist
-      if: always() && matrix.python-version == '3.8'
+      if: always() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04'
 
     - name: Publish
       id: assets
@@ -321,7 +342,7 @@ jobs:
 
         src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
         echo "::set-output name=SRC::$src"
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+      if: success() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04' && startsWith(github.ref, 'refs/heads/release')
 
     - name: Create Release
       id: release
@@ -333,7 +354,7 @@ jobs:
         draft: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+      if: success() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04' && startsWith(github.ref, 'refs/heads/release')
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1.0.1
@@ -344,7 +365,7 @@ jobs:
         asset_path: lib/esbonio/dist/${{ steps.assets.outputs.WHL }}
         asset_name: ${{ steps.assets.outputs.WHL }}
         asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+      if: success() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04' && startsWith(github.ref, 'refs/heads/release')
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1.0.1
@@ -355,7 +376,7 @@ jobs:
         asset_path: lib/esbonio/dist/${{ steps.assets.outputs.SRC }}
         asset_name: ${{ steps.assets.outputs.SRC }}
         asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+      if: success() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04' && startsWith(github.ref, 'refs/heads/release')
 
   docs:
     name: Documentation
