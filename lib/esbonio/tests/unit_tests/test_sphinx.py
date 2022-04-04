@@ -21,19 +21,19 @@ from esbonio.lsp.sphinx import SphinxConfig
         ),
         (
             ("/path/to/root", "${workspaceRoot}/config"),
-            pathlib.Path("/path/to/root/config"),
+            pathlib.Path("/path/to/root/config").resolve(),
         ),
         (
             ("/path/to/root", "${workspaceRoot}/../config"),
-            pathlib.Path("/path/to/config"),
+            pathlib.Path("/path/to/config").resolve(),
         ),
         (
             ("/path/to/root", "${workspaceFolder}/config"),
-            pathlib.Path("/path/to/root/config"),
+            pathlib.Path("/path/to/root/config").resolve(),
         ),
         (
             ("/path/to/root", "${workspaceFolder}/../config"),
-            pathlib.Path("/path/to/config"),
+            pathlib.Path("/path/to/config").resolve(),
         ),
     ],
 )
@@ -71,7 +71,7 @@ def test_expand_conf_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(srcDir="${workspaceRoot}/src"),
             ),
-            pathlib.Path("/path/to/root/src"),
+            pathlib.Path("/path/to/root/src").resolve(),
         ),
         (
             (
@@ -79,7 +79,7 @@ def test_expand_conf_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(srcDir="${workspaceRoot}/../src"),
             ),
-            pathlib.Path("/path/to/src"),
+            pathlib.Path("/path/to/src").resolve(),
         ),
         (
             (
@@ -87,7 +87,7 @@ def test_expand_conf_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(srcDir="${workspaceFolder}/src"),
             ),
-            pathlib.Path("/path/to/root/src"),
+            pathlib.Path("/path/to/root/src").resolve(),
         ),
         (
             (
@@ -95,7 +95,7 @@ def test_expand_conf_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(srcDir="${workspaceFolder}/../src"),
             ),
-            pathlib.Path("/path/to/src"),
+            pathlib.Path("/path/to/src").resolve(),
         ),
         (
             (
@@ -103,7 +103,7 @@ def test_expand_conf_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(srcDir="${confDir}/src"),
             ),
-            pathlib.Path("/path/to/config/src"),
+            pathlib.Path("/path/to/config/src").resolve(),
         ),
         (
             (
@@ -111,7 +111,7 @@ def test_expand_conf_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(srcDir="${confDir}/../src"),
             ),
-            pathlib.Path("/path/to/src"),
+            pathlib.Path("/path/to/src").resolve(),
         ),
     ],
 )
@@ -149,7 +149,7 @@ def test_get_src_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(buildDir="${workspaceRoot}/build"),
             ),
-            pathlib.Path("/path/to/root/build"),
+            pathlib.Path("/path/to/root/build").resolve(),
         ),
         (
             (
@@ -157,7 +157,7 @@ def test_get_src_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(buildDir="${workspaceRoot}/../build"),
             ),
-            pathlib.Path("/path/to/build"),
+            pathlib.Path("/path/to/build").resolve(),
         ),
         (
             (
@@ -165,7 +165,7 @@ def test_get_src_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(buildDir="${workspaceFolder}/build"),
             ),
-            pathlib.Path("/path/to/root/build"),
+            pathlib.Path("/path/to/root/build").resolve(),
         ),
         (
             (
@@ -173,7 +173,7 @@ def test_get_src_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(buildDir="${workspaceFolder}/../build"),
             ),
-            pathlib.Path("/path/to/build"),
+            pathlib.Path("/path/to/build").resolve(),
         ),
         (
             (
@@ -181,7 +181,7 @@ def test_get_src_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(buildDir="${confDir}/build"),
             ),
-            pathlib.Path("/path/to/config/build"),
+            pathlib.Path("/path/to/config/build").resolve(),
         ),
         (
             (
@@ -189,7 +189,7 @@ def test_get_src_dir(setup, expected):
                 pathlib.Path("/path/to/config"),
                 SphinxConfig(buildDir="${confDir}/../build"),
             ),
-            pathlib.Path("/path/to/build"),
+            pathlib.Path("/path/to/build").resolve(),
         ),
     ],
 )
