@@ -1,0 +1,1 @@
+Instead of spamming the client with notifications, the language server now reports Sphinx config/build errors as diagnostics.

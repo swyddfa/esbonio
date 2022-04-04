@@ -18,6 +18,7 @@ from esbonio.lsp import ESBONIO_SERVER_CONFIGURATION
 from esbonio.lsp import ESBONIO_SERVER_PREVIEW
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxConfig
+from esbonio.lsp.testing import sphinx_version
 
 
 def make_esbonio_client(*args, **kwargs):
@@ -390,6 +391,9 @@ async def test_initialization_build_dir_confdir():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
+@pytest.mark.skipif(
+    sphinx_version(eq=2), reason="Sphinx 2.x does not wrap config errors"
+)
 async def test_initialization_sphinx_error():
     """Ensure that the user is notified when we Sphinx throws an exception."""
 
@@ -413,11 +417,17 @@ async def test_initialization_sphinx_error():
         assert "sphinx" in configuration
         assert configuration["sphinx"]["version"] is None
 
-        assert len(test.client.messages) == 1
-        message = test.client.messages[0]
+        conf_py = root_uri + "/conf.py"
+        diagnostics = test.client.diagnostics[conf_py]
+        assert len(diagnostics) == 1
 
-        assert message.type == MessageType.Error.value
-        assert message.message.startswith("Unable to initialize Sphinx")
+        diagnostic = diagnostics[0]
+        assert diagnostic.message == "division by zero"
+        assert diagnostic.source == "conf.py"
+        assert diagnostic.severity == DiagnosticSeverity.Error
+        assert diagnostic.range == Range(
+            start=Position(line=47, character=0), end=Position(line=48, character=0)
+        )
 
     finally:
         await test.stop()
@@ -454,11 +464,10 @@ async def test_initialization_build_error():
         assert "sphinx" in configuration
         assert configuration["sphinx"]["version"] is not None
 
-        assert len(test.client.messages) == 1
-        message = test.client.messages[0]
-
-        assert message.type == MessageType.Error.value
-        assert message.message.startswith("Unable to build documentation")
+        diagnostic = list(test.client.diagnostics.values())[0][0]
+        assert "index.rst not found" in diagnostic.message
+        assert diagnostic.source == "sphinx-build"
+        assert diagnostic.severity == DiagnosticSeverity.Error
 
     finally:
         await test.stop()
