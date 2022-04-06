@@ -17,20 +17,12 @@
                 },
                 {
                     "label": "sphinx-default",
-                    "value": "lib/esbonio/tests/data/sphinx-default"
-                },
-                {
-                    "label": "sphinx-error",
-                    "value": "lib/esbonio/tests/data/sphinx-error"
+                    "value": "lib/esbonio/tests/sphinx-default/workspace"
                 },
                 {
                     "label": "sphinx-extensions",
-                    "value": "lib/esbonio/tests/data/sphinx-extensions"
+                    "value": "lib/esbonio/tests/sphinx-extensions/workspace"
                 },
-                {
-                    "label": "sphinx-srcdir",
-                    "value": "lib/esbonio/tests/data/sphinx-srcdir"
-                }
             ]
         }
     ],
