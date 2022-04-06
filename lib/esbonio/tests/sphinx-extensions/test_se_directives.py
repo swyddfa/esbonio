@@ -19,6 +19,7 @@ EXPECTED = {
     "image",
     "toctree",
     "macro",
+    "not-a-true-directive",  # Ensure the server doesn't crash on non-standard directives.
     "function",
 }
 
