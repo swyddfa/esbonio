@@ -12,6 +12,8 @@
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
 # -- Project information -----------------------------------------------------
+from sphinx.directives.code import CodeBlock
+
 
 project = "Defaults"
 copyright = "2020, Sphinx"
@@ -53,3 +55,24 @@ html_theme = "alabaster"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+
+class Wrapped:
+    def __init__(
+        self,
+        directive,
+    ):
+        self.directive = directive
+        self.required_arguments = directive.required_arguments
+        self.optional_arguments = directive.optional_arguments
+        self.option_spec = directive.option_spec
+        self.has_content = directive.has_content
+        self.final_argument_whitespace = directive.final_argument_whitespace
+
+    def __call__(self, *args):
+        return self.directive(*args)
+
+
+def setup(app):
+
+    app.add_directive("not-a-true-directive", Wrapped(CodeBlock))

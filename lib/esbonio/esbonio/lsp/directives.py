@@ -341,13 +341,18 @@ class Directives(LanguageFeature):
                 args = ""
                 insert_format = InsertTextFormat.PlainText
 
+            try:
+                dotted_name = f"{directive.__module__}.{directive.__name__}"
+            except AttributeError:
+                dotted_name = f"{directive.__module__}.{directive.__class__.__name__}"
+
             insert_text = f".. {name}::{args}"
 
             items.append(
                 CompletionItem(
                     label=name,
                     kind=CompletionItemKind.Class,
-                    detail=f"{directive.__module__}.{directive.__name__}",
+                    detail=dotted_name,
                     filter_text=insert_text,
                     text_edit=TextEdit(range=range_, new_text=insert_text),
                     insert_text_format=insert_format,
