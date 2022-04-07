@@ -23,6 +23,10 @@
                     "label": "sphinx-extensions",
                     "value": "lib/esbonio/tests/sphinx-extensions/workspace"
                 },
+                {
+                    "label": "extension-basics",
+                    "value": "lib/esbonio/tests/extension-basics/workspace"
+                },
             ]
         }
     ],
@@ -39,9 +43,9 @@
             "outFiles": [
                 "${workspaceRoot}/code/dist/**/*.js"
             ],
-            "preLaunchTask": "${defaultBuildTask}",
+            // "preLaunchTask": "${defaultBuildTask}",
             "env": {
-                "VSCODE_LSP_DEBUG": "true"
+                // "VSCODE_LSP_DEBUG": "true"
             }
         },
         {

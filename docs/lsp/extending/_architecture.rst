@@ -6,7 +6,7 @@
    <div class="figure align-default">
    <svg
       width="100%"
-      viewBox="0 0 297 210"
+      viewBox="0 0 297 170"
       style="background: var(--color-content-background)"
       version="1.1"
       id="svg5"
@@ -88,9 +88,16 @@
          style="fill:var(--color-content-background);stroke:var(--color-content-foreground);stroke-width:1;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
          id="rect1192-3"
          width="52.916668"
-         height="129.64583"
+         height="140.64583"
          x="5.2916665"
-         y="31.75001" />
+         y="22.75001" />
+      <rect
+         style="fill:var(--color-content-background);stroke:var(--color-content-foreground);stroke-width:1;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+         id="rect1192-3"
+         width="182.916668"
+         height="140.64583"
+         x="113.2916665"
+         y="22.75001" />
       <rect
          style="fill:var(--color-sidebar-background);fill-rule:evenodd;stroke:var(--color-content-foreground);stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
          id="rect31"
@@ -112,6 +119,20 @@
          height="25.12426"
          x="211.83257"
          y="75.406258" />
+      <rect
+         style="fill:var(--color-admonition-title-background--warning);fill-rule:evenodd;stroke:var(--color-content-foreground);stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect31-5"
+         width="30.096382"
+         height="8.12426"
+         x="213.83257"
+         y="89.406258" />
+      <rect
+         style="fill:var(--color-admonition-title-background--warning);fill-rule:evenodd;stroke:var(--color-content-foreground);stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         id="rect31-5"
+         width="30.096382"
+         height="8.12426"
+         x="246.83257"
+         y="89.406258" />
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:5.64444px;line-height:1.25;font-family:sans-serif;fill:var(--color-content-foreground);fill-opacity:1;stroke:none;stroke-width:0.264583"
@@ -131,7 +152,27 @@
             id="tspan3352-2"
             style="font-size:5.64444px;stroke-width:0.264583"
             x="215.5123"
-            y="89.815636">Language Feature #2</tspan></text>
+            y="84.815636">Language Feature #2</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:5.64444px;line-height:1.25;font-family:sans-serif;fill:var(--color-content-foreground);fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="215.90004"
+         y="60.854172"
+         id="text3354"><tspan
+            id="tspan3352"
+            style="font-size:4.64444px;stroke-width:0.264583"
+            x="215.90004"
+            y="94.854172">Provider #1</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:5.64444px;line-height:1.25;font-family:sans-serif;fill:var(--color-content-foreground);fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="215.90004"
+         y="60.854172"
+         id="text3354"><tspan
+            id="tspan3352"
+            style="font-size:4.64444px;stroke-width:0.264583"
+            x="249.90004"
+            y="94.854172">Provider #2</tspan></text>
       <text
          xml:space="preserve"
          style="font-style:normal;font-weight:normal;font-size:5.64444px;line-height:1.25;font-family:sans-serif;fill:var(--color-content-foreground);fill-opacity:1;stroke:none;stroke-width:0.264583"
@@ -170,6 +211,16 @@
             x="92.105232"
             y="99.029205"
             id="tspan25491-6-7">LSP Protocol</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-style:normal;font-weight:normal;font-size:5.64444px;line-height:1.25;font-family:sans-serif;fill:var(--color-content-foreground);fill-opacity:1;stroke:none;stroke-width:0.264583"
+         x="141.52403"
+         y="98.416359"
+         id="text3354-6-0-3"><tspan
+         style="font-size:5.64444px;text-align:center;text-anchor:middle;stroke-width:0.264583"
+         x="135.52403"
+         y="29.416359"
+         id="tspan25491-0">Python Process</tspan></text>
       <g
          id="g34651"
          transform="translate(-5.8208336)">

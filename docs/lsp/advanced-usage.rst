@@ -11,10 +11,8 @@ functionality or use a different server entirely.
 
 Yes there are!
 
-Due to the extensible nature of Sphinx and reStructuredText, the ``esbonio`` python package
-is actually a framework for building reStructuredText language servers. It just so happens
-that it also comes with a default implementation that works well for Sphinx projects (see
-the section on :doc:`/lsp/extending` if you want to know more)
+Due to the extensible nature of Sphinx and reStructuredText, the ``esbonio`` python package is actually a framework for building reStructuredText language servers.
+It just so happens that it also comes with a default implementation that works well for Sphinx projects (see the section on :ref:`lsp-extending` if you want to know more)
 
 However, all that we need to know for the moment is the concept of startup modules.
 
