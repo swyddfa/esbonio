@@ -1,16 +1,17 @@
 import itertools
 
-import py.test
+import pytest
 from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
+from pytest_lsp import check
+from pytest_lsp import Client
 
-from esbonio.lsp.testing import ClientServer
 from esbonio.lsp.testing import completion_request
-from esbonio.lsp.testing import definition_request
 from esbonio.lsp.testing import directive_argument_patterns
 
-DEFAULT_ROOT_FILES = {
+
+ROOT_FILES = {
     "_static",
     "_templates",
     "theorems",
@@ -20,36 +21,24 @@ DEFAULT_ROOT_FILES = {
     "Makefile",
 }
 
-EXT_ROOT_FILES = {
-    "theorems",
-    "conf.py",
-    "index.rst",
-    "glossary.rst",
-    "make.bat",
-    "Makefile",
-}
-
 THEOREM_FILES = {"index.rst", "pythagoras.rst"}
 
 
-@py.test.mark.asyncio
-@py.test.mark.parametrize(
-    "project, path, position, expected",
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "path, position, expected",
     [
         (
-            "sphinx-default",
             "theorems/pythagoras.rst",
             Position(line=8, character=4),
             None,
         ),
         (
-            "sphinx-default",
             "definitions.rst",
             Position(line=17, character=20),
             None,
         ),
         (
-            "sphinx-default",
             "theorems/pythagoras.rst",
             Position(line=8, character=18),
             Location(
@@ -61,7 +50,6 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
             ),
         ),
         (
-            "sphinx-default",
             "theorems/pythagoras.rst",
             Position(line=10, character=22),
             Location(
@@ -73,7 +61,6 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
             ),
         ),
         (
-            "sphinx-default",
             "definitions.rst",
             Position(line=21, character=20),
             Location(
@@ -85,7 +72,6 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
             ),
         ),
         (
-            "sphinx-default",
             "definitions.rst",
             Position(line=23, character=25),
             Location(
@@ -97,7 +83,6 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
             ),
         ),
         (
-            "sphinx-default",
             "definitions.rst",
             Position(line=25, character=25),
             Location(
@@ -108,12 +93,11 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
                 ),
             ),
         ),
-        ("sphinx-default", "definitions.rst", Position(line=27, character=25), None),
+        ("definitions.rst", Position(line=27, character=25), None),
     ],
 )
 async def test_include_definitions(
-    client_server,
-    project: str,
+    client: Client,
     path: str,
     position: Position,
     expected: Location,
@@ -121,10 +105,8 @@ async def test_include_definitions(
     """Ensure that we can correctly handle ``textDocument/definition`` requests for
     ``include::`` directive arguments."""
 
-    test = await client_server(project)  # type: ClientServer
-    test_uri = test.server.workspace.root_uri + f"/{path}"
-
-    results = await definition_request(test, test_uri, position)
+    test_uri = client.root_uri + f"/{path}"
+    results = await client.definition_request(test_uri, position)
 
     if expected is None:
         assert len(results) == 0
@@ -132,106 +114,63 @@ async def test_include_definitions(
         assert len(results) == 1
         result = results[0]
 
-        assert result.uri == test.server.workspace.root_uri + f"/{expected.uri}"
+        assert result.uri == client.root_uri + f"/{expected.uri}"
         assert result.range == expected.range
 
 
 def completion_trigger_cases(path: str = ""):
     return [
         *directive_argument_patterns("include", path),
-        *directive_argument_patterns("literalinclude", path),
     ]
 
 
-@py.test.mark.asyncio
-@py.test.mark.parametrize(
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
     "text,setup",
     [
         *itertools.product(
             [*completion_trigger_cases("/"), *completion_trigger_cases("/conf")],
             [
-                (
-                    "sphinx-default",
-                    "index.rst",
-                    DEFAULT_ROOT_FILES,
-                    None,
-                ),
-                (
-                    "sphinx-default",
-                    "theorems/pythagoras.rst",
-                    DEFAULT_ROOT_FILES,
-                    None,
-                ),
+                ("index.rst", ROOT_FILES, None),
+                ("theorems/pythagoras.rst", ROOT_FILES, None),
             ],
         ),
         *itertools.product(
             completion_trigger_cases(),
             [
-                (
-                    "sphinx-default",
-                    "index.rst",
-                    DEFAULT_ROOT_FILES,
-                    None,
-                ),
-                (
-                    "sphinx-default",
-                    "theorems/pythagoras.rst",
-                    THEOREM_FILES,
-                    None,
-                ),
+                ("index.rst", ROOT_FILES, None),
+                ("theorems/pythagoras.rst", THEOREM_FILES, None),
             ],
         ),
         *itertools.product(
             completion_trigger_cases("../"),
             [
-                (
-                    "sphinx-default",
-                    "theorems/pythagoras.rst",
-                    DEFAULT_ROOT_FILES,
-                    None,
-                ),
-                (
-                    "sphinx-default",
-                    "index.rst",
-                    {"sphinx-default", "sphinx-extensions"},
-                    None,
-                ),
+                ("theorems/pythagoras.rst", ROOT_FILES, None),
+                ("index.rst", {"workspace", "conftest.py"}, None),
             ],
         ),
         *itertools.product(
             completion_trigger_cases("/theorems/"),
             [
-                (
-                    "sphinx-default",
-                    "index.rst",
-                    THEOREM_FILES,
-                    None,
-                ),
-                (
-                    "sphinx-default",
-                    "theorems/pythagoras.rst",
-                    THEOREM_FILES,
-                    None,
-                ),
+                ("index.rst", THEOREM_FILES, None),
+                ("theorems/pythagoras.rst", THEOREM_FILES, None),
             ],
         ),
     ],
 )
-async def test_include_argument_completions(client_server, text, setup):
+async def test_include_argument_completions(client: Client, text, setup):
     """Ensure that we can offer the correct filepath suggestions."""
 
-    project, filepath, expected, unexpected = setup
+    filepath, expected, unexpected = setup
+    test_uri = client.root_uri + f"/{filepath}"
 
-    test = await client_server(project)  # type: ClientServer
-    test_uri = test.server.workspace.root_uri + f"/{filepath}"
-
-    results = await completion_request(test, test_uri, text)
+    results = await completion_request(client, test_uri, text)
 
     items = {item.label for item in results.items}
+    expected = expected or set()
     unexpected = unexpected or set()
 
-    if expected is None:
-        assert len(items) == 0
-    else:
-        assert expected == items & expected
-        assert set() == items & unexpected
+    assert expected == items & expected
+    assert set() == items & unexpected
+
+    check.completion_items(client, results.items)

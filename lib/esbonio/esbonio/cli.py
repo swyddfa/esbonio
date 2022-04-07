@@ -5,12 +5,6 @@ import sys
 def setup_cli(progname: str, description: str) -> argparse.ArgumentParser:
     """Return an argument parser with the default command line options required for
     main.
-
-    In addition to any command line argumments you add, you should attach a function
-    that takes the parsed arguments and returns a configured language server::
-
-        cli = setup_cli("lsp-server", "my server's description")
-        cli.set_defaults(configure=my_configure_function)
     """
 
     cli = argparse.ArgumentParser(prog=f"python -m {progname}", description=description)

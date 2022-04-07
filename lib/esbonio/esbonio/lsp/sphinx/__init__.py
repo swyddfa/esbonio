@@ -1,6 +1,7 @@
 import hashlib
 import logging
 import pathlib
+import platform
 import re
 import traceback
 import typing
@@ -32,6 +33,7 @@ from pygls.lsp.types import ShowDocumentParams
 from sphinx import __version__ as __sphinx_version__
 from sphinx.application import Sphinx
 from sphinx.domains import Domain
+from sphinx.errors import ConfigError
 from sphinx.util import console
 from sphinx.util.logging import SphinxLogRecord
 from sphinx.util.logging import WarningLogRecordTranslator
@@ -51,6 +53,8 @@ except ImportError:
         def filter(self, *args, **kwargs):
             return True
 
+
+IS_LINUX = platform.system() == "Linux"
 
 # fmt: off
 # Order matters!
@@ -274,12 +278,12 @@ class SphinxLanguageServer(RstLanguageServer):
                     "warnings": 0,
                 },
             )
-        except Exception:
+        except Exception as exc:
             self.logger.error(traceback.format_exc())
-            self.show_message(
-                message="Unable to initialize Sphinx, see output window for details.",
-                msg_type=MessageType.Error,
-            )
+            uri, diagnostic = exception_to_diagnostic(exc)
+            self.set_diagnostics("conf.py", uri, [diagnostic])
+
+            self.sync_diagnostics()
             self.send_notification(
                 "esbonio/buildComplete",
                 {"config": self.configuration, "error": True, "warnings": 0},
@@ -313,7 +317,10 @@ class SphinxLanguageServer(RstLanguageServer):
                 ) or pathlib.Path(".")
 
             if str(conf_dir / "conf.py") == filepath:
+                self.clear_diagnostics("conf.py")
+                self.sync_diagnostics()
                 self.app = self._initialize_sphinx()
+
         else:
             self.clear_diagnostics("sphinx", params.text_document.uri)
 
@@ -335,6 +342,8 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self.logger.debug("Building...")
         self.send_notification("esbonio/buildStart", {})
+        self.clear_diagnostics("sphinx-build")
+        self.sync_diagnostics()
 
         # Reset the warnings counter
         self.app._warncount = 0
@@ -343,12 +352,11 @@ class SphinxLanguageServer(RstLanguageServer):
 
         try:
             self.app.build()
-        except Exception:
-            message = "Unable to build documentation, see output window for details."
+        except Exception as exc:
             error = True
-
             self.logger.error(traceback.format_exc())
-            self.show_message(message=message, msg_type=MessageType.Error)
+            uri, diagnostic = exception_to_diagnostic(exc)
+            self.set_diagnostics("sphinx-build", uri, [diagnostic])
 
         for doc, diagnostics in self.sphinx_log.diagnostics.items():
             self.logger.debug("Found %d problems for %s", len(diagnostics), doc)
@@ -480,7 +488,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
             return {}
 
-        if not self.preview_process and not IS_WIN:
+        if not self.preview_process and IS_LINUX:
             self.logger.debug("Starting preview server.")
             server = make_preview_server(self.app.outdir)
             self.preview_port = server.server_port
@@ -488,7 +496,7 @@ class SphinxLanguageServer(RstLanguageServer):
             self.preview_process = Process(target=server.serve_forever, daemon=True)
             self.preview_process.start()
 
-        if not self.preview_process and IS_WIN:
+        if not self.preview_process and not IS_LINUX:
             self.logger.debug("Starting preview server")
 
             q: Queue = Queue()
@@ -958,7 +966,41 @@ def get_build_dir(
     if build_dir.startswith("/~"):
         build_dir = build_dir.replace("/~", "~")
 
+    # But make sure paths starting with '~' are not corrupted
+    if build_dir.startswith("\\~"):
+        build_dir = build_dir.replace("\\~", "~")
+
     return pathlib.Path(build_dir).expanduser()
+
+
+def exception_to_diagnostic(exc: BaseException):
+    """Convert an exception into a diagnostic we can send to the client."""
+
+    # Config errors sometimes wrap the true cause of the problem
+    if isinstance(exc, ConfigError) and exc.__cause__ is not None:
+        exc = exc.__cause__
+
+    if isinstance(exc, SyntaxError):
+        path = pathlib.Path(exc.filename or "")
+        line = (exc.lineno or 1) - 1
+    else:
+        tb = exc.__traceback__
+        frame = traceback.extract_tb(tb)[-1]
+        path = pathlib.Path(frame.filename)
+        line = frame.lineno - 1
+
+    message = type(exc).__name__ if exc.args.count == 0 else exc.args[0]
+
+    diagnostic = Diagnostic(
+        range=Range(
+            start=Position(line=line, character=0),
+            end=Position(line=line + 1, character=0),
+        ),
+        message=message,
+        severity=DiagnosticSeverity.Error,
+    )
+
+    return Uri.from_fs_path(str(path)), diagnostic
 
 
 cli = setup_cli("esbonio.lsp.sphinx", "Esbonio's Sphinx language server.")
