@@ -1,1 +1,0 @@
-A client's capabilities is now respected when constructing ``CompletionItems``

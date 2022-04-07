@@ -1,2 +1,0 @@
-The language server should no longer fail when suggesting completions for directives that are not class based.
-e.g. ``DirectiveContainer`` based directives from the ``breathe`` extension.

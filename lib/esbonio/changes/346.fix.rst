@@ -1,1 +1,0 @@
-Running ``$ esbonio`` directly on the command line now correctly starts the server again

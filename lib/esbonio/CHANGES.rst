@@ -1,3 +1,17 @@
+v0.10.3 - 2022-04-07
+--------------------
+
+Fixes
+^^^^^
+
+- A client's capabilities is now respected when constructing ``CompletionItems`` (`#270 <https://github.com/swyddfa/esbonio/issues/270>`_)
+- Instead of spamming the client with notifications, the language server now reports Sphinx config/build errors as diagnostics. (`#315 <https://github.com/swyddfa/esbonio/issues/315>`_)
+- Previews should now work on MacOS (`#341 <https://github.com/swyddfa/esbonio/issues/341>`_)
+- Running ``$ esbonio`` directly on the command line now correctly starts the server again (`#346 <https://github.com/swyddfa/esbonio/issues/346>`_)
+- The language server should no longer fail when suggesting completions for directives that are not class based.
+  e.g. ``DirectiveContainer`` based directives from the ``breathe`` extension. (`#353 <https://github.com/swyddfa/esbonio/issues/353>`_)
+
+
 v0.10.2 - 2022-03-22
 --------------------
 
