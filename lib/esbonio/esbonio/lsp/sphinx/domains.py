@@ -138,7 +138,7 @@ class DomainFeatures:
             if "refid" not in node:
                 continue
 
-            if label == node["refid"].replace("-", "_"):
+            if doctree.nameids.get(label, "") == node["refid"]:
                 uri = Uri.from_fs_path(node.source)
                 line = node.line
                 break

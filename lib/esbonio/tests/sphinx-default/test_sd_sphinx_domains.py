@@ -272,6 +272,17 @@ WELCOME_LABEL = Location(
                 ),
             ),
         ),
+        (
+            "definitions.rst",
+            Position(line=29, character=36),
+            Location(
+                uri="index.rst",
+                range=Range(
+                    start=Position(line=18, character=0),
+                    end=Position(line=19, character=0),
+                ),
+            ),
+        ),
     ],
 )
 async def test_role_target_definitions(client: Client, path, position, expected):
