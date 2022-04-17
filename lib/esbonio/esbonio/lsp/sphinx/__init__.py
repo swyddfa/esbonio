@@ -103,6 +103,9 @@ class SphinxConfig(BaseModel):
     builder_name: str = Field("html", alias="builderName")
     """The currently used builder name."""
 
+    force_full_build: bool = Field(True, alias="forceFullBuild")
+    """Flag that can be used to force a full build on startup."""
+
 
 class SphinxServerConfig(ServerConfig):
 
@@ -406,7 +409,7 @@ class SphinxLanguageServer(RstLanguageServer):
             buildername=builder_name,
             status=None,  # type: ignore
             warning=None,  # type: ignore
-            freshenv=True,  # Have Sphinx reload everything on first build.
+            freshenv=sphinx.force_full_build,
         )
 
         # This has to happen after app creation otherwise our handler

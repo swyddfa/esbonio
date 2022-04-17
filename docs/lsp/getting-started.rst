@@ -169,6 +169,18 @@ Configuration
 
    .. include:: ./editors/emacs-lsp-mode/_configuration.rst
 
+.. confval:: sphinx.buildDir (string)
+
+   By default the language server will choose a cache directory (as determined by
+   `appdirs <https://pypi.org/project/appdirs>`_) to put Sphinx's build output.
+   This option can be used to force the language server to use a location
+   of your choosing, currently accepted values include:
+
+   - ``/path/to/src/`` - An absolute path
+   - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
+   - ``${workspaceFolder}/docs/src`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
+   - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
+
 .. confval:: sphinx.confDir (string)
 
    The language server attempts to automatically find the folder which contains your
@@ -179,7 +191,6 @@ Configuration
    - ``/path/to/docs`` - An absolute path
    - ``${workspaceRoot}/docs`` - A path relative to the root of your workspace.
    - ``${workspaceFolder}/docs`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
-
 
 .. confval:: sphinx.srcDir (string)
 
@@ -193,17 +204,9 @@ Configuration
    - ``${workspaceFolder}/docs/src`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
-.. confval:: sphinx.buildDir (string)
+.. confval:: sphinx.forceFullBuild (boolean)
 
-   By default the language server will choose a cache directory (as determined by
-   `appdirs <https://pypi.org/project/appdirs>`_) to put Sphinx's build output.
-   This option can be used to force the language server to use a location
-   of your choosing, currently accepted values include:
-
-   - ``/path/to/src/`` - An absolute path
-   - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
-   - ``${workspaceFolder}/docs/src`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
-   - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
+   Flag that indicates if the server should force a full build of the documentation on startup. (Default: ``true``)
 
 .. confval:: server.logLevel (string)
 
