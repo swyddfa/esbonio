@@ -208,6 +208,12 @@ Configuration
 
    Flag that indicates if the server should force a full build of the documentation on startup. (Default: ``true``)
 
+.. confval:: sphinx.numJobs (string or integer)
+
+   Controls the number of parallel jobs used during a Sphinx build.
+
+   The default value of ``"auto"`` will behave the same as passing ``-j auto`` to a ``sphinx-build`` command. Setting this value to ``1`` effectively disables parallel builds.
+
 .. confval:: server.logLevel (string)
 
    This can be used to set the level of log messages emitted by the server. This can be set
