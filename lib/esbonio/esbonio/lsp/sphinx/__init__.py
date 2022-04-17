@@ -1,5 +1,7 @@
 import hashlib
+import json
 import logging
+import multiprocessing
 import pathlib
 import platform
 import re
@@ -13,6 +15,7 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 import appdirs
 import pygls.uris as Uri
@@ -37,6 +40,7 @@ from sphinx.errors import ConfigError
 from sphinx.util import console
 from sphinx.util.logging import SphinxLogRecord
 from sphinx.util.logging import WarningLogRecordTranslator
+from typing_extensions import Literal
 
 from esbonio.cli import setup_cli
 from esbonio.lsp.rst import LspHandler
@@ -85,7 +89,8 @@ class MissingConfigError(Exception):
 
 class SphinxConfig(BaseModel):
     """Used to represent either the current Sphinx configuration or the config options
-    provided by the user at startup."""
+    provided by the user at startup.
+    """
 
     version: Optional[str]
     """Sphinx's version number."""
@@ -106,6 +111,55 @@ class SphinxConfig(BaseModel):
     force_full_build: bool = Field(True, alias="forceFullBuild")
     """Flag that can be used to force a full build on startup."""
 
+    num_jobs: Union[Literal["auto"], int] = Field("auto", alias="numJobs")
+    """The number of jobs to use for parallel builds."""
+
+    @property
+    def parallel(self) -> int:
+        """The parsed value of the ``num_jobs`` field."""
+
+        if self.num_jobs == "auto":
+            return multiprocessing.cpu_count()
+
+        return self.num_jobs
+
+    def get_sphinx_args(self, root_uri: str) -> Dict[str, Any]:
+        """Get the arguments for the Sphinx application object corresponding to this
+        config.
+
+        Parameters
+        ----------
+        root_uri
+           The workspace root uri
+
+        Raises
+        ------
+        MissingConfigError
+           Raised when a valid conf dir cannot be found.
+        """
+
+        conf_dir = self.resolve_conf_dir(root_uri)
+        if conf_dir is None:
+            raise MissingConfigError()
+
+        builder_name = self.builder_name
+        src_dir = self.resolve_src_dir(root_uri, str(conf_dir))
+        build_dir = self.resolve_build_dir(root_uri, str(conf_dir))
+        doctree_dir = build_dir / "doctrees"
+        build_dir /= builder_name
+
+        return {
+            "buildername": builder_name,
+            "confdir": str(conf_dir),
+            "doctreedir": str(doctree_dir),
+            "freshenv": self.force_full_build,
+            "outdir": str(build_dir),
+            "parallel": self.parallel,
+            "srcdir": str(src_dir),
+            "status": None,
+            "warning": None,
+        }
+
     def resolve_build_dir(self, root_uri: str, actual_conf_dir: str) -> pathlib.Path:
         """Get the build dir to use based on the user's config.
 
@@ -118,9 +172,11 @@ class SphinxConfig(BaseModel):
         either an absolute path, or a path based on the following "variables".
 
         - ``${workspaceRoot}`` which expands to the workspace root as provided
-        by the language client.
-        - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
-        multi-root support.
+          by the language client.
+
+        - ``${workspaceFolder}`` alias for ``${workspaceRoot}``, placeholder ready for
+          multi-root support.
+
         - ``${confDir}`` which expands to the configured config dir.
 
         Parameters
@@ -176,7 +232,8 @@ class SphinxConfig(BaseModel):
 
         - ``${workspaceRoot}`` which expands to the workspace root as provided by the
           language client.
-        - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
+
+        - ``${workspaceFolder}`` alias for ``${workspaceRoot}``, placeholder ready for
           multi-root support.
 
         Parameters
@@ -216,9 +273,11 @@ class SphinxConfig(BaseModel):
         currently we support
 
         - ``${workspaceRoot}`` which expands to the workspace root as provided
-        by the language client.
-        - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
-        multi-root support.
+          by the language client.
+
+        - ``${workspaceFolder}`` alias for ``${workspaceRoot}``, placeholder ready for
+          multi-root support.
+
         - ``${confDir}`` which expands to the configured config dir.
 
         Parameters
@@ -231,7 +290,7 @@ class SphinxConfig(BaseModel):
         """
 
         if not self.src_dir:
-            return actual_conf_dir
+            return pathlib.Path(actual_conf_dir)
 
         src_dir = self.src_dir
         root_dir = Uri.to_fs_path(root_uri)
@@ -521,39 +580,17 @@ class SphinxLanguageServer(RstLanguageServer):
         sphinx = options.sphinx
         server = options.server
 
-        self.logger.debug("Workspace root %s", self.workspace.root_uri)
-        self.logger.debug("Sphinx Config %s", sphinx.dict())
+        self.logger.debug("Workspace root '%s'", self.workspace.root_uri)
+        self.logger.debug("User Config %s", json.dumps(sphinx.dict(), indent=2))
 
-        conf_dir = sphinx.resolve_conf_dir(self.workspace.root_uri)
-        if conf_dir is None:
-            raise MissingConfigError()
-
-        builder_name = sphinx.builder_name
-        src_dir = sphinx.resolve_src_dir(self.workspace.root_uri, conf_dir)
-        build_dir = sphinx.resolve_build_dir(self.workspace.root_uri, conf_dir)
-        doctree_dir = build_dir / "doctrees"
-        build_dir /= builder_name
-
-        self.logger.debug("Config dir %s", conf_dir)
-        self.logger.debug("Src dir %s", src_dir)
-        self.logger.debug("Build dir %s", build_dir)
-        self.logger.debug("Doctree dir %s", doctree_dir)
+        sphinx_args = sphinx.get_sphinx_args(self.workspace.root_uri)
+        self.logger.debug("Sphinx Args %s", json.dumps(sphinx_args, indent=2))
 
         # Disable color escape codes in Sphinx's log messages
         console.nocolor()
+        app = Sphinx(**sphinx_args)
 
-        app = Sphinx(
-            srcdir=str(src_dir),
-            confdir=str(conf_dir),
-            outdir=str(build_dir),
-            doctreedir=str(doctree_dir),
-            buildername=builder_name,
-            status=None,  # type: ignore
-            warning=None,  # type: ignore
-            freshenv=sphinx.force_full_build,
-        )
-
-        # This has to happen after app creation otherwise our handler
+        # This has to happen after app creation otherwise our logging handler
         # will get cleared by Sphinx's setup.
         if not server.hide_sphinx_output:
             sphinx_logger = logging.getLogger("sphinx")

@@ -11,13 +11,24 @@ Language Servers
 
 .. autofunction:: esbonio.lsp.create_language_server
 
+RstLanguageServer
+^^^^^^^^^^^^^^^^^
+
 .. autoclass:: esbonio.lsp.rst.RstLanguageServer
    :members:
    :show-inheritance:
 
+SphinxLanguageServer
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: esbonio.lsp.sphinx.SphinxConfig
+   :members:
+
 .. autoclass:: esbonio.lsp.sphinx.SphinxLanguageServer
    :members:
    :show-inheritance:
+
+.. autoclass:: esbonio.lsp.sphinx.MissingConfigError
 
 Language Features
 -----------------
