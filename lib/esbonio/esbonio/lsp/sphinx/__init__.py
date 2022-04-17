@@ -106,6 +106,147 @@ class SphinxConfig(BaseModel):
     force_full_build: bool = Field(True, alias="forceFullBuild")
     """Flag that can be used to force a full build on startup."""
 
+    def resolve_build_dir(self, root_uri: str, actual_conf_dir: str) -> pathlib.Path:
+        """Get the build dir to use based on the user's config.
+
+        If nothing is specified in the given ``config``, this will choose a location
+        within the user's cache dir (as determined by
+        `appdirs <https://pypi.org/project/appdirs>`). The directory name will be a hash
+        derived from the given ``conf_dir`` for the project.
+
+        Alternatively the user (or least language client) can override this by setting
+        either an absolute path, or a path based on the following "variables".
+
+        - ``${workspaceRoot}`` which expands to the workspace root as provided
+        by the language client.
+        - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
+        multi-root support.
+        - ``${confDir}`` which expands to the configured config dir.
+
+        Parameters
+        ----------
+        root_uri
+           The workspace root uri
+
+        actual_conf_dir:
+           The fully resolved conf dir for the project
+        """
+
+        if not self.build_dir:
+            # Try to pick a sensible dir based on the project's location
+            cache = appdirs.user_cache_dir("esbonio", "swyddfa")
+            project = hashlib.md5(str(actual_conf_dir).encode()).hexdigest()
+
+            return pathlib.Path(cache) / project
+
+        root_dir = Uri.to_fs_path(root_uri)
+        match = PATH_VAR_PATTERN.match(self.build_dir)
+
+        if match and match.group(1) in {"workspaceRoot", "workspaceFolder"}:
+            build = pathlib.Path(self.build_dir).parts[1:]
+            return pathlib.Path(root_dir, *build).resolve()
+
+        if match and match.group(1) == "confDir":
+            build = pathlib.Path(self.build_dir).parts[1:]
+            return pathlib.Path(actual_conf_dir, *build).resolve()
+
+        # Convert path to/from uri so that any path quirks from windows are
+        # automatically handled
+        build_uri = Uri.from_fs_path(self.build_dir)
+        build_dir = Uri.to_fs_path(build_uri)
+
+        # But make sure paths starting with '~' are not corrupted
+        if build_dir.startswith("/~"):
+            build_dir = build_dir.replace("/~", "~")
+
+        # But make sure (windows) paths starting with '~' are not corrupted
+        if build_dir.startswith("\\~"):
+            build_dir = build_dir.replace("\\~", "~")
+
+        return pathlib.Path(build_dir).expanduser()
+
+    def resolve_conf_dir(self, root_uri: str) -> Optional[pathlib.Path]:
+        """Get the conf dir to use based on the user's config.
+
+        If ``conf_dir`` is not set, this method will attempt to find it by searching
+        within the ``root_uri`` for a ``conf.py`` file. If multiple files are found, the
+        first one found will be chosen.
+
+        If ``conf_dir`` is set the following "variables" are handled by this method
+
+        - ``${workspaceRoot}`` which expands to the workspace root as provided by the
+          language client.
+        - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
+          multi-root support.
+
+        Parameters
+        ----------
+        root_uri
+            The workspace root uri
+        """
+        root = Uri.to_fs_path(root_uri)
+
+        if not self.conf_dir:
+            ignore_paths = [".tox", "site-packages"]
+
+            for candidate in pathlib.Path(root).glob("**/conf.py"):
+                # Skip any files that obviously aren't part of the project
+                if any(path in str(candidate) for path in ignore_paths):
+                    continue
+
+                return candidate.parent
+
+            # Nothing found
+            return None
+
+        match = PATH_VAR_PATTERN.match(self.conf_dir)
+        if not match or match.group(1) not in {"workspaceRoot", "workspaceFolder"}:
+            return pathlib.Path(self.conf_dir).expanduser()
+
+        conf = pathlib.Path(self.conf_dir).parts[1:]
+        return pathlib.Path(root, *conf).resolve()
+
+    def resolve_src_dir(self, root_uri: str, actual_conf_dir: str) -> pathlib.Path:
+        """Get the src dir to use based on the user's config.
+
+        By default the src dir will be the same as the conf dir, but this can
+        be overriden by setting the ``src_dir`` field.
+
+        There are a number of "variables" that can be included in the path,
+        currently we support
+
+        - ``${workspaceRoot}`` which expands to the workspace root as provided
+        by the language client.
+        - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
+        multi-root support.
+        - ``${confDir}`` which expands to the configured config dir.
+
+        Parameters
+        ----------
+        root_uri
+           The workspace root uri
+
+        actual_conf_dir
+           The fully resolved conf dir for the project
+        """
+
+        if not self.src_dir:
+            return actual_conf_dir
+
+        src_dir = self.src_dir
+        root_dir = Uri.to_fs_path(root_uri)
+
+        match = PATH_VAR_PATTERN.match(src_dir)
+        if match and match.group(1) in {"workspaceRoot", "workspaceFolder"}:
+            src = pathlib.Path(src_dir).parts[1:]
+            return pathlib.Path(root_dir, *src).resolve()
+
+        if match and match.group(1) == "confDir":
+            src = pathlib.Path(src_dir).parts[1:]
+            return pathlib.Path(actual_conf_dir, *src).resolve()
+
+        return pathlib.Path(src_dir).expanduser()
+
 
 class SphinxServerConfig(ServerConfig):
 
@@ -315,8 +456,8 @@ class SphinxLanguageServer(RstLanguageServer):
                 else:
                     config = SphinxConfig()
 
-                conf_dir = find_conf_dir(
-                    self.workspace.root_uri, config
+                conf_dir = config.resolve_conf_dir(
+                    self.workspace.root_uri
                 ) or pathlib.Path(".")
 
             if str(conf_dir / "conf.py") == filepath:
@@ -383,13 +524,13 @@ class SphinxLanguageServer(RstLanguageServer):
         self.logger.debug("Workspace root %s", self.workspace.root_uri)
         self.logger.debug("Sphinx Config %s", sphinx.dict())
 
-        conf_dir = find_conf_dir(self.workspace.root_uri, sphinx)
+        conf_dir = sphinx.resolve_conf_dir(self.workspace.root_uri)
         if conf_dir is None:
             raise MissingConfigError()
 
         builder_name = sphinx.builder_name
-        src_dir = get_src_dir(self.workspace.root_uri, conf_dir, sphinx)
-        build_dir = get_build_dir(self.workspace.root_uri, conf_dir, sphinx)
+        src_dir = sphinx.resolve_src_dir(self.workspace.root_uri, conf_dir)
+        build_dir = sphinx.resolve_build_dir(self.workspace.root_uri, conf_dir)
         doctree_dir = build_dir / "doctrees"
         build_dir /= builder_name
 
@@ -819,161 +960,6 @@ class SphinxLanguageServer(RstLanguageServer):
                 targets[target_type] = inv[std_domain]
 
         return targets
-
-
-def find_conf_dir(root_uri: str, config: SphinxConfig) -> Optional[pathlib.Path]:
-    """Attempt to find Sphinx's configuration file within the given workspace."""
-
-    root = Uri.to_fs_path(root_uri)
-
-    if config.conf_dir:
-        return expand_conf_dir(root, config.conf_dir)
-
-    ignore_paths = [".tox", "site-packages"]
-
-    for candidate in pathlib.Path(root).glob("**/conf.py"):
-        # Skip any files that obviously aren't part of the project
-        if any(path in str(candidate) for path in ignore_paths):
-            continue
-
-        return candidate.parent
-
-    return None
-
-
-def expand_conf_dir(root_dir: str, conf_dir: str) -> pathlib.Path:
-    """Expand the user provided conf_dir into a real path.
-
-    Here is where we handle "variables" that can be included in the path, currently
-    we support
-
-    - ``${workspaceRoot}`` which expands to the workspace root as provided by the
-      language client.
-    - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
-    multi-root support.
-
-    Parameters
-    ----------
-    root_dir:
-       The workspace root path
-    conf_dir:
-       The user provided path
-    """
-
-    match = PATH_VAR_PATTERN.match(conf_dir)
-    if not match or match.group(1) not in {"workspaceRoot", "workspaceFolder"}:
-        return pathlib.Path(conf_dir).expanduser()
-
-    conf = pathlib.Path(conf_dir).parts[1:]
-    return pathlib.Path(root_dir, *conf).resolve()
-
-
-def get_src_dir(
-    root_uri: str, conf_dir: pathlib.Path, config: SphinxConfig
-) -> pathlib.Path:
-    """Get the src dir to use based on the given conifg.
-
-    By default the src dir will be the same as the conf dir, but this can
-    be overriden by the given conifg.
-
-    There are a number of "variables" that can be included in the path,
-    currently we support
-
-    - ``${workspaceRoot}`` which expands to the workspace root as provided
-      by the language client.
-    - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
-      multi-root support.
-    - ``${confDir}`` which expands to the configured config dir.
-
-    Parameters
-    ----------
-    root_uri:
-       The workspace root uri
-    conf_dir:
-       The project's conf dir
-    config:
-       The user's configuration.
-    """
-
-    if not config.src_dir:
-        return conf_dir
-
-    src_dir = config.src_dir
-    root_dir = Uri.to_fs_path(root_uri)
-
-    match = PATH_VAR_PATTERN.match(src_dir)
-    if match and match.group(1) in {"workspaceRoot", "workspaceFolder"}:
-        src = pathlib.Path(src_dir).parts[1:]
-        return pathlib.Path(root_dir, *src).resolve()
-
-    if match and match.group(1) == "confDir":
-        src = pathlib.Path(src_dir).parts[1:]
-        return pathlib.Path(conf_dir, *src).resolve()
-
-    return pathlib.Path(src_dir).expanduser()
-
-
-def get_build_dir(
-    root_uri: str, conf_dir: pathlib.Path, config: SphinxConfig
-) -> pathlib.Path:
-    """Get the build dir to use based on the given conifg.
-
-    If nothing is specified in the given ``config``, this will choose a location within
-    the user's cache dir (as determined by `appdirs <https://pypi.org/project/appdirs>`).
-    The directory name will be a hash derived from the given ``conf_dir`` for the
-    project.
-
-    Alternatively the user (or least language client) can override this by setting
-    either an absolute path, or a path based on the following "variables".
-
-    - ``${workspaceRoot}`` which expands to the workspace root as provided
-      by the language client.
-    - ``${workspaceFolder}`` alias for ``${workspaceRoot}, placeholder ready for
-      multi-root support.
-    - ``${confDir}`` which expands to the configured config dir.
-
-    Parameters
-    ----------
-    root_uri:
-       The workspace root uri
-    conf_dir:
-       The project's conf dir
-    config:
-       The user's configuration.
-    """
-
-    if not config.build_dir:
-        # Try to pick a sensible dir based on the project's location
-        cache = appdirs.user_cache_dir("esbonio", "swyddfa")
-        project = hashlib.md5(str(conf_dir).encode()).hexdigest()
-
-        return pathlib.Path(cache) / project
-
-    root_dir = Uri.to_fs_path(root_uri)
-    match = PATH_VAR_PATTERN.match(config.build_dir)
-
-    if match and match.group(1) in {"workspaceRoot", "workspaceFolder"}:
-        build = pathlib.Path(config.build_dir).parts[1:]
-        return pathlib.Path(root_dir, *build).resolve()
-
-    if match and match.group(1) == "confDir":
-        build = pathlib.Path(config.build_dir).parts[1:]
-        return pathlib.Path(conf_dir, *build).resolve()
-
-    # Convert path to/from uri so that any path quirks from windows are
-    # automatically handled
-    build_uri = Uri.from_fs_path(config.build_dir)
-    build_dir = Uri.to_fs_path(build_uri)
-
-    # But make sure paths starting with '~' are not corrupted
-    if build_dir.startswith("/~"):
-        build_dir = build_dir.replace("/~", "~")
-
-    # But make sure paths starting with '~' are not corrupted
-    if build_dir.startswith("\\~"):
-        build_dir = build_dir.replace("\\~", "~")
-
-    return pathlib.Path(build_dir).expanduser()
 
 
 def exception_to_diagnostic(exc: BaseException):

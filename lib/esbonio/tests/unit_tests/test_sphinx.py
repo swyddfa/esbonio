@@ -2,9 +2,6 @@ import pathlib
 
 import pytest
 
-from esbonio.lsp.sphinx import expand_conf_dir
-from esbonio.lsp.sphinx import get_build_dir
-from esbonio.lsp.sphinx import get_src_dir
 from esbonio.lsp.sphinx import SphinxConfig
 
 
@@ -37,12 +34,13 @@ from esbonio.lsp.sphinx import SphinxConfig
         ),
     ],
 )
-def test_expand_conf_dir(setup, expected):
-    """Ensure that the ``expand_conf_dir`` function works as expected."""
+def test_resolve_conf_dir(setup, expected):
+    """Ensure that the ``resolve_conf_dir`` function works as expected."""
 
     root_uri, conf_dir = setup
+    config = SphinxConfig(confDir=conf_dir)
 
-    actual = expand_conf_dir(root_uri, conf_dir)
+    actual = config.resolve_conf_dir(root_uri)
     assert actual == expected
 
 
@@ -115,12 +113,12 @@ def test_expand_conf_dir(setup, expected):
         ),
     ],
 )
-def test_get_src_dir(setup, expected):
-    """Ensure that the ``get_src_dir`` function works as expected."""
+def test_resolve_src_dir(setup, expected):
+    """Ensure that the ``resolve_src_dir`` function works as expected."""
 
-    root_uri, conf_dir, sphinx_config = setup
+    root_uri, conf_dir, config = setup
 
-    actual = get_src_dir(root_uri, conf_dir, sphinx_config)
+    actual = config.resolve_src_dir(root_uri, conf_dir)
     assert actual == expected
 
 
@@ -193,10 +191,10 @@ def test_get_src_dir(setup, expected):
         ),
     ],
 )
-def test_get_build_dir(setup, expected):
-    """Ensure that the ``get_build_dir`` function works as expected."""
+def test_resolve_build_dir(setup, expected):
+    """Ensure that the ``resolve_build_dir`` function works as expected."""
 
-    root_uri, conf_dir, sphinx_config = setup
+    root_uri, conf_dir, config = setup
 
-    actual = get_build_dir(root_uri, conf_dir, sphinx_config)
+    actual = config.resolve_build_dir(root_uri, conf_dir)
     assert actual == expected
