@@ -1,0 +1,1 @@
+Language clients can now control if the server forces a full build of a Sphinx project on startup by providing a ``sphinx.forceFullBuild`` initialization option, which defaults to ``true``

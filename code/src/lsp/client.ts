@@ -43,6 +43,10 @@ export interface SphinxConfig {
    */
   builderName?: string
 
+  /**
+   * Flag to force a full build of the documentation on startup.
+   */
+  forceFullBuild?: boolean
 }
 
 /**
@@ -296,7 +300,8 @@ export class EsbonioClient {
       sphinx: {
         srcDir: config.get<string>("sphinx.srcDir"),
         confDir: config.get<string>('sphinx.confDir'),
-        buildDir: buildDir
+        buildDir: buildDir,
+        forceFullBuild: config.get<boolean>('sphinx.forceFullBuild')
       },
       server: {
         logLevel: config.get<string>('server.logLevel'),

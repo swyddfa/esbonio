@@ -182,14 +182,14 @@ def make_esbonio_client(*args, **kwargs):
         ),
     ],
 )
-async def test_initialization(caplog, command: List[str], path: str, options, expected):
+async def test_initialization(command: List[str], path: str, options, expected):
     """Ensure that the server responds correctly to various initialization options."""
 
     root_path = pathlib.Path(__file__).parent / path
     root_uri = uri.from_fs_path(str(root_path))
 
     for key, value in options.dict().items():
-        if key not in {"builder_name"} and value is not None:
+        if key in {"conf_dir", "src_dir", "build_dir"} and value is not None:
             path = resolve_path(value, root_path)
             setattr(options, key, str(path))
 
