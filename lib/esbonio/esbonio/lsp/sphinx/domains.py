@@ -178,11 +178,14 @@ class DomainFeatures:
         currentdir = pathlib.Path(Uri.to_fs_path(doc.uri)).parent
 
         if label.startswith("/"):
-            path = str(pathlib.Path(srcdir, label[1:] + ".rst"))
+            path = pathlib.Path(srcdir, label[1:] + ".rst")
         else:
-            path = str(pathlib.Path(currentdir, label + ".rst"))
+            path = pathlib.Path(currentdir, label + ".rst")
 
-        return Uri.from_fs_path(path)
+        if not path.exists():
+            return None
+
+        return Uri.from_fs_path(str(path))
 
     def resolve_intersphinx(
         self, name: str, domain: Optional[str], label: str
