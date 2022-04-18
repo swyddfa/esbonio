@@ -28,6 +28,7 @@ from pygls.lsp.types import CompletionItemTag
 from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DidSaveTextDocumentParams
+from pygls.lsp.types import DocumentLink
 from pygls.lsp.types import DocumentSymbol
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
@@ -82,7 +83,6 @@ class CompletionContext:
         """The position at which the completion request was made."""
 
         self._client_capabilities: ClientCapabilities = capabilities
-        """The client's capabilities"""
 
     def __repr__(self):
         p = f"{self.position.line}:{self.position.character}"
@@ -145,6 +145,24 @@ class CompletionContext:
             return []
 
         return capabilities.value_set
+
+
+class DocumentLinkContext:
+    """Captures the context within which a document link request has been made."""
+
+    def __init__(self, *, doc: Document, capabilities: ClientCapabilities):
+
+        self.doc = doc
+        """The document within which the document link request was made."""
+
+        self._client_capabilities = capabilities
+
+    @property
+    def tooltip_support(self) -> bool:
+        """Indicates if the client supports tooltips."""
+        return self._client_capabilities.get_capability(
+            "text_document.document_link.tooltip_support", False
+        )
 
 
 class DefinitionContext:
@@ -243,6 +261,10 @@ class LanguageFeature:
         context:
            The context of the definition request.
         """
+        return []
+
+    def document_link(self, context: DocumentLinkContext) -> List[DocumentLink]:
+        """Called whenever a ``textDocument/documentLink`` request is received."""
         return []
 
 
