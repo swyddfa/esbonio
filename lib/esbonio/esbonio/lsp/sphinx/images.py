@@ -3,16 +3,19 @@ import pathlib
 import typing
 from typing import List
 from typing import Optional
+from typing import Tuple
 
 import pygls.uris as Uri
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
+from pygls.workspace import Document
 
 from esbonio.lsp.directives import Directives
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import DefinitionContext
+from esbonio.lsp.rst import DocumentLinkContext
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.util.filepaths import complete_sphinx_filepaths
@@ -52,9 +55,38 @@ class Images:
         if domain or directive not in {"figure", "image"}:
             return []
 
+        uri = self.resolve_path(context.doc, argument)
+        if not uri:
+            return []
+
+        return [
+            Location(
+                uri=uri,
+                range=Range(
+                    start=Position(line=0, character=0),
+                    end=Position(line=1, character=0),
+                ),
+            )
+        ]
+
+    def resolve_link(
+        self,
+        context: DocumentLinkContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> Tuple[Optional[str], Optional[str]]:
+
+        if domain or directive not in {"figure", "image"}:
+            return None, None
+
+        return self.resolve_path(context.doc, argument), None
+
+    def resolve_path(self, doc: Document, argument: str) -> Optional[str]:
+
         if argument.startswith("/"):
             if not self.rst.app:
-                return []
+                return None
 
             basedir = pathlib.Path(self.rst.app.srcdir)
 
@@ -63,21 +95,13 @@ class Images:
             argument = argument[1:]
 
         else:
-            basedir = pathlib.Path(Uri.to_fs_path(context.doc.uri)).parent
+            basedir = pathlib.Path(Uri.to_fs_path(doc.uri)).parent
 
         fpath = (basedir / argument).resolve()
         if not fpath.exists():
-            return []
+            return None
 
-        return [
-            Location(
-                uri=Uri.from_fs_path(str(fpath)),
-                range=Range(
-                    start=Position(line=0, character=0),
-                    end=Position(line=1, character=0),
-                ),
-            )
-        ]
+        return Uri.from_fs_path(str(fpath))
 
 
 def esbonio_setup(rst: RstLanguageServer):
@@ -94,3 +118,4 @@ def esbonio_setup(rst: RstLanguageServer):
     images = Images(rst)
     directives.add_argument_definition_provider(images)
     directives.add_argument_completion_provider(images)
+    directives.add_argument_link_provider(images)

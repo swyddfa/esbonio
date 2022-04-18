@@ -28,7 +28,7 @@ default_role = "py:obj"
 extensions = ["sphinx.ext.autodoc", "sphinx.ext.doctest", "sphinx.ext.intersphinx"]
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3", None),
+    "python": ("https://docs.python.org/3.9/", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master", None),
 }
 
