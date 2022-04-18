@@ -6,10 +6,12 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 
 import pkg_resources
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
+from pygls.lsp.types import DocumentLink
 from pygls.lsp.types import InsertTextFormat
 from pygls.lsp.types import Location
 from pygls.lsp.types import MarkupContent
@@ -20,6 +22,7 @@ from pygls.lsp.types import TextEdit
 
 from esbonio.lsp import CompletionContext
 from esbonio.lsp import DefinitionContext
+from esbonio.lsp import DocumentLinkContext
 from esbonio.lsp import LanguageFeature
 from esbonio.lsp import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
@@ -131,6 +134,31 @@ class ArgumentDefinition(Protocol):
         """
 
 
+class ArgumentLink(Protocol):
+    """A document link resolver for directive arguments."""
+
+    def resolve_link(
+        self,
+        context: DocumentLinkContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """Resolve a document link request for the given argument.
+
+        Parameters
+        ----------
+        context:
+           The context of the document link request.
+        directive:
+           The name of the directive the argument is associated with.
+        domain:
+           The name of the domain the directive belongs to, if applicable.
+        argument:
+           The argument to resolve the link for.
+        """
+
+
 class Directives(LanguageFeature):
     """Directive support for the language server."""
 
@@ -145,7 +173,10 @@ class Directives(LanguageFeature):
         arguments."""
 
         self._argument_definition_providers: Dict[str, ArgumentDefinition] = {}
-        """A dictionary of providers that give completion suggestions for directive
+        """A dictionary of providers that locate definitions for directive arguments."""
+
+        self._argument_link_providers: Dict[str, ArgumentLink] = {}
+        """A dictionary of providers that resolve document links for directive
         arguments."""
 
     def add_argument_completion_provider(self, provider: ArgumentCompletion) -> None:
@@ -160,7 +191,7 @@ class Directives(LanguageFeature):
         self._argument_completion_providers[key] = provider
 
     def add_argument_definition_provider(self, provider: ArgumentDefinition) -> None:
-        """Register an :class:`~esbonio.lsp.directives.ArgumentCompletion` provider.
+        """Register an :class:`~esbonio.lsp.directives.ArgumentDefinition` provider.
 
         Parameters
         ----------
@@ -169,6 +200,17 @@ class Directives(LanguageFeature):
         """
         key = f"{provider.__module__}.{provider.__class__.__name__}"
         self._argument_definition_providers[key] = provider
+
+    def add_argument_link_provider(self, provider: ArgumentLink) -> None:
+        """Register an :class:`~esbonio.lsp.directives.ArgumentLink` provider.
+
+        Parameters
+        ----------
+        provider:
+           The provider to register.
+        """
+        key = f"{provider.__module__}.{provider.__class__.__name__}"
+        self._argument_link_providers[key] = provider
 
     def add_documentation(self, documentation: Dict[str, Dict[str, Any]]) -> None:
         """Register directive documentation.
@@ -493,6 +535,48 @@ class Directives(LanguageFeature):
 
         return definitions
 
+    def document_link(self, context: DocumentLinkContext) -> List[DocumentLink]:
+        links = []
+
+        for line, text in enumerate(context.doc.lines):
+            for match in DIRECTIVE.finditer(text):
+
+                argument = match.group("argument")
+                if not argument:
+                    continue
+
+                domain = match.group("domain")
+                name = match.group("name")
+
+                target = None
+                tooltip = None
+                for provider in self._argument_link_providers.values():
+                    target, tooltip = provider.resolve_link(
+                        context, name, domain, argument
+                    )
+                    if target:
+                        break
+
+                if not target:
+                    continue
+
+                idx = match.group(0).index(argument)
+                start = match.start() + idx
+                end = start + len(argument)
+
+                links.append(
+                    DocumentLink(
+                        target=target,
+                        tooltip=tooltip if context.tooltip_support else None,
+                        range=Range(
+                            start=Position(line=line, character=start),
+                            end=Position(line=line, character=end),
+                        ),
+                    )
+                )
+
+        return links
+
     def get_surrounding_directive(
         self, context: CompletionContext
     ) -> Optional["re.Match"]:
@@ -552,9 +636,10 @@ class Directives(LanguageFeature):
 
         Parameters
         ----------
-        label:
+        label
            The name of the directive, as the user would type in an reStructuredText file.
-        implementation:
+
+        implementation
            The full dotted name of the directive's implementation.
         """
 
