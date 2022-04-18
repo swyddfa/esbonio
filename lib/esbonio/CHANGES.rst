@@ -10,6 +10,11 @@ Features
 
   The server also supports resolving links for directive arguments with initial support for ``.. image::``, ``.. figure::``, ``.. include::`` and ``.. literalinclude::`` directives. (`#294 <https://github.com/swyddfa/esbonio/issues/294>`_)
 
+Enhancements
+^^^^^^^^^^^^
+
+- Language clients can now control if the server forces a full build of a Sphinx project on startup by providing a ``sphinx.forceFullBuild`` initialization option, which defaults to ``true`` (`#358 <https://github.com/swyddfa/esbonio/issues/358>`_)
+- Language clients can now control the number of parallel jobs by providing a ``sphinx.numJobs`` initialization option, which defaults to ``auto``. Clients can disable parallel builds by setting this option to ``1`` (`#359 <https://github.com/swyddfa/esbonio/issues/359>`_)
 
 Fixes
 ^^^^^
