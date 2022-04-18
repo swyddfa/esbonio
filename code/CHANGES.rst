@@ -1,3 +1,13 @@
+v0.8.2 - 2022-04-18
+-------------------
+
+Enhancements
+^^^^^^^^^^^^
+
+- Added the ``esbonio.sphinx.forceFullBuild`` option (default: ``true``) which can be used to control if the language server forces a full Sphinx build on startup. (`#358 <https://github.com/swyddfa/esbonio/issues/358>`_)
+- Added the ``esbonio.sphinx.numJobs`` option (default: ``auto``) which can be used to control the number of parallel jobs used by Sphinx. (`#359 <https://github.com/swyddfa/esbonio/issues/359>`_)
+
+
 v0.8.1 - 2022-03-22
 -------------------
 

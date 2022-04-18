@@ -1,1 +1,0 @@
-Added the ``esbonio.sphinx.forceFullBuild`` option (default: ``true``) which can be used to control if the language server forces a full Sphinx build on startup.
