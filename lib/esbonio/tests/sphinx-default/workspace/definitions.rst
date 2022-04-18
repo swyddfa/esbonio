@@ -26,3 +26,7 @@ Some literal includes now
 .. image:: /_static/vscode-screenshot.png
 
 .. figure:: /_static/bad.png
+
+This line refers to :ref:`setup-label`
+
+See the :doc:`/glossary` for details

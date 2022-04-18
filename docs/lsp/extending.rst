@@ -32,7 +32,7 @@ Architecture
 
    Language Feature
       Language features are subclasses of :class:`~esbonio.lsp.rst.LanguageFeature`.
-      They are typically based on a single aspect of reStructuedText (e.g. :class:`~esbonio.lsp.roles.Roles`) or Sphinx (e.g. :class:``  responsible for providing
+      They are typically based on a single aspect of reStructuredText (e.g. :class:`~esbonio.lsp.roles.Roles`) or Sphinx (e.g. :class:``  responsible for providing
 
       Language Features (where it makes sense) should be server agnostic, that way the same features can be reused across different envrionments.
 

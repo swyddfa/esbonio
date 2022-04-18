@@ -11,24 +11,38 @@ Language Servers
 
 .. autofunction:: esbonio.lsp.create_language_server
 
+RstLanguageServer
+^^^^^^^^^^^^^^^^^
+
 .. autoclass:: esbonio.lsp.rst.RstLanguageServer
    :members:
    :show-inheritance:
+
+SphinxLanguageServer
+^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: esbonio.lsp.sphinx.SphinxConfig
+   :members:
 
 .. autoclass:: esbonio.lsp.sphinx.SphinxLanguageServer
    :members:
    :show-inheritance:
 
+.. autoclass:: esbonio.lsp.sphinx.MissingConfigError
+
 Language Features
 -----------------
 
-.. autoclass:: esbonio.lsp.rst.LanguageFeature
+.. autoclass:: esbonio.lsp.LanguageFeature
    :members:
 
-.. autoclass:: esbonio.lsp.rst.CompletionContext
+.. autoclass:: esbonio.lsp.CompletionContext
    :members:
 
-.. autoclass:: esbonio.lsp.rst.DefinitionContext
+.. autoclass:: esbonio.lsp.DefinitionContext
+   :members:
+
+.. autoclass:: esbonio.lsp.DocumentLinkContext
    :members:
 
 Directives
@@ -45,8 +59,14 @@ Directives
 .. autoclass:: ArgumentCompletion
    :members:
 
+.. autoclass:: ArgumentDefinition
+   :members:
+
+.. autoclass:: ArgumentLink
+   :members:
+
 .. autoclass:: Directives
-   :members: add_argument_completion_provider, add_documentation
+   :members: add_argument_completion_provider, add_argument_definition_provider, add_argument_link_provider, add_documentation
 
 Roles
 ^^^^^
@@ -60,12 +80,15 @@ Roles
    :annotation: = re.compile(...)
 
 .. autoclass:: Roles
-   :members: add_documentation, add_target_definition_provider, add_target_completion_provider
+   :members: add_documentation, add_target_definition_provider, add_target_completion_provider, add_target_link_provider
 
 .. autoclass:: TargetCompletion
    :members:
 
 .. autoclass:: TargetDefinition
+   :members:
+
+.. autoclass:: TargetLink
    :members:
 
 Testing

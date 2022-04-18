@@ -19,21 +19,6 @@ const DEBUG = process.env.VSCODE_LSP_DEBUG === "true"
 export interface SphinxConfig {
 
   /**
-   * Sphinx's version number.
-   */
-  version?: string
-
-  /**
-   * The directory containing the project's 'conf.py' file.
-   */
-  confDir?: string
-
-  /**
-   * The source dir containing the *.rst files for the project.
-   */
-  srcDir?: string
-
-  /**
    * The directory where Sphinx's build output should be stored.
    */
   buildDir?: string
@@ -43,6 +28,30 @@ export interface SphinxConfig {
    */
   builderName?: string
 
+  /**
+   * The directory containing the project's 'conf.py' file.
+   */
+  confDir?: string
+
+  /**
+   * Flag to force a full build of the documentation on startup.
+   */
+  forceFullBuild?: boolean
+
+  /**
+   * The number of parallel jobs to use
+   */
+  numJobs?: number | string
+
+  /**
+   * The source dir containing the *.rst files for the project.
+   */
+  srcDir?: string
+
+  /**
+   * Sphinx's version number.
+   */
+  version?: string
 }
 
 /**
@@ -285,18 +294,22 @@ export class EsbonioClient {
    */
   private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
 
-    let cache = this.context.storageUri.path
 
     let buildDir = config.get<string>('sphinx.buildDir')
+    let numJobs = config.get<number>('sphinx.numJobs')
+
     if (!buildDir) {
+      let cache = this.context.storageUri.path
       buildDir = join(cache, 'sphinx')
     }
 
     let initOptions: InitOptions = {
       sphinx: {
-        srcDir: config.get<string>("sphinx.srcDir"),
+        buildDir: buildDir,
         confDir: config.get<string>('sphinx.confDir'),
-        buildDir: buildDir
+        forceFullBuild: config.get<boolean>('sphinx.forceFullBuild'),
+        numJobs: numJobs === 0 ? 'auto' : numJobs,
+        srcDir: config.get<string>("sphinx.srcDir"),
       },
       server: {
         logLevel: config.get<string>('server.logLevel'),

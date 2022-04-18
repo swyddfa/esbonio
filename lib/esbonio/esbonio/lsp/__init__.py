@@ -13,6 +13,7 @@ from pygls.lsp.methods import CODE_ACTION
 from pygls.lsp.methods import COMPLETION
 from pygls.lsp.methods import COMPLETION_ITEM_RESOLVE
 from pygls.lsp.methods import DEFINITION
+from pygls.lsp.methods import DOCUMENT_LINK
 from pygls.lsp.methods import DOCUMENT_SYMBOL
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import INITIALIZED
@@ -31,6 +32,7 @@ from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import DidChangeTextDocumentParams
 from pygls.lsp.types import DidOpenTextDocumentParams
 from pygls.lsp.types import DidSaveTextDocumentParams
+from pygls.lsp.types import DocumentLinkParams
 from pygls.lsp.types import DocumentSymbolParams
 from pygls.lsp.types import FileOperationFilter
 from pygls.lsp.types import FileOperationPattern
@@ -42,6 +44,7 @@ from pygls.protocol import LanguageServerProtocol
 
 from .rst import CompletionContext
 from .rst import DefinitionContext
+from .rst import DocumentLinkContext
 from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .rst import SymbolVisitor
@@ -51,6 +54,7 @@ __version__ = "0.10.3"
 __all__ = [
     "CompletionContext",
     "DefinitionContext",
+    "DocumentLinkContext",
     "LanguageFeature",
     "RstLanguageServer",
     "create_language_server",
@@ -259,6 +263,18 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
                         definitions += feature.definition(context)
 
         return definitions
+
+    @server.feature(DOCUMENT_LINK)
+    def on_document_link(ls: RstLanguageServer, params: DocumentLinkParams):
+        uri = params.text_document.uri
+        doc = ls.workspace.get_document(uri)
+        context = DocumentLinkContext(doc=doc, capabilities=ls.client_capabilities)
+
+        links = []
+        for feature in ls._features.values():
+            links += feature.document_link(context) or []
+
+        return links
 
     @server.feature(DOCUMENT_SYMBOL)
     def on_document_symbol(ls: RstLanguageServer, params: DocumentSymbolParams):

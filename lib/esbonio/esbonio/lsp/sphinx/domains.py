@@ -4,6 +4,7 @@ import typing
 from typing import List
 from typing import Optional
 from typing import Set
+from typing import Tuple
 
 import pygls.uris as Uri
 from docutils import nodes
@@ -18,6 +19,7 @@ from sphinx.domains import Domain
 from esbonio.lsp.roles import Roles
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import DefinitionContext
+from esbonio.lsp.rst import DocumentLinkContext
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
@@ -76,6 +78,24 @@ class DomainFeatures:
 
         return items
 
+    def resolve_link(
+        self, context: DocumentLinkContext, name: str, domain: Optional[str], label: str
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """``textDocument/documentLink`` support"""
+
+        # We can support intersphinx links.
+        if ":" in label:
+            return self.resolve_intersphinx(name, domain, label)
+
+        # We can also support local `:doc:` roles.
+        if not domain and name == "doc":
+            return self.resolve_doc(context.doc, label), None
+
+        # Other roles like :ref: do not make sense as the ``textDocument/documentLink``
+        # api doesn't support specific locations like goto definition does.
+
+        return None, None
+
     def find_definitions(
         self, context: DefinitionContext, name: str, domain: Optional[str]
     ) -> List[Location]:
@@ -93,20 +113,13 @@ class DomainFeatures:
     def doc_definition(self, doc: Document, label: str) -> List[Location]:
         """Goto definition implementation for ``:doc:`` targets"""
 
-        if self.rst.app is None:
+        uri = self.resolve_doc(doc, label)
+        if not uri:
             return []
-
-        srcdir = self.rst.app.srcdir
-        currentdir = pathlib.Path(Uri.to_fs_path(doc.uri)).parent
-
-        if label.startswith("/"):
-            path = str(pathlib.Path(srcdir, label[1:] + ".rst"))
-        else:
-            path = str(pathlib.Path(currentdir, label + ".rst"))
 
         return [
             Location(
-                uri=Uri.from_fs_path(path),
+                uri=uri,
                 range=Range(
                     start=Position(line=0, character=0),
                     end=Position(line=1, character=0),
@@ -138,7 +151,7 @@ class DomainFeatures:
             if "refid" not in node:
                 continue
 
-            if label == node["refid"].replace("-", "_"):
+            if doctree.nameids.get(label, "") == node["refid"]:
                 uri = Uri.from_fs_path(node.source)
                 line = node.line
                 break
@@ -155,6 +168,45 @@ class DomainFeatures:
                 ),
             )
         ]
+
+    def resolve_doc(self, doc: Document, label: str) -> Optional[str]:
+
+        if self.rst.app is None:
+            return None
+
+        srcdir = self.rst.app.srcdir
+        currentdir = pathlib.Path(Uri.to_fs_path(doc.uri)).parent
+
+        if label.startswith("/"):
+            path = pathlib.Path(srcdir, label[1:] + ".rst")
+        else:
+            path = pathlib.Path(currentdir, label + ".rst")
+
+        if not path.exists():
+            return None
+
+        return Uri.from_fs_path(str(path))
+
+    def resolve_intersphinx(
+        self, name: str, domain: Optional[str], label: str
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """Resolve an intersphinx reference to a URL"""
+
+        if not self.rst.app:
+            return None, None
+
+        project, label = label.split(":")
+        targets = self.rst.get_intersphinx_targets(project, name, domain or "")
+
+        for _, items in targets.items():
+            if label in items:
+                source, version, url, display = items[label]
+                name = label if display == "-" else display
+                tooltip = f"{name} - {source} v{version}"
+
+                return url, tooltip
+
+        return None, None
 
     def find_docname_for_label(
         self, label: str, domain: Domain, types: Optional[Set[str]] = None
@@ -248,5 +300,7 @@ def esbonio_setup(rst: RstLanguageServer):
         roles = rst.get_feature("esbonio.lsp.roles.Roles")
 
         if roles:
-            typing.cast(Roles, roles).add_target_definition_provider(domains)
-            typing.cast(Roles, roles).add_target_completion_provider(domains)
+            roles = typing.cast(Roles, roles)  # let's keep mypy happy
+            roles.add_target_definition_provider(domains)
+            roles.add_target_completion_provider(domains)
+            roles.add_target_link_provider(domains)

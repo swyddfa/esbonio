@@ -16,6 +16,8 @@ Welcome to Defaults's documentation!
    definitions
    glossary
 
+.. _setup-label:
+
 Setup
 =====
 

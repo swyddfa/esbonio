@@ -1,0 +1,5 @@
+Add ``textDocument/documentLink`` support.
+
+The server supports resolving links for role targets with initial support for intersphinx references and local ``:doc:`` references.
+
+The server also supports resolving links for directive arguments with initial support for ``.. image::``, ``.. figure::``, ``.. include::`` and ``.. literalinclude::`` directives.

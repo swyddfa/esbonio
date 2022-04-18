@@ -6,30 +6,27 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 
 import pkg_resources
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
+from pygls.lsp.types import DocumentLink
 from pygls.lsp.types import Location
 from pygls.lsp.types import MarkupContent
 from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
+from typing_extensions import Protocol
 
 from esbonio.lsp.directives import DIRECTIVE
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import DefinitionContext
+from esbonio.lsp.rst import DocumentLinkContext
 from esbonio.lsp.rst import LanguageFeature
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
-
-try:
-    from typing import Protocol
-except ImportError:
-    # Protocol is only available in Python 3.8+
-    class Protocol:  # type: ignore
-        ...
 
 
 ROLE = re.compile(
@@ -146,6 +143,30 @@ class TargetCompletion(Protocol):
         """
 
 
+class TargetLink(Protocol):
+    """A document link provider for role targets"""
+
+    def resolve_link(
+        self, context: DocumentLinkContext, name: str, domain: Optional[str], label: str
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """Return a link corresponding to the given target.
+
+        Parameters
+        ----------
+        context
+           The document link context
+
+        domain
+           The name (if applicable) of the domain the role is a member of
+
+        name
+           The name of the role to generate completion suggestions for.
+
+        label
+           The label of the target to provide the link for
+        """
+
+
 class Roles(LanguageFeature):
     """Role support for the language server."""
 
@@ -158,14 +179,41 @@ class Roles(LanguageFeature):
         self._target_definition_providers: List[TargetDefinition] = []
         """A list of providers that locate the definition for the given role target."""
 
+        self._target_link_providers: List[TargetLink] = []
+        """A list of providers that resolve document links for role targets."""
+
         self._target_completion_providers: List[TargetCompletion] = []
         """A list of providers that give completion suggestions for role target
         objects."""
 
     def add_target_definition_provider(self, provider: TargetDefinition) -> None:
+        """Register a :class:`~esbonio.lsp.roles.TargetDefinition` provider.
+
+        Parameters
+        ----------
+        provider
+           The provider to register
+        """
         self._target_definition_providers.append(provider)
 
+    def add_target_link_provider(self, provider: TargetLink) -> None:
+        """Register a :class:`~esbonio.lsp.roles.TargetLink` provider.
+
+        Parameters
+        ----------
+        provider
+           The provider to register
+        """
+        self._target_link_providers.append(provider)
+
     def add_target_completion_provider(self, provider: TargetCompletion) -> None:
+        """Register a :class:`~esbonio.lsp.roles.TargetCompletion` provider.
+
+        Parameters
+        ----------
+        provider
+           The provider to register
+        """
         self._target_completion_providers.append(provider)
 
     def add_documentation(self, documentation: Dict[str, Dict[str, Any]]) -> None:
@@ -251,6 +299,50 @@ class Roles(LanguageFeature):
             definitions += provide.find_definitions(context, name, domain) or []
 
         return definitions
+
+    def document_link(self, context: DocumentLinkContext) -> List[DocumentLink]:
+
+        links = []
+
+        for line, text in enumerate(context.doc.lines):
+            for match in ROLE.finditer(text):
+                label = match.group("label")
+
+                # Be sure to only match complete roles
+                if not label or not match.group(0).endswith("`"):
+                    continue
+
+                domain = match.group("domain")
+                name = match.group("name")
+
+                target = None
+                tooltip = None
+                for provider in self._target_link_providers:
+                    target, tooltip = provider.resolve_link(
+                        context, name, domain, label
+                    )
+                    if target:
+                        break
+
+                if not target:
+                    continue
+
+                idx = match.group(0).index(label)
+                start = match.start() + idx
+                end = start + len(label)
+
+                links.append(
+                    DocumentLink(
+                        target=target,
+                        tooltip=tooltip if context.tooltip_support else None,
+                        range=Range(
+                            start=Position(line=line, character=start),
+                            end=Position(line=line, character=end),
+                        ),
+                    )
+                )
+
+        return links
 
     def complete(self, context: CompletionContext) -> List[CompletionItem]:
         """Generate completion suggestions relevant to the current context.

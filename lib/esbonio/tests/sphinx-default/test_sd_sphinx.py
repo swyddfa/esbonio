@@ -9,9 +9,12 @@ import pytest
 from pygls import IS_WIN
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DiagnosticSeverity
+from pygls.lsp.types import DocumentLink
 from pygls.lsp.types import MessageType
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
+from pytest_lsp import check
+from pytest_lsp import Client
 from pytest_lsp import ClientServerConfig
 from pytest_lsp import make_client_server
 from pytest_lsp import make_test_client
@@ -35,6 +38,63 @@ def make_esbonio_client(*args, **kwargs):
         ...
 
     return client
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "uri,expected",
+    [
+        (
+            "/definitions.rst",
+            [
+                DocumentLink(
+                    target="${ROOT}/theorems/pythagoras.rst",
+                    range=Range(
+                        start=Position(line=21, character=20),
+                        end=Position(line=21, character=44),
+                    ),
+                ),
+                DocumentLink(
+                    target="${ROOT}/index.rst",
+                    range=Range(
+                        start=Position(line=23, character=20),
+                        end=Position(line=23, character=42),
+                    ),
+                ),
+                DocumentLink(
+                    target="${ROOT}/_static/vscode-screenshot.png",
+                    range=Range(
+                        start=Position(line=25, character=11),
+                        end=Position(line=25, character=41),
+                    ),
+                ),
+                DocumentLink(
+                    target="${ROOT}/glossary.rst",
+                    range=Range(
+                        start=Position(line=31, character=14),
+                        end=Position(line=31, character=23),
+                    ),
+                ),
+            ],
+        )
+    ],
+)
+async def test_document_links(client: Client, uri: str, expected: List[DocumentLink]):
+    """Ensure that we handle ``textDocument/documentLink`` requests correctly."""
+
+    test_uri = client.root_uri + uri
+    links = await client.document_link_request(test_uri)
+
+    assert len(links) == len(expected)
+
+    for expected, actual in zip(expected, links):
+        assert expected.range == actual.range
+
+        target = expected.target.replace("${ROOT}", client.root_uri)
+        assert target == actual.target
+        assert expected.tooltip == actual.tooltip
+
+    check.document_links(client, links)
 
 
 @pytest.mark.asyncio
@@ -182,14 +242,14 @@ def make_esbonio_client(*args, **kwargs):
         ),
     ],
 )
-async def test_initialization(caplog, command: List[str], path: str, options, expected):
+async def test_initialization(command: List[str], path: str, options, expected):
     """Ensure that the server responds correctly to various initialization options."""
 
     root_path = pathlib.Path(__file__).parent / path
     root_uri = uri.from_fs_path(str(root_path))
 
     for key, value in options.dict().items():
-        if key not in {"builder_name"} and value is not None:
+        if key in {"conf_dir", "src_dir", "build_dir"} and value is not None:
             path = resolve_path(value, root_path)
             setattr(options, key, str(path))
 
