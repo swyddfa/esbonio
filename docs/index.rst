@@ -41,6 +41,14 @@ Here is a quick summary of the features implemented by the language server.
          :align: center
          :target: /_images/diagnostic-sphinx-errors-demo.png
 
+   .. collection-item:: Document Links
+
+      The language server implements :lsp:`textDocument/documentLink` to make references to other files "Ctrl + Clickable"
+
+      .. figure:: ../resources/images/document-links-demo.png
+         :align: center
+         :target: /_images/document-links-demo.png
+
    .. collection-item:: Document Symbols
 
       The language server implements :lsp:`textDocument/documentSymbol` which
