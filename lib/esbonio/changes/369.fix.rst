@@ -1,1 +1,0 @@
-Goto definition for ``:doc:`` targets will now only return a result if the referenced document actually exists.

@@ -1,3 +1,23 @@
+v0.11.0 - 2022-04-18
+--------------------
+
+Features
+^^^^^^^^
+
+- Add ``textDocument/documentLink`` support.
+
+  The server supports resolving links for role targets with initial support for intersphinx references and local ``:doc:`` references.
+
+  The server also supports resolving links for directive arguments with initial support for ``.. image::``, ``.. figure::``, ``.. include::`` and ``.. literalinclude::`` directives. (`#294 <https://github.com/swyddfa/esbonio/issues/294>`_)
+
+
+Fixes
+^^^^^
+
+- Goto definition for ``:ref:`` targets now works for labels containing ``-`` characters (`#357 <https://github.com/swyddfa/esbonio/issues/357>`_)
+- Goto definition for ``:doc:`` targets will now only return a result if the referenced document actually exists. (`#369 <https://github.com/swyddfa/esbonio/issues/369>`_)
+
+
 v0.10.3 - 2022-04-07
 --------------------
 
