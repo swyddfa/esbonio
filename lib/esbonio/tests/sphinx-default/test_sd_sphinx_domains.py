@@ -263,9 +263,9 @@ WELCOME_LABEL = Location(
         ),
         (
             "definitions.rst",
-            Position(line=13, character=36),
+            Position(line=31, character=20),
             Location(
-                uri="changelog.rst",
+                uri="glossary.rst",
                 range=Range(
                     start=Position(line=0, character=0),
                     end=Position(line=1, character=0),
