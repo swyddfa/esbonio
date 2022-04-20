@@ -1,3 +1,12 @@
+v0.8.3 - 2022-04-20
+-------------------
+
+Misc
+^^^^
+
+- Switch from ``vscode-test`` to ``@vscode/test-electron`` (`#372 <https://github.com/swyddfa/esbonio/issues/372>`_)
+
+
 v0.8.2 - 2022-04-18
 -------------------
 
