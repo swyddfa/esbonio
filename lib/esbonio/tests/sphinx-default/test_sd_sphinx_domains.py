@@ -283,6 +283,17 @@ WELCOME_LABEL = Location(
                 ),
             ),
         ),
+        (
+            "definitions.rst",
+            Position(line=35, character=32),
+            Location(
+                uri="theorems/pythagoras.rst",
+                range=Range(
+                    start=Position(line=12, character=0),
+                    end=Position(line=13, character=0),
+                ),
+            ),
+        ),
     ],
 )
 async def test_role_target_definitions(client: Client, path, position, expected):

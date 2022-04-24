@@ -374,7 +374,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def get_doctree(
         self, *, docname: Optional[str] = None, uri: Optional[str] = None
     ) -> Optional[Any]:
-        """Return the doctree that corresponds with the specified document.
+        """Return the initial doctree corresponding to the specified document.
 
         The ``docname`` of a document is its path relative to the project's ``srcdir``
         minus the extension e.g. the docname of the file ``docs/lsp/features.rst``

@@ -3,6 +3,7 @@ import importlib
 import logging
 import pathlib
 import re
+import traceback
 import typing
 from typing import Any
 from typing import Dict
@@ -11,10 +12,8 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-import docutils.parsers.rst.directives as directives  # type: ignore
+import docutils.parsers.rst.directives as directives
 import pygls.uris as Uri
-from docutils import nodes
-from docutils.nodes import NodeVisitor
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import roles
 from pydantic import BaseModel
@@ -29,17 +28,15 @@ from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DidSaveTextDocumentParams
 from pygls.lsp.types import DocumentLink
-from pygls.lsp.types import DocumentSymbol
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import Location
 from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pygls.lsp.types import SymbolKind
 from pygls.server import LanguageServer
 from pygls.workspace import Document
 
+from .io import read_initial_doctree
 from esbonio.cli import setup_cli
 
 
@@ -378,7 +375,31 @@ class RstLanguageServer(LanguageServer):
     def get_doctree(
         self, *, docname: Optional[str] = None, uri: Optional[str] = None
     ) -> Optional[Any]:
+        # Not currently implemented for vanilla docutils projects.
         return None
+
+    def get_initial_doctree(self, uri: str) -> Optional[Any]:
+        """Return the initial doctree corresponding to the specified document.
+
+        An "initial" doctree can be thought of as the abstract syntax tree of a
+        reStructuredText document. This method disables all role and directives
+        from being executed, instead they are replaced with nodes that simply
+        represent that they exist.
+
+        Parameters
+        ----------
+        uri
+           Returns the doctree that corresponds with the given uri.
+        """
+        filename = pathlib.Path(Uri.to_fs_path(uri))
+        try:
+            return read_initial_doctree(filename, self.logger)
+        except FileNotFoundError:
+            self.logger.debug(traceback.format_exc())
+            return None
+        except Exception:
+            self.logger.error(traceback.format_exc())
+            return None
 
     def get_directives(self) -> Dict[str, Directive]:
         """Return a dictionary of the known directives"""
@@ -582,93 +603,6 @@ class RstLanguageServer(LanguageServer):
         formatter = logging.Formatter("[%(name)s] %(message)s")
         lsp_handler.setFormatter(formatter)
         lsp_logger.addHandler(lsp_handler)
-
-
-class SymbolVisitor(NodeVisitor):
-    """A visitor used to build the hierarchy we return from a
-    ``textDocument/documentSymbol`` request.
-
-    Currently this only looks at sections.
-    """
-
-    def __init__(self, rst, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.logger = rst.logger
-        self.symbols = []
-        self.symbol_stack = []
-
-    @property
-    def current_symbol(self) -> Optional[DocumentSymbol]:
-
-        if len(self.symbol_stack) == 0:
-            return None
-
-        return self.symbol_stack[-1]
-
-    def push_symbol(self):
-        symbol = DocumentSymbol(
-            name="",
-            kind=SymbolKind.String,
-            range=Range(
-                start=Position(line=1, character=0),
-                end=Position(line=1, character=10),
-            ),
-            selection_range=Range(
-                start=Position(line=1, character=0),
-                end=Position(line=1, character=10),
-            ),
-            children=[],
-        )
-        current_symbol = self.current_symbol
-
-        if not current_symbol:
-            self.symbols.append(symbol)
-        else:
-            current_symbol.children.append(symbol)
-
-        self.symbol_stack.append(symbol)
-
-    def pop_symbol(self):
-        self.symbol_stack.pop()
-
-    def visit_section(self, node: nodes.Node) -> None:
-        self.push_symbol()
-
-    def depart_section(self, node: nodes.Node) -> None:
-        self.pop_symbol()
-
-    def visit_title(self, node: nodes.Node) -> None:
-
-        symbol = self.current_symbol
-        if not symbol:
-            raise ValueError("Missing expected current symbol")
-
-        name = node.astext()
-        line = (node.line or 1) - 1
-
-        symbol.name = name
-        symbol.range.start.line = line
-        symbol.range.end.line = line
-        symbol.range.end.character = len(name) - 1
-        symbol.selection_range.start.line = line
-        symbol.selection_range.end.line = line
-        symbol.selection_range.end.character = len(name) - 1
-
-    def depart_title(self, node: nodes.Node) -> None:
-        pass
-
-    def visit_Text(self, node: nodes.Node) -> None:
-        pass
-
-    def depart_Text(self, node: nodes.Node) -> None:
-        pass
-
-    def unknown_visit(self, node: nodes.Node) -> None:
-        pass
-
-    def unknown_departure(self, node: nodes.Node) -> None:
-        pass
 
 
 LOG_LEVELS = {

@@ -26,6 +26,8 @@ from esbonio.lsp import DocumentLinkContext
 from esbonio.lsp import LanguageFeature
 from esbonio.lsp import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
+from esbonio.lsp.util.patterns import DIRECTIVE
+from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
 
 try:
     from typing import Protocol
@@ -33,60 +35,6 @@ except ImportError:
     # Protocol is only available in Python 3.8+
     class Protocol:  # type: ignore
         ...
-
-
-DIRECTIVE = re.compile(
-    r"""
-    (\s*)                             # directives can be indented
-    (?P<directive>
-      \.\.                            # directives start with a comment
-      [ ]?                            # followed by a space
-      ((?P<domain>[\w]+):(?!:))?      # directives may include a domain
-      (?P<name>([\w-]|:(?!:))+)?      # directives have a name
-      (::)?                           # directives end with '::'
-    )
-    ([\s]+(?P<argument>.*?)\s*$)?     # directives may take an argument
-    """,
-    re.VERBOSE,
-)
-"""A regular expression to detect and parse partial and complete directives.
-
-This does **not** include any options or content that may be included underneath
-the initial declaration. The language server breaks a directive down into a number
-of parts::
-
-                   vvvvvv argument
-   .. c:function:: malloc
-   ^^^^^^^^^^^^^^^ directive
-        ^^^^^^^^ name
-      ^ domain (optional)
-"""
-
-
-DIRECTIVE_OPTION = re.compile(
-    r"""
-    (?P<indent>\s+)       # directive options must be indented
-    (?P<option>
-      :                   # options start with a ':'
-      (?P<name>[\w-]+)?   # options have a name
-      :?                  # options end with a ':'
-    )
-    (\s*
-      (?P<value>.*)       # options can have a value
-    )?
-    """,
-    re.VERBOSE,
-)
-"""A regular expression used to detect and parse partial and complete directive options.
-
-The language server breaks an option down into a number of parts::
-
-               vvvvvv value
-   |   :align: center
-       ^^^^^^^ option
-        ^^^^^ name
-    ^^^ indent
-"""
 
 
 class ArgumentCompletion(Protocol):
@@ -671,7 +619,6 @@ class Directives(LanguageFeature):
 
 def esbonio_setup(rst: RstLanguageServer):
     """Configure and reigster the directives feature with the server."""
-
     directives = Directives(rst)
     rst.add_feature(directives)
 
