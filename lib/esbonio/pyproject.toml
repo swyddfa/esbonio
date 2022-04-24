@@ -5,8 +5,8 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 filterwarnings = [
-     "ignore:'contextfunction' is renamed to 'pass_context',*:DeprecationWarning",
-     "ignore:'environmentfilter' is renamed to 'pass_environment',*:DeprecationWarning",
+    "ignore:'contextfunction' is renamed to 'pass_context',*:DeprecationWarning",
+    "ignore:'environmentfilter' is renamed to 'pass_environment',*:DeprecationWarning",
 ]
 
 [tool.towncrier]
@@ -34,6 +34,11 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "doc"
 name = "Docs"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "api"
+name = "API Changes"
 showcontent = true
 
 [[tool.towncrier.type]]

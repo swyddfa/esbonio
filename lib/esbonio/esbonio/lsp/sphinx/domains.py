@@ -130,6 +130,9 @@ class DomainFeatures:
     def ref_definition(self, label: str) -> List[Location]:
         """Goto definition implementation for ``:ref:`` targets"""
 
+        if not self.rst.app or not self.rst.app.env:
+            return []
+
         types = set(self.rst.get_role_target_types("ref"))
         std = self.rst.get_domain("std")
         if std is None:

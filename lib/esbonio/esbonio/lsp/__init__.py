@@ -47,7 +47,7 @@ from .rst import DefinitionContext
 from .rst import DocumentLinkContext
 from .rst import LanguageFeature
 from .rst import RstLanguageServer
-from .rst import SymbolVisitor
+from .symbols import SymbolVisitor
 
 __version__ = "0.11.2"
 
@@ -279,7 +279,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
     @server.feature(DOCUMENT_SYMBOL)
     def on_document_symbol(ls: RstLanguageServer, params: DocumentSymbolParams):
 
-        doctree = ls.get_doctree(uri=params.text_document.uri)
+        doctree = ls.get_initial_doctree(uri=params.text_document.uri)
         if doctree is None:
             return []
 
