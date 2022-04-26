@@ -1,3 +1,12 @@
+v0.11.1 - 2022-04-26
+--------------------
+
+Fixes
+^^^^^
+
+- ``textDocument/documentLink`` requests no longer fail when encountering `::` characters in C++ references. (`#377 <https://github.com/swyddfa/esbonio/issues/377>`_)
+
+
 v0.11.0 - 2022-04-18
 --------------------
 
