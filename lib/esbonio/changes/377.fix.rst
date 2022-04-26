@@ -1,0 +1,1 @@
+``textDocument/documentLink`` requests no longer fail when encountering `::` characters in C++ references.

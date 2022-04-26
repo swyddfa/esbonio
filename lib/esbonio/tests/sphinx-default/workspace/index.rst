@@ -12,6 +12,7 @@ Welcome to Defaults's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   code/cpp
    theorems/index
    definitions
    glossary

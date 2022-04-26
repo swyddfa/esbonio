@@ -195,7 +195,8 @@ class DomainFeatures:
         if not self.rst.app:
             return None, None
 
-        project, label = label.split(":")
+        project, *parts = label.split(":")
+        label = ":".join(parts)
         targets = self.rst.get_intersphinx_targets(project, name, domain or "")
 
         for _, items in targets.items():

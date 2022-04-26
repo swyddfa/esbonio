@@ -1,1 +1,0 @@
-Language clients can now control the number of parallel jobs by providing a ``sphinx.numJobs`` initialization option, which defaults to ``auto``. Clients can disable parallel builds by setting this option to ``1``
