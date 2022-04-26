@@ -278,8 +278,8 @@ WELCOME_LABEL = Location(
             Location(
                 uri="index.rst",
                 range=Range(
-                    start=Position(line=18, character=0),
-                    end=Position(line=19, character=0),
+                    start=Position(line=19, character=0),
+                    end=Position(line=20, character=0),
                 ),
             ),
         ),
