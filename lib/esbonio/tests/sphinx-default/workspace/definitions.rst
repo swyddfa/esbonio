@@ -30,3 +30,5 @@ Some literal includes now
 This line refers to :ref:`setup-label`
 
 See the :doc:`/glossary` for details
+
+Find more info :cpp:func:`ExampleClass::isExample`
