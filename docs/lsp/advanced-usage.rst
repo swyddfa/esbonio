@@ -16,46 +16,40 @@ the section on :doc:`/lsp/extending` if you want to know more)
 
 However, all that we need to know for the moment is the concept of startup modules.
 
+.. _lsp-startup-mods:
+
 Startup Modules
 ---------------
 
 A startup module is any python module (or script) that results in a running language server.
 The following startup modules are included with the ``esbonio`` python package.
 
-.. relevant-to:: esbonio
-   :category: Startup Module
+.. startmod:: esbonio
 
    The default startup module you are probably already familiar with.
-   It is in fact just an alias for the ``esbonio.lsp.sphinx`` startup module.
+   It is in fact just an alias for the :startmod:`esbonio.lsp.sphinx` startup module.
 
-   .. cli-help:: esbonio.__main__
+   ..   .. cli-help:: esbonio.__main__
 
-.. relevant-to:: esbonio.lsp.rst
-   :category: Startup Module
+.. startmod:: esbonio.lsp.rst
 
    A "vanilla" reStructuedText language server for use with docutils projects.
 
-   .. cli-help:: esbonio.lsp.rst
+   ..   .. cli-help:: esbonio.lsp.rst
 
-.. relevant-to:: esbonio.lsp.sphinx
-   :category: Startup Module
+.. startmod:: esbonio.lsp.sphinx
 
    A language server tailored for use with Sphinx projects.
 
-   .. cli-help:: esbonio.lsp.sphinx
+   .. .. cli-help:: esbonio.lsp.sphinx
 
-Note that, the command line interfaces for these servers is identical and the only difference
-between them is the module name passed to ``python -m``.
 
-Modules
--------
+Extension Modules
+-----------------
 
-Inspired by the way Sphinx extensions work, functionality is added to ``esbonio`` servers through
-lists of python modules with each module contributing some features. The ``--include`` and
-``--exclude`` arguments command line arguments allow you to add additional modules or remove any
-that you don't need or find problematic.
+Inspired by the way Sphinx extensions work, functionality is added to a language server through a list of python modules with each module contributing some features.
 
-Below is the list of modules included by default for each of the provided startup modules.
+Below is the list of modules loaded by default for each of the provided servers.
 
 .. relevant-to:: esbonio
    :category: Startup Module
@@ -84,7 +78,10 @@ Below is the list of modules included by default for each of the provided startu
 In addition to the modules enabled by default, the following modules are provided and can be
 enabled if you wish.
 
-``esbonio.lsp.spelling`` (Experimental)
+.. extmod:: esbonio.lsp.spelling
+
+   **Experimental**
+
    Basic spell checking, with errors reported as diagnostics and corrections suggested as code actions.
    Currently only available for English and can be confused by reStructuredText syntax.
 

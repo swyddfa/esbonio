@@ -129,13 +129,25 @@ def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
 def setup(app: Sphinx):
     app.add_role("lsp", lsp_role)
 
-    # So that it's possible to use intersphinx to link to configuration options
-    # in sphinx.
     app.add_object_type(
         "confval",
         "confval",
         objname="configuration value",
         indextemplate="pair: %s; configuration value",
+    )
+
+    app.add_object_type(
+        "startmod",
+        "startmod",
+        objname="startup module",
+        indextemplate="pair: %s; startup module",
+    )
+
+    app.add_object_type(
+        "extmod",
+        "extmod",
+        objname="extension module",
+        indextemplate="pair: %s; startup module",
     )
 
     # So that it's possible to use intersphinx to link to IPython magics
