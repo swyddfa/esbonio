@@ -1,3 +1,4 @@
+import argparse
 import importlib
 
 from docutils import nodes
@@ -13,13 +14,13 @@ class CliHelp(Directive):
         name = self.arguments[0]
         mod = importlib.import_module(name)
 
-        if not hasattr(mod, "cli"):
+        candidates = [
+            v for v in mod.__dict__.values() if isinstance(v, argparse.ArgumentParser)
+        ]
+        if len(candidates) == 0:
             return []
 
-        cli = mod.cli
-        if not hasattr(cli, "format_help"):
-            return []
-
+        cli = candidates[0]
         return [nodes.literal_block("", cli.format_help(), language="none")]
 
 

@@ -6,15 +6,14 @@ Getting Started
 This section contains notes on how to use the Language Server with your text
 editor of choice.
 
-
-.. relevant-to:: VSCode
+.. relevant-to:: VSCode (Esbonio)
    :category: Editor
 
    .. figure:: /images/vscode-screenshot.png
       :align: center
       :target: /_images/vscode-screenshot.png
 
-      The VSCode extension in action.
+      The Esbonio VSCode extension.
 
 .. relevant-to:: Emacs (eglot)
    :category: Editor
@@ -101,7 +100,7 @@ building your documentation e.g.
 Otherwise the language server will fail to properly understand your project.
 
 
-.. relevant-to:: VSCode
+.. relevant-to:: VSCode (Esbonio)
    :category: Editor
 
    Integration with `VSCode`_ is provided by the `Esbonio`_ extension.
@@ -139,7 +138,7 @@ Otherwise the language server will fail to properly understand your project.
 Configuration
 -------------
 
-.. relevant-to:: VSCode
+.. relevant-to:: VSCode (Esbonio)
    :category: Editor
 
    .. include:: ./editors/vscode/_configuration.rst
@@ -171,10 +170,8 @@ Configuration
 
 .. confval:: sphinx.buildDir (string)
 
-   By default the language server will choose a cache directory (as determined by
-   `appdirs <https://pypi.org/project/appdirs>`_) to put Sphinx's build output.
-   This option can be used to force the language server to use a location
-   of your choosing, currently accepted values include:
+   By default the language server will choose a cache directory (as determined by `appdirs <https://pypi.org/project/appdirs>`_) to put Sphinx's build output.
+   This option can be used to force the language server to use a location of your choosing, currently accepted values include:
 
    - ``/path/to/src/`` - An absolute path
    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
@@ -183,10 +180,9 @@ Configuration
 
 .. confval:: sphinx.confDir (string)
 
-   The language server attempts to automatically find the folder which contains your
-   project's ``conf.py``. If necessary this can be used to override the default discovery
-   mechanism and force the server to use a folder of your choosing. Currently accepted
-   values include:
+   The language server attempts to automatically find the folder which contains your project's ``conf.py``.
+   If necessary this can be used to override the default discovery mechanism and force the server to use a folder of your choosing.
+   Currently accepted values include:
 
    - ``/path/to/docs`` - An absolute path
    - ``${workspaceRoot}/docs`` - A path relative to the root of your workspace.
@@ -194,10 +190,9 @@ Configuration
 
 .. confval:: sphinx.srcDir (string)
 
-   The language server assumes that your project's ``srcDir`` (the folder containing your
-   rst files) is the same as your projects's ``confDir``. If this assumption is not true,
-   you can use this setting to tell the server where to look. Currently accepted values
-   include:
+   The language server assumes that your project's ``srcDir`` (the folder containing your rst files) is the same as your projects's ``confDir``.
+   If this assumption is not true, you can use this setting to tell the server where to look.
+   Currently accepted values include:
 
    - ``/path/to/src/`` - An absolute path
    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
@@ -212,12 +207,13 @@ Configuration
 
    Controls the number of parallel jobs used during a Sphinx build.
 
-   The default value of ``"auto"`` will behave the same as passing ``-j auto`` to a ``sphinx-build`` command. Setting this value to ``1`` effectively disables parallel builds.
+   The default value of ``"auto"`` will behave the same as passing ``-j auto`` to a ``sphinx-build`` command.
+   Setting this value to ``1`` effectively disables parallel builds.
 
 .. confval:: server.logLevel (string)
 
-   This can be used to set the level of log messages emitted by the server. This can be set
-   to one of the following values.
+   This can be used to set the level of log messages emitted by the server.
+   This can be set to one of the following values.
 
    - ``error`` (default)
    - ``info``
@@ -225,8 +221,8 @@ Configuration
 
 .. confval:: server.logFilter (string[])
 
-   The language server will typically include log output from all of its components. This
-   option can be used to restrict the log output to be only those named.
+   The language server will typically include log output from all of its components.
+   This option can be used to restrict the log output to be only those named.
 
 .. confval:: server.hideSphinxOutput (boolean)
 
@@ -267,9 +263,7 @@ to help get you started.
 Debugging
 ---------
 
-In the event that something does not work as expected, you can increase the
-logging level of the server by setting the ``server.logLevel`` initialization option
-to ``debug``.
+In the event that something does not work as expected, you can increase the logging level of the server by setting the :confval:`server.logLevel (string)` option to ``debug``.
 
 .. relevant-to:: Neovim (lspconfig)
    :category: Editor
@@ -289,7 +283,7 @@ to ``debug``.
 Additional Details
 ------------------
 
-.. relevant-to:: VSCode
+.. relevant-to:: VSCode (Esbonio)
    :category: Editor
 
 
