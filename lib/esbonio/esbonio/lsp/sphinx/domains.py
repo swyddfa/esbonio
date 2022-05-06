@@ -142,7 +142,10 @@ class DomainFeatures:
         if docname is None:
             return []
 
-        doctree = self.rst.get_doctree(docname=docname)
+        path = self.rst.app.env.doc2path(docname)
+        uri = Uri.from_fs_path(path)
+
+        doctree = self.rst.get_initial_doctree(uri)
         if doctree is None:
             return []
 

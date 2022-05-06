@@ -10,6 +10,8 @@ sides of a right angled triangle.
 
 .. include:: /math.rst
 
+.. _the-implementation:
+
 Implementation
 --------------
 
