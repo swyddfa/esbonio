@@ -1013,7 +1013,7 @@ def exception_to_diagnostic(exc: BaseException):
         tb = exc.__traceback__
         frame = traceback.extract_tb(tb)[-1]
         path = pathlib.Path(frame.filename)
-        line = frame.lineno - 1
+        line = (frame.lineno or 1) - 1
 
     message = type(exc).__name__ if exc.args.count == 0 else exc.args[0]
 
