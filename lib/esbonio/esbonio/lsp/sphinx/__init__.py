@@ -1,10 +1,7 @@
-import hashlib
 import json
 import logging
-import multiprocessing
 import pathlib
 import platform
-import re
 import traceback
 import typing
 from multiprocessing import Process
@@ -15,14 +12,9 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
-from typing import Union
 
-import appdirs
 import pygls.uris as Uri
 from docutils.parsers.rst import Directive
-from pydantic import BaseModel
-from pydantic import Field
-from pygls import IS_WIN
 from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DiagnosticSeverity
@@ -38,25 +30,24 @@ from sphinx.application import Sphinx
 from sphinx.domains import Domain
 from sphinx.errors import ConfigError
 from sphinx.util import console
-from sphinx.util.logging import SphinxLogRecord
-from sphinx.util.logging import WarningLogRecordTranslator
-from typing_extensions import Literal
 
 from esbonio.cli import setup_cli
-from esbonio.lsp.rst import LspHandler
 from esbonio.lsp.rst import RstLanguageServer
-from esbonio.lsp.rst import ServerConfig
+from esbonio.lsp.sphinx.config import InitializationOptions
+from esbonio.lsp.sphinx.config import MissingConfigError
+from esbonio.lsp.sphinx.config import SphinxConfig
+from esbonio.lsp.sphinx.config import SphinxLogHandler
+from esbonio.lsp.sphinx.config import SphinxServerConfig
 from esbonio.lsp.sphinx.preview import make_preview_server
 from esbonio.lsp.sphinx.preview import start_preview_server
 
-try:
-    from sphinx.util.logging import OnceFilter
-except ImportError:
-    # OnceFilter is not defined in Sphinx 2.x
-    class OnceFilter:  # type: ignore
-        def filter(self, *args, **kwargs):
-            return True
-
+__all__ = [
+    "InitializationOptions",
+    "MissingConfigError",
+    "SphinxConfig",
+    "SphinxServerConfig",
+    "SphinxLanguageServer",
+]
 
 IS_LINUX = platform.system() == "Linux"
 
@@ -74,349 +65,6 @@ DEFAULT_MODULES = [
 """The modules to load in the default configuration of the server."""
 # fmt: on
 
-DIAGNOSTIC_SEVERITY = {
-    logging.ERROR: DiagnosticSeverity.Error,
-    logging.INFO: DiagnosticSeverity.Information,
-    logging.WARNING: DiagnosticSeverity.Warning,
-}
-
-PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")
-
-
-class MissingConfigError(Exception):
-    """Indicates that we couldn't locate the project's 'conf.py'"""
-
-
-class SphinxConfig(BaseModel):
-    """Used to represent either the current Sphinx configuration or the config options
-    provided by the user at startup.
-    """
-
-    version: Optional[str]
-    """Sphinx's version number."""
-
-    conf_dir: Optional[str] = Field(None, alias="confDir")
-    """Can be used to override the default conf.py discovery mechanism."""
-
-    src_dir: Optional[str] = Field(None, alias="srcDir")
-    """Can be used to override the default assumption on where the project's rst files
-    are located."""
-
-    build_dir: Optional[str] = Field(None, alias="buildDir")
-    """Can be used to override the default location for storing build outputs."""
-
-    builder_name: str = Field("html", alias="builderName")
-    """The currently used builder name."""
-
-    force_full_build: bool = Field(True, alias="forceFullBuild")
-    """Flag that can be used to force a full build on startup."""
-
-    num_jobs: Union[Literal["auto"], int] = Field("auto", alias="numJobs")
-    """The number of jobs to use for parallel builds."""
-
-    @property
-    def parallel(self) -> int:
-        """The parsed value of the ``num_jobs`` field."""
-
-        if self.num_jobs == "auto":
-            return multiprocessing.cpu_count()
-
-        return self.num_jobs
-
-    def get_sphinx_args(self, root_uri: str) -> Dict[str, Any]:
-        """Get the arguments for the Sphinx application object corresponding to this
-        config.
-
-        Parameters
-        ----------
-        root_uri
-           The workspace root uri
-
-        Raises
-        ------
-        MissingConfigError
-           Raised when a valid conf dir cannot be found.
-        """
-
-        conf_dir = self.resolve_conf_dir(root_uri)
-        if conf_dir is None:
-            raise MissingConfigError()
-
-        builder_name = self.builder_name
-        src_dir = self.resolve_src_dir(root_uri, str(conf_dir))
-        build_dir = self.resolve_build_dir(root_uri, str(conf_dir))
-        doctree_dir = build_dir / "doctrees"
-        build_dir /= builder_name
-
-        return {
-            "buildername": builder_name,
-            "confdir": str(conf_dir),
-            "doctreedir": str(doctree_dir),
-            "freshenv": self.force_full_build,
-            "outdir": str(build_dir),
-            "parallel": self.parallel,
-            "srcdir": str(src_dir),
-            "status": None,
-            "warning": None,
-        }
-
-    def resolve_build_dir(self, root_uri: str, actual_conf_dir: str) -> pathlib.Path:
-        """Get the build dir to use based on the user's config.
-
-        If nothing is specified in the given ``config``, this will choose a location
-        within the user's cache dir (as determined by
-        `appdirs <https://pypi.org/project/appdirs>`). The directory name will be a hash
-        derived from the given ``conf_dir`` for the project.
-
-        Alternatively the user (or least language client) can override this by setting
-        either an absolute path, or a path based on the following "variables".
-
-        - ``${workspaceRoot}`` which expands to the workspace root as provided
-          by the language client.
-
-        - ``${workspaceFolder}`` alias for ``${workspaceRoot}``, placeholder ready for
-          multi-root support.
-
-        - ``${confDir}`` which expands to the configured config dir.
-
-        Parameters
-        ----------
-        root_uri
-           The workspace root uri
-
-        actual_conf_dir:
-           The fully resolved conf dir for the project
-        """
-
-        if not self.build_dir:
-            # Try to pick a sensible dir based on the project's location
-            cache = appdirs.user_cache_dir("esbonio", "swyddfa")
-            project = hashlib.md5(str(actual_conf_dir).encode()).hexdigest()
-
-            return pathlib.Path(cache) / project
-
-        root_dir = Uri.to_fs_path(root_uri)
-        match = PATH_VAR_PATTERN.match(self.build_dir)
-
-        if match and match.group(1) in {"workspaceRoot", "workspaceFolder"}:
-            build = pathlib.Path(self.build_dir).parts[1:]
-            return pathlib.Path(root_dir, *build).resolve()
-
-        if match and match.group(1) == "confDir":
-            build = pathlib.Path(self.build_dir).parts[1:]
-            return pathlib.Path(actual_conf_dir, *build).resolve()
-
-        # Convert path to/from uri so that any path quirks from windows are
-        # automatically handled
-        build_uri = Uri.from_fs_path(self.build_dir)
-        build_dir = Uri.to_fs_path(build_uri)
-
-        # But make sure paths starting with '~' are not corrupted
-        if build_dir.startswith("/~"):
-            build_dir = build_dir.replace("/~", "~")
-
-        # But make sure (windows) paths starting with '~' are not corrupted
-        if build_dir.startswith("\\~"):
-            build_dir = build_dir.replace("\\~", "~")
-
-        return pathlib.Path(build_dir).expanduser()
-
-    def resolve_conf_dir(self, root_uri: str) -> Optional[pathlib.Path]:
-        """Get the conf dir to use based on the user's config.
-
-        If ``conf_dir`` is not set, this method will attempt to find it by searching
-        within the ``root_uri`` for a ``conf.py`` file. If multiple files are found, the
-        first one found will be chosen.
-
-        If ``conf_dir`` is set the following "variables" are handled by this method
-
-        - ``${workspaceRoot}`` which expands to the workspace root as provided by the
-          language client.
-
-        - ``${workspaceFolder}`` alias for ``${workspaceRoot}``, placeholder ready for
-          multi-root support.
-
-        Parameters
-        ----------
-        root_uri
-            The workspace root uri
-        """
-        root = Uri.to_fs_path(root_uri)
-
-        if not self.conf_dir:
-            ignore_paths = [".tox", "site-packages"]
-
-            for candidate in pathlib.Path(root).glob("**/conf.py"):
-                # Skip any files that obviously aren't part of the project
-                if any(path in str(candidate) for path in ignore_paths):
-                    continue
-
-                return candidate.parent
-
-            # Nothing found
-            return None
-
-        match = PATH_VAR_PATTERN.match(self.conf_dir)
-        if not match or match.group(1) not in {"workspaceRoot", "workspaceFolder"}:
-            return pathlib.Path(self.conf_dir).expanduser()
-
-        conf = pathlib.Path(self.conf_dir).parts[1:]
-        return pathlib.Path(root, *conf).resolve()
-
-    def resolve_src_dir(self, root_uri: str, actual_conf_dir: str) -> pathlib.Path:
-        """Get the src dir to use based on the user's config.
-
-        By default the src dir will be the same as the conf dir, but this can
-        be overriden by setting the ``src_dir`` field.
-
-        There are a number of "variables" that can be included in the path,
-        currently we support
-
-        - ``${workspaceRoot}`` which expands to the workspace root as provided
-          by the language client.
-
-        - ``${workspaceFolder}`` alias for ``${workspaceRoot}``, placeholder ready for
-          multi-root support.
-
-        - ``${confDir}`` which expands to the configured config dir.
-
-        Parameters
-        ----------
-        root_uri
-           The workspace root uri
-
-        actual_conf_dir
-           The fully resolved conf dir for the project
-        """
-
-        if not self.src_dir:
-            return pathlib.Path(actual_conf_dir)
-
-        src_dir = self.src_dir
-        root_dir = Uri.to_fs_path(root_uri)
-
-        match = PATH_VAR_PATTERN.match(src_dir)
-        if match and match.group(1) in {"workspaceRoot", "workspaceFolder"}:
-            src = pathlib.Path(src_dir).parts[1:]
-            return pathlib.Path(root_dir, *src).resolve()
-
-        if match and match.group(1) == "confDir":
-            src = pathlib.Path(src_dir).parts[1:]
-            return pathlib.Path(actual_conf_dir, *src).resolve()
-
-        return pathlib.Path(src_dir).expanduser()
-
-
-class SphinxServerConfig(ServerConfig):
-
-    hide_sphinx_output: bool = Field(False, alias="hideSphinxOutput")
-    """A flag to indicate if Sphinx build output should be omitted from the log."""
-
-
-class InitializationOptions(BaseModel):
-    """The initialization options we can expect to receive from a client."""
-
-    sphinx: SphinxConfig = Field(default_factory=SphinxConfig)
-    """The ``esbonio.sphinx.*`` namespace of options."""
-
-    server: SphinxServerConfig = Field(default_factory=SphinxServerConfig)
-    """The ``esbonio.server.*`` namespace of options."""
-
-
-class SphinxLogHandler(LspHandler):
-    """A logging handler that can extract errors from Sphinx's build output."""
-
-    def __init__(self, app, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self.app = app
-        self.translator = WarningLogRecordTranslator(app)
-        self.only_once = OnceFilter()
-        self.diagnostics: Dict[str, List[Diagnostic]] = {}
-
-    def get_location(self, location: str) -> Tuple[str, Optional[int]]:
-
-        if not location:
-            conf = pathlib.Path(self.app.confdir, "conf.py")
-            return (str(conf), None)
-
-        path, *parts = location.split(":")
-        lineno = None
-
-        # On windows the rest of the path will be the first element of parts
-        if IS_WIN:
-            path += f":{parts.pop(0)}"
-
-        if len(parts) == 1:
-            try:
-                lineno = int(parts[0])
-            except ValueError:
-                pass
-
-        if len(parts) == 2:
-            # TODO: There's a possibility that there is an error in a docstring in a
-            #       *.py file somewhere. In which case parts would look like
-            #       ['docstring of {dotted.name}', '{lineno}']
-            #
-            #  e.g. ['docstring of esbonio.lsp.sphinx.SphinxLanguageServer.get_domains', '8']
-            #
-            #       It would be good to handle this case and look up the correct line
-            #       number to place a diagnostic.
-            pass
-
-        return (Uri.from_fs_path(path), lineno)
-
-    def emit(self, record: logging.LogRecord) -> None:
-
-        conditions = [
-            "sphinx" not in record.name,
-            record.levelno not in {logging.WARNING, logging.ERROR},
-            not self.translator,
-        ]
-
-        if any(conditions):
-            # Log the record as normal
-            super().emit(record)
-            return
-
-        # Only process errors/warnings once.
-        if not self.only_once.filter(record):
-            return
-
-        # Let sphinx do what it does to warning/error messages
-        self.translator.filter(record)
-
-        loc = record.location if isinstance(record, SphinxLogRecord) else ""
-        doc, lineno = self.get_location(loc)
-        line = lineno or 1
-        self.server.logger.debug("Reporting diagnostic at %s:%s", doc, line)
-
-        try:
-            message = record.msg % record.args
-        except Exception:
-            message = record.msg
-            self.server.logger.debug(
-                "Unable to format diagnostic message: %s", traceback.format_exc()
-            )
-
-        diagnostic = Diagnostic(
-            range=Range(
-                start=Position(line=line - 1, character=0),
-                end=Position(line=line, character=0),
-            ),
-            message=message,
-            severity=DIAGNOSTIC_SEVERITY.get(
-                record.levelno, DiagnosticSeverity.Warning
-            ),
-        )
-
-        if doc not in self.diagnostics:
-            self.diagnostics[doc] = [diagnostic]
-        else:
-            self.diagnostics[doc].append(diagnostic)
-
-        super().emit(record)
-
 
 class SphinxLanguageServer(RstLanguageServer):
     """A language server dedicated to working with Sphinx projects."""
@@ -426,6 +74,9 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self.app: Optional[Sphinx] = None
         """The Sphinx application instance."""
+
+        self.sphinx_args: Dict[str, Any] = {}
+        """The current Sphinx configuration will all variables expanded."""
 
         self.preview_process: Optional[Process] = None
         """The process hosting the preview server."""
@@ -440,17 +91,27 @@ class SphinxLanguageServer(RstLanguageServer):
     def configuration(self) -> Dict[str, Any]:
         """Return the server's actual configuration."""
         config = super().configuration
+        sphinx_config = SphinxConfig.from_arguments(sphinx_args=self.sphinx_args)
 
-        if self.app:
-            app = self.app
-            builder_name = None if app.builder is None else app.builder.name
-            config["sphinx"] = SphinxConfig(
-                version=__sphinx_version__,
-                confDir=app.confdir,
-                srcDir=app.srcdir,
-                buildDir=app.outdir,
-                builderName=builder_name,
-            )
+        if sphinx_config is None:
+            self.logger.error("Unable to determine SphinxConfig!")
+            return config
+
+        if self.user_config is None:
+            self.logger.error("Unable to determine user config!")
+            return config
+
+        # We always run Sphinx in "'-Q' mode", so we need to go back to the user's
+        # config to get those values.
+        sphinx_config.silent = self.user_config.sphinx.silent  # type: ignore
+        sphinx_config.quiet = self.user_config.sphinx.quiet  # type: ignore
+
+        # 'Make mode' isn't something that can be inferred from Sphinx args either.
+        sphinx_config.make_mode = self.user_config.sphinx.make_mode  # type: ignore
+
+        config["sphinx"] = dict(**sphinx_config.dict(by_alias=True))
+        config["sphinx"]["command"] = ["sphinx-build"] + sphinx_config.to_cli_args()
+        config["sphinx"]["version"] = __sphinx_version__
 
         return config
 
@@ -583,12 +244,13 @@ class SphinxLanguageServer(RstLanguageServer):
         self.logger.debug("Workspace root '%s'", self.workspace.root_uri)
         self.logger.debug("User Config %s", json.dumps(sphinx.dict(), indent=2))
 
-        sphinx_args = sphinx.get_sphinx_args(self.workspace.root_uri)
-        self.logger.debug("Sphinx Args %s", json.dumps(sphinx_args, indent=2))
+        sphinx_config = sphinx.resolve(self.workspace.root_uri)
+        self.sphinx_args = sphinx_config.to_application_args()
+        self.logger.debug("Sphinx Args %s", json.dumps(self.sphinx_args, indent=2))
 
         # Disable color escape codes in Sphinx's log messages
         console.nocolor()
-        app = Sphinx(**sphinx_args)
+        app = Sphinx(**self.sphinx_args)
 
         # This has to happen after app creation otherwise our logging handler
         # will get cleared by Sphinx's setup.

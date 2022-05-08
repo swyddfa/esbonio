@@ -21,9 +21,19 @@ from pytest_lsp import make_test_client
 
 from esbonio.lsp import ESBONIO_SERVER_CONFIGURATION
 from esbonio.lsp import ESBONIO_SERVER_PREVIEW
+from esbonio.lsp.rst import ServerConfig
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxConfig
 from esbonio.lsp.testing import sphinx_version
+
+
+class SphinxInfo(SphinxConfig):
+
+    command: List[str]
+    """The equivalent ``sphinx-build`` command"""
+
+    version: str
+    """Sphinx's version number."""
 
 
 def make_esbonio_client(*args, **kwargs):
@@ -272,7 +282,7 @@ async def test_initialization(command: List[str], path: str, options, expected):
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxConfig(**configuration["sphinx"])
+        actual = SphinxInfo(**configuration["sphinx"])
 
         assert actual.version is not None
         assert expected.build_dir in actual.build_dir
@@ -326,7 +336,7 @@ async def test_initialization_build_dir():
             assert len(test.client.messages) == 0
 
             assert "sphinx" in configuration
-            actual = SphinxConfig(**configuration["sphinx"])
+            actual = SphinxInfo(**configuration["sphinx"])
 
             assert actual.version is not None
             assert actual.builder_name == "html"
@@ -377,7 +387,7 @@ async def test_initialization_build_dir_workspace_var():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxConfig(**configuration["sphinx"])
+        actual = SphinxInfo(**configuration["sphinx"])
 
         assert actual.version is not None
         assert actual.builder_name == "html"
@@ -428,7 +438,7 @@ async def test_initialization_build_dir_workspace_folder():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxConfig(**configuration["sphinx"])
+        actual = SphinxInfo(**configuration["sphinx"])
 
         assert actual.version is not None
         assert actual.builder_name == "html"
@@ -479,7 +489,7 @@ async def test_initialization_build_dir_confdir():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxConfig(**configuration["sphinx"])
+        actual = SphinxInfo(**configuration["sphinx"])
         expected_dir = pathlib.Path(actual.conf_dir, "..", "_build", "html").resolve()
 
         assert actual.version is not None
@@ -513,6 +523,9 @@ async def test_initialization_sphinx_error():
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=root_uri,
         client_factory=make_esbonio_client,
+        initialization_options=InitializationOptions(
+            server=ServerConfig(logLevel="debug")
+        ),
     )
 
     test = make_client_server(config)
@@ -524,7 +537,6 @@ async def test_initialization_sphinx_error():
         )
 
         assert "sphinx" in configuration
-        assert configuration["sphinx"]["version"] is None
 
         conf_py = root_uri + "/conf.py"
         if IS_WIN:
@@ -609,7 +621,6 @@ async def test_initialization_missing_conf():
             )
 
             assert "sphinx" in configuration
-            assert configuration["sphinx"]["version"] is None
 
             assert len(test.client.messages) == 1
             message = test.client.messages[0]
