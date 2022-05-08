@@ -1,0 +1,16 @@
+The language server now supports many (but not all) ``sphinx-build`` command line options.
+The ``sphinx.*`` section of the server's initialization options has been extened to include the following options.
+
+- ``configOverrides``
+- ``doctreeDir``
+- ``keepGoing``
+- ``makeMode``
+- ``quiet``
+- ``silent``
+- ``tags``
+- ``verbosity``
+- ``warningIsError``
+
+See the `documentation <https://swyddfa.github.io/esbonio/docs/latest/en/lsp/getting-started.html#configuration>`_ for details.
+
+Additionally, a new cli application ``esbonio-sphinx`` is now available which language clients (or users) can use to convert ``sphinx-build`` cli options to/from the server's initialization options.
