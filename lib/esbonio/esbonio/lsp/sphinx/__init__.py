@@ -619,7 +619,7 @@ class SphinxLanguageServer(RstLanguageServer):
             if name in self._loaded_modules:
                 self.logger.debug("Skipping previously loaded module '%s'", name)
 
-            if not hasattr(ext, "esbonio_setup"):
+            if not hasattr(mod, "esbonio_setup"):
                 continue
 
             self.logger.debug("Loading sphinx module '%s'", name)
