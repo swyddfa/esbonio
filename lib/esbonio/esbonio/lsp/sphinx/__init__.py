@@ -619,7 +619,7 @@ class SphinxLanguageServer(RstLanguageServer):
             if name in self._loaded_modules:
                 self.logger.debug("Skipping previously loaded module '%s'", name)
 
-            if not hasattr(ext, "esbonio_setup"):
+            if not hasattr(mod, "esbonio_setup"):
                 continue
 
             self.logger.debug("Loading sphinx module '%s'", name)
@@ -1013,7 +1013,7 @@ def exception_to_diagnostic(exc: BaseException):
         tb = exc.__traceback__
         frame = traceback.extract_tb(tb)[-1]
         path = pathlib.Path(frame.filename)
-        line = frame.lineno - 1
+        line = (frame.lineno or 1) - 1
 
     message = type(exc).__name__ if exc.args.count == 0 else exc.args[0]
 

@@ -32,7 +32,7 @@ Architecture
 
    Language Feature
       Language features are subclasses of :class:`~esbonio.lsp.rst.LanguageFeature`.
-      They are typically based on a single aspect of reStructuredText (e.g. :class:`~esbonio.lsp.roles.Roles`) or Sphinx (e.g. :class:``  responsible for providing
+      They are typically based on a single aspect of reStructuredText (e.g. :class:`~esbonio.lsp.roles.Roles`).
 
       Language Features (where it makes sense) should be server agnostic, that way the same features can be reused across different envrionments.
 
@@ -52,7 +52,7 @@ Architecture
 
       There is nothing in Esbonio that would prevent you from writing your own if you so desired.
 
-   Module
+   Extension Module
       Ordinary Python modules are used to group related functionality together.
       Taking inspiration from how Sphinx is architected, language servers are assembled by passing the list of modules to load to the :func:`~esbonio.lsp.create_language_server`.
       This assembly process calls any functions with the name ``esbonio_setup`` allowing for ``LanguageFeatures`` to be configured and loaded into the server.

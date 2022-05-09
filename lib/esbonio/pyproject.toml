@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 asyncio_mode = "auto"
 filterwarnings = [
      "ignore:'contextfunction' is renamed to 'pass_context',*:DeprecationWarning",
-     "ignore:'environmentfilter' is renamed to 'pass_environment',*:DeprecationWarning"
+     "ignore:'environmentfilter' is renamed to 'pass_environment',*:DeprecationWarning",
 ]
 
 [tool.towncrier]
@@ -17,34 +17,39 @@ issue_format = "`#{issue} <https://github.com/swyddfa/esbonio/issues/{issue}>`_"
 underlines = ["-", "^", "\""]
 
 [[tool.towncrier.type]]
-     directory = "feature"
-     name = "Features"
-     showcontent = true
+directory = "feature"
+name = "Features"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "fix"
-     name = "Fixes"
-     showcontent = true
+directory = "enhancement"
+name = "Enhancements"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "doc"
-     name = "Docs"
-     showcontent = true
+directory = "fix"
+name = "Fixes"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "breaking"
-     name = "Breaking Changes"
-     showcontent = true
+directory = "doc"
+name = "Docs"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "deprecated"
-     name = "Deprecated"
-     showcontent = true
+directory = "breaking"
+name = "Breaking Changes"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "misc"
-     name = "Misc"
-     showcontent = true
+directory = "deprecated"
+name = "Deprecated"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "misc"
+name = "Misc"
+showcontent = true
 
 [tool.tox]
 legacy_tox_ini = """
