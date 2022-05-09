@@ -1,2 +1,0 @@
-Add ``esbonio.lsp.rst._record`` and ``esbonio.lsp.sphinx._record`` startup modules.
-These can be used to record all LSP client-sever communication to a text file.

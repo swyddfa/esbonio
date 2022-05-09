@@ -1,1 +1,0 @@
-The language server now detects functionality bundled with standard Sphinx extensions

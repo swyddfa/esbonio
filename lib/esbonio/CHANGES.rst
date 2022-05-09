@@ -1,3 +1,19 @@
+v0.11.2 - 2022-05-09
+--------------------
+
+Enhancements
+^^^^^^^^^^^^
+
+- Add ``esbonio.lsp.rst._record`` and ``esbonio.lsp.sphinx._record`` startup modules.
+  These can be used to record all LSP client-sever communication to a text file. (`#380 <https://github.com/swyddfa/esbonio/issues/380>`_)
+
+
+Fixes
+^^^^^
+
+- The language server now detects functionality bundled with standard Sphinx extensions (`#381 <https://github.com/swyddfa/esbonio/issues/381>`_)
+
+
 v0.11.1 - 2022-04-26
 --------------------
 
