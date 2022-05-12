@@ -34,9 +34,24 @@ export interface SphinxConfig {
   confDir?: string
 
   /**
+   * Any overriden conf.py options.
+   */
+  configOverrides?: object,
+
+  /**
+   * The directory in which to store Sphinx's doctree cache
+   */
+  doctreeDir?: string,
+
+  /**
    * Flag to force a full build of the documentation on startup.
    */
   forceFullBuild?: boolean
+
+  /**
+   * Flag to continue building when errors generated from warnings are encountered.
+   */
+  keepGoing?: boolean
 
   /**
    * The number of parallel jobs to use
@@ -44,10 +59,34 @@ export interface SphinxConfig {
   numJobs?: number | string
 
   /**
+   * Hide standard Sphinx output messages.
+   */
+  quiet?: boolean
+
+  /**
+   * Hide all Sphinx output.
+   */
+  silent?: boolean
+
+  /**
    * The source dir containing the *.rst files for the project.
    */
   srcDir?: string
 
+  /**
+   * Tags to enable during a build.
+   */
+  tags?: string[]
+
+  /**
+   * The verbosity of Sphinx's output.
+   */
+  verbosity?: number
+
+  /**
+   * Treat any warnings as errors.
+   */
+  warningIsError?: boolean
 }
 
 export interface SphinxInfo extends SphinxConfig {
@@ -324,10 +363,19 @@ export class EsbonioClient {
     let initOptions: InitOptions = {
       sphinx: {
         buildDir: buildDir,
+        builderName: config.get<string>('sphinx.builderName'),
         confDir: config.get<string>('sphinx.confDir'),
+        configOverrides: config.get<object>('sphinx.configOverrides'),
+        doctreeDir: config.get<string>('doctreeDir'),
         forceFullBuild: config.get<boolean>('sphinx.forceFullBuild'),
+        keepGoing: config.get<boolean>('sphinx.keepGoing'),
         numJobs: numJobs === 0 ? 'auto' : numJobs,
+        quiet: config.get<boolean>('sphinx.quiet'),
+        silent: config.get<boolean>('sphinx.silent'),
         srcDir: config.get<string>("sphinx.srcDir"),
+        tags: config.get<string[]>('sphinx.tags'),
+        verbosity: config.get<number>('sphinx.verbosity'),
+        warningIsError: config.get<boolean>('sphinx.warningIsError')
       },
       server: {
         logLevel: config.get<string>('server.logLevel'),

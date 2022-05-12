@@ -1,0 +1,2 @@
+The ``esbonio.server.hideSphinxOutput`` option has been deprecated in favour of the new ``esbonio.sphinx.quiet`` and ``esbonio.sphinx.silent`` options.
+It will be removed when the server reaches ``v1.0``
