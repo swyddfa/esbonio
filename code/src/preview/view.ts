@@ -112,7 +112,7 @@ export class PreviewManager {
    * @returns
    */
   private async getHtmlPath(editor: vscode.TextEditor): Promise<string | undefined> {
-    let config = this.esbonio.sphinxConfig
+    let config = this.esbonio.sphinxInfo
     if (!config || !config.srcDir || !config.buildDir) {
       return undefined
     }

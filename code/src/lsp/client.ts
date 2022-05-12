@@ -48,6 +48,15 @@ export interface SphinxConfig {
    */
   srcDir?: string
 
+}
+
+export interface SphinxInfo extends SphinxConfig {
+
+  /**
+   * The equivalent `sphinx-build` command for the current configuration
+   */
+  command?: string[]
+
   /**
    * Sphinx's version number.
    */
@@ -95,7 +104,7 @@ export interface BuildCompleteResult {
   /**
    * The options representing the server's config.
    */
-  config: InitOptions,
+  config: { server: ServerConfig, sphinx: SphinxInfo },
 
   /**
    * Flag indicating if the previous build resulted in an error.
@@ -120,7 +129,7 @@ export class EsbonioClient {
    * If present, this represents the current configuration of the Sphinx instance
    * managed by the Language server.
    */
-  public sphinxConfig?: SphinxConfig
+  public sphinxInfo?: SphinxInfo
 
   private client: LanguageClient
 
@@ -137,6 +146,7 @@ export class EsbonioClient {
     private context: vscode.ExtensionContext
   ) {
     context.subscriptions.push(vscode.commands.registerCommand(Commands.RESTART_SERVER, this.restartServer, this))
+    context.subscriptions.push(vscode.commands.registerCommand(Commands.COPY_BUILD_COMMAND, this.copyBuildCommand, this))
     context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_BUILDDIR, selectBuildDir))
     context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_CONFDIR, selectConfDir))
     context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_SRCDIR, selectSrcDir))
@@ -204,6 +214,14 @@ export class EsbonioClient {
       await this.stop()
       await this.start()
     }
+  }
+
+  async copyBuildCommand() {
+    if (!this.sphinxInfo) {
+      return
+    }
+
+    await vscode.env.clipboard.writeText(this.sphinxInfo.command.join(' '))
   }
 
   /**
@@ -281,7 +299,7 @@ export class EsbonioClient {
 
     this.client.onNotification("esbonio/buildComplete", (result: BuildCompleteResult) => {
       this.logger.debug(`Build complete ${JSON.stringify(result, null, 2)}`)
-      this.sphinxConfig = result.config.sphinx
+      this.sphinxInfo = result.config.sphinx
       this.buildCompleteCallbacks.forEach(fn => {
         fn(result)
       })
