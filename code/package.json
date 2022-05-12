@@ -95,6 +95,11 @@
                 "category": "Esbonio"
             },
             {
+                "command": "esbonio.sphinx.copyBuildCommand",
+                "title": "Copy Sphinx Build Command",
+                "category": "Esbonio"
+            },
+            {
                 "command": "esbonio.sphinx.selectConfDir",
                 "title": "Select Conf Dir",
                 "category": "Esbonio"
