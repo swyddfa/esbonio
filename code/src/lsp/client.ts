@@ -54,6 +54,11 @@ export interface SphinxConfig {
   keepGoing?: boolean
 
   /**
+   * Flag controlling if the server should behave like `sphinx-build -M ...`
+   */
+  makeMode?: boolean
+
+  /**
    * The number of parallel jobs to use
    */
   numJobs?: number | string
@@ -171,6 +176,7 @@ export class EsbonioClient {
   public sphinxInfo?: SphinxInfo
 
   private client: LanguageClient
+  private allowRestarts = true
 
   private clientStartCallbacks: Array<(params: void) => void> = []
   private clientErrorCallbacks: Array<(params: void) => void> = []
@@ -186,6 +192,7 @@ export class EsbonioClient {
   ) {
     context.subscriptions.push(vscode.commands.registerCommand(Commands.RESTART_SERVER, this.restartServer, this))
     context.subscriptions.push(vscode.commands.registerCommand(Commands.COPY_BUILD_COMMAND, this.copyBuildCommand, this))
+    context.subscriptions.push(vscode.commands.registerCommand(Commands.SET_BUILD_COMMAND, this.setBuildCommand, this))
     context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_BUILDDIR, selectBuildDir))
     context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_CONFDIR, selectConfDir))
     context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_SRCDIR, selectSrcDir))
@@ -248,7 +255,7 @@ export class EsbonioClient {
    */
   async restartServer() {
     let config = vscode.workspace.getConfiguration("esbonio.server")
-    if (config.get("enabled")) {
+    if (this.allowRestarts && config.get("enabled")) {
       this.logger.info("==================== RESTARTING SERVER =====================")
       await this.stop()
       await this.start()
@@ -261,6 +268,111 @@ export class EsbonioClient {
     }
 
     await vscode.env.clipboard.writeText(this.sphinxInfo.command.join(' '))
+  }
+
+  /**
+   * Prompt the user for the new build command and update the config accordingly.
+   */
+  async setBuildCommand() {
+
+    let config = vscode.workspace.getConfiguration("esbonio")
+    let currentCliArgs = await this.sphinxConfigToCLI(config);
+    let cliArgs = await vscode.window.showInputBox({
+      value: currentCliArgs,
+      placeHolder: '-M html ...',
+      prompt: 'Set sphinx-build arguments',
+    })
+
+    if (!cliArgs) {
+      // User cancelled, no need to show an error.
+      return
+    }
+
+    let sphinxConfig = await this.sphinxCLIToConfig(cliArgs);
+    if (!sphinxConfig) {
+      // Actually an error we should care about.
+      let res = await vscode.window.showErrorMessage("Unable to update sphinx-build command", "Show Output")
+      if (res == 'Show Output') {
+        this.channel.show()
+      }
+
+      return
+    }
+
+    await this.setSphinxConfig(sphinxConfig, config);
+  }
+
+  /**
+   * Update the user's sphinx configuration to match the given configuration.
+   *
+   * @param sphinxConfig The SphinxConfig to use
+   * @param config The "esbonio" configuration namespace
+   */
+  private async setSphinxConfig(sphinxConfig: SphinxConfig, config: vscode.WorkspaceConfiguration) {
+    // Based on [1] it would appear that there is no way to bulk update configuration values.
+    // Instead, we'll just have to turn off the restart mechanism until this is complete.
+    //
+    // [1]: https://github.com/microsoft/vscode/issues/63616
+    this.allowRestarts = false;
+
+    for (const [key, value] of Object.entries(sphinxConfig)) {
+      try {
+        await config.update(`sphinx.${key}`, value);
+      } catch (err) {
+        this.logger.error(`Unable to set ${key} = ${value}\n${err}`);
+      }
+    }
+
+    this.allowRestarts = true;
+    await this.restartServer();
+  }
+
+  /**
+   * Convert a set of sphinx-build cli arguments into the equivalent SphinxConfig.
+   *
+   * @param cliArgs The arguments to pass to 'sphinx-build'
+   * @returns
+   */
+  private async sphinxCLIToConfig(cliArgs: string): Promise<SphinxConfig | undefined> {
+
+    try {
+      let result = await this.python.execCommand({
+        args: [
+          '-m', 'esbonio.lsp.sphinx.cli', 'config', '--', ...cliArgs.split(' '),
+        ]
+      });
+      this.logger.debug(result.stdout);
+      return JSON.parse(result.stdout);
+
+    } catch (err) {
+      this.logger.debug(`Unable to obtain Sphinx Config\n${err}`)
+      return undefined
+    }
+  }
+
+  /**
+   * Convert the current sphinx configuration into the equivalent set of `sphinx-build`
+   * cli arguments.
+   *
+   * @param config The "esbonio" configuration namespace
+   * @returns
+   */
+  private async sphinxConfigToCLI(config: vscode.WorkspaceConfiguration): Promise<string | undefined> {
+    let currentConfig = this.getSphinxOptions(config);
+
+    try {
+      let currentArgs = await this.python.execCommand({
+        args: [
+          '-m', 'esbonio.lsp.sphinx.cli', 'config', '--to-cli', JSON.stringify(currentConfig)
+        ]
+      });
+      this.logger.debug(`Current build args, ${currentArgs.stdout}`);
+      return currentArgs.stdout;
+
+    } catch (err) {
+      this.logger.error(`Unable to determine current 'sphinx-build' arugments:\n${err}`)
+      return undefined
+    }
   }
 
   /**
@@ -351,32 +463,8 @@ export class EsbonioClient {
    */
   private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
 
-
-    let buildDir = config.get<string>('sphinx.buildDir')
-    let numJobs = config.get<number>('sphinx.numJobs')
-
-    if (!buildDir) {
-      let cache = this.context.storageUri.path
-      buildDir = join(cache, 'sphinx')
-    }
-
     let initOptions: InitOptions = {
-      sphinx: {
-        buildDir: buildDir,
-        builderName: config.get<string>('sphinx.builderName'),
-        confDir: config.get<string>('sphinx.confDir'),
-        configOverrides: config.get<object>('sphinx.configOverrides'),
-        doctreeDir: config.get<string>('doctreeDir'),
-        forceFullBuild: config.get<boolean>('sphinx.forceFullBuild'),
-        keepGoing: config.get<boolean>('sphinx.keepGoing'),
-        numJobs: numJobs === 0 ? 'auto' : numJobs,
-        quiet: config.get<boolean>('sphinx.quiet'),
-        silent: config.get<boolean>('sphinx.silent'),
-        srcDir: config.get<string>("sphinx.srcDir"),
-        tags: config.get<string[]>('sphinx.tags'),
-        verbosity: config.get<number>('sphinx.verbosity'),
-        warningIsError: config.get<boolean>('sphinx.warningIsError')
-      },
+      sphinx: this.getSphinxOptions(config),
       server: {
         logLevel: config.get<string>('server.logLevel'),
         logFilter: config.get<string[]>('server.logFilter'),
@@ -401,6 +489,35 @@ export class EsbonioClient {
     }
     this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions, null, 2)}`)
     return clientOptions
+  }
+
+  private getSphinxOptions(config: vscode.WorkspaceConfiguration): SphinxConfig {
+
+    let buildDir = config.get<string>('sphinx.buildDir')
+    let numJobs = config.get<number>('sphinx.numJobs')
+
+    if (!buildDir) {
+      let cache = this.context.storageUri.path
+      buildDir = join(cache, 'sphinx')
+    }
+
+    return {
+      buildDir: buildDir,
+      builderName: config.get<string>('sphinx.builderName'),
+      confDir: config.get<string>('sphinx.confDir'),
+      configOverrides: config.get<object>('sphinx.configOverrides'),
+      doctreeDir: config.get<string>('doctreeDir'),
+      forceFullBuild: config.get<boolean>('sphinx.forceFullBuild'),
+      keepGoing: config.get<boolean>('sphinx.keepGoing'),
+      makeMode: config.get<boolean>('sphinx.makeMode'),
+      numJobs: numJobs === 0 ? 'auto' : numJobs,
+      quiet: config.get<boolean>('sphinx.quiet'),
+      silent: config.get<boolean>('sphinx.silent'),
+      srcDir: config.get<string>("sphinx.srcDir"),
+      tags: config.get<string[]>('sphinx.tags'),
+      verbosity: config.get<number>('sphinx.verbosity'),
+      warningIsError: config.get<boolean>('sphinx.warningIsError')
+    };
   }
 
   /**

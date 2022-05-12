@@ -105,7 +105,14 @@ export class StatusManager {
         command: Commands.RESTART_SERVER
       }
     })
-    this.setStatusItem('Builder', builderName, { busy: false })
+    this.setStatusItem('Builder', builderName, {
+      busy: false,
+      command: {
+        title: "Set Build Command",
+        tooltip: "Set the sphinx-build cli options to use",
+        command: Commands.SET_BUILD_COMMAND
+      }
+    })
     this.setStatusItem('Config', confDir, {
       command: {
         title: "Select Conf Dir",
