@@ -49,6 +49,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "sphinxcontrib.autodoc_pydantic",
     "sphinx_panels",
     "esbonio.tutorial",
     "cli_help",
@@ -56,7 +57,12 @@ extensions = [
     "relevant_to",
 ]
 
+autodoc_member_order = "groupwise"
 autodoc_typehints = "description"
+autodoc_typehints_description_target = "documented"
+
+autodoc_pydantic_model_show_json = True
+
 
 intersphinx_mapping = {
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),

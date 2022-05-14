@@ -170,13 +170,22 @@ Configuration
 
 .. confval:: sphinx.buildDir (string)
 
-   By default the language server will choose a cache directory (as determined by `appdirs <https://pypi.org/project/appdirs>`_) to put Sphinx's build output.
+   By default the language server will choose a cache directory (as determined by `appdirs <https://pypi.org/project/appdirs>`_) to place Sphinx's build output.
    This option can be used to force the language server to use a location of your choosing, currently accepted values include:
 
    - ``/path/to/src/`` - An absolute path
    - ``${workspaceRoot}/docs/src`` - A path relative to the root of your workspace
    - ``${workspaceFolder}/docs/src`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
+
+.. confval:: sphinx.builderName (string)
+
+   By default the language server will use the ``html`` builder.
+   This option allows you to specify the builder you wish to use.
+
+   .. note::
+
+      Some features (such as previews) are currently only available for the ``html`` builder.
 
 .. confval:: sphinx.confDir (string)
 
@@ -187,6 +196,73 @@ Configuration
    - ``/path/to/docs`` - An absolute path
    - ``${workspaceRoot}/docs`` - A path relative to the root of your workspace.
    - ``${workspaceFolder}/docs`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
+
+.. confval:: sphinx.configOverrides (object)
+
+   This option can be used to override values set in the project's ``conf.py`` file.
+   This covers both the :option:`sphinx-build -D <sphinx:sphinx-build.-D>` and :option:`sphinx-build -A <sphinx:sphinx-build.-A>` cli options.
+
+   For example the cli argument ``-Dlanguage=cy`` overrides a project's language, the equivalent setting using the ``configOverrides`` setting would be::
+
+      {
+         "sphinx.configOverrides": {
+            "language": "cy"
+         }
+      }
+
+   Simiarly the argument ``-Adocstitle=ProjectName`` overrides the value of the ``docstitle`` variable inside HTML templates, the equivalent setting using ``configOverrides`` would be::
+
+      {
+         "sphinx.configOverrides": {
+            "docstitle": "ProjectName"
+         }
+      }
+
+.. confval:: sphinx.doctreeDir (string)
+
+   This option can be used to specify the directory into which the language server will write the project's doctree cache.
+   Currently accepted values include:
+
+   - ``/path/to/docs`` - An absolute path
+   - ``${workspaceRoot}/doctrees`` - A path relative to the root of your workspace.
+   - ``${workspaceFolder}/doctrees`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
+   - ``${confDir}/../doctrees`` - A path relative to your project's ``confDir``
+   - ``${buildDir}/.doctrees`` - A path relative to your project's ``buildDir``
+
+.. confval:: sphinx.forceFullBuild (boolean)
+
+   Flag that indicates if the server should force a full build of the documentation on startup.
+   (Default: ``false``)
+
+.. confval:: sphinx.keepGoing (boolean)
+
+   Continue building even when errors (from warnings) are encountered.
+   (Default: ``false``)
+
+.. confval:: sphinx.makeMode (boolean)
+
+   If ``true`` the language server will behave like ``sphinx-build`` when invoked with the :option:`-M <sphinx:sphinx-build.-M>` argument.
+   If ``false`` the language server will behave like ``sphinx-build`` when invoked with the :option:`-b <sphinx:sphinx-build.-b>` argument.
+   (Default: ``true``)
+
+.. confval:: sphinx.numJobs (string or integer)
+
+   Controls the number of parallel jobs used during a Sphinx build.
+
+   The default value of ``"auto"`` will behave the same as passing ``-j auto`` to a ``sphinx-build`` command.
+   Setting this value to ``1`` effectively disables parallel builds.
+
+.. confval:: sphinx.quiet (boolean)
+
+   Hides all standard Sphinx output messages.
+   Equivalent to the :option:`sphinx-build -q <sphinx:sphinx-build.-q>` cli option.
+   (Default ``false``)
+
+.. confval:: sphinx.silent (boolean)
+
+   Hides all Sphinx output.
+   Equivalent to the :option:`sphinx-build -Q <sphinx:sphinx-build.-Q>` cli option.
+   (Default ``false``)
 
 .. confval:: sphinx.srcDir (string)
 
@@ -199,16 +275,19 @@ Configuration
    - ``${workspaceFolder}/docs/src`` - Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
    - ``${confDir}/../src/`` - A path relative to your project's ``confDir``
 
-.. confval:: sphinx.forceFullBuild (boolean)
+.. confval:: sphinx.tags (string[])
 
-   Flag that indicates if the server should force a full build of the documentation on startup. (Default: ``true``)
+   A list of tags to enable.
+   See the documentation on the :option:`sphinx-build -t <sphinx:sphinx-build.-t>` cli option for more details.
+   (Default: ``[]``)
 
-.. confval:: sphinx.numJobs (string or integer)
+.. confval:: sphinx.verbosity (integer)
 
-   Controls the number of parallel jobs used during a Sphinx build.
+   Set the verbosity level of Sphinx's output. (Default: ``0``)
 
-   The default value of ``"auto"`` will behave the same as passing ``-j auto`` to a ``sphinx-build`` command.
-   Setting this value to ``1`` effectively disables parallel builds.
+.. confval:: sphinx.warningIsError (boolean)
+
+   Treat warnings as errors. (Default: ``false``)
 
 .. confval:: server.logLevel (string)
 
@@ -225,6 +304,11 @@ Configuration
    This option can be used to restrict the log output to be only those named.
 
 .. confval:: server.hideSphinxOutput (boolean)
+
+   .. deprecated:: 0.12.0
+
+      The :confval:`sphinx.quiet` and :confval:`sphinx.silent` options should be used instead.
+      This will be removed in ``v1.0``.
 
    Normally any build output from Sphinx will be forwarded to the client as log messages.
    If you prefer this flag can be used to exclude any Sphinx output from the log.
