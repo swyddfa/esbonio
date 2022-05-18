@@ -30,6 +30,7 @@ from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DidSaveTextDocumentParams
 from pygls.lsp.types import DocumentLink
 from pygls.lsp.types import DocumentSymbol
+from pygls.lsp.types import Hover
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import Location
@@ -193,6 +194,20 @@ class DefinitionContext:
         )
 
 
+class HoverContext:
+    """A class that captures the context within a hover request has been made."""
+
+    def __init__(self, *, doc: Document, position: Position):
+        self.doc = doc
+        self.position = position
+
+    def __repr__(self):
+        p = f"{self.position.line}:{self.position.character}"
+        return (
+            f"HoverContext<{self.doc.uri}:{p}>"
+        )
+
+
 class LanguageFeature:
     """Base class for language features."""
 
@@ -218,6 +233,10 @@ class LanguageFeature:
     def code_action(self, params: CodeActionParams) -> List[CodeAction]:
         """Called when code actions should be computed."""
         return []
+
+    def hover(self, context: HoverContext) -> Hover:
+        """Called when hovered on need ID."""
+        return Hover
 
     completion_triggers: List["re.Pattern"] = []
     """A list of regular expressions used to determine if the

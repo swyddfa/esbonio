@@ -15,6 +15,7 @@ from pygls.lsp.methods import COMPLETION_ITEM_RESOLVE
 from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import DOCUMENT_LINK
 from pygls.lsp.methods import DOCUMENT_SYMBOL
+from pygls.lsp.methods import HOVER
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import SHUTDOWN
@@ -37,6 +38,7 @@ from pygls.lsp.types import DocumentSymbolParams
 from pygls.lsp.types import FileOperationFilter
 from pygls.lsp.types import FileOperationPattern
 from pygls.lsp.types import FileOperationRegistrationOptions
+from pygls.lsp.types import HoverParams
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import ServerCapabilities
@@ -45,6 +47,7 @@ from pygls.protocol import LanguageServerProtocol
 from .rst import CompletionContext
 from .rst import DefinitionContext
 from .rst import DocumentLinkContext
+from .rst import HoverContext
 from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .rst import SymbolVisitor
@@ -179,11 +182,23 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         return actions
 
+    @server.feature(HOVER)
+    def on_hover(ls: RstLanguageServer, params: HoverParams):
+        uri = params.text_document.uri
+        doc = ls.workspace.get_document(uri)
+        pos = params.position
+        context = HoverContext(doc=doc, position=pos)
+    
+        for feature in ls._features.values():
+            hovers = feature.hover(context)
+
+        return hovers
+
     # <engine-example>
     @server.feature(
         COMPLETION,
         CompletionOptions(
-            trigger_characters=[".", ":", "`", "<", "/"], resolve_provider=True
+            trigger_characters=[">", ".", ":", "`", "<", "/"], resolve_provider=True
         ),
     )
     def on_completion(ls: RstLanguageServer, params: CompletionParams):
