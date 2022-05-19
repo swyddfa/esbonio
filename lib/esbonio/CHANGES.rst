@@ -1,3 +1,11 @@
+Under development
+-----------------
+
+- Add ``textDocument/hover`` support. (`#311 <https://github.com/swyddfa/esbonio/issues/311>`_)
+
+- Support '>' to completion triggers.
+
+
 v0.11.2 - 2022-05-09
 --------------------
 
