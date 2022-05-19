@@ -268,7 +268,11 @@ class SphinxLanguageServer(RstLanguageServer):
             sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
 
             self.sphinx_log = SphinxLogHandler(app, self)
-            self.sphinx_log.setLevel(VERBOSITY_MAP[app.verbosity])
+
+            if sphinx.quiet:
+                self.sphinx_log.setLevel(logging.WARNING)
+            else:
+                self.sphinx_log.setLevel(VERBOSITY_MAP[app.verbosity])
 
             formatter = logging.Formatter("%(message)s")
             self.sphinx_log.setFormatter(formatter)
