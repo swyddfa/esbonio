@@ -80,6 +80,9 @@ class SphinxLanguageServer(RstLanguageServer):
         self.sphinx_args: Dict[str, Any] = {}
         """The current Sphinx configuration will all variables expanded."""
 
+        self.sphinx_log: Optional[SphinxLogHandler] = None
+        """Logging handler for sphinx messages."""
+
         self.preview_process: Optional[Process] = None
         """The process hosting the preview server."""
 
@@ -114,6 +117,8 @@ class SphinxLanguageServer(RstLanguageServer):
         config["sphinx"] = dict(**sphinx_config.dict(by_alias=True))
         config["sphinx"]["command"] = ["sphinx-build"] + sphinx_config.to_cli_args()
         config["sphinx"]["version"] = __sphinx_version__
+
+        config["server"] = self.user_config.server.dict(by_alias=True)  # type: ignore
 
         return config
 
@@ -214,7 +219,9 @@ class SphinxLanguageServer(RstLanguageServer):
         # Reset the warnings counter
         self.app._warncount = 0
         error = False
-        self.sphinx_log.diagnostics = {}
+
+        if self.sphinx_log is not None:
+            self.sphinx_log.diagnostics = {}
 
         try:
             self.app.build()
@@ -224,9 +231,10 @@ class SphinxLanguageServer(RstLanguageServer):
             uri, diagnostic = exception_to_diagnostic(exc)
             self.set_diagnostics("sphinx-build", uri, [diagnostic])
 
-        for doc, diagnostics in self.sphinx_log.diagnostics.items():
-            self.logger.debug("Found %d problems for %s", len(diagnostics), doc)
-            self.set_diagnostics("sphinx", doc, diagnostics)
+        if self.sphinx_log is not None:
+            for doc, diagnostics in self.sphinx_log.diagnostics.items():
+                self.logger.debug("Found %d problems for %s", len(diagnostics), doc)
+                self.set_diagnostics("sphinx", doc, diagnostics)
 
         self.sync_diagnostics()
         self.send_notification(
@@ -256,7 +264,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
         # This has to happen after app creation otherwise our logging handler
         # will get cleared by Sphinx's setup.
-        if not server.hide_sphinx_output:
+        if not server.hide_sphinx_output and not sphinx.silent:
             sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
 
             self.sphinx_log = SphinxLogHandler(app, self)
