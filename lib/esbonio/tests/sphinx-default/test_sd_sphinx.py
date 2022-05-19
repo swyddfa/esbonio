@@ -24,6 +24,7 @@ from esbonio.lsp import ESBONIO_SERVER_PREVIEW
 from esbonio.lsp.rst import ServerConfig
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxConfig
+from esbonio.lsp.sphinx.config import SphinxServerConfig
 from esbonio.lsp.testing import sphinx_version
 
 
@@ -279,7 +280,9 @@ async def test_initialization(command: List[str], path: str, options, expected):
             ESBONIO_SERVER_CONFIGURATION
         )
 
+        # Test some default behaviours.
         assert len(test.client.messages) == 0
+        assert len(test.client.log_messages) > 0
         assert not any(
             [log.message.startswith("[app]") for log in test.client.log_messages]
         )
@@ -638,7 +641,7 @@ async def test_initialization_missing_conf():
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
 async def test_initialization_verbosity():
-    """Ensure that the server respects the verbosity setting."""
+    """Ensure that the server respects Sphinx's verbosity setting."""
 
     root_path = pathlib.Path(__file__).parent / "workspace"
     root_uri = uri.from_fs_path(str(root_path))
@@ -669,6 +672,80 @@ async def test_initialization_verbosity():
         assert any(
             [log.message.startswith("[app]") for log in test.client.log_messages]
         )
+
+    finally:
+        await test.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
+async def test_initialization_hide_sphinx_output():
+    """Ensure that the server respects hide sphinx output setting."""
+
+    root_path = pathlib.Path(__file__).parent / "workspace"
+    root_uri = uri.from_fs_path(str(root_path))
+
+    config = ClientServerConfig(
+        server_command=[sys.executable, "-m", "esbonio"],
+        root_uri=root_uri,
+        initialization_options=InitializationOptions(
+            server=SphinxServerConfig(hideSphinxOutput=True)
+        ),
+        client_factory=make_esbonio_client,
+    )
+
+    test = make_client_server(config)
+
+    try:
+        await test.start()
+
+        configuration = await test.client.execute_command_request(
+            ESBONIO_SERVER_CONFIGURATION,
+        )
+
+        assert len(test.client.messages) == 0
+
+        assert "server" in configuration
+        actual = SphinxServerConfig(**configuration["server"])
+
+        assert actual.hide_sphinx_output is True
+        assert len(test.client.log_messages) == 0
+
+    finally:
+        await test.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
+async def test_initialization_silent():
+    """Ensure that the server respects Sphinx's silent setting."""
+
+    root_path = pathlib.Path(__file__).parent / "workspace"
+    root_uri = uri.from_fs_path(str(root_path))
+
+    config = ClientServerConfig(
+        server_command=[sys.executable, "-m", "esbonio"],
+        root_uri=root_uri,
+        initialization_options=InitializationOptions(sphinx=SphinxConfig(silent=True)),
+        client_factory=make_esbonio_client,
+    )
+
+    test = make_client_server(config)
+
+    try:
+        await test.start()
+
+        configuration = await test.client.execute_command_request(
+            ESBONIO_SERVER_CONFIGURATION,
+        )
+
+        assert len(test.client.messages) == 0
+
+        assert "sphinx" in configuration
+        actual = SphinxConfig(**configuration["sphinx"])
+
+        assert actual.silent is True
+        assert len(test.client.log_messages) == 0
 
     finally:
         await test.stop()
