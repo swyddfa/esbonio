@@ -30,6 +30,8 @@ from sphinx.application import Sphinx
 from sphinx.domains import Domain
 from sphinx.errors import ConfigError
 from sphinx.util import console
+from sphinx.util.logging import NAMESPACE as SPHINX_LOG_NAMESPACE
+from sphinx.util.logging import VERBOSITY_MAP
 
 from esbonio.cli import setup_cli
 from esbonio.lsp.rst import RstLanguageServer
@@ -255,11 +257,10 @@ class SphinxLanguageServer(RstLanguageServer):
         # This has to happen after app creation otherwise our logging handler
         # will get cleared by Sphinx's setup.
         if not server.hide_sphinx_output:
-            sphinx_logger = logging.getLogger("sphinx")
-            sphinx_logger.setLevel(logging.INFO)
+            sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
 
             self.sphinx_log = SphinxLogHandler(app, self)
-            self.sphinx_log.setLevel(logging.INFO)
+            self.sphinx_log.setLevel(VERBOSITY_MAP[app.verbosity])
 
             formatter = logging.Formatter("%(message)s")
             self.sphinx_log.setFormatter(formatter)
