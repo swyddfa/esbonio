@@ -234,7 +234,7 @@ class LanguageFeature:
 
     def hover(self, context: HoverContext) -> str:
         """Called when request textDocument/hover is sent.
-        
+
         This method shall return the contents value of textDocument/hover response.
 
         """
