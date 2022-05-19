@@ -188,7 +188,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
         doc = ls.workspace.get_document(uri)
         pos = params.position
         context = HoverContext(doc=doc, position=pos)
-    
+
         for feature in ls._features.values():
             hovers = feature.hover(context)
 

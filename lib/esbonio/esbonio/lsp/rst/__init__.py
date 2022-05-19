@@ -203,9 +203,7 @@ class HoverContext:
 
     def __repr__(self):
         p = f"{self.position.line}:{self.position.character}"
-        return (
-            f"HoverContext<{self.doc.uri}:{p}>"
-        )
+        return f"HoverContext<{self.doc.uri}:{p}>"
 
 
 class LanguageFeature:
