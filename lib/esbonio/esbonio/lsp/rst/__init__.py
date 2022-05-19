@@ -232,9 +232,13 @@ class LanguageFeature:
         """Called when code actions should be computed."""
         return []
 
-    def hover(self, context: HoverContext) -> Hover:
-        """Called when hovered on need ID."""
-        return Hover
+    def hover(self, context: HoverContext) -> str:
+        """Called when request textDocument/hover is sent.
+        
+        This method shall return the contents value of textDocument/hover response.
+
+        """
+        return ""
 
     completion_triggers: List["re.Pattern"] = []
     """A list of regular expressions used to determine if the

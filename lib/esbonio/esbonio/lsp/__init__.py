@@ -38,9 +38,12 @@ from pygls.lsp.types import DocumentSymbolParams
 from pygls.lsp.types import FileOperationFilter
 from pygls.lsp.types import FileOperationPattern
 from pygls.lsp.types import FileOperationRegistrationOptions
+from pygls.lsp.types import Hover
 from pygls.lsp.types import HoverParams
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
+from pygls.lsp.types import MarkupContent
+from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import ServerCapabilities
 from pygls.protocol import LanguageServerProtocol
 
@@ -189,10 +192,19 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
         pos = params.position
         context = HoverContext(doc=doc, position=pos)
 
+        hover_values = []
         for feature in ls._features.values():
-            hovers = feature.hover(context)
+            for hover_value in feature.hover(context):
+                hover_values.append(hover_value)
 
-        return hovers
+        hover_values = "\n".join(hover_values)
+
+        return Hover(
+            contents=MarkupContent(
+                kind=MarkupKind.Markdown,
+                value=hover_values,
+            )
+        )
 
     # <engine-example>
     @server.feature(
