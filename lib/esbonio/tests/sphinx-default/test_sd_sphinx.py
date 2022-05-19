@@ -280,6 +280,9 @@ async def test_initialization(command: List[str], path: str, options, expected):
         )
 
         assert len(test.client.messages) == 0
+        assert not any(
+            [log.message.startswith("[app]") for log in test.client.log_messages]
+        )
 
         assert "sphinx" in configuration
         actual = SphinxInfo(**configuration["sphinx"])
@@ -630,6 +633,45 @@ async def test_initialization_missing_conf():
 
         finally:
             await test.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
+async def test_initialization_verbosity():
+    """Ensure that the server respects the verbosity setting."""
+
+    root_path = pathlib.Path(__file__).parent / "workspace"
+    root_uri = uri.from_fs_path(str(root_path))
+
+    config = ClientServerConfig(
+        server_command=[sys.executable, "-m", "esbonio"],
+        root_uri=root_uri,
+        initialization_options=InitializationOptions(sphinx=SphinxConfig(verbosity=2)),
+        client_factory=make_esbonio_client,
+    )
+
+    test = make_client_server(config)
+
+    try:
+        await test.start()
+
+        configuration = await test.client.execute_command_request(
+            ESBONIO_SERVER_CONFIGURATION,
+        )
+
+        assert len(test.client.messages) == 0
+
+        assert "sphinx" in configuration
+        actual = SphinxInfo(**configuration["sphinx"])
+
+        assert actual.version is not None
+        assert actual.verbosity == 2
+        assert any(
+            [log.message.startswith("[app]") for log in test.client.log_messages]
+        )
+
+    finally:
+        await test.stop()
 
 
 @pytest.mark.asyncio
