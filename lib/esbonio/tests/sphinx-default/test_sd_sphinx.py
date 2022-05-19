@@ -753,6 +753,47 @@ async def test_initialization_silent():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
+async def test_initialization_quiet():
+    """Ensure that the server respects Sphinx's quiet setting."""
+
+    root_path = pathlib.Path(__file__).parent / "workspace"
+    root_uri = uri.from_fs_path(str(root_path))
+
+    config = ClientServerConfig(
+        server_command=[sys.executable, "-m", "esbonio"],
+        root_uri=root_uri,
+        initialization_options=InitializationOptions(sphinx=SphinxConfig(quiet=True)),
+        client_factory=make_esbonio_client,
+    )
+
+    test = make_client_server(config)
+
+    try:
+        await test.start()
+
+        configuration = await test.client.execute_command_request(
+            ESBONIO_SERVER_CONFIGURATION,
+        )
+
+        assert len(test.client.messages) == 0
+
+        assert "sphinx" in configuration
+        actual = SphinxConfig(**configuration["sphinx"])
+
+        assert actual.quiet is True
+        assert all(
+            [
+                ("WARNING" in log.message or "Errno" in log.message)
+                for log in test.client.log_messages
+            ]
+        )
+
+    finally:
+        await test.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
 @pytest.mark.parametrize(
     "good,bad,expected",
     [
