@@ -533,6 +533,13 @@ class SphinxConfig(BaseModel):
 
 
 class SphinxServerConfig(ServerConfig):
+    """
+    .. deprecated:: 0.12.0
+
+       This will be removed in v1.0.
+       Use :confval:`sphinx.quiet (boolean)` and :confval:`sphinx.silent (boolean)`
+       options instead.
+    """
 
     hide_sphinx_output: bool = Field(False, alias="hideSphinxOutput")
     """A flag to indicate if Sphinx build output should be omitted from the log."""
