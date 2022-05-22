@@ -1,3 +1,51 @@
+v0.12.0 - 2022-05-22
+--------------------
+
+Features
+^^^^^^^^
+
+- The language server now supports many (but not all) ``sphinx-build`` command line options.
+  The ``sphinx.*`` section of the server's initialization options has been extened to include the following options.
+
+  - ``configOverrides``
+  - ``doctreeDir``
+  - ``keepGoing``
+  - ``makeMode``
+  - ``quiet``
+  - ``silent``
+  - ``tags``
+  - ``verbosity``
+  - ``warningIsError``
+
+  See the `documentation <https://swyddfa.github.io/esbonio/docs/latest/en/lsp/getting-started.html#configuration>`_ for details.
+
+  Additionally, a new cli application ``esbonio-sphinx`` is now available which language clients (or users) can use to convert ``sphinx-build`` cli options to/from the server's initialization options. (`#360 <https://github.com/swyddfa/esbonio/issues/360>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- ``textDocument/documentSymbol`` responses now include symbol information on directives. (`#374 <https://github.com/swyddfa/esbonio/issues/374>`_)
+
+
+Fixes
+^^^^^
+
+- ``.. include::`` directives no longer break goto definition for ``:ref:`` role targets (`#361 <https://github.com/swyddfa/esbonio/issues/361>`_)
+
+
+API Changes
+^^^^^^^^^^^
+
+- Add method ``get_initial_doctree`` to ``RstLanguageServer`` which can be used to obtain a doctree of the given file before any role and directives have been applied. (`#374 <https://github.com/swyddfa/esbonio/issues/374>`_)
+
+
+Misc
+^^^^
+
+- The ``esbonio.sphinx.numJobs`` configuration now defaults to ``1`` in line with ``sphinx-build`` defaults. (`#374 <https://github.com/swyddfa/esbonio/issues/374>`_)
+
+
 v0.11.2 - 2022-05-09
 --------------------
 

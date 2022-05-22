@@ -1,1 +1,0 @@
-``.. include::`` directives no longer break goto definition for ``:ref:`` role targets

@@ -1,1 +1,0 @@
-``textDocument/documentSymbol`` responses now include symbol information on directives.

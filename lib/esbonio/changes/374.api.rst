@@ -1,1 +1,0 @@
-Add method ``get_initial_doctree`` to ``RstLanguageServer`` which can be used to obtain a doctree of the given file before any role and directives have been applied.
