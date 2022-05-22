@@ -18,17 +18,32 @@ RstLanguageServer
    :members:
    :show-inheritance:
 
+.. autoclass:: esbonio.lsp.rst.InitializationOptions
+   :members:
+
+.. autoclass:: esbonio.lsp.rst.ServerConfig
+   :members:
+
+
 SphinxLanguageServer
 ^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: esbonio.lsp.sphinx.SphinxConfig
-   :members:
+.. currentmodule:: esbonio.lsp.sphinx
 
-.. autoclass:: esbonio.lsp.sphinx.SphinxLanguageServer
+.. autoclass:: SphinxLanguageServer
    :members:
    :show-inheritance:
 
-.. autoclass:: esbonio.lsp.sphinx.MissingConfigError
+.. autoclass:: InitializationOptions
+   :members:
+
+.. autoclass:: SphinxServerConfig
+   :members:
+
+.. autoclass:: SphinxConfig
+   :members:
+
+.. autoclass:: MissingConfigError
 
 Language Features
 -----------------

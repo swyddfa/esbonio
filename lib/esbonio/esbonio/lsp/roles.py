@@ -1,6 +1,5 @@
 """Role support."""
 import json
-import re
 import typing
 from typing import Any
 from typing import Dict
@@ -20,85 +19,15 @@ from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
 from typing_extensions import Protocol
 
-from esbonio.lsp.directives import DIRECTIVE
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import DefinitionContext
 from esbonio.lsp.rst import DocumentLinkContext
 from esbonio.lsp.rst import LanguageFeature
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
-
-
-ROLE = re.compile(
-    r"""
-    ([^\w:]|^\s*)                     # roles cannot be preceeded by letter chars
-    (?P<role>
-      :                               # roles begin with a ':' character
-      (?!:)                           # the next character cannot be a ':'
-      ((?P<domain>[\w]+):(?=\w))?     # roles may include a domain (that must be followed by a word character)
-      ((?P<name>[\w-]+):?)?           # roles have a name
-    )
-    (?P<target>
-      `                               # targets begin with a '`' character
-      ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
-      (?P<modifier>[!~])?             # targets may have a modifier
-      (?P<label>[^<`>]*)?             # targets contain a label
-      >?                              # labels end with a '>' when there's an alias
-      `?                              # targets end with a '`' character
-    )?
-    """,
-    re.VERBOSE,
-)
-"""A regular expression to detect and parse parial and complete roles.
-
-I'm not sure if there are offical names for the components of a role, but the
-language server breaks a role down into a number of parts::
-
-                 vvvvvv label
-                v modifier(optional)
-               vvvvvvvv target
-   :c:function:`!malloc`
-   ^^^^^^^^^^^^ role
-      ^^^^^^^^ name
-    ^ domain (optional)
-
-The language server sometimes refers to the above as a "plain" role, in that the
-role's target contains just the label of the object it is linking to. However it's
-also possible to define "aliased" roles, where the link text in the final document
-is overriden, for example::
-
-                vvvvvvvvvvvvvvvvvvvvvvvv alias
-                                          vvvvvv label
-                                         v modifier (optional)
-               vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv target
-   :c:function:`used to allocate memory <~malloc>`
-   ^^^^^^^^^^^^ role
-      ^^^^^^^^ name
-    ^ domain (optional)
-
-See :func:`tests.test_roles.test_role_regex` for a list of example strings this pattern
-is expected to match.
-"""
-
-
-DEFAULT_ROLE = re.compile(
-    r"""
-    (?<![:`])
-    (?P<target>
-      `                               # targets begin with a '`' character
-      ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
-      (?P<modifier>[!~])?             # targets may have a modifier
-      (?P<label>[^<`>]*)?             # targets contain a label
-      >?                              # labels end with a '>' when there's an alias
-      `?                              # targets end with a '`' character
-    )
-    """,
-    re.VERBOSE,
-)
-"""A regular expression to detect and parse parial and complete "default" roles.
-
-A "default" role is the target part of a normal role - but without the ``:name:`` part.
-"""
+from esbonio.lsp.util.patterns import DEFAULT_ROLE
+from esbonio.lsp.util.patterns import DIRECTIVE
+from esbonio.lsp.util.patterns import ROLE
 
 
 class TargetDefinition(Protocol):
@@ -585,6 +514,7 @@ class Roles(LanguageFeature):
 
 
 def esbonio_setup(rst: RstLanguageServer):
+
     roles = Roles(rst)
     rst.add_feature(roles)
 

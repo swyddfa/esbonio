@@ -33,6 +33,8 @@ import pathlib
 
 from sphinx.application import Sphinx
 
+from esbonio.lsp.sphinx import SphinxLanguageServer
+
 root = pathlib.Path(__file__).parent.parent
 
 app = Sphinx(
@@ -44,3 +46,5 @@ app = Sphinx(
     freshenv=True,  # Have Sphinx reload everything on first build.
 )
 app.build()
+ls = SphinxLanguageServer()
+ls.app = app

@@ -11,6 +11,8 @@ export namespace Commands {
   export const OPEN_PREVIEW = "esbonio.preview.open"
   export const OPEN_PREVIEW_TO_SIDE = "esbonio.preview.openSide"
 
+  export const COPY_BUILD_COMMAND = "esbonio.sphinx.copyBuildCommand"
+  export const SET_BUILD_COMMAND = "esbonio.sphinx.setBuildCommand"
   export const SELECT_CONFDIR = "esbonio.sphinx.selectConfDir"
   export const SELECT_SRCDIR = "esbonio.sphinx.selectSrcDir"
   export const SELECT_BUILDDIR = "esbonio.sphinx.selectBuildDir"

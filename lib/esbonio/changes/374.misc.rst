@@ -1,0 +1,1 @@
+The ``esbonio.sphinx.numJobs`` configuration now defaults to ``1`` in line with ``sphinx-build`` defaults.

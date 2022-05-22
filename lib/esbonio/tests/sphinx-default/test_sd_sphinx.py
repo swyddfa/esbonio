@@ -21,9 +21,20 @@ from pytest_lsp import make_test_client
 
 from esbonio.lsp import ESBONIO_SERVER_CONFIGURATION
 from esbonio.lsp import ESBONIO_SERVER_PREVIEW
+from esbonio.lsp.rst import ServerConfig
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxConfig
+from esbonio.lsp.sphinx.config import SphinxServerConfig
 from esbonio.lsp.testing import sphinx_version
+
+
+class SphinxInfo(SphinxConfig):
+
+    command: List[str]
+    """The equivalent ``sphinx-build`` command"""
+
+    version: str
+    """Sphinx's version number."""
 
 
 def make_esbonio_client(*args, **kwargs):
@@ -269,10 +280,15 @@ async def test_initialization(command: List[str], path: str, options, expected):
             ESBONIO_SERVER_CONFIGURATION
         )
 
+        # Test some default behaviours.
         assert len(test.client.messages) == 0
+        assert len(test.client.log_messages) > 0
+        assert not any(
+            [log.message.startswith("[app]") for log in test.client.log_messages]
+        )
 
         assert "sphinx" in configuration
-        actual = SphinxConfig(**configuration["sphinx"])
+        actual = SphinxInfo(**configuration["sphinx"])
 
         assert actual.version is not None
         assert expected.build_dir in actual.build_dir
@@ -326,7 +342,7 @@ async def test_initialization_build_dir():
             assert len(test.client.messages) == 0
 
             assert "sphinx" in configuration
-            actual = SphinxConfig(**configuration["sphinx"])
+            actual = SphinxInfo(**configuration["sphinx"])
 
             assert actual.version is not None
             assert actual.builder_name == "html"
@@ -377,7 +393,7 @@ async def test_initialization_build_dir_workspace_var():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxConfig(**configuration["sphinx"])
+        actual = SphinxInfo(**configuration["sphinx"])
 
         assert actual.version is not None
         assert actual.builder_name == "html"
@@ -428,7 +444,7 @@ async def test_initialization_build_dir_workspace_folder():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxConfig(**configuration["sphinx"])
+        actual = SphinxInfo(**configuration["sphinx"])
 
         assert actual.version is not None
         assert actual.builder_name == "html"
@@ -479,7 +495,7 @@ async def test_initialization_build_dir_confdir():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxConfig(**configuration["sphinx"])
+        actual = SphinxInfo(**configuration["sphinx"])
         expected_dir = pathlib.Path(actual.conf_dir, "..", "_build", "html").resolve()
 
         assert actual.version is not None
@@ -513,6 +529,9 @@ async def test_initialization_sphinx_error():
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=root_uri,
         client_factory=make_esbonio_client,
+        initialization_options=InitializationOptions(
+            server=ServerConfig(logLevel="debug")
+        ),
     )
 
     test = make_client_server(config)
@@ -524,7 +543,6 @@ async def test_initialization_sphinx_error():
         )
 
         assert "sphinx" in configuration
-        assert configuration["sphinx"]["version"] is None
 
         conf_py = root_uri + "/conf.py"
         if IS_WIN:
@@ -609,7 +627,6 @@ async def test_initialization_missing_conf():
             )
 
             assert "sphinx" in configuration
-            assert configuration["sphinx"]["version"] is None
 
             assert len(test.client.messages) == 1
             message = test.client.messages[0]
@@ -619,6 +636,160 @@ async def test_initialization_missing_conf():
 
         finally:
             await test.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
+async def test_initialization_verbosity():
+    """Ensure that the server respects Sphinx's verbosity setting."""
+
+    root_path = pathlib.Path(__file__).parent / "workspace"
+    root_uri = uri.from_fs_path(str(root_path))
+
+    config = ClientServerConfig(
+        server_command=[sys.executable, "-m", "esbonio"],
+        root_uri=root_uri,
+        initialization_options=InitializationOptions(sphinx=SphinxConfig(verbosity=2)),
+        client_factory=make_esbonio_client,
+    )
+
+    test = make_client_server(config)
+
+    try:
+        await test.start()
+
+        configuration = await test.client.execute_command_request(
+            ESBONIO_SERVER_CONFIGURATION,
+        )
+
+        assert len(test.client.messages) == 0
+
+        assert "sphinx" in configuration
+        actual = SphinxInfo(**configuration["sphinx"])
+
+        assert actual.version is not None
+        assert actual.verbosity == 2
+        assert any(
+            [log.message.startswith("[app]") for log in test.client.log_messages]
+        )
+
+    finally:
+        await test.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
+async def test_initialization_hide_sphinx_output():
+    """Ensure that the server respects hide sphinx output setting."""
+
+    root_path = pathlib.Path(__file__).parent / "workspace"
+    root_uri = uri.from_fs_path(str(root_path))
+
+    config = ClientServerConfig(
+        server_command=[sys.executable, "-m", "esbonio"],
+        root_uri=root_uri,
+        initialization_options=InitializationOptions(
+            server=SphinxServerConfig(hideSphinxOutput=True)
+        ),
+        client_factory=make_esbonio_client,
+    )
+
+    test = make_client_server(config)
+
+    try:
+        await test.start()
+
+        configuration = await test.client.execute_command_request(
+            ESBONIO_SERVER_CONFIGURATION,
+        )
+
+        assert len(test.client.messages) == 0
+
+        assert "server" in configuration
+        actual = SphinxServerConfig(**configuration["server"])
+
+        assert actual.hide_sphinx_output is True
+        assert len(test.client.log_messages) == 0
+
+    finally:
+        await test.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
+async def test_initialization_silent():
+    """Ensure that the server respects Sphinx's silent setting."""
+
+    root_path = pathlib.Path(__file__).parent / "workspace"
+    root_uri = uri.from_fs_path(str(root_path))
+
+    config = ClientServerConfig(
+        server_command=[sys.executable, "-m", "esbonio"],
+        root_uri=root_uri,
+        initialization_options=InitializationOptions(sphinx=SphinxConfig(silent=True)),
+        client_factory=make_esbonio_client,
+    )
+
+    test = make_client_server(config)
+
+    try:
+        await test.start()
+
+        configuration = await test.client.execute_command_request(
+            ESBONIO_SERVER_CONFIGURATION,
+        )
+
+        assert len(test.client.messages) == 0
+
+        assert "sphinx" in configuration
+        actual = SphinxConfig(**configuration["sphinx"])
+
+        assert actual.silent is True
+        assert len(test.client.log_messages) == 0
+
+    finally:
+        await test.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
+async def test_initialization_quiet():
+    """Ensure that the server respects Sphinx's quiet setting."""
+
+    root_path = pathlib.Path(__file__).parent / "workspace"
+    root_uri = uri.from_fs_path(str(root_path))
+
+    config = ClientServerConfig(
+        server_command=[sys.executable, "-m", "esbonio"],
+        root_uri=root_uri,
+        initialization_options=InitializationOptions(sphinx=SphinxConfig(quiet=True)),
+        client_factory=make_esbonio_client,
+    )
+
+    test = make_client_server(config)
+
+    try:
+        await test.start()
+
+        configuration = await test.client.execute_command_request(
+            ESBONIO_SERVER_CONFIGURATION,
+        )
+
+        assert len(test.client.messages) == 0
+
+        assert "sphinx" in configuration
+        actual = SphinxConfig(**configuration["sphinx"])
+
+        assert actual.quiet is True
+        assert all(
+            [
+                ("WARNING" in log.message or "Errno" in log.message)
+                for log in test.client.log_messages
+            ]
+        )
+
+    finally:
+        await test.stop()
 
 
 @pytest.mark.asyncio
