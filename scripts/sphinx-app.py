@@ -32,6 +32,7 @@ The HTML pages are in docs/_build.
 import pathlib
 
 from sphinx.application import Sphinx
+
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
 root = pathlib.Path(__file__).parent.parent
