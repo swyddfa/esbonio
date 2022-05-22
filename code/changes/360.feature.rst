@@ -1,2 +1,0 @@
-Add new ``esbonio.sphinx.copyBuildCommand`` and ``esbonio.sphinx.setBuildCommand`` commands.
-As the name suggests, the first command will copy the equivalent ``sphinx-build`` command to the clipboard while the set build command prompts for a set of ``sphinx-build`` arguments and updates the server's configuration accordingly.

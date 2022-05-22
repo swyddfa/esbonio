@@ -1,3 +1,26 @@
+v0.9.0 - 2022-05-22
+-------------------
+
+Features
+^^^^^^^^
+
+- Add new ``esbonio.sphinx.copyBuildCommand`` and ``esbonio.sphinx.setBuildCommand`` commands.
+  As the name suggests, the first command will copy the equivalent ``sphinx-build`` command to the clipboard while the set build command prompts for a set of ``sphinx-build`` arguments and updates the server's configuration accordingly. (`#360 <https://github.com/swyddfa/esbonio/issues/360>`_)
+
+
+Deprecated
+^^^^^^^^^^
+
+- The ``esbonio.server.hideSphinxOutput`` option has been deprecated in favour of the new ``esbonio.sphinx.quiet`` and ``esbonio.sphinx.silent`` options.
+  It will be removed when the server reaches ``v1.0`` (`#360 <https://github.com/swyddfa/esbonio/issues/360>`_)
+
+
+Misc
+^^^^
+
+- The ``esbonio.sphinx.numJobs`` configuration now defaults to ``1`` in line with ``sphinx-build`` defaults. (`#374 <https://github.com/swyddfa/esbonio/issues/374>`_)
+
+
 v0.8.3 - 2022-04-20
 -------------------
 
