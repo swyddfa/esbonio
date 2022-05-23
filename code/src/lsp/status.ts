@@ -10,8 +10,9 @@ import { BuildCompleteResult, EsbonioClient } from "./client";
  */
 interface StatusItemFields {
   busy?: boolean,
-  severity?: vscode.LanguageStatusSeverity,
   command?: vscode.Command,
+  selector?: vscode.DocumentSelector,
+  severity?: vscode.LanguageStatusSeverity,
 }
 
 function renderPath(workspaceRoot: string, value: string): string {
@@ -73,6 +74,7 @@ export class StatusManager {
     let confDir = ""
     let srcDir = ""
     let version = ""
+    let selector: (string | vscode.DocumentFilter)[] = []
 
     if (sphinx.buildDir) {
       buildDir = `Build Files - ${renderPath(workspaceRoot, sphinx.buildDir)}`
@@ -80,6 +82,7 @@ export class StatusManager {
 
     if (sphinx.confDir) {
       confDir = `Config - ${renderPath(workspaceRoot, sphinx.confDir)}`
+      selector.push({ language: 'python', pattern: `${sphinx.confDir}/conf.py` })
     }
 
     if (sphinx.builderName) {
@@ -88,6 +91,7 @@ export class StatusManager {
 
     if (sphinx.srcDir) {
       srcDir = `Sources - ${renderPath(workspaceRoot, sphinx.srcDir)}`
+      selector.push({ language: 'restructuredtext', pattern: `${sphinx.srcDir}/**/*` })
     }
 
     if (sphinx.version) {
@@ -98,6 +102,7 @@ export class StatusManager {
 
     this.setStatusItem('Sphinx Version', version, {
       busy: false,
+      selector: selector,
       severity: result.error ? vscode.LanguageStatusSeverity.Error : vscode.LanguageStatusSeverity.Information,
       command: {
         title: 'Restart Server',
@@ -107,6 +112,7 @@ export class StatusManager {
     })
     this.setStatusItem('Builder', builderName, {
       busy: false,
+      selector: selector,
       command: {
         title: "Set Build Command",
         tooltip: "Set the sphinx-build cli options to use",
@@ -114,6 +120,7 @@ export class StatusManager {
       }
     })
     this.setStatusItem('Config', confDir, {
+      selector: selector,
       command: {
         title: "Select Conf Dir",
         tooltip: "Select a new config directory",
@@ -121,6 +128,7 @@ export class StatusManager {
       }
     })
     this.setStatusItem('Sources', srcDir, {
+      selector: selector,
       command: {
         title: "Select Src Dir",
         tooltip: "Select a new sources directory",
@@ -128,6 +136,7 @@ export class StatusManager {
       }
     })
     this.setStatusItem("Build Files", buildDir, {
+      selector: selector,
       command: {
         title: "Select Build Dir",
         tooltip: "Select a new build directory",
@@ -159,7 +168,6 @@ export class StatusManager {
       statusItem.name = name
 
       this.statusItems.set(key, statusItem)
-      // this.context.subscriptions.push(statusItem)
     }
 
     statusItem.text = value
@@ -170,6 +178,10 @@ export class StatusManager {
 
     if (params && params.command) {
       statusItem.command = params.command
+    }
+
+    if (params && params.selector) {
+      statusItem.selector = params.selector
     }
   }
 
