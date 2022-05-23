@@ -190,12 +190,31 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
         uri = params.text_document.uri
         doc = ls.workspace.get_document(uri)
         pos = params.position
-        context = HoverContext(doc=doc, position=pos)
+        line = ls.line_at_position(doc, pos)
+        location = ls.get_location_type(doc, pos)
 
         hover_values = []
         for feature in ls._features.values():
-            for hover_value in feature.hover(context):
-                hover_values.append(hover_value)
+            for pattern in feature.hover_triggers:
+                for match in pattern.finditer(line):
+                    if not match:
+                        continue
+
+                    # only trigger hover if the position of the request is within
+                    # the match
+                    start, stop = match.span()
+                    if start <= pos.character <= stop:
+                        context = HoverContext(
+                            doc=doc,
+                            location=location,
+                            match=match,
+                            position=pos,
+                            capabilities=ls.client_capabilities,
+                        )
+                        ls.logger.debug("Hover context: %s", context)
+
+                        hover_value = feature.hover(context)
+                        hover_values.append(hover_value)
 
         hover_values = "\n".join(hover_values)
 

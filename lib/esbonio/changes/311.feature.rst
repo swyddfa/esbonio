@@ -1,0 +1,9 @@
+Support textDocument/hover Features
+-----------------------------------
+
+- Add ``textDocument/hover`` support. (`#311 <https://github.com/swyddfa/esbonio/issues/311>`_)
+
+Support '>' to completion triggers
+----------------------------------
+
+- Support '>' to completion triggers.
