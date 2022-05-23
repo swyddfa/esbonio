@@ -216,12 +216,12 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
                         hover_value = feature.hover(context)
                         hover_values.append(hover_value)
 
-        hover_values = "\n".join(hover_values)
+        hover_content_values = "\n".join(hover_values)
 
         return Hover(
             contents=MarkupContent(
                 kind=MarkupKind.Markdown,
-                value=hover_values,
+                value=hover_content_values,
             )
         )
 
