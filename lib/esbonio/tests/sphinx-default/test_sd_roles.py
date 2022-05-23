@@ -11,7 +11,9 @@ from pytest_lsp import check
 from pytest_lsp import Client
 
 from esbonio.lsp.testing import completion_request
+from esbonio.lsp.testing import hover_request
 from esbonio.lsp.testing import role_patterns
+from esbonio.lsp.testing import sphinx_version
 
 
 C_EXPECTED = {"c:func", "c:macro"}
@@ -247,6 +249,49 @@ async def test_completion_suppression(client: Client, extension: str, setup):
 
     results = await completion_request(client, test_uri, text, character=character)
     assert (len(results.items) > 0) == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "text,position,expected",
+    [
+        (
+            ":option:`progname.--verbose`",
+            Position(line=0, character=4),
+            "A command-line option",
+        ),
+        (
+            ":option:`progname.--verbose`",
+            Position(line=0, character=12),
+            None,
+        ),
+        (
+            ":not-a-known-role:`progname.--verbose`",
+            Position(line=0, character=4),
+            None,
+        ),
+        pytest.param(
+            ":c:expr:",
+            Position(line=0, character=1),
+            "Insert a C expression or type",
+            marks=pytest.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
+        ),
+    ],
+)
+async def test_role_hovers(
+    client: Client, text: str, position: Position, expected: Optional[str]
+):
+    """Ensure that we can offer hovers for roles correctly."""
+
+    test_uri = client.root_uri + "/test.rst"
+
+    hover = await hover_request(client, test_uri, text, position)
+    actual = hover.contents.value
+
+    if expected is None:
+        assert actual == ""
+    else:
+        assert actual.startswith(expected)
 
 
 @pytest.mark.asyncio
