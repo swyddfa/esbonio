@@ -203,7 +203,7 @@ class HoverContext:
         location: str,
         match: "re.Match",
         position: Position,
-        capabilities: ClientCapabilities
+        capabilities: ClientCapabilities,
     ):
 
         self.doc = doc
@@ -214,9 +214,7 @@ class HoverContext:
 
     def __repr__(self):
         p = f"{self.position.line}:{self.position.character}"
-        return (
-            f"HoverContext<{self.doc.uri}:{p} ({self.location}) -- {self.match}>"
-        )
+        return f"HoverContext<{self.doc.uri}:{p} ({self.location}) -- {self.match}>"
 
     @property
     def content_formats(self) -> List[MarkupKind]:
