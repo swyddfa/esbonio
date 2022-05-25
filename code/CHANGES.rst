@@ -1,3 +1,18 @@
+v0.9.1 - 2022-05-25
+-------------------
+
+Fixes
+^^^^^
+
+- The correct value of the ``esbonio.sphinx.doctreeDir`` setting is used when constructing the initializationOptions to send to the server. (`#390 <https://github.com/swyddfa/esbonio/issues/390>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- Language status items are now shown in a project's ``conf.py``, while also correctly being omitted for rst files not under the project's ``srcDir`` (`#391 <https://github.com/swyddfa/esbonio/issues/391>`_)
+
+
 v0.9.0 - 2022-05-22
 -------------------
 

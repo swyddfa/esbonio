@@ -1,1 +1,0 @@
-The correct value of the ``esbonio.sphinx.doctreeDir`` setting is used when constructing the initializationOptions to send to the server.
