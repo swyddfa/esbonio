@@ -506,7 +506,7 @@ export class EsbonioClient {
       builderName: config.get<string>('sphinx.builderName'),
       confDir: config.get<string>('sphinx.confDir'),
       configOverrides: config.get<object>('sphinx.configOverrides'),
-      doctreeDir: config.get<string>('doctreeDir'),
+      doctreeDir: config.get<string>('sphinx.doctreeDir'),
       forceFullBuild: config.get<boolean>('sphinx.forceFullBuild'),
       keepGoing: config.get<boolean>('sphinx.keepGoing'),
       makeMode: config.get<boolean>('sphinx.makeMode'),
