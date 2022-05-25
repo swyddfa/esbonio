@@ -190,6 +190,37 @@ class DefinitionContext:
         )
 
 
+class HoverContext:
+    """A class that captures the context within a hover request has been made."""
+
+    def __init__(
+        self,
+        *,
+        doc: Document,
+        location: str,
+        match: "re.Match",
+        position: Position,
+        capabilities: ClientCapabilities,
+    ):
+
+        self.doc = doc
+        self.location = location
+        self.match = match
+        self.position = position
+        self._client_capabilities = capabilities
+
+    def __repr__(self):
+        p = f"{self.position.line}:{self.position.character}"
+        return f"HoverContext<{self.doc.uri}:{p} ({self.location}) -- {self.match}>"
+
+    @property
+    def content_formats(self) -> List[MarkupKind]:
+        """The list of content formats supported by the client."""
+        return self._client_capabilities.get_capability(
+            "text_document.hover.content_format", []
+        )
+
+
 class LanguageFeature:
     """Base class for language features."""
 
@@ -215,6 +246,16 @@ class LanguageFeature:
     def code_action(self, params: CodeActionParams) -> List[CodeAction]:
         """Called when code actions should be computed."""
         return []
+
+    hover_triggers: List["re.Pattern"] = []
+
+    def hover(self, context: HoverContext) -> str:
+        """Called when request textDocument/hover is sent.
+
+        This method shall return the contents value of textDocument/hover response.
+
+        """
+        return ""
 
     completion_triggers: List["re.Pattern"] = []
     """A list of regular expressions used to determine if the

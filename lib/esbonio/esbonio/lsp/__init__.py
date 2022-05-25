@@ -15,6 +15,7 @@ from pygls.lsp.methods import COMPLETION_ITEM_RESOLVE
 from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import DOCUMENT_LINK
 from pygls.lsp.methods import DOCUMENT_SYMBOL
+from pygls.lsp.methods import HOVER
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import SHUTDOWN
@@ -37,14 +38,19 @@ from pygls.lsp.types import DocumentSymbolParams
 from pygls.lsp.types import FileOperationFilter
 from pygls.lsp.types import FileOperationPattern
 from pygls.lsp.types import FileOperationRegistrationOptions
+from pygls.lsp.types import Hover
+from pygls.lsp.types import HoverParams
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
+from pygls.lsp.types import MarkupContent
+from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import ServerCapabilities
 from pygls.protocol import LanguageServerProtocol
 
 from .rst import CompletionContext
 from .rst import DefinitionContext
 from .rst import DocumentLinkContext
+from .rst import HoverContext
 from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .symbols import SymbolVisitor
@@ -179,11 +185,51 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         return actions
 
+    @server.feature(HOVER)
+    def on_hover(ls: RstLanguageServer, params: HoverParams):
+        uri = params.text_document.uri
+        doc = ls.workspace.get_document(uri)
+        pos = params.position
+        line = ls.line_at_position(doc, pos)
+        location = ls.get_location_type(doc, pos)
+
+        hover_values = []
+        for feature in ls._features.values():
+            for pattern in feature.hover_triggers:
+                for match in pattern.finditer(line):
+                    if not match:
+                        continue
+
+                    # only trigger hover if the position of the request is within
+                    # the match
+                    start, stop = match.span()
+                    if start <= pos.character <= stop:
+                        context = HoverContext(
+                            doc=doc,
+                            location=location,
+                            match=match,
+                            position=pos,
+                            capabilities=ls.client_capabilities,
+                        )
+                        ls.logger.debug("Hover context: %s", context)
+
+                        hover_value = feature.hover(context)
+                        hover_values.append(hover_value)
+
+        hover_content_values = "\n".join(hover_values)
+
+        return Hover(
+            contents=MarkupContent(
+                kind=MarkupKind.Markdown,
+                value=hover_content_values,
+            )
+        )
+
     # <engine-example>
     @server.feature(
         COMPLETION,
         CompletionOptions(
-            trigger_characters=[".", ":", "`", "<", "/"], resolve_provider=True
+            trigger_characters=[">", ".", ":", "`", "<", "/"], resolve_provider=True
         ),
     )
     def on_completion(ls: RstLanguageServer, params: CompletionParams):
