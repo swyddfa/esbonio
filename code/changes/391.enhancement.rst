@@ -1,0 +1,1 @@
+Language status items are now shown in a project's ``conf.py``, while also correctly being omitted for rst files not under the project's ``srcDir``
