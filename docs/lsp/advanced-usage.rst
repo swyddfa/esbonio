@@ -1,3 +1,5 @@
+.. _lsp-advanced:
+
 Advanced Usage
 ==============
 
@@ -107,9 +109,9 @@ a :lsp:`workspace/executeCommand` request.
 
          {
            "server": {
-             "log_level": "debug",
-             "log_filter": [],
-             "hide_sphinx_output": false
+             "logLevel": "debug",
+             "logFilter": [],
+             "hideSphinxOutput": false
            }
          }
 
