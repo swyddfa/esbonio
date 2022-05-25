@@ -10,6 +10,7 @@ from pytest_lsp import check
 from pytest_lsp import Client
 
 from esbonio.lsp.testing import completion_request
+from esbonio.lsp.testing import hover_request
 from esbonio.lsp.testing import sphinx_version
 
 EXPECTED = {
@@ -301,6 +302,49 @@ async def test_completion_suppression(client: Client, extension: str, setup):
 
     results = await completion_request(client, test_uri, text, character=character)
     assert (len(results.items) > 0) == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "text,position,expected",
+    [
+        (
+            ".. deprecated:: 0.12.0",
+            Position(line=0, character=4),
+            "Similar to [versionchanged]",
+        ),
+        (
+            ".. deprecated:: 0.12.0",
+            Position(line=0, character=16),
+            None,
+        ),
+        (
+            ".. not-a-known-directive:: ",
+            Position(line=0, character=4),
+            None,
+        ),
+        pytest.param(
+            ".. c:function:: ",
+            Position(line=0, character=1),
+            "Describes a C function",
+            marks=pytest.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
+        ),
+    ],
+)
+async def test_directive_hovers(
+    client: Client, text: str, position: Position, expected: Optional[str]
+):
+    """Ensure that we can offer hovers for directives correctly."""
+
+    test_uri = client.root_uri + "/test.rst"
+
+    hover = await hover_request(client, test_uri, text, position)
+    actual = hover.contents.value
+
+    if expected is None:
+        assert actual == ""
+    else:
+        assert actual.startswith(expected)
 
 
 @pytest.mark.asyncio

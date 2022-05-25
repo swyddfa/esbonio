@@ -25,6 +25,7 @@ from esbonio.lsp import DefinitionContext
 from esbonio.lsp import DocumentLinkContext
 from esbonio.lsp import LanguageFeature
 from esbonio.lsp import RstLanguageServer
+from esbonio.lsp.rst import HoverContext
 from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
@@ -524,6 +525,49 @@ class Directives(LanguageFeature):
                 )
 
         return links
+
+    hover_triggers = [DIRECTIVE]
+
+    def hover(self, context: HoverContext) -> str:
+
+        if context.location not in {"rst", "docstring"}:
+            return ""
+
+        name = context.match.group("name")
+        domain = context.match.group("domain")
+
+        # Determine if the hover is on the .. directive::  itself, or within the argument
+        # Be sure to include enough chars for the length of '::'!
+        idx = context.position.character - context.match.start()
+        prefix = context.match.group(0)[:idx]
+
+        if "::" not in prefix:
+            return self.hover_directive(context, name, domain)
+
+        # TODO: Add extension points for directive arguments and options.
+        return ""
+
+    def hover_directive(
+        self, context: HoverContext, name: str, domain: Optional[str]
+    ) -> str:
+
+        label = f"{domain}:{name}" if domain else name
+        self.logger.debug("Calculating hover for directive '%s'", label)
+
+        directive = self.rst.get_directives().get(label, None)
+        if not directive:
+            return ""
+
+        try:
+            dotted_name = f"{directive.__module__}.{directive.__name__}"
+        except AttributeError:
+            dotted_name = f"{directive.__module__}.{directive.__class__.__name__}"
+
+        documentation = self.get_documentation(label, dotted_name)
+        if not documentation:
+            return ""
+
+        return documentation.get("description", "")
 
     def get_surrounding_directive(
         self, context: CompletionContext
