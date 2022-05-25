@@ -1,0 +1,38 @@
+{
+    "scopeName": "source.esbonio-log-output",
+    "patterns": [
+        {
+            "include": "#log-line"
+        },
+        {
+            "include": "#json"
+        },
+        {
+            "include": "#string"
+        }
+    ],
+    "repository": {
+        "log-line": {
+            "match": "^\\[([.a-zA-Z]+)\\]",
+            "captures": {
+                "1": {
+                    "name": "storage.type.namespace"
+                }
+            }
+        },
+        "string": {
+            "match": "('|\").*?('|\")",
+            "name": "string"
+        },
+        "json": {
+            "begin": "(?={$)",
+            "end": "(?<=^})",
+            "name": "source.json",
+            "patterns": [
+                {
+                    "include": "source.json"
+                }
+            ]
+        }
+    }
+}
