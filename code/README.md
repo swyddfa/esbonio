@@ -54,6 +54,12 @@ Errors from a build are published to VSCode as diagnostics
 
 ![Diagnostics](../resources/images/diagnostic-sphinx-errors-demo.png)
 
+### Hover
+
+Documentation is provided for certain roles and directives
+
+![Hover](../resources/images/hover-demo.png)
+
 ### Outline
 
 Sections within a document are displayed in the "Outline" view
