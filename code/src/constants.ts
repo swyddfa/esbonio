@@ -1,6 +1,5 @@
 export const PYTHON_EXTENSION = "ms-python.python"
 
-
 export namespace Server {
   export const REQUIRED_PYTHON = "3.6.0"
   export const REQUIRED_VERSION = "0.12.0"
