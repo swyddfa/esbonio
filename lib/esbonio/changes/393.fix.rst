@@ -1,0 +1,1 @@
+The language server now correctly handles diagnosics originating from ``.. c:function::`` directives.

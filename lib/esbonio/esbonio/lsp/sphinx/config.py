@@ -631,10 +631,19 @@ class SphinxLogHandler(LspHandler):
         self.server.logger.debug("Reporting diagnostic at %s:%s", doc, line)
 
         try:
-            message = record.msg % record.args
+            # Not every message contains a string...
+            if not isinstance(record.msg, str):
+                message = str(record.msg)
+            else:
+                message = record.msg
+
+            # Only attempt to format args if there are args to format
+            if record.args is not None and len(record.args) > 0:
+                message = message % record.args
+
         except Exception:
-            message = record.msg
-            self.server.logger.debug(
+            message = str(record.msg)
+            self.server.logger.error(
                 "Unable to format diagnostic message: %s", traceback.format_exc()
             )
 
