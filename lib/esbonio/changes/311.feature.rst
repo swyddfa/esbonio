@@ -1,3 +1,0 @@
-Add initial ``textDocument/hover`` support, with documentation for roles and directives being shown.
-
-Add ``>`` to completion triggers.

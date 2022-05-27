@@ -1,3 +1,20 @@
+v0.13.0 - 2022-05-27
+--------------------
+
+Features
+^^^^^^^^
+
+- Add initial ``textDocument/hover`` support, with documentation for roles and directives being shown.
+
+  Add ``>`` to completion triggers. (`#311 <https://github.com/swyddfa/esbonio/issues/311>`_)
+
+
+Fixes
+^^^^^
+
+- The language server now correctly handles diagnosics originating from ``.. c:function::`` directives. (`#393 <https://github.com/swyddfa/esbonio/issues/393>`_)
+
+
 v0.12.0 - 2022-05-22
 --------------------
 
