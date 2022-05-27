@@ -6,6 +6,8 @@ from typing import Optional
 
 import pygls.uris as Uri
 from pygls.lsp.types import CompletionList
+from pygls.lsp.types import Hover
+from pygls.lsp.types import Position
 from pytest_lsp import Client
 from sphinx import __version__ as __sphinx_version__
 
@@ -174,7 +176,7 @@ async def completion_request(
     Parameters
     ----------
     test:
-       The client-server pair to be used to make the request.
+       The client used to make the request.
     test_uri:
        The uri the completion request should be made within.
     text
@@ -206,6 +208,40 @@ async def completion_request(
 
     character = character or insertion_point + len(text)
     response = await client.completion_request(test_uri, line, character)
+
+    client.notify_did_close(test_uri)
+    return response
+
+
+async def hover_request(
+    client: Client, test_uri: str, text: str, position: Position
+) -> Hover:
+    """Make a hover request to a language server.
+
+    Intended for use within test cases, this function simulates the opening of a
+    document containing some text, triggering a hover request and closing it again.
+
+    The file referenced by ``test_uri`` does not have to exist.
+
+    Parameters
+    ----------
+    test
+       The client used to make the request.
+
+    test_uri
+       The uri the completion request should be made within.
+
+    text
+       The text that provides the context for the hover request.
+
+    position
+       The position at which to make the hover request from.
+    """
+    ext = pathlib.Path(Uri.to_fs_path(test_uri)).suffix
+    lang_id = "python" if ext == ".py" else "rst"
+
+    client.notify_did_open(test_uri, lang_id, text)
+    response = await client.hover_request(test_uri, position)
 
     client.notify_did_close(test_uri)
     return response

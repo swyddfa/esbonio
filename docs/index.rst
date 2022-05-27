@@ -58,12 +58,23 @@ Here is a quick summary of the features implemented by the language server.
          :align: center
          :target: /_images/document-symbols-demo.png
 
+   .. collection-item:: Hover
+
+      The language server implements :lsp:`textDocument/hover` to provide easy access to documentation for roles and directives.
+
+      .. figure:: ../resources/images/hover-demo.png
+         :align: center
+         :target: /_images/hover-demo.png
+
 
 - See the :ref:`lsp_getting_started` guide for details on how to get up and
   running.
 
-.. - TODO: Extending
-.. - TODO: Contributing.
+- For further details on more advanced use cases, see the :ref:`lsp-advanced` section.
+
+- Interested in adding support for your own Sphinx extensions?
+  See the section on :ref:`lsp-extending` for more information.
+
 
 .. toctree::
    :glob:

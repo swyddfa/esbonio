@@ -1,3 +1,5 @@
+.. _lsp-extending:
+
 Extending
 =========
 

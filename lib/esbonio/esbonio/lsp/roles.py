@@ -22,6 +22,7 @@ from typing_extensions import Protocol
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import DefinitionContext
 from esbonio.lsp.rst import DocumentLinkContext
+from esbonio.lsp.rst import HoverContext
 from esbonio.lsp.rst import LanguageFeature
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
@@ -216,6 +217,7 @@ class Roles(LanguageFeature):
 
     completion_triggers = [ROLE, DEFAULT_ROLE]
     definition_triggers = [ROLE]
+    hover_triggers = [ROLE]
 
     def definition(self, context: DefinitionContext) -> List[Location]:
 
@@ -469,6 +471,49 @@ class Roles(LanguageFeature):
                 targets.append(candidate)
 
         return targets
+
+    def hover(self, context: HoverContext) -> str:
+
+        if context.location not in {"rst", "docstring"}:
+            return ""
+
+        name = context.match.group("name")
+        domain = context.match.group("domain")
+
+        # Determine if the hover is on the :role: itself, or within the `target`.
+        idx = context.position.character - context.match.start()
+        prefix = context.match.group(0)[:idx]
+
+        if "`" in prefix:
+            return self.hover_target(context, name, domain)
+
+        return self.hover_role(context, name, domain)
+
+    def hover_role(
+        self, context: HoverContext, name: str, domain: Optional[str]
+    ) -> str:
+
+        label = f"{domain}:{name}" if domain else name
+        role = self.rst.get_roles().get(label, None)
+        if not role:
+            return ""
+
+        try:
+            dotted_name = f"{role.__module__}.{role.__name__}"
+        except AttributeError:
+            dotted_name = f"{role.__module__}.{role.__class__.__name__}"
+
+        documentation = self.get_documentation(label, dotted_name)
+        if not documentation:
+            return ""
+
+        return documentation.get("description", "")
+
+    def hover_target(
+        self, context: HoverContext, name: str, domain: Optional[str]
+    ) -> str:
+        # TODO: Add extension point for providers to contribute hovers for a target.
+        return ""
 
     def get_documentation(
         self, label: str, implementation: str

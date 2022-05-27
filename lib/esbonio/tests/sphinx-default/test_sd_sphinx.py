@@ -831,6 +831,20 @@ image file not readable: not-an-image.png""",
                 ),
             ),
         ),
+        pytest.param(
+            ".. c:function:: int add(int a, int b)",
+            ".. c:function:: arg1",
+            Diagnostic(
+                source="sphinx",
+                message="Error in declarator or parameters\nInvalid C declaration: Expected identifier in nested name. [error at 4]\n  arg1\n  ----^",
+                severity=DiagnosticSeverity.Warning,
+                range=Range(
+                    start=Position(line=0, character=0),
+                    end=Position(line=1, character=0),
+                ),
+            ),
+            marks=pytest.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
+        ),
     ],
 )
 async def test_diagnostics(good, bad, expected):
