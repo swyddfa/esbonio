@@ -126,7 +126,7 @@ def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     """Link to sections within the lsp specification."""
 
     anchor = text.replace("/", "_")
-    ref = f"https://microsoft.github.io/language-server-protocol/specifications/specification-current#{anchor}"
+    ref = f"https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#{anchor}"
 
     node = nodes.reference(rawtext, text, refuri=ref, **options)
     return [node], []
