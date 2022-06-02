@@ -51,10 +51,10 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinxcontrib.autodoc_pydantic",
     "sphinx_panels",
+    "esbonio.relevant_to",
     "esbonio.tutorial",
     "cli_help",
     "collection_items",
-    "relevant_to",
 ]
 
 autodoc_member_order = "groupwise"

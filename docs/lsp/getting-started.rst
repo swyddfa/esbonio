@@ -3,80 +3,65 @@
 Getting Started
 ===============
 
-This section contains notes on how to use the Language Server with your text
-editor of choice.
-
-.. relevant-to:: VSCode (Esbonio)
-   :category: Editor
-
-   .. figure:: /images/vscode-screenshot.png
-      :align: center
-      :target: /_images/vscode-screenshot.png
-
-      The Esbonio VSCode extension.
-
-.. relevant-to:: Emacs (eglot)
-   :category: Editor
-
-   .. figure:: /images/emacs-eglot-extended.png
-      :align: center
-      :target: /_images/emacs-eglot-extended.png
-
-      Emacs, Esbonio and the ``eglot-extended.el`` configuration
-
-.. relevant-to:: Emacs (lsp-mode)
-   :category: Editor
-
-   .. figure:: /images/emacs-lsp-mode-extended.png
-      :align: center
-      :target: /_images/emacs-lsp-mode-extended.png
-
-      Emacs, Esbonio and the ``lsp-mode-extended.el`` configuration
-
-.. relevant-to:: Kate
-   :category: Editor
-
-   .. figure:: /images/kate-screenshot.png
-      :align: center
-      :target: /_images/kate-screenshot.png
-
-      Using the Esbonio language server within Kate.
-
-   `Kate <https://kate-editor.org/en-gb/>`_ is a text editor from the KDE project
-   and comes with LSP support.
-
-.. relevant-to:: Neovim (lspconfig)
-   :category: Editor
-
-   .. figure:: /images/nvim-lspconfig.png
-      :align: center
-      :target: /_images/nvim-lspconfig.png
-
-      Using Esbonio with Neovim's built-in language client.
-
-.. relevant-to:: Vim (coc.nvim)
-   :category: Editor
-
-   .. figure:: /images/nvim-coc.png
-      :align: center
-      :target: /_images/nvim-coc.png
-
-      Using Esbonio in Neovim via ``coc.nvim`` and the ``coc-esbonio`` extension.
-
-.. relevant-to:: Vim (vim-lsp)
-   :category: Editor
-
-   .. figure:: /images/nvim-vim-lsp.png
-      :align: center
-      :target: /_images/nvim-vim-lsp.png
-
-      Using Esbonio and Neovim with ``vim-lsp``
+This section contains notes on how to use the language server with your text editor of choice.
 
 .. admonition:: Don't see your favourite editor?
 
    Feel free to submit a pull request with steps on how to get started or if you're not
    sure on where to start, `open an issue`_ and we'll help you figure it out.
 
+.. relevant-to:: Editor
+
+   VSCode (Esbonio)
+      .. figure:: /images/vscode-screenshot.png
+         :align: center
+         :target: /_images/vscode-screenshot.png
+
+         The Esbonio VSCode extension.
+
+   Emacs (eglot)
+      .. figure:: /images/emacs-eglot-extended.png
+         :align: center
+         :target: /_images/emacs-eglot-extended.png
+
+         Emacs, Esbonio and the ``eglot-extended.el`` configuration
+
+   Emacs (lsp-mode)
+      .. figure:: /images/emacs-lsp-mode-extended.png
+         :align: center
+         :target: /_images/emacs-lsp-mode-extended.png
+
+         Emacs, Esbonio and the ``lsp-mode-extended.el`` configuration
+
+   Kate
+      .. figure:: /images/kate-screenshot.png
+         :align: center
+         :target: /_images/kate-screenshot.png
+
+         Using the Esbonio language server within Kate.
+
+      `Kate <https://kate-editor.org/en-gb/>`_ is a text editor from the KDE project and comes with LSP support.
+
+   Neovim (lspconfig)
+      .. figure:: /images/nvim-lspconfig.png
+         :align: center
+         :target: /_images/nvim-lspconfig.png
+
+         Using Esbonio with Neovim's built-in language client.
+
+   Vim (coc.nvim)
+      .. figure:: /images/nvim-coc.png
+         :align: center
+         :target: /_images/nvim-coc.png
+
+         Using Esbonio in Neovim via ``coc.nvim`` and the ``coc-esbonio`` extension.
+
+   Vim (vim-lsp)
+      .. figure:: /images/nvim-vim-lsp.png
+         :align: center
+         :target: /_images/nvim-vim-lsp.png
+
+         Using Esbonio and Neovim with ``vim-lsp``
 
 Installation
 ------------
@@ -99,74 +84,60 @@ building your documentation e.g.
 
 Otherwise the language server will fail to properly understand your project.
 
+If you want to try the latest developments before they are released you can use ``pip`` to install from the development branch.
 
-.. relevant-to:: VSCode (Esbonio)
-   :category: Editor
+.. code-block:: console
 
-   Integration with `VSCode`_ is provided by the `Esbonio`_ extension.
+   $ pip install "git+https://github.com/swyddfa/esbonio#egg=esbonio&subdirectory=lib/esbonio"
 
-.. relevant-to:: Emacs (eglot)
-   :category: Editor
+For more information on this command see the documentation on pip's `VCS Support <https://pip.pypa.io/en/stable/topics/vcs-support/>`_.
 
-   .. include:: ./editors/emacs-eglot/_installation.rst
 
-.. relevant-to:: Emacs (lsp-mode)
-   :category: Editor
+.. relevant-to:: Editor
 
-   .. include:: ./editors/emacs-lsp-mode/_installation.rst
+   VSCode (Esbonio)
+      Integration with `VSCode`_ is provided by the `Esbonio`_ extension.
 
-.. relevant-to:: Kate
-   :category: Editor
+   Emacs (eglot)
+      .. include:: ./editors/emacs-eglot/_installation.rst
 
-   .. include:: ./editors/kate/_installation.rst
+   Emacs (lsp-mode)
+      .. include:: ./editors/emacs-lsp-mode/_installation.rst
 
-.. relevant-to:: Neovim (lspconfig)
-   :category: Editor
+   Kate
+      .. include:: ./editors/kate/_installation.rst
 
-   .. include:: ./editors/nvim-lspconfig/_installation.rst
+   Neovim (lspconfig)
+      .. include:: ./editors/nvim-lspconfig/_installation.rst
 
-.. relevant-to:: Vim (coc.nvim)
-   :category: Editor
+   Vim (coc.nvim)
+      .. include:: ./editors/vim-coc/_installation.rst
 
-   .. include:: ./editors/vim-coc/_installation.rst
-
-.. relevant-to:: Vim (vim-lsp)
-   :category: Editor
-
-   .. include:: ./editors/vim-lsp/_installation.rst
+   Vim (vim-lsp)
+      .. include:: ./editors/vim-lsp/_installation.rst
 
 Configuration
 -------------
 
-.. relevant-to:: VSCode (Esbonio)
-   :category: Editor
+.. relevant-to:: Editor
 
-   .. include:: ./editors/vscode/_configuration.rst
+   VSCode (Esbonio)
+      .. include:: ./editors/vscode/_configuration.rst
 
-.. relevant-to:: Neovim (lspconfig)
-   :category: Editor
+   Neovim (lspconfig)
+      .. include:: ./editors/nvim-lspconfig/_configuration.rst
 
-   .. include:: ./editors/nvim-lspconfig/_configuration.rst
+   Vim (coc.nvim)
+      .. include:: ./editors/vim-coc/_configuration.rst
 
-.. relevant-to:: Vim (coc.nvim)
-   :category: Editor
+   Vim (vim-lsp)
+      .. include:: ./editors/vim-lsp/_configuration.rst
 
-   .. include:: ./editors/vim-coc/_configuration.rst
+   Emacs (eglot)
+      .. include:: ./editors/emacs-eglot/_configuration.rst
 
-.. relevant-to:: Vim (vim-lsp)
-   :category: Editor
-
-   .. include:: ./editors/vim-lsp/_configuration.rst
-
-.. relevant-to:: Emacs (eglot)
-   :category: Editor
-
-   .. include:: ./editors/emacs-eglot/_configuration.rst
-
-.. relevant-to:: Emacs (lsp-mode)
-   :category: Editor
-
-   .. include:: ./editors/emacs-lsp-mode/_configuration.rst
+   Emacs (lsp-mode)
+      .. include:: ./editors/emacs-lsp-mode/_configuration.rst
 
 .. confval:: sphinx.buildDir (string)
 
@@ -214,7 +185,7 @@ Configuration
 
       {
          "sphinx.configOverrides": {
-            "docstitle": "ProjectName"
+            "html_context.docstitle": "ProjectName"
          }
       }
 
@@ -307,7 +278,7 @@ Configuration
 
    .. deprecated:: 0.12.0
 
-      The :confval:`sphinx.quiet` and :confval:`sphinx.silent` options should be used instead.
+      The :confval:`sphinx.quiet (boolean)` and :confval:`sphinx.silent (boolean)` options should be used instead.
       This will be removed in ``v1.0``.
 
    Normally any build output from Sphinx will be forwarded to the client as log messages.
@@ -319,67 +290,46 @@ Examples
 For some editors where the setup is more manual, we do provide some example configurations
 to help get you started.
 
-.. relevant-to:: Neovim (lspconfig)
-   :category: Editor
+.. relevant-to:: Editor
 
-   .. include:: ./editors/nvim-lspconfig/_examples.rst
+   Neovim (lspconfig)
+      .. include:: ./editors/nvim-lspconfig/_examples.rst
 
-.. relevant-to:: Vim (coc.nvim)
-   :category: Editor
+   Vim (coc.nvim)
+      .. include:: ./editors/vim-coc/_examples.rst
 
-   .. include:: ./editors/vim-coc/_examples.rst
+   Vim (vim-lsp)
+      .. include:: ./editors/vim-lsp/_examples.rst
 
-.. relevant-to:: Vim (vim-lsp)
-   :category: Editor
+   Emacs (eglot)
+      .. include:: ./editors/emacs-eglot/_examples.rst
 
-   .. include:: ./editors/vim-lsp/_examples.rst
-
-.. relevant-to:: Emacs (eglot)
-   :category: Editor
-
-   .. include:: ./editors/emacs-eglot/_examples.rst
-
-.. relevant-to:: Emacs (lsp-mode)
-   :category: Editor
-
-   .. include:: ./editors/emacs-lsp-mode/_examples.rst
+   Emacs (lsp-mode)
+      .. include:: ./editors/emacs-lsp-mode/_examples.rst
 
 Debugging
 ---------
 
 In the event that something does not work as expected, you can increase the logging level of the server by setting the :confval:`server.logLevel (string)` option to ``debug``.
 
-.. relevant-to:: Neovim (lspconfig)
-   :category: Editor
+.. relevant-to:: Editor
 
-   .. include:: ./editors/nvim-lspconfig/_debugging.rst
+   Neovim (lspconfig)
+      .. include:: ./editors/nvim-lspconfig/_debugging.rst
 
-.. relevant-to:: Vim (coc.nvim)
-   :category: Editor
+   Vim (coc.nvim)
+      .. include:: ./editors/vim-coc/_debugging.rst
 
-   .. include:: ./editors/vim-coc/_debugging.rst
+   Vim (vim-lsp)
+      .. include:: ./editors/vim-lsp/_debugging.rst
 
-.. relevant-to:: Vim (vim-lsp)
-   :category: Editor
+Commands
+--------
 
-   .. include:: ./editors/vim-lsp/_debugging.rst
+.. relevant-to:: Editor
 
-Additional Details
-------------------
-
-.. relevant-to:: VSCode (Esbonio)
-   :category: Editor
-
-
-   Commands
-   """"""""
-
-   .. include:: editors/vscode/_commands.rst
-
-   Changelog
-   """""""""
-
-   .. include:: ../../code/CHANGES.rst
+   VSCode (Esbonio)
+      .. include:: editors/vscode/_commands.rst
 
 
 .. _Esbonio: https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio

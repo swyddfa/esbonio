@@ -12,6 +12,12 @@ palette (:kbd:`Ctrl+Shift+P`).
    between source files the preview will automatically update to show the page you are
    currently working on.
 
+``esbonio.sphinx.copyBuildCommand``
+   Copy the server's current ``sphinx-build`` command to the clipboard.
+
+``esbonio.sphinx.setBuildCommand``
+   Prompts for a set of ``sphinx-build`` arguments and updates the project's configuration accordingly.
+
 ``esbonio.sphinx.selectConfDir``
    Interactively pick a new ``confDir``.
 
