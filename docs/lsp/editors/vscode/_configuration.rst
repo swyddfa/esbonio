@@ -54,6 +54,16 @@ The following options are available.
      installed automatically
    - ``automatic`` - Never ask for confirmation, updates will always be installed.
 
+.. confval:: esbonio.trace.server (string)
+
+   Set the logging level for LSP protocol messages, mostly useful for debugging.
+
+   The following options are available
+
+   - ``off`` (default) - Don't log any LSP messages
+   - ``messages`` - Log when LSP messages are sent/recevied
+   - ``verbose`` - Log all LSP messages and their contents
+
 The VSCode extension also exposes the following server configuration options under an
 ``esbonio.*`` prefix.
 

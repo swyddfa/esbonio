@@ -43,6 +43,14 @@ The following startup modules are included with the ``esbonio`` python package.
 
    .. .. cli-help:: esbonio.lsp.sphinx
 
+.. startmod:: esbonio.lsp.rst._record
+
+   Exactly the same as :startmod:`esbonio.lsp.rst`, but with output capture enabled.
+
+.. startmod:: esbonio.lsp.sphinx._record
+
+   Exaclty the same as :startmod:`esbonio.lsp.sphinx` but with output capture enabled.
+
 
 Extension Modules
 -----------------

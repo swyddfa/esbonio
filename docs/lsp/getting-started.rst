@@ -307,12 +307,29 @@ to help get you started.
    Emacs (lsp-mode)
       .. include:: ./editors/emacs-lsp-mode/_examples.rst
 
+Commands
+--------
+
+.. relevant-to:: Editor
+
+   VSCode (Esbonio)
+      .. include:: editors/vscode/_commands.rst
+
 Debugging
 ---------
 
-In the event that something does not work as expected, you can increase the logging level of the server by setting the :confval:`server.logLevel (string)` option to ``debug``.
+In its default configuration the language server doesn't give you much information, you'll be able to see Sphinx's build output and not much else.
+Depending on your needs you may find one of the following options useful.
+
+Enabling Debug Logging
+^^^^^^^^^^^^^^^^^^^^^^
+
+The simplest way to get more information is to set the :confval:`server.logLevel (string)` option to ``debug``. Log messages from the language server will be sent to your language client as :lsp:`window/logMessage` messages.
 
 .. relevant-to:: Editor
+
+   VSCode (Esbonio)
+      .. include:: ./editors/vscode/_debugging.rst
 
    Neovim (lspconfig)
       .. include:: ./editors/nvim-lspconfig/_debugging.rst
@@ -323,13 +340,35 @@ In the event that something does not work as expected, you can increase the logg
    Vim (vim-lsp)
       .. include:: ./editors/vim-lsp/_debugging.rst
 
-Commands
---------
+Capture All Client-Server Communication
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. relevant-to:: Editor
+.. important::
 
-   VSCode (Esbonio)
-      .. include:: editors/vscode/_commands.rst
+   This option requires the ``lsp-devtools`` package to be installed in the same Python environment as the ``esbonio`` language server::
+
+      $ pip install lsp-devtools
+
+It's possible to capture **all data** sent to/from the language server in a text file names ``lsp.log`` by using one of the following startup modules.
+
+- :startmod:`esbonio.lsp.rst._record`: For capturing communications with the vanilla docutils server.
+- :startmod:`esbonio.lsp.sphinx._record` For capturing communications with the default Sphinx server.
+
+See :ref:`lsp-startup-mods` for more information on startup modules.
+
+The resulting ``lsp.log`` file will look something like the following
+
+.. code-block:: none
+
+   Content-Length: 209
+
+   {"jsonrpc":"2.0","id":6,"method":"textDocument/documentLink","params":{"textDocument":{"uri":"file:///path/to/index.rst"}}}
+   Content-Length: 41
+   Content-Type: application/vscode-jsonrpc; charset=utf-8
+
+   {"jsonrpc": "2.0", "id": 6, "result": []}
+
+Capturing data in this way will likely only be useful in a limited set of scenarios - such as if the server starts misbehaving an emitting data that does not conform to the LSP specification.
 
 
 .. _Esbonio: https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio
