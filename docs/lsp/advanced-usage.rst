@@ -53,29 +53,25 @@ Inspired by the way Sphinx extensions work, functionality is added to a language
 
 Below is the list of modules loaded by default for each of the provided servers.
 
-.. relevant-to:: esbonio
-   :category: Startup Module
+.. relevant-to:: Startup Module
 
-   .. literalinclude:: ../../lib/esbonio/esbonio/lsp/sphinx/__init__.py
-      :language: python
-      :start-at: DEFAULT_MODULES
-      :end-at: ]
+   esbonio
+      .. literalinclude:: ../../lib/esbonio/esbonio/lsp/sphinx/__init__.py
+         :language: python
+         :start-at: DEFAULT_MODULES
+         :end-at: ]
 
-.. relevant-to:: esbonio.lsp.rst
-   :category: Startup Module
+   esbonio.lsp.rst
+      .. literalinclude:: ../../lib/esbonio/esbonio/lsp/rst/__init__.py
+         :language: python
+         :start-at: DEFAULT_MODULES
+         :end-at: ]
 
-   .. literalinclude:: ../../lib/esbonio/esbonio/lsp/rst/__init__.py
-      :language: python
-      :start-at: DEFAULT_MODULES
-      :end-at: ]
-
-.. relevant-to:: esbonio.lsp.sphinx
-   :category: Startup Module
-
-   .. literalinclude:: ../../lib/esbonio/esbonio/lsp/sphinx/__init__.py
-      :language: python
-      :start-at: DEFAULT_MODULES
-      :end-at: ]
+   esbonio.lsp.sphinx
+      .. literalinclude:: ../../lib/esbonio/esbonio/lsp/sphinx/__init__.py
+         :language: python
+         :start-at: DEFAULT_MODULES
+         :end-at: ]
 
 In addition to the modules enabled by default, the following modules are provided and can be
 enabled if you wish.
@@ -93,37 +89,30 @@ Commands
 The bundled language servers offer some commands that can be invoked from a language client using
 a :lsp:`workspace/executeCommand` request.
 
-.. relevant-to:: esbonio
-   :category: Startup Module
+.. relevant-to:: Startup Module
 
-   .. include:: ./advanced/_esbonio.lsp.sphinx_commands.rst
+   esbonio
+      .. include:: ./advanced/_esbonio.lsp.sphinx_commands.rst
 
+   esbonio.lsp.rst
+      ``esbonio.server.configuration``
+         Returns the server's current configuration.
 
-.. relevant-to:: esbonio.lsp.rst
-   :category: Startup Module
+         .. code-block:: json
 
-   ``esbonio.server.configuration``
-      Returns the server's current configuration.
+            {
+              "server": {
+                "logLevel": "debug",
+                "logFilter": [],
+                "hideSphinxOutput": false
+              }
+            }
 
-      .. code-block:: json
+      ``esbonio.sever.preview``
+         Currently a placeholder.
 
-         {
-           "server": {
-             "logLevel": "debug",
-             "logFilter": [],
-             "hideSphinxOutput": false
-           }
-         }
-
-   ``esbonio.sever.preview``
-      Currently a placeholder.
-
-
-.. relevant-to:: esbonio.lsp.sphinx
-   :category: Startup Module
-
-   .. include:: ./advanced/_esbonio.lsp.sphinx_commands.rst
-
+   esbonio.lsp.sphinx
+      .. include:: ./advanced/_esbonio.lsp.sphinx_commands.rst
 
 Notifications
 -------------
@@ -131,20 +120,13 @@ Notifications
 The bundled language servers also emit custom notifications that language clients
 can use to react to events happening within the server.
 
+.. relevant-to:: Startup Module
 
-.. relevant-to:: esbonio
-   :category: Startup Module
+   esbonio
+      .. include:: ./advanced/_esbonio.lsp.sphinx_notifications.rst
 
-   .. include:: ./advanced/_esbonio.lsp.sphinx_notifications.rst
+   esbonio.lsp.rst
+      Currently this server implements no custom notifications.
 
-
-.. relevant-to:: esbonio.lsp.rst
-   :category: Startup Module
-
-   Currently this server implements no custom notifications.
-
-
-.. relevant-to:: esbonio.lsp.sphinx
-   :category: Startup Module
-
-   .. include:: ./advanced/_esbonio.lsp.sphinx_notifications.rst
+   esbonio.lsp.sphinx
+      .. include:: ./advanced/_esbonio.lsp.sphinx_notifications.rst
