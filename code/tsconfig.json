@@ -2,10 +2,11 @@
     "compilerOptions": {
         "module": "commonjs",
         "moduleResolution": "node",
-        "target": "es2019",
+        "target": "ES2019",
         "lib": [
             "ES2019",
-            "dom"
+            "DOM",
+            "WebWorker"
         ],
         "outDir": "dist",
         "rootDir": "src",
