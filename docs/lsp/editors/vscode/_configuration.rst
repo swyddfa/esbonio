@@ -17,6 +17,7 @@ The following options are available.
 
    - ``/path/to/python/`` - An absolute path
    - ``${workspaceRoot}/../venv/bin/python`` - A path relative to the root of your workspace
+   - ``${workspaceFolder}/../venv/bin/python`` -  Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
 
 .. confval:: esbonio.server.installBehavior (string)
 
