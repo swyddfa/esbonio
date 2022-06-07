@@ -1,3 +1,14 @@
+v0.9.2 - 2022-06-07
+-------------------
+
+Fixes
+^^^^^
+
+- The ``esbonio.server.pythonPath`` setting now accepts paths relative to ``${workspaceFolder}``.
+
+  **Note** This is simply an alias for the existing ``${workspaceRoot}`` functionality. (`#404 <https://github.com/swyddfa/esbonio/issues/404>`_)
+
+
 v0.9.1 - 2022-05-25
 -------------------
 
