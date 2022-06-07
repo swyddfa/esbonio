@@ -48,8 +48,8 @@ export class PythonManager {
     if (userPython) {
 
       // Support for ${workspaceRoot}/...
-      let match = userPython.match(/^\${(\w+)}.*/)
-      if (match && match[1] === 'workspaceRoot') {
+      let match = userPython.match(/^\${(\w+)}/)
+      if (match && (match[1] === 'workspaceRoot' || match[1] === 'workspaceFolder')) {
         let workspaceRoot = ""
         let workspaceFolders = vscode.workspace.workspaceFolders
 
@@ -57,7 +57,7 @@ export class PythonManager {
           workspaceRoot = workspaceFolders[0].uri.fsPath
         }
 
-        userPython = userPython.replace("${workspaceRoot}", workspaceRoot)
+        userPython = userPython.replace(match[0], workspaceRoot)
       }
 
       this.logger.debug(`Using user configured Python: ${userPython}`)
