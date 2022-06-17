@@ -1,0 +1,1 @@
+Improved type annotations allow ``rst.get_feature`` to be called with a language feature's type and have the return type match accordingly. This should allow editors to provide better autocomplete suggestions etc.

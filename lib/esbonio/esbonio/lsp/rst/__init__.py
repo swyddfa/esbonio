@@ -5,11 +5,14 @@ import pathlib
 import re
 import traceback
 import typing
+import warnings
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Type
+from typing import TypeVar
 from typing import Union
 
 import docutils.parsers.rst.directives as directives
@@ -40,6 +43,7 @@ from .io import read_initial_doctree
 from esbonio.cli import setup_cli
 
 
+LF = TypeVar("LF", bound="LanguageFeature")
 TRIPLE_QUOTE = re.compile("(\"\"\"|''')")
 """A regular expression matching the triple quotes used to delimit python docstrings."""
 
@@ -410,7 +414,45 @@ class RstLanguageServer(LanguageServer):
         key = f"{feature.__module__}.{feature.__class__.__name__}"
         self._features[key] = feature
 
-    def get_feature(self, key) -> Optional["LanguageFeature"]:
+    @typing.overload
+    def get_feature(self, key: str) -> "Optional[LanguageFeature]":
+        ...
+
+    @typing.overload
+    def get_feature(self, key: Type[LF]) -> Optional[LF]:
+        ...
+
+    def get_feature(self, key):
+        """Returns the requested language feature if it exists, otherwise it returns
+        ``None``.
+
+        Parameters
+        ----------
+        key: str | Type[LanguageFeature]
+           A feature can be referenced either by its class definition (preferred) or by
+           a string representing the language feature's dotted name e.g.
+           ``a.b.c.ClassName``.
+
+           .. deprecated:: 0.14.0
+
+              Passing a string ``key`` to this method is deprecated and will become an
+              error in ``v1.0``.
+        """
+
+        if isinstance(key, str):
+            warnings.warn(
+                "Language features should be referenced by their class definition, "
+                "this will become an error in v1.0.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        elif issubclass(key, LanguageFeature):
+            key = f"{key.__module__}.{key.__name__}"
+
+        else:
+            raise TypeError("Expected language feature definition")
+
         return self._features.get(key, None)
 
     def get_doctree(
