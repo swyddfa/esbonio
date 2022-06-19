@@ -1,0 +1,1 @@
+Log messages from the server's startup are now captured and forwarded onto the language client.

@@ -28,7 +28,7 @@ from sphinx.util.logging import SphinxLogRecord
 from sphinx.util.logging import WarningLogRecordTranslator
 from typing_extensions import Literal
 
-from esbonio.lsp.rst import LspHandler
+from esbonio.lsp.log import LspHandler
 from esbonio.lsp.rst import ServerConfig
 
 try:
