@@ -65,7 +65,7 @@ __all__ = [
     "CompletionContext",
     "DefinitionContext",
     "DocumentLinkContext",
-    "LanguageFeature",
+    "HoverContext",
     "RstLanguageServer",
     "create_language_server",
 ]
@@ -377,6 +377,7 @@ def _load_module(server: RstLanguageServer, modname: str):
 
     try:
         setup(**args)
+        logger.debug("Loaded module '%s'", modname)
     except Exception:
         logger.error(
             "Error while setting up module '%s'\n%s", modname, traceback.format_exc()
