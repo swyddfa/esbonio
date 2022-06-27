@@ -15,7 +15,7 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
-import docutils.parsers.rst.directives as directives
+import docutils.parsers.rst.directives as docutils_directives
 import pygls.uris as Uri
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import roles
@@ -51,8 +51,9 @@ TRIPLE_QUOTE = re.compile("(\"\"\"|''')")
 # fmt: off
 # Order matters!
 DEFAULT_MODULES = [
-    "esbonio.lsp.directives",  # Generic directive support
-    "esbonio.lsp.roles",       # Generic roles support
+    "esbonio.lsp.directives",      # Generic directive support
+    "esbonio.lsp.roles",           # Generic roles support
+    "esbonio.lsp.rst.directives",  # Specialised support for docutils directives
 ]
 """The modules to load in the default configuration of the server."""
 # fmt: on
@@ -492,7 +493,10 @@ class RstLanguageServer(LanguageServer):
             return self._directives
 
         ignored_directives = ["restructuredtext-test-directive"]
-        found_directives = {**directives._directive_registry, **directives._directives}
+        found_directives = {
+            **docutils_directives._directive_registry,
+            **docutils_directives._directives,
+        }
 
         self._directives = {
             k: resolve_directive(v)
