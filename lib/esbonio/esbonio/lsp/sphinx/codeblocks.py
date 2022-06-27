@@ -1,6 +1,5 @@
 """Support for code-blocks and related directives."""
 import textwrap
-import typing
 from typing import List
 
 from pygls.lsp.types import CompletionItem
@@ -11,7 +10,6 @@ from pygments.lexers import get_all_lexers
 
 from esbonio.lsp.directives import Directives
 from esbonio.lsp.rst import CompletionContext
-from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
 
@@ -62,14 +60,5 @@ class CodeBlocks:
                 self._lexers.append(item)
 
 
-def esbonio_setup(rst: RstLanguageServer):
-
-    name = "esbonio.lsp.directives.Directives"
-    directives = rst.get_feature(name)
-
-    if not isinstance(rst, SphinxLanguageServer) or not directives:
-        return
-
-    # To keep mypy happy.
-    directives = typing.cast(Directives, directives)
+def esbonio_setup(rst: SphinxLanguageServer, directives: Directives):
     directives.add_argument_completion_provider(CodeBlocks(rst))
