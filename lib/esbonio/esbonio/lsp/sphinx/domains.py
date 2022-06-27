@@ -1,6 +1,5 @@
 """Support for Sphinx domains."""
 import pathlib
-import typing
 from typing import List
 from typing import Optional
 from typing import Set
@@ -20,7 +19,6 @@ from esbonio.lsp.roles import Roles
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import DefinitionContext
 from esbonio.lsp.rst import DocumentLinkContext
-from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
 
@@ -300,14 +298,9 @@ def project_to_completion_item(project: str) -> CompletionItem:
     )
 
 
-def esbonio_setup(rst: RstLanguageServer):
+def esbonio_setup(rst: SphinxLanguageServer, roles: Roles):
+    domains = DomainFeatures(rst)
 
-    if isinstance(rst, SphinxLanguageServer):
-        domains = DomainFeatures(rst)
-        roles = rst.get_feature("esbonio.lsp.roles.Roles")
-
-        if roles:
-            roles = typing.cast(Roles, roles)  # let's keep mypy happy
-            roles.add_target_definition_provider(domains)
-            roles.add_target_completion_provider(domains)
-            roles.add_target_link_provider(domains)
+    roles.add_target_definition_provider(domains)
+    roles.add_target_completion_provider(domains)
+    roles.add_target_link_provider(domains)
