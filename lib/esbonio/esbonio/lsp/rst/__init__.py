@@ -16,9 +16,9 @@ from typing import TypeVar
 from typing import Union
 
 import docutils.parsers.rst.directives as docutils_directives
+import docutils.parsers.rst.roles as docutils_roles
 import pygls.uris as Uri
 from docutils.parsers.rst import Directive
-from docutils.parsers.rst import roles
 from pydantic import BaseModel
 from pydantic import Field
 from pygls import IS_WIN
@@ -54,6 +54,7 @@ DEFAULT_MODULES = [
     "esbonio.lsp.directives",      # Generic directive support
     "esbonio.lsp.roles",           # Generic roles support
     "esbonio.lsp.rst.directives",  # Specialised support for docutils directives
+    "esbonio.lsp.rst.roles",       # Specialised support for docutils roles
 ]
 """The modules to load in the default configuration of the server."""
 # fmt: on
@@ -521,10 +522,12 @@ class RstLanguageServer(LanguageServer):
         if self._roles is not None:
             return self._roles
 
-        found_roles = {**roles._roles, **roles._role_registry}
+        found_roles = {**docutils_roles._roles, **docutils_roles._role_registry}
 
         self._roles = {
-            k: v for k, v in found_roles.items() if v != roles.unimplemented_role
+            k: v
+            for k, v in found_roles.items()
+            if v != docutils_roles.unimplemented_role
         }
 
         return self._roles
