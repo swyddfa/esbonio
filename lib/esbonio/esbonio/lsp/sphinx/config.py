@@ -28,6 +28,7 @@ from sphinx.util.logging import SphinxLogRecord
 from sphinx.util.logging import WarningLogRecordTranslator
 from typing_extensions import Literal
 
+from esbonio.lsp.log import LOG_NAMESPACE
 from esbonio.lsp.log import LspHandler
 from esbonio.lsp.rst import ServerConfig
 
@@ -41,6 +42,7 @@ except ImportError:
 
 
 PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")
+logger = logging.getLogger(LOG_NAMESPACE)
 
 
 class MissingConfigError(Exception):
@@ -628,7 +630,7 @@ class SphinxLogHandler(LspHandler):
         loc = record.location if isinstance(record, SphinxLogRecord) else ""
         doc, lineno = self.get_location(loc)
         line = lineno or 1
-        self.server.logger.debug("Reporting diagnostic at %s:%s", doc, line)
+        logger.debug("Reporting diagnostic at %s:%s", doc, line)
 
         try:
             # Not every message contains a string...
@@ -643,7 +645,7 @@ class SphinxLogHandler(LspHandler):
 
         except Exception:
             message = str(record.msg)
-            self.server.logger.error(
+            logger.error(
                 "Unable to format diagnostic message: %s", traceback.format_exc()
             )
 
