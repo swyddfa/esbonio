@@ -1,5 +1,3 @@
-"""Logic around directive completions goes here."""
-import json
 import re
 import typing
 from typing import Any
@@ -8,7 +6,6 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-import pkg_resources
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import DocumentLink
@@ -662,15 +659,4 @@ class Directives(LanguageFeature):
 
 
 def esbonio_setup(rst: RstLanguageServer):
-    """Configure and reigster the directives feature with the server."""
-    directives = Directives(rst)
-    rst.add_feature(directives)
-
-    docutils_docs = pkg_resources.resource_string("esbonio.lsp.rst", "directives.json")
-    directives.add_documentation(json.loads(docutils_docs.decode("utf8")))
-
-    if isinstance(rst, SphinxLanguageServer):
-        sphinx_docs = pkg_resources.resource_string(
-            "esbonio.lsp.sphinx", "directives.json"
-        )
-        directives.add_documentation(json.loads(sphinx_docs.decode("utf8")))
+    rst.add_feature(Directives(rst))

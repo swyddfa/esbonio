@@ -58,8 +58,10 @@ IS_LINUX = platform.system() == "Linux"
 DEFAULT_MODULES = [
     "esbonio.lsp.directives",         # Generic directive support
     "esbonio.lsp.roles",              # Generic roles support
+    "esbonio.lsp.rst.directives",     # Specialised support for docutils directives
     "esbonio.lsp.sphinx.codeblocks",  # Support for code-block, highlight, etc.
     "esbonio.lsp.sphinx.domains",     # Support for Sphinx domains
+    "esbonio.lsp.sphinx.directives",  # Specialised support for Sphinx directives
     "esbonio.lsp.sphinx.images",      # Support for image, figure etc
     "esbonio.lsp.sphinx.includes",    # Support for include, literal-include etc.
     "esbonio.lsp.sphinx.roles",       # Support for misc roles added by Sphinx e.g. :download:
