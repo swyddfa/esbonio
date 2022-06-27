@@ -59,6 +59,7 @@ DEFAULT_MODULES = [
     "esbonio.lsp.directives",         # Generic directive support
     "esbonio.lsp.roles",              # Generic roles support
     "esbonio.lsp.rst.directives",     # Specialised support for docutils directives
+    "esbonio.lsp.rst.roles",          # Specialised support for docutils roles
     "esbonio.lsp.sphinx.codeblocks",  # Support for code-block, highlight, etc.
     "esbonio.lsp.sphinx.domains",     # Support for Sphinx domains
     "esbonio.lsp.sphinx.directives",  # Specialised support for Sphinx directives

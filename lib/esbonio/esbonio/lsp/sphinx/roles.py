@@ -1,15 +1,15 @@
 """Extra support for roles added by sphinx."""
+import json
 import os.path
-import typing
 from typing import List
 from typing import Optional
 
+import pkg_resources
 import pygls.uris as Uri
 from pygls.lsp.types import CompletionItem
 
 from esbonio.lsp.roles import Roles
 from esbonio.lsp.rst import CompletionContext
-from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.util.filepaths import complete_sphinx_filepaths
 from esbonio.lsp.util.filepaths import path_to_completion_item
@@ -38,14 +38,8 @@ class Downloads:
         return [path_to_completion_item(context, p) for p in items]
 
 
-def esbonio_setup(rst: RstLanguageServer):
+def esbonio_setup(rst: SphinxLanguageServer, roles: Roles):
+    sphinx_docs = pkg_resources.resource_string("esbonio.lsp.sphinx", "roles.json")
+    roles.add_documentation(json.loads(sphinx_docs.decode("utf8")))
 
-    name = "esbonio.lsp.roles.Roles"
-    roles = rst.get_feature(name)
-
-    if not isinstance(rst, SphinxLanguageServer) or not roles:
-        return
-
-    # To keep mypy happy
-    roles = typing.cast(Roles, roles)
     roles.add_target_completion_provider(Downloads(rst))

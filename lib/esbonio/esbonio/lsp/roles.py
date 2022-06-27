@@ -1,5 +1,4 @@
 """Role support."""
-import json
 import typing
 from typing import Any
 from typing import Dict
@@ -7,7 +6,6 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-import pkg_resources
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import DocumentLink
@@ -559,13 +557,4 @@ class Roles(LanguageFeature):
 
 
 def esbonio_setup(rst: RstLanguageServer):
-
-    roles = Roles(rst)
-    rst.add_feature(roles)
-
-    docutils_docs = pkg_resources.resource_string("esbonio.lsp.rst", "roles.json")
-    roles.add_documentation(json.loads(docutils_docs.decode("utf8")))
-
-    if isinstance(rst, SphinxLanguageServer):
-        sphinx_docs = pkg_resources.resource_string("esbonio.lsp.sphinx", "roles.json")
-        roles.add_documentation(json.loads(sphinx_docs.decode("utf8")))
+    rst.add_feature(Roles(rst))
