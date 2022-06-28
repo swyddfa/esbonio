@@ -1,9 +1,9 @@
 ``esbonio_setup`` functions can now request specific language features and servers, just by providing type annotations e.g::
 
-     from esbonio.lsp.roles import Roles
-     from esbonio.lsp.sphinx import SphinxLanguageServer
+   from esbonio.lsp.roles import Roles
+   from esbonio.lsp.sphinx import SphinxLanguageServer
 
-     def esbonio_setup(rst: SphinxLanguageServer, roles: Roles):
-         ...
+   def esbonio_setup(rst: SphinxLanguageServer, roles: Roles):
+       ...
 
-  This function will then only be called when the language server is actually an instance of ``SphinxLanguageServer`` and only when that lanuage server instance contains an intance of the ``Roles`` feature.
+This function will then only be called when the language server is actually an instance of ``SphinxLanguageServer`` and only when that lanuage server instance contains an intance of the ``Roles`` feature.
