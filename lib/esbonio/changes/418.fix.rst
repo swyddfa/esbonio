@@ -1,0 +1,1 @@
+Fixed handling of default roles when getting a document's initial doctree.
