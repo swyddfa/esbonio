@@ -39,7 +39,7 @@ Tutorial
 
      perhaps?
 
-The tutorial extension's aim is to make it easy to export tutorials written as part of
+The ``esbonio.tutorial`` extension's aim is to make it easy to export tutorials written as part of
 your project's documentation to `Jupyter Notebooks`_ allowing the reader to follow along
 in an interactive environment and further explore for themselves.
 
@@ -47,7 +47,12 @@ With online services such as `Binder`_ it's also possible to create fully intera
 online versions of your tutorials allowing the user to just try things out bypassing any
 (potentially) complicated setup steps.
 
-.. include:: _installation.rst
+This extension is available through the ``esbonio-extensions`` Python package but the ``tutorial`` extra is required due to some additional dependencies.
+
+.. code-block:: console
+
+   $ pip install esbonio-extensions[tutorial]
+
 
 Getting Started
 ---------------

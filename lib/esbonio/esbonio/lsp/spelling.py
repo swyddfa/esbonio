@@ -187,8 +187,5 @@ def find_words(
     return words
 
 
-def esbonio_setup(rst):
-
-    if isinstance(rst, SphinxLanguageServer):
-        spelling = Spelling(rst)
-        rst.add_feature(spelling)
+def esbonio_setup(rst: SphinxLanguageServer):
+    rst.add_feature(Spelling(rst))

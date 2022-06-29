@@ -94,6 +94,7 @@ Sphinx Extensions
 In addition to the language server, the Esbonio project provides a number of
 Sphinx extensions.
 
+- :doc:`/extensions/relevant_to`: Swap out sections of an article based on a chosen subject.
 - :doc:`/extensions/tutorial`: Export tutorial articles as `Jupyter Notebooks`_
 
 .. toctree::

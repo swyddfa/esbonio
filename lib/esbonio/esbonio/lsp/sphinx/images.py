@@ -1,6 +1,5 @@
 import os.path
 import pathlib
-import typing
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -16,7 +15,6 @@ from esbonio.lsp.directives import Directives
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import DefinitionContext
 from esbonio.lsp.rst import DocumentLinkContext
-from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.util.filepaths import complete_sphinx_filepaths
 from esbonio.lsp.util.filepaths import path_to_completion_item
@@ -104,18 +102,9 @@ class Images:
         return Uri.from_fs_path(str(fpath))
 
 
-def esbonio_setup(rst: RstLanguageServer):
-
-    name = "esbonio.lsp.directives.Directives"
-    directives = rst.get_feature(name)
-
-    if not isinstance(rst, SphinxLanguageServer) or not directives:
-        return
-
-    # To keep mypy happy.
-    directives = typing.cast(Directives, directives)
-
+def esbonio_setup(rst: SphinxLanguageServer, directives: Directives):
     images = Images(rst)
+
     directives.add_argument_definition_provider(images)
     directives.add_argument_completion_provider(images)
     directives.add_argument_link_provider(images)

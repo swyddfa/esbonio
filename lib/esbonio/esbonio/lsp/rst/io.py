@@ -37,8 +37,11 @@ def dummy_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     node.line = lineno
 
     match = ROLE.match(rawtext)
-    node.attributes.update(match.groupdict())
-    node.attributes["text"] = match.group(0)
+    if match is None:
+        node.attributes["text"] = rawtext
+    else:
+        node.attributes.update(match.groupdict())
+        node.attributes["text"] = match.group(0)
 
     return [node], []
 

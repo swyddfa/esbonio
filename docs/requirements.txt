@@ -5,4 +5,4 @@ autodoc-pydantic
 sphinx-panels
 furo
 -e lib/esbonio
--e lib/esbonio-extensions
+-e lib/esbonio-extensions[tutorial]

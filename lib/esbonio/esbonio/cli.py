@@ -1,4 +1,5 @@
 import argparse
+import logging
 import sys
 
 
@@ -50,6 +51,8 @@ def main(cli: argparse.ArgumentParser):
     # Put these here to avoid circular import issues.
     from esbonio.lsp import __version__
     from esbonio.lsp import create_language_server
+    from esbonio.lsp.log import LOG_NAMESPACE
+    from esbonio.lsp.log import MemoryHandler
 
     args = cli.parse_args()
 
@@ -65,6 +68,15 @@ def main(cli: argparse.ArgumentParser):
     for mod in args.excluded_modules:
         if mod in modules:
             modules.remove(mod)
+
+    # Setup a temporary logging handler that can cache messages until the language server
+    # is ready to forward them onto the client.
+    logger = logging.getLogger(LOG_NAMESPACE)
+    logger.setLevel(logging.DEBUG)
+
+    handler = MemoryHandler()
+    handler.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
 
     server = create_language_server(args.server_cls, modules)
 

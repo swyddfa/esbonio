@@ -4,10 +4,12 @@ import pathlib
 import platform
 import traceback
 import typing
+from functools import partial
 from multiprocessing import Process
 from multiprocessing import Queue
 from typing import Any
 from typing import Dict
+from typing import IO
 from typing import Iterator
 from typing import List
 from typing import Optional
@@ -30,6 +32,7 @@ from sphinx.application import Sphinx
 from sphinx.domains import Domain
 from sphinx.errors import ConfigError
 from sphinx.util import console
+from sphinx.util import logging as sphinx_logging_module
 from sphinx.util.logging import NAMESPACE as SPHINX_LOG_NAMESPACE
 from sphinx.util.logging import VERBOSITY_MAP
 
@@ -58,8 +61,11 @@ IS_LINUX = platform.system() == "Linux"
 DEFAULT_MODULES = [
     "esbonio.lsp.directives",         # Generic directive support
     "esbonio.lsp.roles",              # Generic roles support
+    "esbonio.lsp.rst.directives",     # Specialised support for docutils directives
+    "esbonio.lsp.rst.roles",          # Specialised support for docutils roles
     "esbonio.lsp.sphinx.codeblocks",  # Support for code-block, highlight, etc.
     "esbonio.lsp.sphinx.domains",     # Support for Sphinx domains
+    "esbonio.lsp.sphinx.directives",  # Specialised support for Sphinx directives
     "esbonio.lsp.sphinx.images",      # Support for image, figure etc
     "esbonio.lsp.sphinx.includes",    # Support for include, literal-include etc.
     "esbonio.lsp.sphinx.roles",       # Support for misc roles added by Sphinx e.g. :download:
@@ -258,30 +264,42 @@ class SphinxLanguageServer(RstLanguageServer):
         self.sphinx_args = sphinx_config.to_application_args()
         self.logger.debug("Sphinx Args %s", json.dumps(self.sphinx_args, indent=2))
 
-        # Disable color escape codes in Sphinx's log messages
-        console.nocolor()
+        # Override Sphinx's logging setup with our own.
+        sphinx_logging_module.setup = partial(self._logging_setup, server, sphinx)
         app = Sphinx(**self.sphinx_args)
-
-        # This has to happen after app creation otherwise our logging handler
-        # will get cleared by Sphinx's setup.
-        if not server.hide_sphinx_output and not sphinx.silent:
-            sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
-
-            self.sphinx_log = SphinxLogHandler(app, self)
-
-            if sphinx.quiet:
-                self.sphinx_log.setLevel(logging.WARNING)
-            else:
-                self.sphinx_log.setLevel(VERBOSITY_MAP[app.verbosity])
-
-            formatter = logging.Formatter("%(message)s")
-            self.sphinx_log.setFormatter(formatter)
-            sphinx_logger.addHandler(self.sphinx_log)
 
         self._load_sphinx_extensions(app)
         self._load_sphinx_config(app)
 
         return app
+
+    def _logging_setup(
+        self,
+        server: SphinxServerConfig,
+        sphinx: SphinxConfig,
+        app: Sphinx,
+        status: IO,
+        warning: IO,
+    ):
+
+        # Disable color escape codes in Sphinx's log messages
+        console.nocolor()
+
+        if not server.hide_sphinx_output and not sphinx.silent:
+            sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
+            self.sphinx_log = SphinxLogHandler(app, self)
+            sphinx_logger.addHandler(self.sphinx_log)
+
+            if sphinx.quiet:
+                level = logging.WARNING
+            else:
+                level = VERBOSITY_MAP[app.verbosity]
+
+            sphinx_logger.setLevel(level)
+            self.sphinx_log.setLevel(level)
+
+            formatter = logging.Formatter("%(message)s")
+            self.sphinx_log.setFormatter(formatter)
 
     def _load_sphinx_extensions(self, app: Sphinx):
         """Loop through each of Sphinx's extensions and see if any contain server

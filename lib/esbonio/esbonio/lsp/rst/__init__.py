@@ -5,17 +5,20 @@ import pathlib
 import re
 import traceback
 import typing
+import warnings
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Type
+from typing import TypeVar
 from typing import Union
 
-import docutils.parsers.rst.directives as directives
+import docutils.parsers.rst.directives as docutils_directives
+import docutils.parsers.rst.roles as docutils_roles
 import pygls.uris as Uri
 from docutils.parsers.rst import Directive
-from docutils.parsers.rst import roles
 from pydantic import BaseModel
 from pydantic import Field
 from pygls import IS_WIN
@@ -38,16 +41,20 @@ from pygls.workspace import Document
 
 from .io import read_initial_doctree
 from esbonio.cli import setup_cli
+from esbonio.lsp.log import setup_logging
 
 
+LF = TypeVar("LF", bound="LanguageFeature")
 TRIPLE_QUOTE = re.compile("(\"\"\"|''')")
 """A regular expression matching the triple quotes used to delimit python docstrings."""
 
 # fmt: off
 # Order matters!
 DEFAULT_MODULES = [
-    "esbonio.lsp.directives",  # Generic directive support
-    "esbonio.lsp.roles",       # Generic roles support
+    "esbonio.lsp.directives",      # Generic directive support
+    "esbonio.lsp.roles",           # Generic roles support
+    "esbonio.lsp.rst.directives",  # Specialised support for docutils directives
+    "esbonio.lsp.rst.roles",       # Specialised support for docutils roles
 ]
 """The modules to load in the default configuration of the server."""
 # fmt: on
@@ -390,7 +397,7 @@ class RstLanguageServer(LanguageServer):
         self.user_config = InitializationOptions(
             **typing.cast(Dict, params.initialization_options)
         )
-        self._configure_logging(self.user_config.server)
+        setup_logging(self, self.user_config.server)
 
     def initialized(self, params: InitializedParams):
         pass
@@ -410,7 +417,45 @@ class RstLanguageServer(LanguageServer):
         key = f"{feature.__module__}.{feature.__class__.__name__}"
         self._features[key] = feature
 
-    def get_feature(self, key) -> Optional["LanguageFeature"]:
+    @typing.overload
+    def get_feature(self, key: str) -> "Optional[LanguageFeature]":
+        ...
+
+    @typing.overload
+    def get_feature(self, key: Type[LF]) -> Optional[LF]:
+        ...
+
+    def get_feature(self, key):
+        """Returns the requested language feature if it exists, otherwise it returns
+        ``None``.
+
+        Parameters
+        ----------
+        key: str | Type[LanguageFeature]
+           A feature can be referenced either by its class definition (preferred) or by
+           a string representing the language feature's dotted name e.g.
+           ``a.b.c.ClassName``.
+
+           .. deprecated:: 0.14.0
+
+              Passing a string ``key`` to this method is deprecated and will become an
+              error in ``v1.0``.
+        """
+
+        if isinstance(key, str):
+            warnings.warn(
+                "Language features should be referenced by their class definition, "
+                "this will become an error in v1.0.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        elif issubclass(key, LanguageFeature):
+            key = f"{key.__module__}.{key.__name__}"
+
+        else:
+            raise TypeError("Expected language feature definition")
+
         return self._features.get(key, None)
 
     def get_doctree(
@@ -449,7 +494,10 @@ class RstLanguageServer(LanguageServer):
             return self._directives
 
         ignored_directives = ["restructuredtext-test-directive"]
-        found_directives = {**directives._directive_registry, **directives._directives}
+        found_directives = {
+            **docutils_directives._directive_registry,
+            **docutils_directives._directives,
+        }
 
         self._directives = {
             k: resolve_directive(v)
@@ -474,10 +522,12 @@ class RstLanguageServer(LanguageServer):
         if self._roles is not None:
             return self._roles
 
-        found_roles = {**roles._roles, **roles._role_registry}
+        found_roles = {**docutils_roles._roles, **docutils_roles._role_registry}
 
         self._roles = {
-            k: v for k, v in found_roles.items() if v != roles.unimplemented_role
+            k: v
+            for k, v in found_roles.items()
+            if v != docutils_roles.unimplemented_role
         }
 
         return self._roles
@@ -627,59 +677,6 @@ class RstLanguageServer(LanguageServer):
         """
         idx = doc.offset_at_position(position)
         return doc.source[:idx]
-
-    def _configure_logging(self, config: ServerConfig):
-
-        level = LOG_LEVELS[config.log_level]
-
-        lsp_logger = logging.getLogger("esbonio.lsp")
-        lsp_logger.setLevel(level)
-
-        lsp_handler = LspHandler(self)
-        lsp_handler.setLevel(level)
-
-        if len(config.log_filter) > 0:
-            lsp_handler.addFilter(LogFilter(config.log_filter))
-
-        formatter = logging.Formatter("[%(name)s] %(message)s")
-        lsp_handler.setFormatter(formatter)
-        lsp_logger.addHandler(lsp_handler)
-
-
-LOG_LEVELS = {
-    "debug": logging.DEBUG,
-    "error": logging.ERROR,
-    "info": logging.INFO,
-}
-
-
-class LogFilter(logging.Filter):
-    """A log filter that accepts message from any of the listed logger names."""
-
-    def __init__(self, names):
-        self.names = names
-
-    def filter(self, record):
-        return any(record.name == name for name in self.names)
-
-
-class LspHandler(logging.Handler):
-    """A logging handler that will send log records to an LSP client."""
-
-    def __init__(self, server: RstLanguageServer):
-        super().__init__()
-        self.server = server
-
-    def emit(self, record: logging.LogRecord) -> None:
-        """Sends the record to the client."""
-
-        # To avoid infinite recursions, it's simpler to just ignore all log records
-        # coming from pygls...
-        if "pygls" in record.name:
-            return
-
-        log = self.format(record).strip()
-        self.server.show_message_log(log)
 
 
 def resolve_directive(directive: Union[Directive, Tuple[str, str]]) -> Directive:

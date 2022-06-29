@@ -51,10 +51,10 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinxcontrib.autodoc_pydantic",
     "sphinx_panels",
+    "esbonio.relevant_to",
     "esbonio.tutorial",
     "cli_help",
     "collection_items",
-    "relevant_to",
 ]
 
 autodoc_member_order = "groupwise"
@@ -126,7 +126,7 @@ def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     """Link to sections within the lsp specification."""
 
     anchor = text.replace("/", "_")
-    ref = f"https://microsoft.github.io/language-server-protocol/specifications/specification-current#{anchor}"
+    ref = f"https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#{anchor}"
 
     node = nodes.reference(rawtext, text, refuri=ref, **options)
     return [node], []
