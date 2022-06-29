@@ -1,3 +1,12 @@
+v0.2.0 - 2022-06-29
+-------------------
+
+Features
+^^^^^^^^
+
+- Add ``esbonio.relevant_to`` extension. (`#403 <https://github.com/swyddfa/esbonio/issues/403>`_)
+
+
 v0.1.0 - 2021-11-26
 -------------------
 
