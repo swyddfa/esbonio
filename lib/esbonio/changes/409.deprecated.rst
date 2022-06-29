@@ -1,1 +1,0 @@
-Calling ``rst.get_feature`` with a string will become an error in ``v.1.0``, a language feature's class should be given instead.

@@ -59,7 +59,7 @@ from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .symbols import SymbolVisitor
 
-__version__ = "0.13.0"
+__version__ = "0.13.1"
 
 __all__ = [
     "CompletionContext",

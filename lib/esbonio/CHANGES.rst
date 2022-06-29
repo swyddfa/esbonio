@@ -1,3 +1,35 @@
+v0.13.1 - 2022-06-29
+--------------------
+
+Fixes
+^^^^^
+
+- Log messages from Sphinx's startup are now captured and forwarded onto the language client. (`#408 <https://github.com/swyddfa/esbonio/issues/408>`_)
+- Log messages from the server's startup are now captured and forwarded onto the language client. (`#417 <https://github.com/swyddfa/esbonio/issues/417>`_)
+- Fixed handling of default roles when getting a document's initial doctree. (`#418 <https://github.com/swyddfa/esbonio/issues/418>`_)
+
+
+API Changes
+^^^^^^^^^^^
+
+- Improved type annotations allow ``rst.get_feature`` to be called with a language feature's type and have the return type match accordingly. This should allow editors to provide better autocomplete suggestions etc. (`#409 <https://github.com/swyddfa/esbonio/issues/409>`_)
+- ``esbonio_setup`` functions can now request specific language features and servers, just by providing type annotations e.g::
+
+     from esbonio.lsp.roles import Roles
+     from esbonio.lsp.sphinx import SphinxLanguageServer
+
+     def esbonio_setup(rst: SphinxLanguageServer, roles: Roles):
+         ...
+
+  This function will then only be called when the language server is actually an instance of ``SphinxLanguageServer`` and only when that lanuage server instance contains an intance of the ``Roles`` feature. (`#410 <https://github.com/swyddfa/esbonio/issues/410>`_)
+
+
+Deprecated
+^^^^^^^^^^
+
+- Calling ``rst.get_feature`` with a string will become an error in ``v.1.0``, a language feature's class should be given instead. (`#409 <https://github.com/swyddfa/esbonio/issues/409>`_)
+
+
 v0.13.0 - 2022-05-27
 --------------------
 
