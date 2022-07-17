@@ -13,7 +13,6 @@ from pytest_lsp import Client
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import hover_request
 from esbonio.lsp.testing import role_patterns
-from esbonio.lsp.testing import sphinx_version
 
 
 C_EXPECTED = {"c:func", "c:macro"}
@@ -270,11 +269,10 @@ async def test_completion_suppression(client: Client, extension: str, setup):
             Position(line=0, character=4),
             None,
         ),
-        pytest.param(
+        (
             ":c:expr:",
             Position(line=0, character=1),
             "Insert a C expression or type",
-            marks=pytest.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
         ),
     ],
 )
