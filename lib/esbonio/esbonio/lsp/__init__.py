@@ -1,16 +1,12 @@
 import enum
 import importlib
-import inspect
 import json
 import logging
 import textwrap
 import traceback
-import typing
 from typing import Any
-from typing import Callable
 from typing import Dict
 from typing import Iterable
-from typing import Optional
 from typing import Type
 
 from pygls.lsp.methods import CODE_ACTION
@@ -66,6 +62,7 @@ __all__ = [
     "DefinitionContext",
     "DocumentLinkContext",
     "HoverContext",
+    "LanguageFeature",
     "RstLanguageServer",
     "create_language_server",
 ]
@@ -367,25 +364,6 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 def _load_module(server: RstLanguageServer, modname: str):
     """Load an extension module by calling its ``esbonio_setup`` function, if it exists."""
 
-    setup = _get_setup_function(modname)
-    if not setup:
-        return
-
-    args = _get_setup_arguments(server, setup, modname)
-    if not args:
-        return
-
-    try:
-        setup(**args)
-        logger.debug("Loaded module '%s'", modname)
-    except Exception:
-        logger.error(
-            "Error while setting up module '%s'\n%s", modname, traceback.format_exc()
-        )
-
-
-def _get_setup_function(modname: str) -> Optional[Callable]:
-
     try:
         module = importlib.import_module(modname)
     except ImportError:
@@ -394,57 +372,12 @@ def _get_setup_function(modname: str) -> Optional[Callable]:
         )
         return None
 
-    if not hasattr(module, "esbonio_setup"):
-        logger.error(
-            "Unable to load module '%s', missing 'esbonio_setup' function", modname
-        )
+    setup = getattr(module, "esbonio_setup", None)
+    if setup is None:
+        logger.error("Skipping module '%s', missing 'esbonio_setup' function", modname)
         return None
 
-    return module.esbonio_setup
-
-
-def _get_setup_arguments(
-    server: RstLanguageServer, setup: Callable, modname: str
-) -> Optional[Dict[str, Any]]:
-    """Given a setup function, try to construct the collection of arguments to pass to
-    it.
-    """
-    annotations = typing.get_type_hints(setup)
-    parameters = {
-        p.name: annotations[p.name]
-        for p in inspect.signature(setup).parameters.values()
-    }
-
-    args = {}
-    for name, type_ in parameters.items():
-
-        if issubclass(server.__class__, type_):
-            args[name] = server
-            continue
-
-        if issubclass(type_, LanguageFeature):
-            # Try and obtain an instance of the requested language feature.
-            feature = server.get_feature(type_)
-            if feature is not None:
-                args[name] = feature
-                continue
-
-            logger.debug(
-                "Skipping module '%s', server missing requested feature: '%s'",
-                modname,
-                type_,
-            )
-            return None
-
-        logger.error(
-            "Skipping module '%s', parameter '%s' has unsupported type: '%s'",
-            modname,
-            name,
-            type_,
-        )
-        return None
-
-    return args
+    server.load_extension(modname, setup)
 
 
 def dump(obj) -> str:

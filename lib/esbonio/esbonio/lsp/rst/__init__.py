@@ -1,5 +1,6 @@
 import collections
 import importlib
+import inspect
 import logging
 import pathlib
 import re
@@ -7,6 +8,7 @@ import traceback
 import typing
 import warnings
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -373,7 +375,7 @@ class RstLanguageServer(LanguageServer):
         self._diagnostics: Dict[Tuple[str, str], List[Diagnostic]] = {}
         """Where we store and manage diagnostics."""
 
-        self._loaded_modules: Dict[str, Any] = {}
+        self._loaded_extensions: Dict[str, Any] = {}
         """Record of modules that have been loaded."""
 
         self._features: Dict[str, LanguageFeature] = {}
@@ -411,8 +413,62 @@ class RstLanguageServer(LanguageServer):
     def delete_files(self, params: DeleteFilesParams):
         pass
 
+    def load_extension(self, name: str, setup: Callable):
+        """Load the given setup function as an extension.
+
+        If an extension with the given ``name`` already exists, the given setup function
+        will be ignored.
+
+        The ``setup`` function can declare dependencies in the form of type
+        annotations.
+
+        .. code-block:: python
+
+           from esbonio.lsp.roles import Roles
+           from esbonio.lsp.sphinx import SphinxLanguageServer
+
+           def esbonio_setup(rst: SphinxLanguageServer, roles: Roles):
+               ...
+
+        In this example the setup function is requesting instances of the
+        :class:`~esbonio.lsp.sphinx.SphinxLanguageServer` and the
+        :class:`~esbonio.lsp.roles.Roles` language feature.
+
+        Parameters
+        ----------
+        name
+           The name to give the extension
+
+        setup
+           The setup function to call
+        """
+
+        if name in self._loaded_extensions:
+            self.logger.debug("Skipping extension '%s', already loaded", name)
+            return
+
+        arguments = _get_setup_arguments(self, setup, name)
+        if not arguments:
+            return
+
+        try:
+            setup(**arguments)
+
+            self.logger.debug("Loaded extension '%s'", name)
+            self._loaded_extensions[name] = setup
+        except Exception:
+            self.logger.error(
+                "Unable to load extension '%s'\n%s", name, traceback.format_exc()
+            )
+
     def add_feature(self, feature: "LanguageFeature"):
-        """Register a language feature with the server."""
+        """Register a language feature with the server.
+
+        Parameters
+        ----------
+        feature
+           The language feature
+        """
 
         key = f"{feature.__module__}.{feature.__class__.__name__}"
         self._features[key] = feature
@@ -705,6 +761,50 @@ def normalise_uri(uri: str) -> str:
         uri = uri.lower()
 
     return uri
+
+
+def _get_setup_arguments(
+    server: RstLanguageServer, setup: Callable, modname: str
+) -> Optional[Dict[str, Any]]:
+    """Given a setup function, try to construct the collection of arguments to pass to
+    it.
+    """
+    annotations = typing.get_type_hints(setup)
+    parameters = {
+        p.name: annotations[p.name]
+        for p in inspect.signature(setup).parameters.values()
+    }
+
+    args = {}
+    for name, type_ in parameters.items():
+
+        if issubclass(server.__class__, type_):
+            args[name] = server
+            continue
+
+        if issubclass(type_, LanguageFeature):
+            # Try and obtain an instance of the requested language feature.
+            feature = server.get_feature(type_)
+            if feature is not None:
+                args[name] = feature
+                continue
+
+            server.logger.debug(
+                "Skipping extension '%s', server missing requested feature: '%s'",
+                modname,
+                type_,
+            )
+            return None
+
+        server.logger.error(
+            "Skipping extension '%s', parameter '%s' has unsupported type: '%s'",
+            modname,
+            name,
+            type_,
+        )
+        return None
+
+    return args
 
 
 cli = setup_cli("esbonio.lsp.rst", "Esbonio's reStructuredText language server.")
