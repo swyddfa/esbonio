@@ -4,5 +4,6 @@ sphinx
 autodoc-pydantic
 sphinx-panels
 furo
+pytest_lsp
 -e lib/esbonio
 -e lib/esbonio-extensions[tutorial]
