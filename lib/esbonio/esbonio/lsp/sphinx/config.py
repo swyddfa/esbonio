@@ -24,6 +24,7 @@ from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from sphinx.application import Sphinx
 from sphinx.cmd.build import main as sphinx_build
+from sphinx.util.logging import OnceFilter
 from sphinx.util.logging import SphinxLogRecord
 from sphinx.util.logging import WarningLogRecordTranslator
 from typing_extensions import Literal
@@ -31,14 +32,6 @@ from typing_extensions import Literal
 from esbonio.lsp.log import LOG_NAMESPACE
 from esbonio.lsp.log import LspHandler
 from esbonio.lsp.rst import ServerConfig
-
-try:
-    from sphinx.util.logging import OnceFilter
-except ImportError:
-    # OnceFilter is not defined in Sphinx 2.x
-    class OnceFilter:  # type: ignore
-        def filter(self, *args, **kwargs):
-            return True
 
 
 PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")

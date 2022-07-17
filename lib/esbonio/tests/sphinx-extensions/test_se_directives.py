@@ -7,7 +7,6 @@ from pytest_lsp import check
 from pytest_lsp import Client
 
 from esbonio.lsp.testing import completion_request
-from esbonio.lsp.testing import sphinx_version
 
 EXPECTED = {
     "autoclass",
@@ -89,11 +88,10 @@ async def test_directive_completions(
 @pytest.mark.parametrize(
     "text,label,expected",
     [
-        pytest.param(
+        (
             "..",
             "function",
             "Describes a C function. The signature",
-            marks=pytest.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
         ),
         (
             "..",
@@ -162,7 +160,7 @@ AUTOCLASS_OPTS = {
 }
 IMAGE_OPTS = {"align", "alt", "class", "height", "scale", "target", "width"}
 PY_FUNC_OPTS = {"annotation", "async", "module", "noindex"}
-C_FUNC_OPTS = {"noindex"} if sphinx_version(eq=2) else {"noindexentry"}
+C_FUNC_OPTS = {"noindexentry"}
 
 
 @pytest.mark.asyncio

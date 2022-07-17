@@ -11,7 +11,6 @@ from pytest_lsp import Client
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import hover_request
-from esbonio.lsp.testing import sphinx_version
 
 EXPECTED = {
     "function",
@@ -99,11 +98,10 @@ async def test_directive_completions(
                 reason="generate_sphinx_documentation.py doesn't extract options yet."
             ),
         ),
-        pytest.param(
+        (
             "..",
             "c:function",
             "Describes a C function. The signature",
-            marks=pytest.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
         ),
         (
             ".. image:: filename.png\n   \f:",
@@ -180,7 +178,7 @@ AUTOCLASS_OPTS = {
 }
 IMAGE_OPTS = {"align", "alt", "class", "height", "scale", "target", "width"}
 PY_FUNC_OPTS = {"annotation", "async", "module", "noindex"}
-C_FUNC_OPTS = {"noindex"} if sphinx_version(eq=2) else {"noindexentry"}
+C_FUNC_OPTS = {"noindexentry"}
 
 
 @pytest.mark.asyncio
@@ -323,11 +321,10 @@ async def test_completion_suppression(client: Client, extension: str, setup):
             Position(line=0, character=4),
             None,
         ),
-        pytest.param(
+        (
             ".. c:function:: ",
             Position(line=0, character=1),
             "Describes a C function",
-            marks=pytest.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
         ),
     ],
 )
