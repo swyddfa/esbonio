@@ -3,8 +3,10 @@ import logging
 import pathlib
 from typing import List
 from typing import Optional
+from typing import Union
 
 import pygls.uris as Uri
+from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionList
 from pygls.lsp.types import Hover
 from pygls.lsp.types import Position
@@ -147,7 +149,7 @@ def intersphinx_target_patterns(name: str, project: str) -> List[str]:
 
 async def completion_request(
     client: Client, test_uri: str, text: str, character: Optional[int] = None
-) -> CompletionList:
+) -> Union[CompletionList, List[CompletionItem], None]:
     """Make a completion request to a language server.
 
     Intended for use within test cases, this function simulates the opening of a
@@ -215,7 +217,7 @@ async def completion_request(
 
 async def hover_request(
     client: Client, test_uri: str, text: str, position: Position
-) -> Hover:
+) -> Optional[Hover]:
     """Make a hover request to a language server.
 
     Intended for use within test cases, this function simulates the opening of a
