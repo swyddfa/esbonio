@@ -22,7 +22,7 @@ import pygls.lsp.methods as M
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 
-from esbonio.lsp.roles import TargetCompletion
+from esbonio.lsp.roles import Roles, TargetCompletion
 from esbonio.lsp.rst import CompletionContext
 
 import esbonio.lsp
@@ -62,7 +62,6 @@ autodoc_typehints = "description"
 autodoc_typehints_description_target = "documented"
 
 autodoc_pydantic_model_show_json = True
-
 
 intersphinx_mapping = {
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
@@ -165,7 +164,5 @@ def setup(app: Sphinx):
     )
 
 
-def esbonio_setup(rst):
-    roles = rst.get_feature("esbonio.lsp.roles.Roles")
-    if roles:
-        roles.add_target_completion_provider(LspMethod())
+def esbonio_setup(roles: Roles):
+    roles.add_target_completion_provider(LspMethod())
