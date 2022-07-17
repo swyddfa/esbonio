@@ -41,7 +41,7 @@ def symbol(
 @py.test.mark.parametrize(
     "filepath,expected",
     [
-        ("conf.py", []),
+        ("conf.py", None),
         (
             "theorems/pythagoras.rst",
             [
