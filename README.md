@@ -51,6 +51,13 @@ The language server is still in early development, but already provides the foll
   <img src="./resources/images/hover-demo.png" alt="Hover Demo"></img>
 </p>
 
+**Implementations**
+
+<p align="center">
+  <img src="./resources/images/implementation-demo.gif" alt="Implementations Demo"></img>
+</p>
+
+
 ## `code/` - A VSCode extension for editing Sphinx projects
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/swyddfa.esbonio?style=flat-square)![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/swyddfa.esbonio?style=flat-square)![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/swyddfa.esbonio?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/code/LICENSE)
 
