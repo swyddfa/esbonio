@@ -21,9 +21,11 @@ from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import DefinitionContext
 from esbonio.lsp.rst import DocumentLinkContext
 from esbonio.lsp.rst import HoverContext
+from esbonio.lsp.rst import ImplementationContext
 from esbonio.lsp.rst import LanguageFeature
 from esbonio.lsp.rst import RstLanguageServer
 from esbonio.lsp.sphinx import SphinxLanguageServer
+from esbonio.lsp.util.inspect import get_object_location
 from esbonio.lsp.util.patterns import DEFAULT_ROLE
 from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import ROLE
@@ -216,6 +218,7 @@ class Roles(LanguageFeature):
     completion_triggers = [ROLE, DEFAULT_ROLE]
     definition_triggers = [ROLE]
     hover_triggers = [ROLE]
+    implementation_triggers = [ROLE]
 
     def definition(self, context: DefinitionContext) -> List[Location]:
 
@@ -512,6 +515,47 @@ class Roles(LanguageFeature):
     ) -> str:
         # TODO: Add extension point for providers to contribute hovers for a target.
         return ""
+
+    def implementation(self, context: ImplementationContext) -> List[Location]:
+
+        region = context.match.group("role")
+        name = context.match.group("name")
+        domain = context.match.group("domain")
+
+        start = context.match.start() + context.match.group(0).index(region)
+        end = start + len(region)
+
+        self.logger.debug("%s, %s, %s", region, name, domain)
+        self.logger.debug("%s, %s", start, end)
+
+        if start <= context.position.character <= end:
+            return self.find_role_implementation(context, name, domain)
+
+        return []
+
+    def find_role_implementation(
+        self, context: ImplementationContext, name: str, domain: Optional[str]
+    ) -> List[Location]:
+
+        roles = self.rst.get_roles()
+        key = f"{domain}:{name}" if domain is not None else name
+        self.logger.debug("Key is: '%s'", key)
+
+        impl = roles.get(key, None)
+        if impl is None:
+            return []
+
+        self.logger.debug("Getting implementation of '%s' (%s)", key, impl)
+        location = get_object_location(impl, self.logger)
+        if location is not None:
+            return [location]
+
+        # Some roles are implemented as instances of some class
+        location = get_object_location(impl.__class__, self.logger)
+        if location is not None:
+            return [location]
+
+        return []
 
     def get_documentation(
         self, label: str, implementation: str
