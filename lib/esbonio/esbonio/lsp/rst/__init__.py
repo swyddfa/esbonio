@@ -199,6 +199,32 @@ class DefinitionContext:
         )
 
 
+class ImplementationContext:
+    """A class that captures the context within which an implementation request has been
+    made."""
+
+    def __init__(
+        self, *, doc: Document, location: str, match: "re.Match", position: Position
+    ):
+
+        self.doc = doc
+        """The document within which the implementation request was made."""
+
+        self.location = location
+        """The location type where the request was made.
+        See :meth:`~esbonio.lsp.rst.RstLanguageServer.get_location_type` for details."""
+
+        self.match = match
+        """The match object describing the site of the implementation request."""
+
+        self.position = position
+        """The position at which the implementation request was made."""
+
+    def __repr__(self):
+        p = f"{self.position.line}:{self.position.character}"
+        return f"ImplementationContext<{self.doc.uri}:{p} ({self.location}) -- {self.match}>"
+
+
 class HoverContext:
     """A class that captures the context within a hover request has been made."""
 
@@ -307,6 +333,22 @@ class LanguageFeature:
         ----------
         context:
            The context of the definition request.
+        """
+        return []
+
+    implementation_triggers: List["re.Pattern"] = []
+    """A list of regular expressions used to determine if the
+    :meth:`~esbonio.lsp.rst.LanguageFeature.implementation` method should be called."""
+
+    def implementation(self, context: ImplementationContext) -> List[Location]:
+        """Called if any of the given ``implementation_triggers`` match the current line.
+
+        This method should return a list of ``Location`` objects.
+
+        Parameters
+        ----------
+        context:
+           The context of the implementation request.
         """
         return []
 

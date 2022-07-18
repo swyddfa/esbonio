@@ -16,6 +16,7 @@ from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import DOCUMENT_LINK
 from pygls.lsp.methods import DOCUMENT_SYMBOL
 from pygls.lsp.methods import HOVER
+from pygls.lsp.methods import IMPLEMENTATION
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import SHUTDOWN
@@ -40,6 +41,7 @@ from pygls.lsp.types import FileOperationPattern
 from pygls.lsp.types import FileOperationRegistrationOptions
 from pygls.lsp.types import Hover
 from pygls.lsp.types import HoverParams
+from pygls.lsp.types import ImplementationParams
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import MarkupContent
@@ -51,6 +53,7 @@ from .rst import CompletionContext
 from .rst import DefinitionContext
 from .rst import DocumentLinkContext
 from .rst import HoverContext
+from .rst import ImplementationContext
 from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .symbols import SymbolVisitor
@@ -62,6 +65,7 @@ __all__ = [
     "DefinitionContext",
     "DocumentLinkContext",
     "HoverContext",
+    "ImplementationContext",
     "LanguageFeature",
     "RstLanguageServer",
     "create_language_server",
@@ -310,6 +314,33 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
                         definitions += feature.definition(context)
 
         return definitions
+
+    @server.feature(IMPLEMENTATION)
+    def on_implementation(ls: RstLanguageServer, params: ImplementationParams):
+        uri = params.text_document.uri
+        pos = params.position
+
+        doc = ls.workspace.get_document(uri)
+        line = ls.line_at_position(doc, pos)
+        location = ls.get_location_type(doc, pos)
+
+        implementations = []
+
+        for feature in ls._features.values():
+            for pattern in feature.implementation_triggers:
+                for match in pattern.finditer(line):
+                    if not match:
+                        continue
+
+                    start, stop = match.span()
+                    if start <= pos.character and pos.character <= stop:
+                        context = ImplementationContext(
+                            doc=doc, location=location, match=match, position=pos
+                        )
+                        ls.logger.debug("Implementation context: %s", context)
+                        implementations += feature.implementation(context)
+
+        return implementations
 
     @server.feature(DOCUMENT_LINK)
     def on_document_link(ls: RstLanguageServer, params: DocumentLinkParams):
