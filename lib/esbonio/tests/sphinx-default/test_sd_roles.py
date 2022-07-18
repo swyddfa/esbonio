@@ -1,4 +1,5 @@
 import itertools
+import pathlib
 import re
 from typing import Optional
 from typing import Set
@@ -13,6 +14,7 @@ from pytest_lsp import Client
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import hover_request
 from esbonio.lsp.testing import role_patterns
+from esbonio.lsp.testing import sphinx_version
 
 
 C_EXPECTED = {"c:func", "c:macro"}
@@ -396,3 +398,70 @@ async def test_role_target_insert_range(
     for item in results.items:
         assert pattern.match(item.text_edit.new_text) is not None
         assert item.text_edit.range == expected_range
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "uri,position,expected",
+    [
+        (
+            "definitions.rst",
+            Position(line=5, character=34),
+            None,
+        ),
+        (
+            "definitions.rst",
+            Position(line=5, character=27),
+            "sphinx/roles.py",
+        ),
+        (
+            "definitions.rst",
+            Position(line=33, character=21),
+            "sphinx/domains/cpp.py",
+        ),
+        pytest.param(
+            "theorems/pythagoras.rst",
+            Position(line=50, character=19),
+            "docutils/parsers/rst/roles.py",
+            marks=pytest.mark.skipif(
+                sphinx_version(gte=5),
+                reason=":code: is provided by docutils up to and including Sphinx 4.x",
+            ),
+        ),
+        pytest.param(
+            "theorems/pythagoras.rst",
+            Position(line=50, character=19),
+            "sphinx/roles.py",
+            marks=pytest.mark.skipif(
+                sphinx_version(lt=5),
+                reason=":code: is provided by Sphinx from v5.x ",
+            ),
+        ),
+    ],
+)
+async def test_roles_implementation(
+    client: Client, uri: str, position: Position, expected: Optional[pathlib.Path]
+):
+    """Ensure that we can find the implementation of roles.
+
+    Since we're testing items provided by 3rd party packages (Sphinx + docutils) we can't
+    really check the precise location as tests could break each time a new version is
+    released.
+
+    Instead let's go for just the containing file and hope the rest is correct!
+    """
+
+    test_uri = client.root_uri + f"/{uri}"
+
+    results = await client.implementation_request(test_uri, position)
+
+    if expected is None:
+        assert len(results) == 0
+
+    else:
+        assert len(results) == 1
+
+        location = results[0]
+        assert location.uri.endswith(str(expected))
+        assert location.range.start.line >= 0
+        assert location.range.end.line > location.range.start.line

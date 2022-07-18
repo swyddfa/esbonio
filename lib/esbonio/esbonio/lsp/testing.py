@@ -16,23 +16,60 @@ from sphinx import __version__ as __sphinx_version__
 logger = logging.getLogger(__name__)
 
 
-def sphinx_version(eq: Optional[int] = None) -> bool:
+def sphinx_version(
+    eq: Optional[int] = None,
+    lt: Optional[int] = None,
+    lte: Optional[int] = None,
+    gt: Optional[int] = None,
+    gte: Optional[int] = None,
+) -> bool:
     """Helper function for determining which version of Sphinx we are
     testing with.
 
-    Currently this only cares about the major version number.
+    .. note::
+
+       Currently this function only considers the major version number.
 
     Parameters
     ----------
-    eq:
-       When set returns ``True`` if the Sphinx version exactly matches
+    eq
+       When set, this function returns ``True`` if Sphinx's version is exactly
        what's given.
+
+    gt
+       When set, this function returns ``True`` if Sphinx's version is strictly
+       greater than what's given
+
+    gte
+       When set, this function returns ``True`` if Sphinx's version is greater than
+       or equal to what's given
+
+    lt
+       When set, this function returns ``True`` if Sphinx's version is strictly
+       less than what's given
+
+    lte
+       When set, this function returns ``True`` if Sphinx's version is less than
+       or equal to what's given
+
     """
 
     major, _, _ = [int(v) for v in __sphinx_version__.split(".")]
 
-    if eq and major == eq:
-        return True
+    if eq is not None:
+        return major == eq
+
+    if gt is not None:
+        return major > gt
+
+    if gte is not None:
+        return major >= gte
+
+    if lt is not None:
+        return major < lt
+
+    if lte is not None:
+        return major <= lte
 
     return False
 
