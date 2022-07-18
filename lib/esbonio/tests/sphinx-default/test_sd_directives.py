@@ -1,4 +1,5 @@
 import itertools
+import pathlib
 from typing import Optional
 from typing import Set
 
@@ -421,3 +422,62 @@ async def test_insert_range(
 
     for item in results.items:
         assert item.text_edit.range == expected_range
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "uri,position,expected",
+    [
+        (
+            "definitions.rst",
+            Position(line=25, character=18),
+            None,
+        ),
+        (
+            "definitions.rst",
+            Position(line=25, character=5),
+            "docutils/parsers/rst/directives/images.py",
+        ),
+        (
+            "definitions.rst",
+            Position(line=21, character=5),
+            "sphinx/directives/code.py",
+        ),
+        (
+            "theorems/pythagoras.rst",
+            Position(line=53, character=9),
+            "sphinx/domains/python.py",
+        ),
+        (
+            "code/cpp.rst",
+            Position(line=3, character=9),
+            "sphinx/domains/cpp.py",
+        ),
+    ],
+)
+async def test_directive_implementation(
+    client: Client, uri: str, position: Position, expected: Optional[pathlib.Path]
+):
+    """Ensure that we can find the implementation of directives.
+
+    Since we're testing items provided by 3rd party packages (Sphinx + docutils) we can't
+    really check the precise location as tests could break each time a new version is
+    released.
+
+    Instead let's go for just the containing file and hope the rest is correct!
+    """
+
+    test_uri = client.root_uri + f"/{uri}"
+
+    results = await client.implementation_request(test_uri, position)
+
+    if expected is None:
+        assert len(results) == 0
+
+    else:
+        assert len(results) == 1
+
+        location = results[0]
+        assert location.uri.endswith(str(expected))
+        assert location.range.start.line >= 0
+        assert location.range.end.line > location.range.start.line
