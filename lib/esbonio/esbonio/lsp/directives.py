@@ -20,10 +20,12 @@ from pygls.lsp.types import TextEdit
 from esbonio.lsp import CompletionContext
 from esbonio.lsp import DefinitionContext
 from esbonio.lsp import DocumentLinkContext
+from esbonio.lsp import HoverContext
+from esbonio.lsp import ImplementationContext
 from esbonio.lsp import LanguageFeature
 from esbonio.lsp import RstLanguageServer
-from esbonio.lsp.rst import HoverContext
 from esbonio.lsp.sphinx import SphinxLanguageServer
+from esbonio.lsp.util.inspect import get_object_location
 from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
 
@@ -237,6 +239,9 @@ class Directives(LanguageFeature):
             self._documentation[key] = doc
 
     completion_triggers = [DIRECTIVE, DIRECTIVE_OPTION]
+    definition_triggers = [DIRECTIVE]
+    hover_triggers = [DIRECTIVE]
+    implementation_triggers = [DIRECTIVE]
 
     def completion_resolve(self, item: CompletionItem) -> CompletionItem:
 
@@ -445,10 +450,7 @@ class Directives(LanguageFeature):
         item.documentation = MarkupContent(kind=kind, value=description)
         return item
 
-    definition_triggers = [DIRECTIVE]
-
     def definition(self, context: DefinitionContext) -> List[Location]:
-        self.rst.logger.debug("%s", context)
 
         directive = context.match.group("name")
         domain = context.match.group("domain")
@@ -523,8 +525,6 @@ class Directives(LanguageFeature):
 
         return links
 
-    hover_triggers = [DIRECTIVE]
-
     def hover(self, context: HoverContext) -> str:
 
         if context.location not in {"rst", "docstring"}:
@@ -565,6 +565,38 @@ class Directives(LanguageFeature):
             return ""
 
         return documentation.get("description", "")
+
+    def implementation(self, context: ImplementationContext) -> List[Location]:
+
+        region = context.match.group("directive")
+        name = context.match.group("name")
+        domain = context.match.group("domain")
+
+        start = context.match.group(0).index(region)
+        end = start + len(region)
+
+        if start <= context.position.character <= end:
+            return self.find_directive_implementation(context, name, domain)
+
+        return []
+
+    def find_directive_implementation(
+        self, context: ImplementationContext, name: str, domain: Optional[str]
+    ) -> List[Location]:
+
+        directives = self.rst.get_directives()
+        key = f"{domain}:{name}" if domain is not None else name
+
+        impl = directives.get(key, None)
+        if impl is None:
+            return []
+
+        self.logger.debug("Getting implementation of '%s' (%s)", key, impl)
+        location = get_object_location(impl, self.logger)
+        if location is None:
+            return []
+
+        return [location]
 
     def get_surrounding_directive(
         self, context: CompletionContext
