@@ -19,7 +19,7 @@ repos:
     args: [--config=lib/esbonio/setup.cfg]
 
 - repo: https://github.com/asottile/reorder_python_imports
-  rev: v3.8.1
+  rev: v3.8.2
   hooks:
   - id: reorder-python-imports
     args: [--application-directories=lib:esbonio]
