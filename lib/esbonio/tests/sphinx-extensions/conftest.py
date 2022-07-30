@@ -7,8 +7,8 @@ import pytest
 import pytest_lsp
 from pytest_lsp import Client
 from pytest_lsp import ClientServerConfig
-from pytest_lsp import make_test_client
 
+from esbonio.lsp.testing import make_esbonio_client
 
 root_path = pathlib.Path(__file__).parent / "workspace"
 
@@ -23,20 +23,6 @@ def event_loop():
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
-
-
-def make_esbonio_client(*args, **kwargs):
-    client = make_test_client(*args, **kwargs)
-
-    @client.feature("esbonio/buildStart")
-    def _(*args, **kwargs):
-        ...
-
-    @client.feature("esbonio/buildComplete")
-    def _(*args, **kwargs):
-        ...
-
-    return client
 
 
 @pytest_lsp.fixture(
