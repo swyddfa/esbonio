@@ -12,6 +12,7 @@ Welcome to Defaults's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   diagnostics
    theorems/index
    glossary
 

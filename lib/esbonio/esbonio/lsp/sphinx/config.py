@@ -4,7 +4,9 @@ import logging
 import multiprocessing
 import pathlib
 import re
+import sys
 import traceback
+from types import ModuleType
 from typing import Any
 from typing import Dict
 from typing import List
@@ -587,18 +589,40 @@ class SphinxLogHandler(LspHandler):
             except ValueError:
                 pass
 
-        if len(parts) == 2:
-            # TODO: There's a possibility that there is an error in a docstring in a
-            #       *.py file somewhere. In which case parts would look like
-            #       ['docstring of {dotted.name}', '{lineno}']
-            #
-            #  e.g. ['docstring of esbonio.lsp.sphinx.SphinxLanguageServer.get_domains', '8']
-            #
-            #       It would be good to handle this case and look up the correct line
-            #       number to place a diagnostic.
-            pass
+        if len(parts) == 2 and parts[0].startswith("docstring of "):
+            target = parts[0].replace("docstring of ", "")
+            lineno = self.get_docstring_location(target, parts[1])
 
         return (Uri.from_fs_path(path), lineno)
+
+    def get_docstring_location(self, target: str, offset: str) -> Optional[int]:
+
+        # The containing module will be the longest substring we can find in target
+        candidates = [m for m in sys.modules.keys() if target.startswith(m)] + [""]
+        module = sys.modules.get(sorted(candidates, key=len, reverse=True)[0], None)
+
+        if module is None:
+            return None
+
+        obj: Union[ModuleType, Any, None] = module
+        dotted_name = target.replace(module.__name__ + ".", "")
+
+        for name in dotted_name.split("."):
+            obj = getattr(obj, name, None)
+            if obj is None:
+                return None
+
+        try:
+            _, line = inspect.getsourcelines(obj)  # type: ignore
+
+            # Correct off by one error for docstrings that don't start with a newline.
+            nl = (obj.__doc__ or "").startswith("\n")
+            return line + int(offset) - (not nl)
+        except Exception:
+            logger.debug(
+                "Unable to determine diagnostic location\n%s", traceback.format_exc()
+            )
+            return None
 
     def emit(self, record: logging.LogRecord) -> None:
 
