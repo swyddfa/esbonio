@@ -152,7 +152,11 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
     def on_open(ls: RstLanguageServer, params: DidOpenTextDocumentParams):
-        pass
+
+        # TODO: Delete me when we've dropped Python 3.6 and a pygls release that
+        # remembers the language id is available.
+        doc = ls.workspace.get_document(params.text_document.uri)
+        doc.language_id = params.text_document.language_id  # type: ignore
 
     @server.feature(TEXT_DOCUMENT_DID_CHANGE)
     def on_change(ls: RstLanguageServer, params: DidChangeTextDocumentParams):
