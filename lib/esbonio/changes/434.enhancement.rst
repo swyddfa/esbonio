@@ -1,1 +1,0 @@
-Document symbol requests made for unsaved files now use the language client's version rather than the version on disk.

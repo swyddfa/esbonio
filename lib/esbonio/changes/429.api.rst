@@ -1,1 +1,0 @@
-It is now possible to manually load an extension by calling the ``load_extension`` method on a language server object.

@@ -1,1 +1,0 @@
-Diagnostics for issues found in ``.. included::`` files should now have the correct filepath.

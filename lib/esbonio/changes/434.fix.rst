@@ -1,1 +1,0 @@
-The server should now handle document symbol requests for files that are treated as reStructuredText files by a language client but don't have an ``*.rst`` extension.

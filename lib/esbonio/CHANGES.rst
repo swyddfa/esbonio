@@ -1,3 +1,34 @@
+v0.14.0 - 2022-07-31
+--------------------
+
+Features
+^^^^^^^^
+
+- The language server now supports ``textDocument/implementation`` requests for roles and directives. (`#431 <https://github.com/swyddfa/esbonio/issues/431>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- Line numbers for diagnostics for issues found within Python docstrings should now be more accurate. (`#433 <https://github.com/swyddfa/esbonio/issues/433>`_)
+- Document symbol requests made for unsaved files now use the language client's version rather than the version on disk. (`#434 <https://github.com/swyddfa/esbonio/issues/434>`_)
+
+
+Fixes
+^^^^^
+
+- Diagnostics for issues found in ``.. included::`` files should now have the correct filepath. (`#425 <https://github.com/swyddfa/esbonio/issues/425>`_)
+- Extensions defined within Sphinx extensions or ``conf.py`` files can now take advantage of dependency injection (`#428 <https://github.com/swyddfa/esbonio/issues/428>`_)
+- The server should now handle document symbol requests for files that are treated as reStructuredText files by a language client but don't have an ``*.rst`` extension. (`#434 <https://github.com/swyddfa/esbonio/issues/434>`_)
+
+
+API Changes
+^^^^^^^^^^^
+
+- It is now possible to manually load an extension by calling the ``load_extension`` method on a language server object. (`#429 <https://github.com/swyddfa/esbonio/issues/429>`_)
+- ``LanguageFeatures`` can now respond to ``textDocument/implementation`` requests by providing an ``implementation`` method and a collection of ``implementation_triggers``. (`#431 <https://github.com/swyddfa/esbonio/issues/431>`_)
+
+
 v0.13.1 - 2022-06-29
 --------------------
 

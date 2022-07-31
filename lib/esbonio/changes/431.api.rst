@@ -1,1 +1,0 @@
-``LanguageFeatures`` can now respond to ``textDocument/implementation`` requests by providing an ``implementation`` method and a collection of ``implementation_triggers``.

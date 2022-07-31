@@ -1,1 +1,0 @@
-Extensions defined within Sphinx extensions or ``conf.py`` files can now take advantage of dependency injection
