@@ -1,16 +1,12 @@
 import enum
 import importlib
-import inspect
 import json
 import logging
 import textwrap
 import traceback
-import typing
 from typing import Any
-from typing import Callable
 from typing import Dict
 from typing import Iterable
-from typing import Optional
 from typing import Type
 
 from pygls.lsp.methods import CODE_ACTION
@@ -20,6 +16,7 @@ from pygls.lsp.methods import DEFINITION
 from pygls.lsp.methods import DOCUMENT_LINK
 from pygls.lsp.methods import DOCUMENT_SYMBOL
 from pygls.lsp.methods import HOVER
+from pygls.lsp.methods import IMPLEMENTATION
 from pygls.lsp.methods import INITIALIZE
 from pygls.lsp.methods import INITIALIZED
 from pygls.lsp.methods import SHUTDOWN
@@ -44,6 +41,7 @@ from pygls.lsp.types import FileOperationPattern
 from pygls.lsp.types import FileOperationRegistrationOptions
 from pygls.lsp.types import Hover
 from pygls.lsp.types import HoverParams
+from pygls.lsp.types import ImplementationParams
 from pygls.lsp.types import InitializedParams
 from pygls.lsp.types import InitializeParams
 from pygls.lsp.types import MarkupContent
@@ -55,6 +53,7 @@ from .rst import CompletionContext
 from .rst import DefinitionContext
 from .rst import DocumentLinkContext
 from .rst import HoverContext
+from .rst import ImplementationContext
 from .rst import LanguageFeature
 from .rst import RstLanguageServer
 from .symbols import SymbolVisitor
@@ -66,6 +65,8 @@ __all__ = [
     "DefinitionContext",
     "DocumentLinkContext",
     "HoverContext",
+    "ImplementationContext",
+    "LanguageFeature",
     "RstLanguageServer",
     "create_language_server",
 ]
@@ -151,7 +152,11 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
     def on_open(ls: RstLanguageServer, params: DidOpenTextDocumentParams):
-        pass
+
+        # TODO: Delete me when we've dropped Python 3.6 and a pygls release that
+        # remembers the language id is available.
+        doc = ls.workspace.get_document(params.text_document.uri)
+        doc.language_id = params.text_document.language_id  # type: ignore
 
     @server.feature(TEXT_DOCUMENT_DID_CHANGE)
     def on_change(ls: RstLanguageServer, params: DidChangeTextDocumentParams):
@@ -314,6 +319,33 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         return definitions
 
+    @server.feature(IMPLEMENTATION)
+    def on_implementation(ls: RstLanguageServer, params: ImplementationParams):
+        uri = params.text_document.uri
+        pos = params.position
+
+        doc = ls.workspace.get_document(uri)
+        line = ls.line_at_position(doc, pos)
+        location = ls.get_location_type(doc, pos)
+
+        implementations = []
+
+        for feature in ls._features.values():
+            for pattern in feature.implementation_triggers:
+                for match in pattern.finditer(line):
+                    if not match:
+                        continue
+
+                    start, stop = match.span()
+                    if start <= pos.character and pos.character <= stop:
+                        context = ImplementationContext(
+                            doc=doc, location=location, match=match, position=pos
+                        )
+                        ls.logger.debug("Implementation context: %s", context)
+                        implementations += feature.implementation(context)
+
+        return implementations
+
     @server.feature(DOCUMENT_LINK)
     def on_document_link(ls: RstLanguageServer, params: DocumentLinkParams):
         uri = params.text_document.uri
@@ -367,25 +399,6 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 def _load_module(server: RstLanguageServer, modname: str):
     """Load an extension module by calling its ``esbonio_setup`` function, if it exists."""
 
-    setup = _get_setup_function(modname)
-    if not setup:
-        return
-
-    args = _get_setup_arguments(server, setup, modname)
-    if not args:
-        return
-
-    try:
-        setup(**args)
-        logger.debug("Loaded module '%s'", modname)
-    except Exception:
-        logger.error(
-            "Error while setting up module '%s'\n%s", modname, traceback.format_exc()
-        )
-
-
-def _get_setup_function(modname: str) -> Optional[Callable]:
-
     try:
         module = importlib.import_module(modname)
     except ImportError:
@@ -394,57 +407,12 @@ def _get_setup_function(modname: str) -> Optional[Callable]:
         )
         return None
 
-    if not hasattr(module, "esbonio_setup"):
-        logger.error(
-            "Unable to load module '%s', missing 'esbonio_setup' function", modname
-        )
+    setup = getattr(module, "esbonio_setup", None)
+    if setup is None:
+        logger.error("Skipping module '%s', missing 'esbonio_setup' function", modname)
         return None
 
-    return module.esbonio_setup
-
-
-def _get_setup_arguments(
-    server: RstLanguageServer, setup: Callable, modname: str
-) -> Optional[Dict[str, Any]]:
-    """Given a setup function, try to construct the collection of arguments to pass to
-    it.
-    """
-    annotations = typing.get_type_hints(setup)
-    parameters = {
-        p.name: annotations[p.name]
-        for p in inspect.signature(setup).parameters.values()
-    }
-
-    args = {}
-    for name, type_ in parameters.items():
-
-        if issubclass(server.__class__, type_):
-            args[name] = server
-            continue
-
-        if issubclass(type_, LanguageFeature):
-            # Try and obtain an instance of the requested language feature.
-            feature = server.get_feature(type_)
-            if feature is not None:
-                args[name] = feature
-                continue
-
-            logger.debug(
-                "Skipping module '%s', server missing requested feature: '%s'",
-                modname,
-                type_,
-            )
-            return None
-
-        logger.error(
-            "Skipping module '%s', parameter '%s' has unsupported type: '%s'",
-            modname,
-            name,
-            type_,
-        )
-        return None
-
-    return args
+    server.load_extension(modname, setup)
 
 
 def dump(obj) -> str:

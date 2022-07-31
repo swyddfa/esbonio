@@ -2,9 +2,12 @@ import hashlib
 import inspect
 import logging
 import multiprocessing
+import os
 import pathlib
 import re
+import sys
 import traceback
+from types import ModuleType
 from typing import Any
 from typing import Dict
 from typing import List
@@ -17,13 +20,13 @@ import appdirs
 import pygls.uris as Uri
 from pydantic import BaseModel
 from pydantic import Field
-from pygls import IS_WIN
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DiagnosticSeverity
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from sphinx.application import Sphinx
 from sphinx.cmd.build import main as sphinx_build
+from sphinx.util.logging import OnceFilter
 from sphinx.util.logging import SphinxLogRecord
 from sphinx.util.logging import WarningLogRecordTranslator
 from typing_extensions import Literal
@@ -31,14 +34,6 @@ from typing_extensions import Literal
 from esbonio.lsp.log import LOG_NAMESPACE
 from esbonio.lsp.log import LspHandler
 from esbonio.lsp.rst import ServerConfig
-
-try:
-    from sphinx.util.logging import OnceFilter
-except ImportError:
-    # OnceFilter is not defined in Sphinx 2.x
-    class OnceFilter:  # type: ignore
-        def filter(self, *args, **kwargs):
-            return True
 
 
 PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")
@@ -579,14 +574,10 @@ class SphinxLogHandler(LspHandler):
 
         if not location:
             conf = pathlib.Path(self.app.confdir, "conf.py")
-            return (str(conf), None)
+            return (Uri.from_fs_path(str(conf)), None)
 
-        path, *parts = location.split(":")
         lineno = None
-
-        # On windows the rest of the path will be the first element of parts
-        if IS_WIN:
-            path += f":{parts.pop(0)}"
+        path, parts = self.get_location_path(location)
 
         if len(parts) == 1:
             try:
@@ -594,18 +585,61 @@ class SphinxLogHandler(LspHandler):
             except ValueError:
                 pass
 
-        if len(parts) == 2:
-            # TODO: There's a possibility that there is an error in a docstring in a
-            #       *.py file somewhere. In which case parts would look like
-            #       ['docstring of {dotted.name}', '{lineno}']
-            #
-            #  e.g. ['docstring of esbonio.lsp.sphinx.SphinxLanguageServer.get_domains', '8']
-            #
-            #       It would be good to handle this case and look up the correct line
-            #       number to place a diagnostic.
-            pass
+        if len(parts) == 2 and parts[0].startswith("docstring of "):
+            target = parts[0].replace("docstring of ", "")
+            lineno = self.get_docstring_location(target, parts[1])
 
         return (Uri.from_fs_path(path), lineno)
+
+    def get_location_path(self, location: str) -> Tuple[str, List[str]]:
+        """Determine the filepath from the given location."""
+
+        if location.startswith("internal padding before "):
+            location = location.replace("internal padding before ", "")
+
+        if location.startswith("internal padding after "):
+            location = location.replace("internal padding after ", "")
+
+        path, *parts = location.split(":")
+
+        # On windows the rest of the path will be the first element of parts
+        if pathlib.Path(location).drive:
+            path += f":{parts.pop(0)}"
+
+        # Diagnostics in .. included:: files are reported relative to the process'
+        # working directory, so ensure the path is absolute.
+        path = os.path.abspath(path)
+
+        return path, parts
+
+    def get_docstring_location(self, target: str, offset: str) -> Optional[int]:
+
+        # The containing module will be the longest substring we can find in target
+        candidates = [m for m in sys.modules.keys() if target.startswith(m)] + [""]
+        module = sys.modules.get(sorted(candidates, key=len, reverse=True)[0], None)
+
+        if module is None:
+            return None
+
+        obj: Union[ModuleType, Any, None] = module
+        dotted_name = target.replace(module.__name__ + ".", "")
+
+        for name in dotted_name.split("."):
+            obj = getattr(obj, name, None)
+            if obj is None:
+                return None
+
+        try:
+            _, line = inspect.getsourcelines(obj)  # type: ignore
+
+            # Correct off by one error for docstrings that don't start with a newline.
+            nl = (obj.__doc__ or "").startswith("\n")
+            return line + int(offset) - (not nl)
+        except Exception:
+            logger.debug(
+                "Unable to determine diagnostic location\n%s", traceback.format_exc()
+            )
+            return None
 
     def emit(self, record: logging.LogRecord) -> None:
 

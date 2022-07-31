@@ -1,4 +1,5 @@
 import itertools
+import pathlib
 from typing import Optional
 from typing import Set
 
@@ -11,7 +12,6 @@ from pytest_lsp import Client
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import hover_request
-from esbonio.lsp.testing import sphinx_version
 
 EXPECTED = {
     "function",
@@ -99,11 +99,10 @@ async def test_directive_completions(
                 reason="generate_sphinx_documentation.py doesn't extract options yet."
             ),
         ),
-        pytest.param(
+        (
             "..",
             "c:function",
             "Describes a C function. The signature",
-            marks=pytest.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
         ),
         (
             ".. image:: filename.png\n   \f:",
@@ -180,7 +179,7 @@ AUTOCLASS_OPTS = {
 }
 IMAGE_OPTS = {"align", "alt", "class", "height", "scale", "target", "width"}
 PY_FUNC_OPTS = {"annotation", "async", "module", "noindex"}
-C_FUNC_OPTS = {"noindex"} if sphinx_version(eq=2) else {"noindexentry"}
+C_FUNC_OPTS = {"noindexentry"}
 
 
 @pytest.mark.asyncio
@@ -323,11 +322,10 @@ async def test_completion_suppression(client: Client, extension: str, setup):
             Position(line=0, character=4),
             None,
         ),
-        pytest.param(
+        (
             ".. c:function:: ",
             Position(line=0, character=1),
             "Describes a C function",
-            marks=pytest.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
         ),
     ],
 )
@@ -424,3 +422,62 @@ async def test_insert_range(
 
     for item in results.items:
         assert item.text_edit.range == expected_range
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "uri,position,expected",
+    [
+        (
+            "definitions.rst",
+            Position(line=25, character=18),
+            None,
+        ),
+        (
+            "definitions.rst",
+            Position(line=25, character=5),
+            "docutils/parsers/rst/directives/images.py",
+        ),
+        (
+            "definitions.rst",
+            Position(line=21, character=5),
+            "sphinx/directives/code.py",
+        ),
+        (
+            "theorems/pythagoras.rst",
+            Position(line=53, character=9),
+            "sphinx/domains/python.py",
+        ),
+        (
+            "code/cpp.rst",
+            Position(line=3, character=9),
+            "sphinx/domains/cpp.py",
+        ),
+    ],
+)
+async def test_directive_implementation(
+    client: Client, uri: str, position: Position, expected: Optional[pathlib.Path]
+):
+    """Ensure that we can find the implementation of directives.
+
+    Since we're testing items provided by 3rd party packages (Sphinx + docutils) we can't
+    really check the precise location as tests could break each time a new version is
+    released.
+
+    Instead let's go for just the containing file and hope the rest is correct!
+    """
+
+    test_uri = client.root_uri + f"/{uri}"
+
+    results = await client.implementation_request(test_uri, position)
+
+    if expected is None:
+        assert len(results) == 0
+
+    else:
+        assert len(results) == 1
+
+        location = results[0]
+        assert location.uri.endswith(str(expected))
+        assert location.range.start.line >= 0
+        assert location.range.end.line > location.range.start.line

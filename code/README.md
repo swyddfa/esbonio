@@ -48,6 +48,11 @@ Goto definition is currently implemented for objects linked to by
 
 ![Goto Defintion Demo](../resources/images/definition-demo.gif)
 
+### Goto Implementation
+
+Goto implementation is available for roles and directives
+
+![Goto Implementation Demo](../resources/images/implementation-demo.gif)
 ### Diagnostics
 
 Errors from a build are published to VSCode as diagnostics

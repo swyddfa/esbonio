@@ -25,7 +25,6 @@ from esbonio.lsp.rst import ServerConfig
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxConfig
 from esbonio.lsp.sphinx.config import SphinxServerConfig
-from esbonio.lsp.testing import sphinx_version
 
 
 class SphinxInfo(SphinxConfig):
@@ -516,9 +515,6 @@ async def test_initialization_build_dir_confdir():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-@pytest.mark.skipif(
-    sphinx_version(eq=2), reason="Sphinx 2.x does not wrap config errors"
-)
 async def test_initialization_sphinx_error():
     """Ensure that the user is notified when we Sphinx throws an exception."""
 
@@ -831,7 +827,7 @@ image file not readable: not-an-image.png""",
                 ),
             ),
         ),
-        pytest.param(
+        (
             ".. c:function:: int add(int a, int b)",
             ".. c:function:: arg1",
             Diagnostic(
@@ -843,7 +839,6 @@ image file not readable: not-an-image.png""",
                     end=Position(line=1, character=0),
                 ),
             ),
-            marks=pytest.mark.skipif(sphinx_version(eq=2), reason="Sphinx 2.x"),
         ),
     ],
 )

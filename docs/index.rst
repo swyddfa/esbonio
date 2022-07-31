@@ -66,6 +66,13 @@ Here is a quick summary of the features implemented by the language server.
          :align: center
          :target: /_images/hover-demo.png
 
+   .. collection-item:: Implementation
+
+      The language server implements :lsp:`textDocument/implementation` so you can easily find the implementation of a given role or directive.
+
+      .. figure:: ../resources/images/implementation-demo.gif
+         :align: center
+         :target: /_images/implementation-demo.gif
 
 - See the :ref:`lsp_getting_started` guide for details on how to get up and
   running.

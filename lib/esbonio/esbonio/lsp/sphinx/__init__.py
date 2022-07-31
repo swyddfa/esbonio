@@ -309,45 +309,25 @@ class SphinxLanguageServer(RstLanguageServer):
         for name, ext in app.extensions.items():
             mod = ext.module
 
-            if name in self._loaded_modules:
-                self.logger.debug("Skipping previously loaded module '%s'", name)
-
-            if not hasattr(mod, "esbonio_setup"):
+            setup = getattr(mod, "esbonio_setup", None)
+            if setup is None:
+                self.logger.debug(
+                    "Skipping extension '%s', missing 'esbonio_setup' fuction", name
+                )
                 continue
 
-            self.logger.debug("Loading sphinx module '%s'", name)
-            try:
-                mod.esbonio_setup(self)
-                self._loaded_modules[name] = mod
-            except Exception:
-                self.logger.error(
-                    "Unable to load sphinx module '%s'\n%s",
-                    name,
-                    traceback.format_exc(),
-                )
+            self.load_extension(name, setup)
 
     def _load_sphinx_config(self, app: Sphinx):
         """Try and load the config as an server extension."""
 
         name = "<sphinx-config>"
-        if name in self._loaded_modules:
-            self.logger.debug("Skipping previously loaded module '%s'", name)
+
+        setup = app.config._raw_config.get("esbonio_setup", None)
+        if not setup or not callable(setup):
             return
 
-        fn = app.config._raw_config.get("esbonio_setup", None)
-        if not fn or not callable(fn):
-            return
-
-        self.logger.debug("Loading sphinx module '%s'", name)
-        try:
-            fn(self)
-            self._loaded_modules[name] = fn
-        except Exception:
-            self.logger.error(
-                "Unable to load sphinx module '%s'\n%s",
-                name,
-                traceback.format_exc(),
-            )
+        self.load_extension(name, setup)
 
     def preview(self, options: Dict[str, Any]) -> Dict[str, Any]:
 

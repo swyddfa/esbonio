@@ -1,4 +1,5 @@
 import asyncio
+import os
 import pathlib
 import sys
 
@@ -7,10 +8,27 @@ import pytest
 import pytest_lsp
 from pytest_lsp import Client
 from pytest_lsp import ClientServerConfig
-from pytest_lsp import make_test_client
 
+from esbonio.lsp.sphinx import InitializationOptions
+from esbonio.lsp.sphinx import SphinxServerConfig
+from esbonio.lsp.testing import make_esbonio_client
 
 root_path = pathlib.Path(__file__).parent / "workspace"
+
+
+SERVER_CMD = ["-m", "esbonio"]
+if "USE_DEBUGPY" in os.environ:
+    SERVER_CMD = [
+        "-m",
+        "debugpy",
+        "--listen",
+        "localhost:5678",
+        "--wait-for-client",
+        *SERVER_CMD,
+    ]
+
+
+LOG_LEVEL = os.environ.get("SERVER_LOG_LEVEL", "error")
 
 
 @pytest.fixture(scope="session")
@@ -25,33 +43,25 @@ def event_loop():
     loop.close()
 
 
-def make_esbonio_client(*args, **kwargs):
-    client = make_test_client(*args, **kwargs)
-
-    @client.feature("esbonio/buildStart")
-    def _(*args, **kwargs):
-        ...
-
-    @client.feature("esbonio/buildComplete")
-    def _(*args, **kwargs):
-        ...
-
-    return client
-
-
 @pytest_lsp.fixture(
     scope="session",
     config=[
         ClientServerConfig(
             client="visual_studio_code",
             client_factory=make_esbonio_client,
-            server_command=[sys.executable, "-m", "esbonio"],
+            server_command=[sys.executable, *SERVER_CMD],
+            initialization_options=InitializationOptions(
+                server=SphinxServerConfig(logLevel=LOG_LEVEL)
+            ),
             root_uri=uri.from_fs_path(str(root_path)),
         ),
         ClientServerConfig(
             client="neovim",
             client_factory=make_esbonio_client,
-            server_command=[sys.executable, "-m", "esbonio"],
+            server_command=[sys.executable, *SERVER_CMD],
+            initialization_options=InitializationOptions(
+                server=SphinxServerConfig(logLevel=LOG_LEVEL)
+            ),
             root_uri=uri.from_fs_path(str(root_path)),
         ),
     ],

@@ -3,34 +3,87 @@ import logging
 import pathlib
 from typing import List
 from typing import Optional
+from typing import Union
 
 import pygls.uris as Uri
+from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionList
 from pygls.lsp.types import Hover
 from pygls.lsp.types import Position
 from pytest_lsp import Client
+from pytest_lsp import make_test_client
 from sphinx import __version__ as __sphinx_version__
 
 logger = logging.getLogger(__name__)
 
 
-def sphinx_version(eq: Optional[int] = None) -> bool:
+def _noop(*args, **kwargs):
+    ...
+
+
+def make_esbonio_client(*args, **kwargs) -> Client:
+    """Construct a pytest-lsp client that is aware of esbonio specific messages"""
+    client = make_test_client(*args, **kwargs)
+    client.feature("esbonio/buildStart")(_noop)
+    client.feature("esbonio/buildComplete")(_noop)
+
+    return client
+
+
+def sphinx_version(
+    eq: Optional[int] = None,
+    lt: Optional[int] = None,
+    lte: Optional[int] = None,
+    gt: Optional[int] = None,
+    gte: Optional[int] = None,
+) -> bool:
     """Helper function for determining which version of Sphinx we are
     testing with.
 
-    Currently this only cares about the major version number.
+    .. note::
+
+       Currently this function only considers the major version number.
 
     Parameters
     ----------
-    eq:
-       When set returns ``True`` if the Sphinx version exactly matches
+    eq
+       When set, this function returns ``True`` if Sphinx's version is exactly
        what's given.
+
+    gt
+       When set, this function returns ``True`` if Sphinx's version is strictly
+       greater than what's given
+
+    gte
+       When set, this function returns ``True`` if Sphinx's version is greater than
+       or equal to what's given
+
+    lt
+       When set, this function returns ``True`` if Sphinx's version is strictly
+       less than what's given
+
+    lte
+       When set, this function returns ``True`` if Sphinx's version is less than
+       or equal to what's given
+
     """
 
     major, _, _ = [int(v) for v in __sphinx_version__.split(".")]
 
-    if eq and major == eq:
-        return True
+    if eq is not None:
+        return major == eq
+
+    if gt is not None:
+        return major > gt
+
+    if gte is not None:
+        return major >= gte
+
+    if lt is not None:
+        return major < lt
+
+    if lte is not None:
+        return major <= lte
 
     return False
 
@@ -147,7 +200,7 @@ def intersphinx_target_patterns(name: str, project: str) -> List[str]:
 
 async def completion_request(
     client: Client, test_uri: str, text: str, character: Optional[int] = None
-) -> CompletionList:
+) -> Union[CompletionList, List[CompletionItem], None]:
     """Make a completion request to a language server.
 
     Intended for use within test cases, this function simulates the opening of a
@@ -215,7 +268,7 @@ async def completion_request(
 
 async def hover_request(
     client: Client, test_uri: str, text: str, position: Position
-) -> Hover:
+) -> Optional[Hover]:
     """Make a hover request to a language server.
 
     Intended for use within test cases, this function simulates the opening of a

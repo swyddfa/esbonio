@@ -1,5 +1,6 @@
 import collections
 import importlib
+import inspect
 import logging
 import pathlib
 import re
@@ -7,6 +8,7 @@ import traceback
 import typing
 import warnings
 from typing import Any
+from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -197,6 +199,32 @@ class DefinitionContext:
         )
 
 
+class ImplementationContext:
+    """A class that captures the context within which an implementation request has been
+    made."""
+
+    def __init__(
+        self, *, doc: Document, location: str, match: "re.Match", position: Position
+    ):
+
+        self.doc = doc
+        """The document within which the implementation request was made."""
+
+        self.location = location
+        """The location type where the request was made.
+        See :meth:`~esbonio.lsp.rst.RstLanguageServer.get_location_type` for details."""
+
+        self.match = match
+        """The match object describing the site of the implementation request."""
+
+        self.position = position
+        """The position at which the implementation request was made."""
+
+    def __repr__(self):
+        p = f"{self.position.line}:{self.position.character}"
+        return f"ImplementationContext<{self.doc.uri}:{p} ({self.location}) -- {self.match}>"
+
+
 class HoverContext:
     """A class that captures the context within a hover request has been made."""
 
@@ -308,6 +336,22 @@ class LanguageFeature:
         """
         return []
 
+    implementation_triggers: List["re.Pattern"] = []
+    """A list of regular expressions used to determine if the
+    :meth:`~esbonio.lsp.rst.LanguageFeature.implementation` method should be called."""
+
+    def implementation(self, context: ImplementationContext) -> List[Location]:
+        """Called if any of the given ``implementation_triggers`` match the current line.
+
+        This method should return a list of ``Location`` objects.
+
+        Parameters
+        ----------
+        context:
+           The context of the implementation request.
+        """
+        return []
+
     def document_link(self, context: DocumentLinkContext) -> List[DocumentLink]:
         """Called whenever a ``textDocument/documentLink`` request is received."""
         return []
@@ -373,7 +417,7 @@ class RstLanguageServer(LanguageServer):
         self._diagnostics: Dict[Tuple[str, str], List[Diagnostic]] = {}
         """Where we store and manage diagnostics."""
 
-        self._loaded_modules: Dict[str, Any] = {}
+        self._loaded_extensions: Dict[str, Any] = {}
         """Record of modules that have been loaded."""
 
         self._features: Dict[str, LanguageFeature] = {}
@@ -411,8 +455,62 @@ class RstLanguageServer(LanguageServer):
     def delete_files(self, params: DeleteFilesParams):
         pass
 
+    def load_extension(self, name: str, setup: Callable):
+        """Load the given setup function as an extension.
+
+        If an extension with the given ``name`` already exists, the given setup function
+        will be ignored.
+
+        The ``setup`` function can declare dependencies in the form of type
+        annotations.
+
+        .. code-block:: python
+
+           from esbonio.lsp.roles import Roles
+           from esbonio.lsp.sphinx import SphinxLanguageServer
+
+           def esbonio_setup(rst: SphinxLanguageServer, roles: Roles):
+               ...
+
+        In this example the setup function is requesting instances of the
+        :class:`~esbonio.lsp.sphinx.SphinxLanguageServer` and the
+        :class:`~esbonio.lsp.roles.Roles` language feature.
+
+        Parameters
+        ----------
+        name
+           The name to give the extension
+
+        setup
+           The setup function to call
+        """
+
+        if name in self._loaded_extensions:
+            self.logger.debug("Skipping extension '%s', already loaded", name)
+            return
+
+        arguments = _get_setup_arguments(self, setup, name)
+        if not arguments:
+            return
+
+        try:
+            setup(**arguments)
+
+            self.logger.debug("Loaded extension '%s'", name)
+            self._loaded_extensions[name] = setup
+        except Exception:
+            self.logger.error(
+                "Unable to load extension '%s'\n%s", name, traceback.format_exc()
+            )
+
     def add_feature(self, feature: "LanguageFeature"):
-        """Register a language feature with the server."""
+        """Register a language feature with the server.
+
+        Parameters
+        ----------
+        feature
+           The language feature
+        """
 
         key = f"{feature.__module__}.{feature.__class__.__name__}"
         self._features[key] = feature
@@ -477,12 +575,17 @@ class RstLanguageServer(LanguageServer):
         uri
            Returns the doctree that corresponds with the given uri.
         """
-        filename = pathlib.Path(Uri.to_fs_path(uri))
-        try:
-            return read_initial_doctree(filename, self.logger)
-        except FileNotFoundError:
-            self.logger.debug(traceback.format_exc())
+
+        doc = self.workspace.get_document(uri)
+        loctype = self.get_location_type(doc, Position(line=1, character=0))
+
+        if loctype != "rst":
             return None
+
+        self.logger.debug("Getting initial doctree for: '%s'", Uri.to_fs_path(uri))
+
+        try:
+            return read_initial_doctree(doc, self.logger)
         except Exception:
             self.logger.error(traceback.format_exc())
             return None
@@ -590,32 +693,39 @@ class RstLanguageServer(LanguageServer):
             self.logger.debug("Publishing %d diagnostics for: %s", len(diag_list), uri)
             self.publish_diagnostics(uri, diag_list.data)
 
-    def get_location_type(self, doc: Document, position: Position) -> str:
-        """Given a document and a position, return the kind of location that
-        represents.
+    def get_location_type(self, document: Document, position: Position) -> str:
+        """Given a document and a position, return the type of location.
 
-        This will return one of the following values:
+        Returns one of the following values:
 
-        - ``rst``: Indicates that the position is within an ``*.rst`` document
-        - ``py``: Indicates that the position is within code in a ``*.py`` document
+        - ``rst``: Indicates that the position is within an reStructuredText document
+        - ``py``: Indicates that the position is within code in a Python file
         - ``docstring``: Indicates that the position is within a docstring in a
-          ``*.py`` document.
+          Python file.
+
+        If the location type cannot be determined, this function will fall back to
+        ``rst``.
 
         Parameters
         ----------
-        doc:
+        doc
            The document associated with the given position
-        position:
-           The position to determine the type of.
-        """
-        ext = pathlib.Path(Uri.to_fs_path(doc.uri)).suffix
 
-        if ext == ".rst":
+        position
+           The position to determine the type of
+        """
+        doc = self.workspace.get_document(document.uri)
+        fpath = pathlib.Path(Uri.to_fs_path(doc.uri))
+
+        # Prefer the document's language_id, but fallback to file extensions
+        loctype = getattr(doc, "language_id", None) or fpath.suffix
+
+        if loctype in {".rst", "rst", "restructuredtext"}:
             return "rst"
 
-        if ext == ".py":
+        if loctype in {".py", "py", "python"}:
 
-            # Let's count how many pairs of triple quotes are "above" us in the file
+            # Let's count how many pairs of triple quotes are above us in the file
             # even => we're outside a docstring
             # odd  => we're within a docstring
             source = self.text_to_position(doc, position)
@@ -705,6 +815,50 @@ def normalise_uri(uri: str) -> str:
         uri = uri.lower()
 
     return uri
+
+
+def _get_setup_arguments(
+    server: RstLanguageServer, setup: Callable, modname: str
+) -> Optional[Dict[str, Any]]:
+    """Given a setup function, try to construct the collection of arguments to pass to
+    it.
+    """
+    annotations = typing.get_type_hints(setup)
+    parameters = {
+        p.name: annotations[p.name]
+        for p in inspect.signature(setup).parameters.values()
+    }
+
+    args = {}
+    for name, type_ in parameters.items():
+
+        if issubclass(server.__class__, type_):
+            args[name] = server
+            continue
+
+        if issubclass(type_, LanguageFeature):
+            # Try and obtain an instance of the requested language feature.
+            feature = server.get_feature(type_)
+            if feature is not None:
+                args[name] = feature
+                continue
+
+            server.logger.debug(
+                "Skipping extension '%s', server missing requested feature: '%s'",
+                modname,
+                type_,
+            )
+            return None
+
+        server.logger.error(
+            "Skipping extension '%s', parameter '%s' has unsupported type: '%s'",
+            modname,
+            name,
+            type_,
+        )
+        return None
+
+    return args
 
 
 cli = setup_cli("esbonio.lsp.rst", "Esbonio's reStructuredText language server.")
