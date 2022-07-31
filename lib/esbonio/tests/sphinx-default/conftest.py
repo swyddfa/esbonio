@@ -1,4 +1,5 @@
 import asyncio
+import os
 import pathlib
 import sys
 
@@ -12,6 +13,17 @@ from esbonio.lsp.testing import make_esbonio_client
 
 
 root_path = pathlib.Path(__file__).parent / "workspace"
+
+SERVER_CMD = ["-m", "esbonio"]
+if "USE_DEBUGPY" in os.environ:
+    SERVER_CMD = [
+        "-m",
+        "debugpy",
+        "--listen",
+        "localhost:5678",
+        "--wait-for-client",
+        *SERVER_CMD,
+    ]
 
 
 @pytest.fixture(scope="session")
@@ -32,13 +44,13 @@ def event_loop():
         ClientServerConfig(
             client="visual_studio_code",
             client_factory=make_esbonio_client,
-            server_command=[sys.executable, "-m", "esbonio"],
+            server_command=[sys.executable, *SERVER_CMD],
             root_uri=uri.from_fs_path(str(root_path)),
         ),
         ClientServerConfig(
             client="neovim",
             client_factory=make_esbonio_client,
-            server_command=[sys.executable, "-m", "esbonio"],
+            server_command=[sys.executable, *SERVER_CMD],
             root_uri=uri.from_fs_path(str(root_path)),
         ),
     ],
