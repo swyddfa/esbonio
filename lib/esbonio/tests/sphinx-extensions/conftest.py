@@ -9,6 +9,8 @@ import pytest_lsp
 from pytest_lsp import Client
 from pytest_lsp import ClientServerConfig
 
+from esbonio.lsp.sphinx import InitializationOptions
+from esbonio.lsp.sphinx import SphinxServerConfig
 from esbonio.lsp.testing import make_esbonio_client
 
 root_path = pathlib.Path(__file__).parent / "workspace"
@@ -24,6 +26,9 @@ if "USE_DEBUGPY" in os.environ:
         "--wait-for-client",
         *SERVER_CMD,
     ]
+
+
+LOG_LEVEL = os.environ.get("SERVER_LOG_LEVEL", "error")
 
 
 @pytest.fixture(scope="session")
@@ -45,12 +50,18 @@ def event_loop():
             client="visual_studio_code",
             client_factory=make_esbonio_client,
             server_command=[sys.executable, *SERVER_CMD],
+            initialization_options=InitializationOptions(
+                server=SphinxServerConfig(logLevel=LOG_LEVEL)
+            ),
             root_uri=uri.from_fs_path(str(root_path)),
         ),
         ClientServerConfig(
             client="neovim",
             client_factory=make_esbonio_client,
             server_command=[sys.executable, *SERVER_CMD],
+            initialization_options=InitializationOptions(
+                server=SphinxServerConfig(logLevel=LOG_LEVEL)
+            ),
             root_uri=uri.from_fs_path(str(root_path)),
         ),
     ],
