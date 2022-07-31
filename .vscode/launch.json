@@ -85,7 +85,23 @@
             ],
             "python": "${command:python.interpreterPath}",
             "cwd": "${workspaceFolder}/docs"
-        }
+        },
+        {
+            "name": "Python: Attach",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "."
+                }
+            ],
+            "justMyCode": false
+        },
     ],
     "compounds": [
         {
