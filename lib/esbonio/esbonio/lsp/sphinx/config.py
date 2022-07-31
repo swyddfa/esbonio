@@ -2,6 +2,7 @@ import hashlib
 import inspect
 import logging
 import multiprocessing
+import os
 import pathlib
 import re
 import sys
@@ -19,7 +20,6 @@ import appdirs
 import pygls.uris as Uri
 from pydantic import BaseModel
 from pydantic import Field
-from pygls import IS_WIN
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DiagnosticSeverity
 from pygls.lsp.types import Position
@@ -574,14 +574,10 @@ class SphinxLogHandler(LspHandler):
 
         if not location:
             conf = pathlib.Path(self.app.confdir, "conf.py")
-            return (str(conf), None)
+            return (Uri.from_fs_path(str(conf)), None)
 
-        path, *parts = location.split(":")
         lineno = None
-
-        # On windows the rest of the path will be the first element of parts
-        if IS_WIN:
-            path += f":{parts.pop(0)}"
+        path, parts = self.get_location_path(location)
 
         if len(parts) == 1:
             try:
@@ -594,6 +590,27 @@ class SphinxLogHandler(LspHandler):
             lineno = self.get_docstring_location(target, parts[1])
 
         return (Uri.from_fs_path(path), lineno)
+
+    def get_location_path(self, location: str) -> Tuple[str, List[str]]:
+        """Determine the filepath from the given location."""
+
+        if location.startswith("internal padding before "):
+            location = location.replace("internal padding before ", "")
+
+        if location.startswith("internal padding after "):
+            location = location.replace("internal padding after ", "")
+
+        path, *parts = location.split(":")
+
+        # On windows the rest of the path will be the first element of parts
+        if pathlib.Path(location).drive:
+            path += f":{parts.pop(0)}"
+
+        # Diagnostics in .. included:: files are reported relative to the process'
+        # working directory, so ensure the path is absolute.
+        path = os.path.abspath(path)
+
+        return path, parts
 
     def get_docstring_location(self, target: str, offset: str) -> Optional[int]:
 

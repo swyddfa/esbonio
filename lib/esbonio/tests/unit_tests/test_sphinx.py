@@ -1,12 +1,17 @@
 import itertools
+import os
 import pathlib
 from typing import List
+from typing import Optional
 from typing import Tuple
+from unittest import mock
 
+import pygls.uris as uri
 import pytest
 from pygls import IS_WIN
 
 from esbonio.lsp.sphinx import SphinxConfig
+from esbonio.lsp.sphinx import SphinxLogHandler
 
 
 def config_with(**kwargs) -> SphinxConfig:
@@ -386,3 +391,50 @@ def test_cli_arg_handling(args: List[str]):
     actual = config.to_cli_args()
 
     assert args == actual
+
+
+ROOT = pathlib.Path(__file__).parent.parent / "sphinx-extensions" / "workspace"
+PY_PATH = ROOT / "code" / "diagnostics.py"
+CONF_PATH = ROOT / "sphinx-extensions" / "conf.py"
+RST_PATH = ROOT / "sphinx-extensions" / "index.rst"
+INC_PATH = ROOT / "sphinx-extensions" / "_include_me.txt"
+REL_INC_PATH = os.path.relpath(INC_PATH)
+
+
+@pytest.mark.parametrize(
+    "location, expected",
+    [
+        ("", (uri.from_fs_path(str(CONF_PATH)), None)),
+        (f"{RST_PATH}", (uri.from_fs_path(str(RST_PATH)), None)),
+        (f"{RST_PATH}:", (uri.from_fs_path(str(RST_PATH)), None)),
+        (f"{RST_PATH}:3", (uri.from_fs_path(str(RST_PATH)), 3)),
+        (f"{REL_INC_PATH}:12", (uri.from_fs_path(str(INC_PATH)), 12)),
+        (
+            f"{PY_PATH}:docstring of esbonio.lsp.sphinx.config.SphinxLogHandler:3",
+            (uri.from_fs_path(str(PY_PATH)), 22),
+        ),
+        (
+            f"internal padding after {RST_PATH}:34",
+            (uri.from_fs_path(str(RST_PATH)), 34),
+        ),
+        (
+            f"internal padding before {RST_PATH}:34",
+            (uri.from_fs_path(str(RST_PATH)), 34),
+        ),
+    ],
+)
+def test_get_diagnostic_location(location: str, expected: Tuple[str, Optional[int]]):
+    """Ensure we can correctly determine a dianostic's location based on the string we
+    get from sphinx."""
+
+    app = mock.Mock()
+    app.confdir = str(ROOT / "sphinx-extensions")
+
+    server = mock.Mock()
+    handler = SphinxLogHandler(app, server)
+
+    mockpath = f"{SphinxLogHandler.__module__}.inspect.getsourcelines"
+    with mock.patch(mockpath, return_value=([""], 20)):
+        actual = handler.get_location(location)
+
+    assert actual == expected
