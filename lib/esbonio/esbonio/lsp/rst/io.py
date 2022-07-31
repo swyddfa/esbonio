@@ -1,5 +1,4 @@
 import logging
-import pathlib
 import typing
 from typing import Any
 from typing import Callable
@@ -7,10 +6,11 @@ from typing import IO
 from typing import Optional
 from typing import Type
 
+import pygls.uris as uri
 from docutils import nodes
 from docutils.core import Publisher
-from docutils.io import FileInput
 from docutils.io import NullOutput
+from docutils.io import StringInput
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
 from docutils.parsers.rst import Parser
@@ -18,6 +18,7 @@ from docutils.parsers.rst import roles
 from docutils.readers.standalone import Reader
 from docutils.utils import Reporter
 from docutils.writers import Writer
+from pygls.workspace import Document
 from sphinx.environment import default_settings
 
 from esbonio.lsp.util.patterns import DIRECTIVE
@@ -174,9 +175,9 @@ class InitialDoctreeReader(Reader):
 
 
 def read_initial_doctree(
-    filename: pathlib.Path, logger: logging.Logger
+    document: Document, logger: logging.Logger
 ) -> Optional[nodes.document]:
-    """Parse the given reStructuredText file into its "initial" doctree.
+    """Parse the given reStructuredText document into its "initial" doctree.
 
     An "initial" doctree can be thought of as the abstract syntax tree of a
     reStructuredText document. This method disables all role and directives
@@ -185,29 +186,26 @@ def read_initial_doctree(
 
     Parameters
     ----------
-    filename
-       Returns the doctree that corresponds with the given file.
+    document
+       The document containing the reStructuredText source.
 
     logger
        Logger to log debug info to.
     """
 
     parser = Parser()
-
-    if filename.suffix.replace(".", "") not in parser.supported:
-        return None
-
-    logger.debug("Getting initial doctree for: '%s'", filename)
     with disable_roles_and_directives():
         publisher = Publisher(
             reader=InitialDoctreeReader(logger),
             parser=parser,
             writer=DummyWriter(),
-            source_class=FileInput,
+            source_class=StringInput,
             destination=NullOutput(),
         )
         publisher.process_programmatic_settings(None, default_settings, None)
-        publisher.set_source(source_path=str(filename))
+        publisher.set_source(
+            source=document.source, source_path=uri.to_fs_path(document.uri)
+        )
         publisher.publish()
 
         return publisher.document
