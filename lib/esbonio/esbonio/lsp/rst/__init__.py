@@ -575,12 +575,17 @@ class RstLanguageServer(LanguageServer):
         uri
            Returns the doctree that corresponds with the given uri.
         """
-        filename = pathlib.Path(Uri.to_fs_path(uri))
-        try:
-            return read_initial_doctree(filename, self.logger)
-        except FileNotFoundError:
-            self.logger.debug(traceback.format_exc())
+
+        doc = self.workspace.get_document(uri)
+        loctype = self.get_location_type(doc, Position(line=1, character=0))
+
+        if loctype != "rst":
             return None
+
+        self.logger.debug("Getting initial doctree for: '%s'", Uri.to_fs_path(uri))
+
+        try:
+            return read_initial_doctree(doc, self.logger)
         except Exception:
             self.logger.error(traceback.format_exc())
             return None
