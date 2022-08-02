@@ -21,18 +21,18 @@
     ],
     "scripts": {
         "compile": "webpack --mode development",
-        "compile-test": "npm run clean && tsc -p ./",
+        "compile-test": "npm run clean && tsc -p ./src/node",
         "serve": "npx serve --cors -l 5000",
         "tunnel": "npx localtunnel -p 5000",
         "watch": "webpack --mode development --watch",
-        "test": "npm run compile-test && node ./dist/test/runTests.js",
+        "test": "npm run compile-test && node ./dist/node/test/runTests.js",
         "clean": "rm -r dist",
         "deploy": "vsce publish --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "vscode:prepublish": "webpack --mode production"
     },
-    "main": "dist/extension",
-    "browser": "dist/webextension",
+    "main": "dist/node/extension",
+    "browser": "dist/browser/extension",
     "dependencies": {
         "semver": "^7.3.5",
         "vscode-languageclient": "^7.0.0"

@@ -37,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel: outputChannel
   }
 
-  const path = vscode.Uri.joinPath(context.extensionUri, "dist/worker.js")
+  const path = vscode.Uri.joinPath(context.extensionUri, "dist/browser/worker.js")
   const worker = new Worker(path.toString())
 
   client = new LanguageClient("esbonio", "Esbonio", clientOptions, worker)
