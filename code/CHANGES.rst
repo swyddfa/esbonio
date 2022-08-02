@@ -1,3 +1,21 @@
+v0.10.0 - 2022-08-02
+--------------------
+
+Features
+^^^^^^^^
+
+- Initial **very experimental** web extension support!
+  Currently this is limited to the vanilla docutils language server available in the ``esbonio`` Python package - so no Sphinx support yet.
+
+  The outline view,  basic completions and hovers for vanilla docutils roles and directives are the only known working features at this point. (`#438 <https://github.com/swyddfa/esbonio/issues/438>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- Log output in the ``Esbonio`` output channel is now syntax highlighted. (`#436 <https://github.com/swyddfa/esbonio/issues/436>`_)
+
+
 v0.9.2 - 2022-06-07
 -------------------
 

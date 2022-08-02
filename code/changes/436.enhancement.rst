@@ -1,1 +1,0 @@
-Log output in the ``Esbonio`` output channel is now syntax highlighted.
