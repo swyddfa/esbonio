@@ -1,0 +1,4 @@
+Initial **very experimental** web extension support!
+Currently this is limited to the vanilla docutils language server available in the ``esbonio`` Python package - so no Sphinx support yet.
+
+The outline view,  basic completions and hovers for vanilla docutils roles and directives are the only known working features at this point.

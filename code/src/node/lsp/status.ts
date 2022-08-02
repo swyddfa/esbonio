@@ -49,7 +49,7 @@ export class StatusManager {
   }
 
   onClientStart() {
-    this.setStatusItem("Sphinx Version", "$(sync~spin) Starting...", { busy: true })
+    this.setStatusItem("Sphinx Version", "Starting...", { busy: true })
   }
 
   onClientError() {
@@ -58,7 +58,7 @@ export class StatusManager {
     })
   }
   onBuildStart() {
-    this.setStatusItem("Builder", "$(sync~spin) Building...", { busy: true })
+    this.setStatusItem("Builder", "Building...", { busy: true })
   }
 
   onBuildComplete(result: BuildCompleteResult) {
@@ -171,6 +171,10 @@ export class StatusManager {
     }
 
     statusItem.text = value
+
+    if (params && params.busy !== undefined) {
+      statusItem.busy = params.busy
+    }
 
     if (params && params.severity >= 0) {
       statusItem.severity = params.severity

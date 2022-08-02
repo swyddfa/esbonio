@@ -37,7 +37,7 @@
                 "--folder-uri=${workspaceRoot}/${input:workspace}"
             ],
             "outFiles": [
-                "${workspaceRoot}/code/dist/**/*.js"
+                "${workspaceRoot}/code/dist/node/**/*.js"
             ],
             "preLaunchTask": "${defaultBuildTask}",
             "env": {
@@ -51,10 +51,10 @@
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceFolder}/code",
-                "--extensionTestsPath=${workspaceFolder}/code/dist/test/suite/index"
+                "--extensionTestsPath=${workspaceFolder}/code/dist/node/test/suite/index"
             ],
             "outFiles": [
-                "${workspaceFolder}/code/dist/test/**/*.js"
+                "${workspaceFolder}/code/dist/node/test/**/*.js"
             ],
             "preLaunchTask": "Build Tests",
         },
