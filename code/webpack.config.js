@@ -9,9 +9,9 @@ const path = require('path')
 /**@type {import('webpack').Configuration}*/
 const electronConfig = {
   target: 'node',
-  entry: './src/extension.ts',
+  entry: './src/node/extension.ts',
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'dist', 'node'),
     filename: 'extension.js',
     libraryTarget: 'commonjs2',
     devtoolModuleFilenameTemplate: '../[resource-path]'
@@ -47,10 +47,10 @@ const electronConfig = {
 /**@type {import('webpack').Configuration}*/
 const webExtConfig = {
   target: 'webworker',
-  entry: './src/webextension.ts',
+  entry: './src/browser/extension.ts',
   output: {
-    path: path.resolve(__dirname, 'dist'),
-    filename: 'webextension.js',
+    path: path.resolve(__dirname, 'dist', 'browser'),
+    filename: 'extension.js',
     libraryTarget: 'commonjs',
   },
   devtool: 'source-map',
@@ -83,9 +83,9 @@ const webExtConfig = {
 /**@type {import('webpack').Configuration}*/
 const lspWorkerConfig = {
   target: 'webworker',
-  entry: './src/lsp/worker.ts',
+  entry: './src/browser/lsp/worker.ts',
   output: {
-    path: path.resolve(__dirname, 'dist'),
+    path: path.resolve(__dirname, 'dist', 'browser'),
     filename: 'worker.js',
     libraryTarget: 'var',
     library: 'serverExportVar'

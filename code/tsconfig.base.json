@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "target": "ES2019",
+        "sourceMap": true,
+        "lib": [
+            "ES2019"
+        ]
+    }
+}
