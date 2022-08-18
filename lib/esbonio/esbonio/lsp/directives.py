@@ -16,6 +16,7 @@ from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
+from typing_extensions import Protocol
 
 from esbonio.lsp import CompletionContext
 from esbonio.lsp import DefinitionContext
@@ -28,13 +29,6 @@ from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.util.inspect import get_object_location
 from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
-
-try:
-    from typing import Protocol
-except ImportError:
-    # Protocol is only available in Python 3.8+
-    class Protocol:  # type: ignore
-        ...
 
 
 class ArgumentCompletion(Protocol):
