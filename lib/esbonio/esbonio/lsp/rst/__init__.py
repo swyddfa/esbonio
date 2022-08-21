@@ -661,6 +661,21 @@ class RstLanguageServer(LanguageServer):
             if clear_source and clear_uri:
                 self._diagnostics[key] = []
 
+    def add_diagnostics(self, source: str, uri, diagnostic: Diagnostic):
+        """Add a diagnostic to the given source and uri.
+
+        Parameters
+        ----------
+        source
+           The source the diagnostics are from
+        uri
+           The uri the diagnostics are associated with
+        diagnostic
+           The diagnostic to add
+        """
+        key = (source, normalise_uri(uri))
+        self._diagnostics.setdefault(key, []).append(diagnostic)
+
     def set_diagnostics(
         self, source: str, uri: str, diagnostics: List[Diagnostic]
     ) -> None:
