@@ -126,6 +126,11 @@ export interface ServerConfig {
    * A flag to indicate if Sphinx build output should be omitted from the log.
    */
   hideSphinxOutput: boolean
+
+  /**
+   * A flag to enable showing deprecation warnings.
+   */
+  showDeprecationWarnings: boolean
 }
 
 /**
@@ -468,7 +473,8 @@ export class EsbonioClient {
       server: {
         logLevel: config.get<string>('server.logLevel'),
         logFilter: config.get<string[]>('server.logFilter'),
-        hideSphinxOutput: config.get<boolean>('server.hideSphinxOutput')
+        hideSphinxOutput: config.get<boolean>('server.hideSphinxOutput'),
+        showDeprecationWarnings: config.get<boolean>('server.showDeprecationWarnings')
       }
     }
 

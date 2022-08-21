@@ -190,6 +190,12 @@
                         "default": "",
                         "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
                     },
+                    "esbonio.server.showDeprecationWarnings": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Developer flag to enable deprecation warnings."
+                    },
                     "esbonio.server.hideSphinxOutput": {
                         "scope": "window",
                         "type": "boolean",
