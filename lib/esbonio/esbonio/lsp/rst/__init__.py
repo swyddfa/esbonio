@@ -394,6 +394,9 @@ class ServerConfig(BaseModel):
     log_filter: List[str] = Field(default_factory=list, alias="logFilter")
     """A list of logger names to restrict output to."""
 
+    show_deprecation_warnings = Field(False, alias="showDeprecationWarnings")
+    """Developer flag to enable deprecation warnings."""
+
 
 class InitializationOptions(BaseModel):
     """The initialization options we can expect to receive from a client."""
@@ -421,7 +424,7 @@ class RstLanguageServer(LanguageServer):
         """Record of modules that have been loaded."""
 
         self._features: Dict[str, LanguageFeature] = {}
-        """The list of language features registered with the server."""
+        """The collection of language features registered with the server."""
 
         self._directives: Optional[Dict[str, Directive]] = None
         """Cache for known directives."""
