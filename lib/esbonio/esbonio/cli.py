@@ -1,6 +1,7 @@
 import argparse
 import logging
 import sys
+import warnings
 
 
 def setup_cli(progname: str, description: str) -> argparse.ArgumentParser:
@@ -69,6 +70,13 @@ def main(cli: argparse.ArgumentParser):
         if mod in modules:
             modules.remove(mod)
 
+    # Ensure we can capture warnings.
+    logging.captureWarnings(True)
+    warnlog = logging.getLogger("py.warnings")
+
+    if not sys.warnoptions:
+        warnings.simplefilter("default")  # Enable capture of DeprecationWarnings
+
     # Setup a temporary logging handler that can cache messages until the language server
     # is ready to forward them onto the client.
     logger = logging.getLogger(LOG_NAMESPACE)
@@ -77,6 +85,7 @@ def main(cli: argparse.ArgumentParser):
     handler = MemoryHandler()
     handler.setLevel(logging.DEBUG)
     logger.addHandler(handler)
+    warnlog.addHandler(handler)
 
     server = create_language_server(args.server_cls, modules)
 
