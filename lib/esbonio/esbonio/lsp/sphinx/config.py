@@ -35,7 +35,6 @@ from esbonio.lsp.log import LOG_NAMESPACE
 from esbonio.lsp.log import LspHandler
 from esbonio.lsp.rst import ServerConfig
 
-
 PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")
 logger = logging.getLogger(LOG_NAMESPACE)
 

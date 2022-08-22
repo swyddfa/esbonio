@@ -1,8 +1,8 @@
 import itertools
 
 import pytest
-from pytest_lsp import check
 from pytest_lsp import Client
+from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import intersphinx_target_patterns

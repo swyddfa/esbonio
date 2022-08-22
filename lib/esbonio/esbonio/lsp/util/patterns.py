@@ -1,6 +1,5 @@
 import re
 
-
 DIRECTIVE = re.compile(
     r"""
     (\s*)                             # directives can be indented

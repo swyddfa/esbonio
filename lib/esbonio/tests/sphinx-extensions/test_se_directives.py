@@ -3,8 +3,8 @@ from typing import Set
 
 import pytest
 from pygls.lsp.types import MarkupKind
-from pytest_lsp import check
 from pytest_lsp import Client
+from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 

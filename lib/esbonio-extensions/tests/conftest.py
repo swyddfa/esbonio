@@ -3,8 +3,8 @@ from unittest import mock
 
 import py.test
 from docutils.io import StringInput
-from docutils.parsers.rst import directives
 from docutils.parsers.rst import Parser
+from docutils.parsers.rst import directives
 from docutils.readers.standalone import Reader
 from sphinx.ext.doctest import DoctestDirective
 

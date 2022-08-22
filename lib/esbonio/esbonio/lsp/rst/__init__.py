@@ -41,10 +41,10 @@ from pygls.lsp.types import Position
 from pygls.server import LanguageServer
 from pygls.workspace import Document
 
-from .io import read_initial_doctree
 from esbonio.cli import setup_cli
 from esbonio.lsp.log import setup_logging
 
+from .io import read_initial_doctree
 
 LF = TypeVar("LF", bound="LanguageFeature")
 TRIPLE_QUOTE = re.compile("(\"\"\"|''')")

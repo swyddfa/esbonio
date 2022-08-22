@@ -15,17 +15,16 @@ from typing import List
 sys.path.insert(0, os.path.abspath("../lib/esbonio"))
 sys.path.insert(0, os.path.abspath("./ext"))
 
-from docutils.parsers.rst import nodes
-from sphinx.application import Sphinx
-
 import pygls.lsp.methods as M
+from docutils.parsers.rst import nodes
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
-
-from esbonio.lsp.roles import Roles, TargetCompletion
-from esbonio.lsp.rst import CompletionContext
+from sphinx.application import Sphinx
 
 import esbonio.lsp
+from esbonio.lsp.roles import Roles
+from esbonio.lsp.roles import TargetCompletion
+from esbonio.lsp.rst import CompletionContext
 
 # -- Project information -----------------------------------------------------
 project = "Esbonio"

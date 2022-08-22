@@ -15,7 +15,6 @@ sys.path.insert(0, os.path.abspath("../code"))
 # -- Project information -----------------------------------------------------
 from sphinx.directives.code import CodeBlock
 
-
 project = "Defaults"
 copyright = "2020, Sphinx"
 author = "Sphinx"

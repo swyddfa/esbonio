@@ -21,7 +21,6 @@ from esbonio.lsp.rst import DefinitionContext
 from esbonio.lsp.rst import DocumentLinkContext
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
-
 TARGET_KINDS = {
     "attribute": CompletionItemKind.Field,
     "doc": CompletionItemKind.File,

@@ -13,9 +13,9 @@ from pygls.lsp.types import DocumentLink
 from pygls.lsp.types import MessageType
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
-from pytest_lsp import check
 from pytest_lsp import Client
 from pytest_lsp import ClientServerConfig
+from pytest_lsp import check
 from pytest_lsp import make_client_server
 from pytest_lsp import make_test_client
 

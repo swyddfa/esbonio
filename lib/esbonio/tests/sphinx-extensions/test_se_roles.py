@@ -4,12 +4,11 @@ from typing import Set
 from typing import Tuple
 
 import pytest
-from pytest_lsp import check
 from pytest_lsp import Client
+from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import role_patterns
-
 
 EXPECTED = {"doc", "py:func", "py:mod", "ref", "func"}
 UNEXPECTED = {"c:func", "c:macro", "restructuredtext-unimplemented-role"}

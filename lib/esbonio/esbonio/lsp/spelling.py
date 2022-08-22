@@ -21,7 +21,6 @@ from spellchecker import SpellChecker  # type: ignore
 from esbonio.lsp.rst import LanguageFeature
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
-
 IGNORED_NODES = {nodes.raw, nodes.literal, nodes.literal_block}
 """Don't spell check Text contained in any of these nodes."""
 
