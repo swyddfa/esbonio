@@ -1,8 +1,8 @@
 import logging
 import typing
+from typing import IO
 from typing import Any
 from typing import Callable
-from typing import IO
 from typing import Optional
 from typing import Type
 
@@ -12,8 +12,8 @@ from docutils.core import Publisher
 from docutils.io import NullOutput
 from docutils.io import StringInput
 from docutils.parsers.rst import Directive
-from docutils.parsers.rst import directives
 from docutils.parsers.rst import Parser
+from docutils.parsers.rst import directives
 from docutils.parsers.rst import roles
 from docutils.readers.standalone import Reader
 from docutils.utils import Reporter

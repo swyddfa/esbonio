@@ -13,7 +13,6 @@ from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxServerConfig
 from esbonio.lsp.testing import make_esbonio_client
 
-
 root_path = pathlib.Path(__file__).parent / "workspace"
 
 SERVER_CMD = ["-m", "esbonio"]

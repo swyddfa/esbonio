@@ -4,12 +4,11 @@ import pytest
 from pygls.lsp.types import Location
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
-from pytest_lsp import check
 from pytest_lsp import Client
+from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import directive_argument_patterns
-
 
 ROOT_FILES = {
     "_static",

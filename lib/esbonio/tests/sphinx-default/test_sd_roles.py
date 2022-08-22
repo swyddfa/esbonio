@@ -8,14 +8,13 @@ from typing import Tuple
 import pytest
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
-from pytest_lsp import check
 from pytest_lsp import Client
+from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import hover_request
 from esbonio.lsp.testing import role_patterns
 from esbonio.lsp.testing import sphinx_version
-
 
 C_EXPECTED = {"c:func", "c:macro"}
 C_UNEXPECTED = {"py:func", "py:mod"}

@@ -7,9 +7,9 @@ import typing
 from functools import partial
 from multiprocessing import Process
 from multiprocessing import Queue
+from typing import IO
 from typing import Any
 from typing import Dict
-from typing import IO
 from typing import Iterator
 from typing import List
 from typing import Optional

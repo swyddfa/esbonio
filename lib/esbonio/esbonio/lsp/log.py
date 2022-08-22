@@ -10,8 +10,8 @@ from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 
 if typing.TYPE_CHECKING:
-    from .rst import ServerConfig
     from .rst import RstLanguageServer
+    from .rst import ServerConfig
 
 
 LOG_NAMESPACE = "esbonio.lsp"

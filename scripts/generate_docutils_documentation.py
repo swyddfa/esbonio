@@ -17,7 +17,6 @@ from docutils.parsers.rst import roles
 from docutils.utils import new_document
 from docutils.writers import Writer
 
-
 logger = logging.getLogger(__name__)
 
 

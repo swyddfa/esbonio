@@ -1,8 +1,8 @@
 import pytest
 
 from esbonio.lsp.roles import Roles
-from esbonio.lsp.rst import _get_setup_arguments
 from esbonio.lsp.rst import RstLanguageServer
+from esbonio.lsp.rst import _get_setup_arguments
 from esbonio.lsp.sphinx import SphinxLanguageServer
 
 
