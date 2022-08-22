@@ -1,10 +1,12 @@
 import re
 import typing
+import warnings
 from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
@@ -31,8 +33,79 @@ from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
 
 
+class DirectiveLanguageFeature:
+    """Base class for directive language features."""
+
+    def complete_arguments(
+        self, context: CompletionContext, domain: str, name: str
+    ) -> List[CompletionItem]:
+        """Return a list of completion items representing valid targets for the given
+        directive.
+
+        Parameters
+        ----------
+        context:
+           The completion context
+        domain:
+           The name of the domain the directive is a member of
+        name:
+           The name of the domain
+        """
+        return []
+
+    def resolve_link(
+        self,
+        context: DocumentLinkContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> Union[Tuple[str, str], str, None]:
+        """Resolve a document link request for the given argument.
+
+        Parameters
+        ----------
+        context:
+           The context of the document link request.
+        directive:
+           The name of the directive the argument is associated with.
+        domain:
+           The name of the domain the directive belongs to, if applicable.
+        argument:
+           The argument to resolve the link for.
+        """
+        return None
+
+    def find_definitions(
+        self,
+        context: DefinitionContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> List[Location]:
+        """Return a list of locations representing definitions of the given argument.
+
+        Parameters
+        ----------
+        context:
+           The context of the definition request.
+        directive:
+           The name of the directive the argument is associated with.
+        domain:
+           The name of the domain the directive belongs to, if applicable.
+        argument:
+           The argument to find the definition of.
+        """
+        return []
+
+
 class ArgumentCompletion(Protocol):
-    """A completion provider for directive arguments."""
+    """A completion provider for directive arguments.
+
+    .. deprecated:: xxxx
+
+       This will be removed in ``v1.0``, use subclasses of
+       :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` instead.
+    """
 
     def complete_arguments(
         self, context: CompletionContext, domain: str, name: str
@@ -52,7 +125,13 @@ class ArgumentCompletion(Protocol):
 
 
 class ArgumentDefinition(Protocol):
-    """A definition provider for directive arguments."""
+    """A definition provider for directive arguments.
+
+    .. deprecated:: xxxx
+
+       This will be removed in ``v1.0``, use subclasses of
+       :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` instead.
+    """
 
     def find_definitions(
         self,
@@ -77,7 +156,13 @@ class ArgumentDefinition(Protocol):
 
 
 class ArgumentLink(Protocol):
-    """A document link resolver for directive arguments."""
+    """A document link resolver for directive arguments.
+
+    .. deprecated:: xxxx
+
+       This will be removed in ``v1.0``, use subclasses of
+       :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` instead.
+    """
 
     def resolve_link(
         self,
@@ -110,49 +195,118 @@ class Directives(LanguageFeature):
         self._documentation: Dict[str, Dict[str, str]] = {}
         """Cache for documentation."""
 
-        self._argument_completion_providers: Dict[str, ArgumentCompletion] = {}
-        """A dictionary of providers that give completion suggestions for directive
-        arguments."""
+        self._features: Dict[str, DirectiveLanguageFeature] = {}
+        """The collection of registered features."""
 
-        self._argument_definition_providers: Dict[str, ArgumentDefinition] = {}
-        """A dictionary of providers that locate definitions for directive arguments."""
+    def add_feature(self, feature: DirectiveLanguageFeature):
+        """Register a directive language feature.
 
-        self._argument_link_providers: Dict[str, ArgumentLink] = {}
-        """A dictionary of providers that resolve document links for directive
-        arguments."""
+        Parameters
+        ----------
+        feature
+           The directive language feature
+        """
+        key = f"{feature.__module__}.{feature.__class__.__name__}"
+        self._features[key] = feature
 
     def add_argument_completion_provider(self, provider: ArgumentCompletion) -> None:
         """Register an :class:`~esbonio.lsp.directives.ArgumentCompletion` provider.
 
+        .. deprecated:: xxxx
+
+           This will be removed in ``v1.0``, use
+           :meth:`esbonio.lsp.directives.Directives.add_feature` with a
+           :class:`esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
+
         Parameters
         ----------
         provider:
            The provider to register.
         """
-        key = f"{provider.__module__}.{provider.__class__.__name__}"
-        self._argument_completion_providers[key] = provider
+        warnings.warn(
+            "ArgumentCompletion providers are deprecated in favour of "
+            "DirectiveLanguageFeatures, this method will be removed in v1.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        name = provider.__class__.__name__
+        key = f"{provider.__module__}.{name}.completion"
+
+        # Automatically derive the feature definition from the provider.
+        feature = type(
+            f"{name}CompletionProvider",
+            (DirectiveLanguageFeature,),
+            {"complete_arguments": provider.complete_arguments},
+        )()
+
+        self._features[key] = feature
 
     def add_argument_definition_provider(self, provider: ArgumentDefinition) -> None:
         """Register an :class:`~esbonio.lsp.directives.ArgumentDefinition` provider.
 
+        .. deprecated:: xxxx
+
+           This will be removed in ``v1.0``, use
+           :meth:`esbonio.lsp.directives.Directives.add_feature` with a
+           :class:`esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
+
         Parameters
         ----------
         provider:
            The provider to register.
         """
-        key = f"{provider.__module__}.{provider.__class__.__name__}"
-        self._argument_definition_providers[key] = provider
+        warnings.warn(
+            "ArgumentDefinition providers are deprecated in favour of "
+            "DirectiveLanguageFeatures, this method will be removed in v1.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        name = provider.__class__.__name__
+        key = f"{provider.__module__}.{name}.definitions"
+
+        # Automatically derive the feature definition from the provider.
+        feature = type(
+            f"{name}DefinitionProvider",
+            (DirectiveLanguageFeature,),
+            {"find_definitions": provider.find_definitions},
+        )()
+
+        self._features[key] = feature
 
     def add_argument_link_provider(self, provider: ArgumentLink) -> None:
         """Register an :class:`~esbonio.lsp.directives.ArgumentLink` provider.
 
+        .. deprecated:: xxxx
+
+           This will be removed in ``v1.0``, use
+           :meth:`esbonio.lsp.directives.Directives.add_feature` with a
+           :class:`esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
+
         Parameters
         ----------
         provider:
            The provider to register.
         """
-        key = f"{provider.__module__}.{provider.__class__.__name__}"
-        self._argument_link_providers[key] = provider
+        warnings.warn(
+            "ArgumentLink providers are deprecated in favour of "
+            "DirectiveLanguageFeatures, this method will be removed in v1.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        name = provider.__class__.__name__
+        key = f"{provider.__module__}.{name}.links"
+
+        # Automatically derive the feature definition from the provider.
+        feature = type(
+            f"{name}LinkProvider",
+            (DirectiveLanguageFeature,),
+            {"resolve_link": provider.resolve_link},
+        )()
+
+        self._features[key] = feature
 
     def add_documentation(self, documentation: Dict[str, Dict[str, Any]]) -> None:
         """Register directive documentation.
@@ -280,8 +434,8 @@ class Directives(LanguageFeature):
         name = context.match.group("name")
         domain = context.match.group("domain") or ""
 
-        for provider_name, provider in self._argument_completion_providers.items():
-            arguments += provider.complete_arguments(context, domain, name) or []
+        for feature in self._features.values():
+            arguments += feature.complete_arguments(context, domain, name) or []
 
         return arguments
 
@@ -470,9 +624,9 @@ class Directives(LanguageFeature):
     ) -> List[Location]:
         definitions = []
 
-        for _, provider in self._argument_definition_providers.items():
+        for feature in self._features.values():
             definitions += (
-                provider.find_definitions(context, directive, domain, argument) or []
+                feature.find_definitions(context, directive, domain, argument) or []
             )
 
         return definitions
@@ -492,11 +646,15 @@ class Directives(LanguageFeature):
 
                 target = None
                 tooltip = None
-                for provider in self._argument_link_providers.values():
-                    target, tooltip = provider.resolve_link(
-                        context, name, domain, argument
-                    )
-                    if target:
+                for feature in self._features.values():
+                    result = feature.resolve_link(context, name, domain, argument)
+
+                    if isinstance(result, str):
+                        target = result
+                        break
+
+                    if isinstance(result, tuple) and isinstance(result[0], str):
+                        target, tooltip = result
                         break
 
                 if not target:

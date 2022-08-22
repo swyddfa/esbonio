@@ -1,0 +1,1 @@
+``ArgumentCompletion``, ``ArgumentDefinition`` and ``ArgumentLink`` directive providers have been deprecated in favour of ``DirectiveLanguageFeatures`` and will be removed in ``v1.0``
