@@ -16,9 +16,6 @@
     "categories": [
         "Programming Languages"
     ],
-    "extensionPack": [
-        "trond-snekvik.simple-rst"
-    ],
     "scripts": {
         "compile": "webpack --mode development",
         "compile-test": "npm run clean && tsc -p ./src/node",
