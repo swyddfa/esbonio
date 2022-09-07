@@ -1,3 +1,12 @@
+v0.10.1 - 2022-09-07
+--------------------
+
+Removed
+^^^^^^^
+
+- The reStructuredText Syntax Highlighting extension is no longer included via VSCode's "Extension Pack" feature as these rules are now distributed with VSCode itself. (`#447 <https://github.com/swyddfa/esbonio/issues/447>`_)
+
+
 v0.10.0 - 2022-08-02
 --------------------
 

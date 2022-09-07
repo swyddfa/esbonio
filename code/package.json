@@ -8,16 +8,13 @@
     "author": "Swyddfa Developers",
     "publisher": "swyddfa",
     "license": "MIT",
-    "version": "0.10.0",
+    "version": "0.10.1",
     "keywords": [
         "sphinx",
         "documentation"
     ],
     "categories": [
         "Programming Languages"
-    ],
-    "extensionPack": [
-        "trond-snekvik.simple-rst"
     ],
     "scripts": {
         "compile": "webpack --mode development",
