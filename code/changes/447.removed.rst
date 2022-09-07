@@ -1,1 +1,0 @@
-The reStructuredText Syntax Highlighting extension is no longer included via VSCode's "Extension Pack" feature as these rules are now distributed with VSCode itself.
