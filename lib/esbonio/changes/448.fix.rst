@@ -1,1 +1,0 @@
-``textDocument/documentSymbol`` requests should no longer fail on substitution definitions.

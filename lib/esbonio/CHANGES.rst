@@ -1,3 +1,12 @@
+v0.14.1 - 2022-09-11
+--------------------
+
+Fixes
+^^^^^
+
+- ``textDocument/documentSymbol`` requests should no longer fail on substitution definitions. (`#448 <https://github.com/swyddfa/esbonio/issues/448>`_)
+
+
 v0.14.0 - 2022-07-31
 --------------------
 
