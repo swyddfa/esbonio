@@ -7,6 +7,10 @@ DIRECTIVE = re.compile(
     (?P<directive>
       \.\.                            # directives start with a comment
       [ ]?                            # followed by a space
+      (?P<substitution>\|             # this could be a substitution definition
+        (?P<substitution_text>[^|]+)?
+      \|?)?
+      [ ]?
       ((?P<domain>[\w]+):(?!:))?      # directives may include a domain
       (?P<name>([\w-]|:(?!:))+)?      # directives have a name
       (::)?                           # directives end with '::'
