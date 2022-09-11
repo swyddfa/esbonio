@@ -1,10 +1,10 @@
-import py.test
+import pytest
 
 from esbonio.lsp.directives import DIRECTIVE
 from esbonio.lsp.directives import DIRECTIVE_OPTION
 
 
-@py.test.mark.parametrize(
+@pytest.mark.parametrize(
     "string, expected",
     [
         (".", None),
@@ -12,6 +12,46 @@ from esbonio.lsp.directives import DIRECTIVE_OPTION
         (".. d", {"directive": ".. d"}),
         (".. image::", {"name": "image", "directive": ".. image::"}),
         (".. c:", {"domain": "c", "directive": ".. c:"}),
+        (".. |", {"directive": ".. |", "substitution": "|"}),
+        (
+            ".. |e",
+            {"directive": ".. |e", "substitution": "|e", "substitution_text": "e"},
+        ),
+        (
+            ".. |example",
+            {
+                "directive": ".. |example",
+                "substitution": "|example",
+                "substitution_text": "example",
+            },
+        ),
+        (
+            ".. |example|",
+            {
+                "directive": ".. |example|",
+                "substitution": "|example|",
+                "substitution_text": "example",
+            },
+        ),
+        (
+            ".. |example| replace::",
+            {
+                "directive": ".. |example| replace::",
+                "substitution": "|example|",
+                "substitution_text": "example",
+                "name": "replace",
+            },
+        ),
+        (
+            ".. |example| replace:: some text here",
+            {
+                "directive": ".. |example| replace::",
+                "substitution": "|example|",
+                "substitution_text": "example",
+                "name": "replace",
+                "argument": "some text here",
+            },
+        ),
         (
             ".. c:function::",
             {"name": "function", "domain": "c", "directive": ".. c:function::"},
@@ -105,10 +145,10 @@ def test_directive_regex(string, expected):
         assert match is not None
 
         for name, value in expected.items():
-            assert match.groupdict().get(name, None) == value
+            assert match.groupdict().get(name, None) == value, name
 
 
-@py.test.mark.parametrize(
+@pytest.mark.parametrize(
     "string, expected",
     [
         (":", None),
