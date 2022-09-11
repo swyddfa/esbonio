@@ -25,7 +25,7 @@ from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import ROLE
 
 
-class a_directive(nodes.Element):
+class a_directive(nodes.Element, nodes.Inline):
     """Represents a directive."""
 
 
@@ -53,10 +53,21 @@ class DummyDirective(Directive):
     def run(self):
         node = a_directive()
         node.line = self.lineno
+        parent = self.state.parent
+        lines = self.block_text
 
-        match = DIRECTIVE.match(self.block_text.split("\n")[0])
-        node.attributes.update(match.groupdict())
-        node.attributes["text"] = match.group(0)
+        # substitution definitions require special handling
+        if isinstance(parent, nodes.substitution_definition):
+            lines = parent.rawsource
+
+        text = lines.split("\n")[0]
+        match = DIRECTIVE.match(text)
+        if match:
+            node.attributes.update(match.groupdict())
+            node.attributes["text"] = match.group(0)
+        else:
+            self.state.reporter.warning(f"Unable to parse directive: '{text}'")
+            node.attributes["text"] = text
 
         if self.content:
             # This is essentially what `nested_parse_with_titles` does in Sphinx.
