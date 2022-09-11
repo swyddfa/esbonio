@@ -68,3 +68,5 @@ length of a missing side of a right angled triangle when the other two are known
    :param float b: The length of the side labelled ``b``
    :return: Then length of the side ``a``
    :rtype: float
+
+.. |rhs| replace:: right hand side

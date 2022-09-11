@@ -21,6 +21,29 @@ def from_str(spec: str):
     )
 
 
+def check_symbols(actual: DocumentSymbol, expected: DocumentSymbol):
+    """Ensure that the given ``DocumentSymbols`` are equivalent."""
+
+    assert isinstance(actual, DocumentSymbol)
+
+    assert actual.name == expected.name
+    assert actual.kind == expected.kind
+    assert actual.range == expected.range
+    assert actual.selection_range == expected.selection_range
+
+    if expected.children is None:
+        assert actual.children is None
+        return
+
+    assert actual.children is not None
+    assert len(actual.children) == len(
+        expected.children
+    ), f"Children mismatch in symbol '{actual.name}'"
+
+    for actual_child, expected_child in zip(actual.children, expected.children):
+        check_symbols(actual_child, expected_child)
+
+
 def symbol(
     name: str,
     kind: SymbolKind,
@@ -123,6 +146,11 @@ def symbol(
                                     kind=SymbolKind.Class,
                                     range="62:0-62:51",
                                 ),
+                                symbol(
+                                    name=".. |rhs| replace:: right hand side",
+                                    kind=SymbolKind.Class,
+                                    range="71:0-71:33",
+                                ),
                             ],
                         ),
                     ],
@@ -131,10 +159,19 @@ def symbol(
         ),
     ],
 )
-async def test_document_symbols(client: Client, filepath: str, expected):
+async def test_document_symbols(
+    client: Client, filepath: str, expected: List[DocumentSymbol]
+):
     """Ensure that we handle ``textDocument/documentSymbols`` requests correctly"""
 
     test_uri = client.root_uri + f"/{filepath}"
-    symbols = await client.document_symbols_request(test_uri)
+    actual = await client.document_symbols_request(test_uri)
 
-    assert symbols == expected
+    if expected is None:
+        assert actual is None
+        return
+
+    assert actual is not None
+    assert len(actual) == len(expected)
+    for actual_symbol, expected_symbol in zip(actual, expected):
+        check_symbols(actual_symbol, expected_symbol)
