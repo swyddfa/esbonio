@@ -75,7 +75,7 @@ class DirectiveLanguageFeature:
         """
         return None
 
-    def find_definitions(
+    def find_argument_definitions(
         self,
         context: DefinitionContext,
         directive: str,
@@ -248,8 +248,8 @@ class Directives(LanguageFeature):
         .. deprecated:: xxxx
 
            This will be removed in ``v1.0``, use
-           :meth:`esbonio.lsp.directives.Directives.add_feature` with a
-           :class:`esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
+           :meth:`~esbonio.lsp.directives.Directives.add_feature` with a
+           :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
 
         Parameters
         ----------
@@ -270,7 +270,7 @@ class Directives(LanguageFeature):
         feature = type(
             f"{name}DefinitionProvider",
             (DirectiveLanguageFeature,),
-            {"find_definitions": provider.find_definitions},
+            {"find_argument_definitions": provider.find_definitions},
         )()
 
         self._features[key] = feature
@@ -626,7 +626,8 @@ class Directives(LanguageFeature):
 
         for feature in self._features.values():
             definitions += (
-                feature.find_definitions(context, directive, domain, argument) or []
+                feature.find_argument_definitions(context, directive, domain, argument)
+                or []
             )
 
         return definitions
