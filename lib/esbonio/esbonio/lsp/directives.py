@@ -53,7 +53,7 @@ class DirectiveLanguageFeature:
         """
         return []
 
-    def resolve_link(
+    def resolve_argument_link(
         self,
         context: DocumentLinkContext,
         directive: str,
@@ -281,8 +281,8 @@ class Directives(LanguageFeature):
         .. deprecated:: xxxx
 
            This will be removed in ``v1.0``, use
-           :meth:`esbonio.lsp.directives.Directives.add_feature` with a
-           :class:`esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
+           :meth:`~esbonio.lsp.directives.Directives.add_feature` with a
+           :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
 
         Parameters
         ----------
@@ -303,7 +303,7 @@ class Directives(LanguageFeature):
         feature = type(
             f"{name}LinkProvider",
             (DirectiveLanguageFeature,),
-            {"resolve_link": provider.resolve_link},
+            {"resolve_argument_link": provider.resolve_link},
         )()
 
         self._features[key] = feature
@@ -648,7 +648,9 @@ class Directives(LanguageFeature):
                 target = None
                 tooltip = None
                 for feature in self._features.values():
-                    result = feature.resolve_link(context, name, domain, argument)
+                    result = feature.resolve_argument_link(
+                        context, name, domain, argument
+                    )
 
                     if isinstance(result, str):
                         target = result
