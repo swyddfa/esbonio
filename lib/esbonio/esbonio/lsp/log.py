@@ -126,6 +126,7 @@ def setup_logging(server: "RstLanguageServer", config: "ServerConfig"):
 
     level = LOG_LEVELS[config.log_level]
 
+    warnlog = logging.getLogger("py.warnings")
     logger = logging.getLogger(LOG_NAMESPACE)
     logger.setLevel(level)
 
@@ -150,3 +151,4 @@ def setup_logging(server: "RstLanguageServer", config: "ServerConfig"):
         logger.removeHandler(handler)
 
     logger.addHandler(lsp_handler)
+    warnlog.addHandler(lsp_handler)
