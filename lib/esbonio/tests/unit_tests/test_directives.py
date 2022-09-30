@@ -1,5 +1,7 @@
 from typing import Dict
+from typing import Iterable
 from typing import List
+from typing import Optional
 from unittest.mock import Mock
 
 import pytest
@@ -18,19 +20,39 @@ class Simple(DirectiveLanguageFeature):
     def __init__(self, names: List[str]):
         self.directives = {name: Directive for name in names}
 
+    def get_implementation(
+        self, directive: str, domain: Optional[str]
+    ) -> Optional[Directive]:
+        return self.directives.get(directive, None)
+
     def index_directives(self) -> Dict[str, Directive]:
         return self.directives
 
     # The default `suggest_directives` implementation should be sufficient.
 
+    def suggest_options(
+        self, context: CompletionContext, directive: str, domain: Optional[str]
+    ) -> Iterable[str]:
+        return iter(directive) if directive in self.directives else []
+
 
 class Broken(DirectiveLanguageFeature):
     """A directive language feature that only throws exceptions."""
+
+    def get_implementation(
+        self, directive: str, domain: Optional[str]
+    ) -> Optional[Directive]:
+        raise NotImplementedError()
 
     def index_directives(self) -> Dict[str, Directive]:
         raise NotImplementedError()
 
     # The default `suggest_directives` implementation should be sufficient.
+
+    def suggest_options(
+        self, context: CompletionContext, directive: str, domain: Optional[str]
+    ) -> Iterable[str]:
+        raise NotImplementedError()
 
 
 @pytest.fixture()
@@ -88,6 +110,31 @@ def test_get_directives_error(broken: Directives):
     assert args[0].startswith("Unable to index directives")
 
 
+def test_get_implementation(simple: Directives):
+    """Ensure that we can correctly combine directives from multiple sources."""
+
+    impl = simple.get_implementation("one", None)
+    assert impl == Directive
+
+    impl = simple.get_implementation("four", None)
+    assert impl == Directive
+
+    # All should be well
+    simple.logger.error.assert_not_called()
+
+
+def test_get_implementation_error(broken: Directives):
+    """Ensure we can gracefully handle errors in directive language features."""
+
+    impl = broken.get_implementation("four", None)
+    assert impl == Directive
+
+    # The error should've been logged
+    broken.logger.error.assert_called_once()
+    args = broken.logger.error.call_args.args
+    assert args[0].startswith("Unable to get implementation for")
+
+
 def test_suggest_directives(simple: Directives):
     """Ensure that we can correctly combine directives from multiple sources."""
 
@@ -118,6 +165,36 @@ def test_suggest_directives_error(broken: Directives):
     broken.logger.error.assert_called_once()
     args = broken.logger.error.call_args.args
     assert args[0].startswith("Unable to suggest directives")
+
+
+def test_suggest_options(simple: Directives):
+    """Ensure that we can correctly combine directives from multiple sources."""
+
+    context = CompletionContext(
+        doc=Mock(), location="rst", match=Mock(), position=Mock(), capabilities=Mock()
+    )
+
+    items = simple.suggest_options(context, "four", None)
+    assert list(items) == ["f", "o", "u", "r"]
+
+    # All should be well
+    simple.logger.error.assert_not_called()
+
+
+def test_suggest_options_error(broken: Directives):
+    """Ensure that we can gracefully handle errors in directive language features."""
+
+    context = CompletionContext(
+        doc=Mock(), location="rst", match=Mock(), position=Mock(), capabilities=Mock()
+    )
+
+    items = broken.suggest_options(context, "four", None)
+    assert list(items) == ["f", "o", "u", "r"]
+
+    # The error should've been logged
+    broken.logger.error.assert_called_once()
+    args = broken.logger.error.call_args.args
+    assert args[0].startswith("Unable to suggest options for ")
 
 
 @pytest.mark.parametrize(
