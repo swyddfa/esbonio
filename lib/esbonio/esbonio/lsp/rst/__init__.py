@@ -1,5 +1,4 @@
 import collections
-import importlib
 import inspect
 import logging
 import pathlib
@@ -15,7 +14,6 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
-from typing import Union
 
 import docutils.parsers.rst.roles as docutils_roles
 import pygls.uris as Uri
@@ -810,23 +808,6 @@ class RstLanguageServer(LanguageServer):
         """
         idx = doc.offset_at_position(position)
         return doc.source[:idx]
-
-
-def resolve_directive(directive: Union[Directive, Tuple[str, str]]) -> Directive:
-    """Return the directive based on the given reference.
-
-    'Core' docutils directives are returned as tuples ``(modulename, ClassName)``
-    so they need to be resolved manually.
-    """
-
-    if isinstance(directive, tuple):
-        mod, cls = directive
-
-        modulename = "docutils.parsers.rst.directives.{}".format(mod)
-        module = importlib.import_module(modulename)
-        return getattr(module, cls)
-
-    return directive
 
 
 def normalise_uri(uri: str) -> str:
