@@ -75,10 +75,13 @@ async def test_directive_completions(
     results = await completion_request(client, test_uri, text)
 
     items = {item.label for item in results.items}
-    expected = expected or set()
     unexpected = unexpected or set()
 
-    assert expected == items & expected
+    if expected is None:
+        assert items == set()
+    else:
+        assert expected == items & expected
+
     assert set() == items & unexpected
 
     check.completion_items(client, results.items)
