@@ -17,7 +17,6 @@ from typing import Type
 from typing import TypeVar
 from typing import Union
 
-import docutils.parsers.rst.directives as docutils_directives
 import docutils.parsers.rst.roles as docutils_roles
 import pygls.uris as Uri
 from docutils.parsers.rst import Directive
@@ -596,22 +595,20 @@ class RstLanguageServer(LanguageServer):
     def get_directives(self) -> Dict[str, Directive]:
         """Return a dictionary of the known directives"""
 
-        if self._directives is not None:
-            return self._directives
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_directives() is deprecated and will be removed in v1.0."
+            " Instead call the get_directives() method on the Directives language "
+            "feature.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
-        ignored_directives = ["restructuredtext-test-directive"]
-        found_directives = {
-            **docutils_directives._directive_registry,
-            **docutils_directives._directives,
-        }
+        feature = self.get_feature("esbonio.lsp.directives.Directives")
+        if feature is None:
+            return {}
 
-        self._directives = {
-            k: resolve_directive(v)
-            for k, v in found_directives.items()
-            if k not in ignored_directives
-        }
-
-        return self._directives
+        return feature.get_directives()  # type: ignore
 
     def get_directive_options(self, name: str) -> Dict[str, Any]:
         """Return the options specification for the given directive."""

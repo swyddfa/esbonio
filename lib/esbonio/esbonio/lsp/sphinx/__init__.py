@@ -16,7 +16,6 @@ from typing import Optional
 from typing import Tuple
 
 import pygls.uris as Uri
-from docutils.parsers.rst import Directive
 from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DiagnosticSeverity
@@ -453,23 +452,6 @@ class SphinxLanguageServer(RstLanguageServer):
                 prefix = ""
 
             yield prefix, domain
-
-    def get_directives(self) -> Dict[str, Directive]:
-        """Return a dictionary of the known directives"""
-
-        if self._directives is not None:
-            return self._directives
-
-        self._directives = super().get_directives()
-
-        for prefix, domain in self.get_domains():
-            fmt = "{prefix}:{name}" if prefix else "{name}"
-
-            for name, directive in domain.directives.items():
-                key = fmt.format(name=name, prefix=prefix)
-                self._directives[key] = directive
-
-        return self._directives
 
     def get_directive_options(self, name: str) -> Dict[str, Any]:
         """Return the options specification for the given directive."""
