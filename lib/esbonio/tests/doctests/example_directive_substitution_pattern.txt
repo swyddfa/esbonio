@@ -1,0 +1,20 @@
+>>> from esbonio.lsp.util.patterns import DIRECTIVE
+>>> match = DIRECTIVE.match(".. |example| replace:: this is an example")
+
+>>> match.group("name")
+'replace'
+
+>>> match.group("domain") is None
+True
+
+>>> match.group("substitution")
+'|example|'
+
+>>> match.group("substitution_text")
+'example'
+
+>>> match.group("directive")
+'.. |example| replace::'
+
+>>> match.group("argument")
+'this is an example'

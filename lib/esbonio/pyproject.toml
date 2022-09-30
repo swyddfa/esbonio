@@ -8,6 +8,7 @@ known_first_party = ["esbonio"]
 profile = "black"
 
 [tool.pytest.ini_options]
+addopts = "--doctest-glob='*.txt'"
 asyncio_mode = "auto"
 filterwarnings = [
     "ignore:'contextfunction' is renamed to 'pass_context',*:DeprecationWarning",

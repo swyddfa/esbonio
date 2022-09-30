@@ -7,9 +7,10 @@ In order to support the extensible nature of reStructuredText and Sphinx, Esboni
 This section of the documentation outlines the server's architecture and how you can write your own extensions.
 
 .. toctree::
-   :hidden:
+   :maxdepth: 1
 
-   api-reference
+   extending/directives
+   extending/api-reference
 
 .. _lsp_architecture:
 
@@ -58,19 +59,6 @@ Architecture
       Ordinary Python modules are used to group related functionality together.
       Taking inspiration from how Sphinx is architected, language servers are assembled by passing the list of modules to load to the :func:`~esbonio.lsp.create_language_server`.
       This assembly process calls any functions with the name ``esbonio_setup`` allowing for ``LanguageFeatures`` to be configured and loaded into the server.
-
-      Here is an example of such a setup function.
-
-      .. literalinclude:: ../../lib/esbonio/esbonio/lsp/directives.py
-         :language: python
-         :start-at: def esbonio_setup
-
-   Provider
-      Being a Python class ``LanguageFeatures`` can do whatever you like.
-
-      However, a pattern commonly used in Esbonio is allowing multiple "providers" to be registered with a ``LanguageFeature``, extending its functionality in some way.
-      The API that a provider must implement varies and is defined by the language feature that uses it. An example of such a provider it the :class:`~esbonio.lsp.directives.ArgumentCompletion`
-      provider which allows extensions to provide completion suggestions for directive arguments.
 
    Startup Module
       As mentioned above, language servers are assembled and this is done inside a startup module.
