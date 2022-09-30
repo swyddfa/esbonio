@@ -453,26 +453,6 @@ class SphinxLanguageServer(RstLanguageServer):
 
             yield prefix, domain
 
-    def get_directive_options(self, name: str) -> Dict[str, Any]:
-        """Return the options specification for the given directive."""
-
-        directive = self.get_directives().get(name, None)
-        if directive is None:
-            return {}
-
-        options = directive.option_spec
-
-        if name.startswith("auto") and self.app:
-            self.logger.debug("Processing options for '%s' directive", name)
-            name = name.replace("auto", "")
-
-            self.logger.debug("Documenter name is '%s'", name)
-            documenter = self.app.registry.documenters.get(name, None)
-
-            if documenter is not None:
-                options = documenter.option_spec
-
-        return options or {}
 
     def get_roles(self) -> Dict[str, Any]:
         """Return a dictionary of known roles."""

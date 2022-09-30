@@ -613,6 +613,14 @@ class RstLanguageServer(LanguageServer):
     def get_directive_options(self, name: str) -> Dict[str, Any]:
         """Return the options specification for the given directive."""
 
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_directive_options() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         directive = self.get_directives().get(name, None)
         if directive is None:
             return {}

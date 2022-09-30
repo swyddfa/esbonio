@@ -56,6 +56,11 @@ class DirectiveLanguageFeature:
         """
         return []
 
+    def get_implementation(
+        self, directive: str, domain: Optional[str]
+    ) -> Optional[Directive]:
+        """Return the implementation for the given directive name."""
+        return self.index_directives().get(directive, None)
 
     def index_directives(self) -> Dict[str, Directive]:
         """Return all known directives."""
@@ -66,6 +71,12 @@ class DirectiveLanguageFeature:
     ) -> Iterable[Tuple[str, Directive]]:
         """Suggest directives that may be used, given a completion context."""
         return self.index_directives().items()
+
+    def suggest_options(
+        self, context: CompletionContext, directive: str, domain: Optional[str]
+    ) -> Iterable[str]:
+        """Suggest directive options that may be used, given a completion context."""
+        return []
 
     def resolve_argument_link(
         self,
@@ -422,6 +433,40 @@ class Directives(LanguageFeature):
 
         return directives
 
+    def get_implementation(
+        self, directive: str, domain: Optional[str]
+    ) -> Optional[Directive]:
+        """Suggest directives that may be used, given a completion context.
+
+        Parameters
+        ----------
+        context
+           The CompletionContext.
+        """
+
+        if domain:
+            name = f"{domain}:{directive}"
+        else:
+            name = directive
+
+        for feature_name, feature in self._features.items():
+            try:
+                impl = feature.get_implementation(directive, domain)
+                if impl is not None:
+                    return impl
+            except Exception:
+                self.logger.error(
+                    "Unable to get implementation for '%s', error in feature: '%s'\n%s",
+                    name,
+                    feature_name,
+                    traceback.format_exc(),
+                )
+
+        self.logger.debug(
+            "Unable to get implementation for '%s', unknown directive", name
+        )
+        return None
+
     def suggest_directives(
         self, context: CompletionContext
     ) -> Iterable[Tuple[str, Directive]]:
@@ -440,6 +485,27 @@ class Directives(LanguageFeature):
                 self.logger.error(
                     "Unable to suggest directives, error in feature: '%s'\n%s",
                     name,
+                    traceback.format_exc(),
+                )
+
+    def suggest_options(
+        self, context: CompletionContext, directive: str, domain: Optional[str]
+    ) -> Iterable[str]:
+        """Suggest directive options that may be used, given a completion context."""
+
+        if domain:
+            name = f"{domain}:{directive}"
+        else:
+            name = directive
+
+        for feature_name, feature in self._features.items():
+            try:
+                yield from feature.suggest_options(context, directive, domain)
+            except Exception:
+                self.logger.error(
+                    "Unable to suggest options for directive '%s', error in feature: '%s'\n%s",
+                    name,
+                    feature_name,
                     traceback.format_exc(),
                 )
 
@@ -572,23 +638,20 @@ class Directives(LanguageFeature):
 
     def complete_options(self, context: CompletionContext) -> List[CompletionItem]:
 
-        surrounding_directive = self.get_surrounding_directive(context)
+        surrounding_directive = self._get_surrounding_directive(context)
         if not surrounding_directive:
             return []
 
-        domain = ""
-        if surrounding_directive.group("domain"):
-            domain = f'{surrounding_directive.group("domain")}:'
-
-        name = f"{domain}{surrounding_directive.group('name')}"
-        directive = self.rst.get_directives().get(name, None)
-
-        if not directive:
+        name = surrounding_directive.group("name")
+        domain = surrounding_directive.group("domain")
+        impl = self.get_implementation(name, domain)
+        if impl is None:
             return []
 
         items = []
         match = context.match
         groups = match.groupdict()
+        impl_name = f"{impl.__module__}.{impl.__name__}"
 
         option = groups["option"]
         start = match.span()[0] + match.group(0).find(option)
@@ -599,19 +662,23 @@ class Directives(LanguageFeature):
             end=Position(line=context.position.line, character=end),
         )
 
-        for option in self.rst.get_directive_options(name):
-            insert_text = f":{option}:"
+        for feature in self._features.values():
+            for option in feature.suggest_options(context, name, domain):
+                insert_text = f":{option}:"
 
-            items.append(
-                CompletionItem(
-                    label=option,
-                    detail=f"{directive.__module__}.{directive.__name__}:{option}",
-                    kind=CompletionItemKind.Field,
-                    filter_text=insert_text,
-                    text_edit=TextEdit(range=range_, new_text=insert_text),
-                    data={"completion_type": "directive_option", "for_directive": name},
+                items.append(
+                    CompletionItem(
+                        label=option,
+                        detail=f"{impl_name}:{option}",
+                        kind=CompletionItemKind.Field,
+                        filter_text=insert_text,
+                        text_edit=TextEdit(range=range_, new_text=insert_text),
+                        data={
+                            "completion_type": "directive_option",
+                            "for_directive": name,
+                        },
+                    )
                 )
-            )
 
         return items
 
@@ -803,7 +870,7 @@ class Directives(LanguageFeature):
 
         return [location]
 
-    def get_surrounding_directive(
+    def _get_surrounding_directive(
         self, context: CompletionContext
     ) -> Optional["re.Match"]:
         """Used to determine which directive we should be offering completions for.
