@@ -60,28 +60,6 @@ Language Features
 .. autoclass:: esbonio.lsp.DocumentLinkContext
    :members:
 
-Directives
-^^^^^^^^^^
-
-.. currentmodule:: esbonio.lsp.directives
-
-.. autodata:: DIRECTIVE
-   :annotation: = re.compile(...)
-
-.. autodata:: DIRECTIVE_OPTION
-   :annotation: = re.compile(...)
-
-.. autoclass:: ArgumentCompletion
-   :members:
-
-.. autoclass:: ArgumentDefinition
-   :members:
-
-.. autoclass:: ArgumentLink
-   :members:
-
-.. autoclass:: Directives
-   :members: add_argument_completion_provider, add_argument_definition_provider, add_argument_link_provider, add_documentation
 
 Roles
 ^^^^^
