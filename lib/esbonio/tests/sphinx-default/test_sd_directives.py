@@ -22,15 +22,15 @@ EXPECTED = {
     "toctree",
     "c:macro",
     "c:function",
+    "py:function",
+    "py:module",
+    "std:program",
+    "std:option",
 }
 
 UNEXPECTED = {
     "autoclass",
     "automodule",
-    "py:function",
-    "py:module",
-    "std:program",
-    "std:option",
     "restructuredtext-test-directive",
 }
 
@@ -45,9 +45,15 @@ UNEXPECTED = {
         (".. d", EXPECTED, UNEXPECTED),
         (".. code-b", EXPECTED, UNEXPECTED),
         (".. codex-block:: ", None, None),
-        (".. py:", None, None),
-        (".. c:", {"c:macro", "c:function"}, {"function", "image", "toctree"}),
-        (".. _some_label:", None, None),
+        (".. c:", EXPECTED, UNEXPECTED),
+        pytest.param(
+            ".. _some_label:",
+            None,
+            None,
+            marks=pytest.mark.xfail(
+                reason="TODO: Is there a way not to offer directive suggestions here?"
+            ),
+        ),
         ("   .", None, None),
         ("   ..", EXPECTED, UNEXPECTED),
         ("   .. ", EXPECTED, UNEXPECTED),
@@ -55,9 +61,15 @@ UNEXPECTED = {
         ("   .. doctest:: ", None, None),
         ("   .. code-b", EXPECTED, UNEXPECTED),
         ("   .. codex-block:: ", None, None),
-        ("   .. py:", None, None),
-        ("   .. _some_label:", None, None),
-        ("   .. c:", {"c:macro", "c:function"}, {"function", "image", "toctree"}),
+        pytest.param(
+            "   .. _some_label:",
+            None,
+            None,
+            marks=pytest.mark.xfail(
+                reason="TODO: Is there a way not to offer directive suggestions here?"
+            ),
+        ),
+        ("   .. c:", EXPECTED, UNEXPECTED),
     ],
 )
 async def test_directive_completions(
