@@ -856,14 +856,15 @@ class Directives(LanguageFeature):
         self, context: ImplementationContext, name: str, domain: Optional[str]
     ) -> List[Location]:
 
-        directives = self.rst.get_directives()
-        key = f"{domain}:{name}" if domain is not None else name
-
-        impl = directives.get(key, None)
+        impl = self.get_implementation(name, domain)
         if impl is None:
             return []
 
-        self.logger.debug("Getting implementation of '%s' (%s)", key, impl)
+        self.logger.debug(
+            "Getting implementation of '%s' (%s)",
+            f"{domain}:{name}" if domain else name,
+            impl,
+        )
         location = get_object_location(impl, self.logger)
         if location is None:
             return []
