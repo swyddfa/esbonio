@@ -245,8 +245,8 @@ class Directives(LanguageFeature):
         .. deprecated:: xxxx
 
            This will be removed in ``v1.0``, use
-           :meth:`esbonio.lsp.directives.Directives.add_feature` with a
-           :class:`esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
+           :meth:`~esbonio.lsp.directives.Directives.add_feature` with a
+           :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
 
         Parameters
         ----------
