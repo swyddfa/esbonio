@@ -1,13 +1,16 @@
 import re
+import traceback
 import typing
 import warnings
 from typing import Any
 from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Union
 
+from docutils.parsers.rst import Directive
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import DocumentLink
@@ -52,6 +55,17 @@ class DirectiveLanguageFeature:
            The name of the domain
         """
         return []
+
+
+    def index_directives(self) -> Dict[str, Directive]:
+        """Return all known directives."""
+        return dict()
+
+    def suggest_directives(
+        self, context: CompletionContext
+    ) -> Iterable[Tuple[str, Directive]]:
+        """Suggest directives that may be used, given a completion context."""
+        return self.index_directives().items()
 
     def resolve_argument_link(
         self,
@@ -207,6 +221,11 @@ class Directives(LanguageFeature):
            The directive language feature
         """
         key = f"{feature.__module__}.{feature.__class__.__name__}"
+
+        # Create an unique key for this instance.
+        if key in self._features:
+            key += f".{len([k for k in self._features.keys() if k.startswith(key)])}"
+
         self._features[key] = feature
 
     def add_argument_completion_provider(self, provider: ArgumentCompletion) -> None:
@@ -386,6 +405,44 @@ class Directives(LanguageFeature):
             doc["description"] = "\n".join(description)
             self._documentation[key] = doc
 
+    def get_directives(self) -> Dict[str, Directive]:
+        """Return a dictionary of all known directives."""
+
+        directives = {}
+
+        for name, feature in self._features.items():
+            try:
+                directives.update(feature.index_directives())
+            except Exception:
+                self.logger.error(
+                    "Unable to index directives, error in feature '%s'\n%s",
+                    name,
+                    traceback.format_exc(),
+                )
+
+        return directives
+
+    def suggest_directives(
+        self, context: CompletionContext
+    ) -> Iterable[Tuple[str, Directive]]:
+        """Suggest directives that may be used, given a completion context.
+
+        Parameters
+        ----------
+        context
+           The CompletionContext.
+        """
+
+        for name, feature in self._features.items():
+            try:
+                yield from feature.suggest_directives(context)
+            except Exception:
+                self.logger.error(
+                    "Unable to suggest directives, error in feature: '%s'\n%s",
+                    name,
+                    traceback.format_exc(),
+                )
+
     completion_triggers = [DIRECTIVE, DIRECTIVE_OPTION]
     definition_triggers = [DIRECTIVE]
     hover_triggers = [DIRECTIVE]
@@ -446,10 +503,6 @@ class Directives(LanguageFeature):
         match = context.match
         groups = match.groupdict()
 
-        domain = ""
-        if groups["domain"]:
-            domain = f'{groups["domain"]}:'
-
         # Calculate the range of text the CompletionItems should edit.
         # If there is an existing argument to the directive, we should leave it untouched
         # otherwise, edit the whole line to insert any required arguments.
@@ -466,10 +519,7 @@ class Directives(LanguageFeature):
             end=Position(line=context.position.line, character=end),
         )
 
-        for name, directive in self.rst.get_directives().items():
-
-            if not name.startswith(domain):
-                continue
+        for name, directive in self.suggest_directives(context):
 
             # TODO: Give better names to arguments based on what they represent.
             if include_argument:
