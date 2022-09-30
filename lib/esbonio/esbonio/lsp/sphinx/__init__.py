@@ -60,14 +60,15 @@ IS_LINUX = platform.system() == "Linux"
 DEFAULT_MODULES = [
     "esbonio.lsp.directives",         # Generic directive support
     "esbonio.lsp.roles",              # Generic roles support
-    "esbonio.lsp.rst.directives",     # Specialised support for docutils directives
-    "esbonio.lsp.rst.roles",          # Specialised support for docutils roles
-    "esbonio.lsp.sphinx.codeblocks",  # Support for code-block, highlight, etc.
-    "esbonio.lsp.sphinx.domains",     # Support for Sphinx domains
-    "esbonio.lsp.sphinx.directives",  # Specialised support for Sphinx directives
-    "esbonio.lsp.sphinx.images",      # Support for image, figure etc
-    "esbonio.lsp.sphinx.includes",    # Support for include, literal-include etc.
-    "esbonio.lsp.sphinx.roles",       # Support for misc roles added by Sphinx e.g. :download:
+    "esbonio.lsp.rst.directives",     # docutils directives
+    "esbonio.lsp.rst.roles",          # docutils roles
+    "esbonio.lsp.sphinx.autodoc",     # automodule, autoclass, etc.
+    "esbonio.lsp.sphinx.codeblocks",  # code-block, highlight, etc.
+    "esbonio.lsp.sphinx.domains",     # Sphinx domains
+    "esbonio.lsp.sphinx.directives",  # Sphinx directives
+    "esbonio.lsp.sphinx.images",      # image, figure etc
+    "esbonio.lsp.sphinx.includes",    # include, literal-include etc.
+    "esbonio.lsp.sphinx.roles",       # misc roles added by Sphinx e.g. :download:
 ]
 """The modules to load in the default configuration of the server."""
 # fmt: on
@@ -453,6 +454,26 @@ class SphinxLanguageServer(RstLanguageServer):
 
             yield prefix, domain
 
+    def get_directive_options(self, name: str) -> Dict[str, Any]:
+        """Return the options specification for the given directive."""
+
+        directive = self.get_directives().get(name, None)
+        if directive is None:
+            return {}
+
+        options = directive.option_spec
+
+        if name.startswith("auto") and self.app:
+            self.logger.debug("Processing options for '%s' directive", name)
+            name = name.replace("auto", "")
+
+            self.logger.debug("Documenter name is '%s'", name)
+            documenter = self.app.registry.documenters.get(name, None)
+
+            if documenter is not None:
+                options = documenter.option_spec
+
+        return options or {}
 
     def get_roles(self) -> Dict[str, Any]:
         """Return a dictionary of known roles."""
