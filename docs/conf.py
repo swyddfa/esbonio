@@ -33,6 +33,7 @@ author = "the Esbonio project"
 release = esbonio.lsp.__version__
 
 DEV_BUILD = os.getenv("BUILDDIR", None) == "latest"
+BRANCH = "develop" if DEV_BUILD else "release"
 
 # -- i18n configuration ------------------------------------------------------
 locale_dirs = ["locale/"]
@@ -83,7 +84,11 @@ html_title = "Esbonio"
 html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
 html_favicon = "favicon.svg"
 # html_static_path = ["_static"]
-html_theme_options = {}
+html_theme_options = {
+    "source_repository": "https://github.com/swyddfa/esbonio/",
+    "source_branch": BRANCH,
+    "source_directory": "docs/",
+}
 
 if DEV_BUILD:
     html_theme_options["announcement"] = (
