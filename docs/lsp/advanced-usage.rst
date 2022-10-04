@@ -45,6 +45,7 @@ The following startup modules are included with the ``esbonio`` python package.
 
    .. .. cli-help:: esbonio.lsp.sphinx
 
+.. _lsp-extension-modules:
 
 Extension Modules
 -----------------
