@@ -2,7 +2,6 @@
 # $ pip install -r docs/requirements.txt
 sphinx
 autodoc-pydantic
-sphinx-panels
 furo
 pytest_lsp
 -e lib/esbonio

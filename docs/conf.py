@@ -49,7 +49,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinxcontrib.autodoc_pydantic",
-    "sphinx_panels",
     "esbonio.relevant_to",
     "esbonio.tutorial",
     "cli_help",
