@@ -287,6 +287,12 @@ class SphinxLanguageServer(RstLanguageServer):
 
         if not server.hide_sphinx_output and not sphinx.silent:
             sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
+
+            # Be sure to remove any old handlers.
+            for handler in sphinx_logger.handlers:
+                if isinstance(handler, SphinxLogHandler):
+                    sphinx_logger.handlers.remove(handler)
+
             self.sphinx_log = SphinxLogHandler(app, self)
             sphinx_logger.addHandler(self.sphinx_log)
 
