@@ -1,8 +1,8 @@
+import sys
 from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
-from unittest.mock import Mock
 
 import pytest
 from docutils.parsers.rst import Directive
@@ -12,6 +12,11 @@ from esbonio.lsp.directives import DIRECTIVE
 from esbonio.lsp.directives import DIRECTIVE_OPTION
 from esbonio.lsp.directives import DirectiveLanguageFeature
 from esbonio.lsp.directives import Directives
+
+if sys.version_info.minor < 8:
+    from mock import Mock
+else:
+    from unittest.mock import Mock
 
 
 class Simple(DirectiveLanguageFeature):
