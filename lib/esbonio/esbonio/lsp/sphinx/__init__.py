@@ -4,6 +4,7 @@ import pathlib
 import platform
 import traceback
 import typing
+import warnings
 from functools import partial
 from multiprocessing import Process
 from multiprocessing import Queue
@@ -455,7 +456,20 @@ class SphinxLanguageServer(RstLanguageServer):
             yield prefix, domain
 
     def get_directive_options(self, name: str) -> Dict[str, Any]:
-        """Return the options specification for the given directive."""
+        """Return the options specification for the given directive.
+
+        .. deprecated:: 0.14.2
+
+           This will be removed in ``v1.0``
+        """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_directive_options() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         directive = self.get_directives().get(name, None)
         if directive is None:

@@ -126,7 +126,7 @@ class DirectiveLanguageFeature:
 class ArgumentCompletion(Protocol):
     """A completion provider for directive arguments.
 
-    .. deprecated:: xxxx
+    .. deprecated:: 0.14.2
 
        This will be removed in ``v1.0``, use subclasses of
        :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` instead.
@@ -152,7 +152,7 @@ class ArgumentCompletion(Protocol):
 class ArgumentDefinition(Protocol):
     """A definition provider for directive arguments.
 
-    .. deprecated:: xxxx
+    .. deprecated:: 0.14.2
 
        This will be removed in ``v1.0``, use subclasses of
        :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` instead.
@@ -183,7 +183,7 @@ class ArgumentDefinition(Protocol):
 class ArgumentLink(Protocol):
     """A document link resolver for directive arguments.
 
-    .. deprecated:: xxxx
+    .. deprecated:: 0.14.2
 
        This will be removed in ``v1.0``, use subclasses of
        :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` instead.
@@ -242,7 +242,7 @@ class Directives(LanguageFeature):
     def add_argument_completion_provider(self, provider: ArgumentCompletion) -> None:
         """Register an :class:`~esbonio.lsp.directives.ArgumentCompletion` provider.
 
-        .. deprecated:: xxxx
+        .. deprecated:: 0.14.2
 
            This will be removed in ``v1.0``, use
            :meth:`~esbonio.lsp.directives.Directives.add_feature` with a
@@ -275,7 +275,7 @@ class Directives(LanguageFeature):
     def add_argument_definition_provider(self, provider: ArgumentDefinition) -> None:
         """Register an :class:`~esbonio.lsp.directives.ArgumentDefinition` provider.
 
-        .. deprecated:: xxxx
+        .. deprecated:: 0.14.2
 
            This will be removed in ``v1.0``, use
            :meth:`~esbonio.lsp.directives.Directives.add_feature` with a
@@ -308,7 +308,7 @@ class Directives(LanguageFeature):
     def add_argument_link_provider(self, provider: ArgumentLink) -> None:
         """Register an :class:`~esbonio.lsp.directives.ArgumentLink` provider.
 
-        .. deprecated:: xxxx
+        .. deprecated:: 0.14.2
 
            This will be removed in ``v1.0``, use
            :meth:`~esbonio.lsp.directives.Directives.add_feature` with a

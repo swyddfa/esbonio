@@ -591,7 +591,14 @@ class RstLanguageServer(LanguageServer):
             return None
 
     def get_directives(self) -> Dict[str, Directive]:
-        """Return a dictionary of the known directives"""
+        """Return a dictionary of the known directives
+
+        .. deprecated:: 0.14.2
+
+           This will be removed in ``v1.0``.
+           Use the :meth:`~esbonio.lsp.directives.Directives.get_directives` method
+           instead.
+        """
 
         clsname = self.__class__.__name__
         warnings.warn(
@@ -609,7 +616,12 @@ class RstLanguageServer(LanguageServer):
         return feature.get_directives()  # type: ignore
 
     def get_directive_options(self, name: str) -> Dict[str, Any]:
-        """Return the options specification for the given directive."""
+        """Return the options specification for the given directive.
+
+        .. deprecated:: 0.14.2
+
+           This will be removed in ``v1.0``
+        """
 
         clsname = self.__class__.__name__
         warnings.warn(
