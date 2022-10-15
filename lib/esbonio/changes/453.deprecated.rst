@@ -1,0 +1,4 @@
+Calling the ``get_directives()`` method on the ``RstLanguageServer`` and ``SphinxLanguageServer`` objects is deprecated in favour of calling the ``get_directives()`` method on the ``Directives`` language feature.
+It will be removed in ``v1.0``
+
+Calling the ``get_directive_options()`` method on the ``RstLanguageServer`` and ``SphinxLanguageServer`` objects deprecated and will be removed in ``v1.0``.
