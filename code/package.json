@@ -18,11 +18,11 @@
     ],
     "scripts": {
         "compile": "webpack --mode development",
-        "compile-test": "npm run clean && tsc -p ./src/node",
+        "compile-test": "tsc -p ./src/test -p ./src/node",
         "serve": "npx serve --cors -l 5000",
         "tunnel": "npx localtunnel -p 5000",
         "watch": "webpack --mode development --watch",
-        "test": "npm run compile-test && node ./dist/node/test/runTests.js",
+        "test": "npm run compile-test && node ./dist/test/runTests.js",
         "clean": "rm -r dist",
         "deploy": "vsce publish --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",

@@ -1,5 +1,5 @@
 import * as assert from "assert";
-import { shouldPromptUpdate, shouldUpdate } from "../../../lsp/server";
+import { shouldPromptUpdate, shouldUpdate } from "../../../node/lsp/server";
 
 suite("ServerManager", () => {
 
