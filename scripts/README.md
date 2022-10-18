@@ -12,3 +12,4 @@ development or for automating project management tasks.
 | `project-management.sh` | This script is run from GitHub Actions to automatically assign issues to the relevant projects based on labels. |
 | `should-build.sh` | Being a monorepo, not all changes require all CI pipelines to be run. This script is used by Github Actions to determine which pipelines should be run on any given PR |
 | `sphinx-app.py` | Useful when you want to inspect Sphinx's internals, this is used to bootstrap a REPL with a Sphinx application instance configured for our `docs/`. <br /> Usage: `python -i sphinx-app.py` |
+| `check-sphinx-version.py` | Check that we are testing the correct Sphinx version inside tox. |
