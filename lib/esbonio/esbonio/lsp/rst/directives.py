@@ -60,7 +60,7 @@ def resolve_directive(directive: Union[Directive, Tuple[str, str]]) -> Directive
     if isinstance(directive, tuple):
         mod, cls = directive
 
-        modulename = "docutils.parsers.rst.directives.{}".format(mod)
+        modulename = f"docutils.parsers.rst.directives.{mod}"
         module = importlib.import_module(modulename)
         return getattr(module, cls)
 
