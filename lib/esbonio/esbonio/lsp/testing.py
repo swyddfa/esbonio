@@ -68,7 +68,7 @@ def sphinx_version(
 
     """
 
-    major, _, _ = [int(v) for v in __sphinx_version__.split(".")]
+    major, _, _ = (int(v) for v in __sphinx_version__.split("."))
 
     if eq is not None:
         return major == eq
