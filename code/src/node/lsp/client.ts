@@ -219,14 +219,6 @@ export class EsbonioClient {
     }
 
     if (!this.client) {
-      let message = `Unable to start language server.
-      See output window for more details`
-
-      let response = await this.editor.showErrorMessage(message, { title: "Show Output" })
-      if (response && response.title === "Show Output") {
-        this.channel.show()
-      }
-
       return
     }
 
