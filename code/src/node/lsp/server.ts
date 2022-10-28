@@ -1,9 +1,9 @@
 import { request, RequestOptions } from "https";
 import * as semver from "semver";
-import * as vscode from "vscode";
 
-import { Commands, Server } from "../constants";
-import { Logger } from "../log";
+import { Server } from "../constants";
+import { EditorIntegrations, WorkspaceState } from "../core/editor";
+import { Logger } from "../core/log";
 import { PythonCommand, PythonManager } from "./python";
 
 /**
@@ -27,6 +27,10 @@ enum NextAction {
   Continue = 2
 }
 
+export enum ServerResult {
+
+}
+
 /**
  * Class responsible for managing the Language server. i.e. installation & updates of the
  * esbonio Python package.
@@ -36,17 +40,11 @@ export class ServerManager {
   LAST_UPDATE = "server.lastUpdate"
 
   constructor(
+    private editor: EditorIntegrations,
     private logger: Logger,
     private python: PythonManager,
-    private context: vscode.ExtensionContext
-  ) {
-    context.subscriptions.push(
-      vscode.commands.registerCommand(Commands.INSTALL_SERVER, this.installServer, this)
-    )
-    context.subscriptions.push(
-      vscode.commands.registerCommand(Commands.UPDATE_SERVER, this.updateServer, this)
-    )
-  }
+    private state: WorkspaceState,
+  ) { }
 
   /**
    * Ensure a compatible copy of the language server is present in the current environment.
@@ -60,7 +58,7 @@ export class ServerManager {
    */
   async bootstrap(retry: number = 1): Promise<string | undefined> {
 
-    if (!await this.checkPythonVersion()) {
+    if (!await this.checkPythonVersion(Server.REQUIRED_PYTHON)) {
       return undefined
     }
 
@@ -86,7 +84,7 @@ export class ServerManager {
 
       Please upgrade to at least version v${Server.REQUIRED_VERSION}.`
 
-      let response = await vscode.window.showErrorMessage(message, { title: "Update Server" })
+      let response = await this.editor.showErrorMessage(message, { title: "Update Server" })
       if (!response || response.title !== "Update Server") {
         return undefined
       }
@@ -112,7 +110,7 @@ export class ServerManager {
 
     // Store today's date so that the installation counts as an update.
     let today = new Date(Date.now())
-    this.context.workspaceState.update(this.LAST_UPDATE, today.toISOString())
+    this.state.update(this.LAST_UPDATE, today.toISOString())
 
     return
   }
@@ -129,14 +127,14 @@ export class ServerManager {
     await this.python.runCommand(command)
 
     let today = new Date(Date.now())
-    this.context.workspaceState.update(this.LAST_UPDATE, today.toISOString())
+    this.state.update(this.LAST_UPDATE, today.toISOString())
 
     return
   }
 
   private async checkForUpdates(currentVersion: string, retry: number = 1): Promise<string | undefined> {
 
-    let config = vscode.workspace.getConfiguration("esbonio")
+    let config = this.editor.getConfiguration("esbonio")
     let updateBehavior = config.get<string>('server.updateBehavior')
     let updateFrequency = config.get<string>('server.updateFrequency')
 
@@ -145,7 +143,7 @@ export class ServerManager {
       return currentVersion
     }
 
-    let lastUpdateStr = this.context.workspaceState.get(this.LAST_UPDATE, "1970-01-01")
+    let lastUpdateStr = this.state.get(this.LAST_UPDATE, "1970-01-01")
     this.logger.debug(`Last update was ${lastUpdateStr}`)
 
     let today = new Date(Date.now())
@@ -164,7 +162,7 @@ export class ServerManager {
       let message = `Version v${latestVersion} of the Esbonio language server is now available.
       Would you like to update?`
 
-      let response = await vscode.window.showInformationMessage(message, { title: "Yes" }, { title: "No" })
+      let response = await this.editor.showInformationMessage(message, { title: "Yes" }, { title: "No" })
       if (!response || response.title !== "Yes") {
         return currentVersion
       }
@@ -178,9 +176,9 @@ export class ServerManager {
    * Get the version of the currently installed language server.
    *
    * If the server is not installed it will attempt to install it
-   * according to the user's configured instal behavior.
+   * according to the user's configured install behavior.
    */
-  private async getServerVersion(retry: number = 1): Promise<string | undefined> {
+  async getServerVersion(retry: number = 1): Promise<string | undefined> {
     let command: PythonCommand = {
       args: ["-m", "esbonio", "--version"]
     }
@@ -200,7 +198,7 @@ export class ServerManager {
       }
 
       // Try installing the language server.
-      let config = vscode.workspace.getConfiguration("esbonio")
+      let config = this.editor.getConfiguration("esbonio")
       let installBehavior = config.get<string>('server.installBehavior')
       let nextAction = await this.shouldInstall(installBehavior)
 
@@ -217,7 +215,7 @@ export class ServerManager {
     }
   }
 
-  private async shouldInstall(installBehavior: string): Promise<NextAction> {
+  async shouldInstall(installBehavior: string): Promise<NextAction> {
     if (installBehavior === "nothing") {
       return NextAction.Abort
     }
@@ -234,16 +232,14 @@ export class ServerManager {
       options.push({ title: "Switch Environments" })
     }
 
-    let response = await vscode.window.showWarningMessage(
-      message, ...options
-    )
+    let response = await this.editor.showWarningMessage(message, ...options)
 
     if (response && (response.title === "Yes")) {
       return NextAction.Continue
     }
 
     if (response && (response.title === "Switch Environments")) {
-      await this.python.changeEnvironment()
+      await this.python.selectEnvironment()
       return NextAction.Retry
     }
 
@@ -273,7 +269,7 @@ export class ServerManager {
           this.logger.debug(`Latest version: ${version}`)
 
           let today = new Date(Date.now())
-          this.context.workspaceState.update(this.LAST_UPDATE, today.toISOString())
+          this.state.update(this.LAST_UPDATE, today.toISOString())
 
           resolve(version)
         })
@@ -287,7 +283,7 @@ export class ServerManager {
   /**
    * Ensure that the configured Python environment is compatible with the server.
    */
-  private async checkPythonVersion(): Promise<string | undefined> {
+  async checkPythonVersion(requiredVersion: string): Promise<string | undefined> {
     let pythonVersion = await this.python.getVersion()
     let hasPythonExt = await this.python.hasPythonExtension()
 
@@ -297,33 +293,33 @@ export class ServerManager {
       let options = []
 
       if (hasPythonExt) {
-        options.push({ title: "Pick Environment" })
+        options.push({ title: "Select Environment" })
       }
 
-      let response = await vscode.window.showErrorMessage(message, ...options)
-      if (response && response.title === "Pick Environment") {
-        await this.python.changeEnvironment()
-        return await this.checkPythonVersion()
+      let response = await this.editor.showErrorMessage(message, ...options)
+      if (response && response.title === "Select Environment") {
+        await this.python.selectEnvironment()
+        return await this.checkPythonVersion(requiredVersion)
       }
 
       return undefined
     }
 
-    if (semver.lt(pythonVersion, Server.REQUIRED_PYTHON)) {
+    if (semver.lt(pythonVersion, requiredVersion)) {
       let options = []
-      let message = `Your configured Python version is v${pythonVersion} which is incompatible with the
+      let message = `Your configured Python version v${pythonVersion} is incompatible with the
       Esbonio Lanuage Server.
 
-      Please choose an environment that has a Python version of at least v${Server.REQUIRED_PYTHON}`
+      Please choose an environment that has a Python version >= v${requiredVersion}`
 
       if (hasPythonExt) {
-        options.push({ title: "Switch Environment" })
+        options.push({ title: "Select Environment" })
       }
 
-      let response = await vscode.window.showErrorMessage(message, ...options)
-      if (response && response.title === "Switch Environment") {
-        await this.python.changeEnvironment()
-        return await this.checkPythonVersion()
+      let response = await this.editor.showErrorMessage(message, ...options)
+      if (response && response.title === "Select Environment") {
+        await this.python.selectEnvironment()
+        return await this.checkPythonVersion(requiredVersion)
       }
 
       return undefined
