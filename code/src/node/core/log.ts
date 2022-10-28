@@ -1,4 +1,3 @@
-import * as vscode from "vscode";
 
 export enum LogLevel {
   DEBUG = 0,
@@ -6,12 +5,11 @@ export enum LogLevel {
   ERROR = 2
 }
 
-let channelLogger: Logger
-export class Logger {
+export abstract class Logger {
 
   public level: LogLevel
 
-  constructor(private channel: vscode.OutputChannel) {
+  constructor() {
     this.level = LogLevel.ERROR
   }
 
@@ -33,9 +31,7 @@ export class Logger {
     }
   }
 
-  log(message: string): void {
-    this.channel.appendLine(`[client] ${message}`)
-  }
+  abstract log(message: string): void
 
   setLevel(level: string): void {
     let logLevel: LogLevel
@@ -54,30 +50,10 @@ export class Logger {
 
     this.level = logLevel
   }
-
-  show() {
-    this.channel.show()
-  }
 }
 
-/**
- * Construct the logger that logs to the output window.
- */
-export function createOutputLogger(channel: vscode.OutputChannel): Logger {
-  if (!channelLogger) {
-
-    let level = vscode.workspace.getConfiguration('esbonio').get<string>('server.logLevel')
-
-    channelLogger = new Logger(channel)
-    channelLogger.setLevel(level)
+export class ConsoleLogger extends Logger {
+  log(message: string): void {
+    console.log(message)
   }
-
-  return channelLogger
-}
-
-/**
- * Return the active logger.
- */
-export function getOutputLogger(): Logger {
-  return channelLogger
 }

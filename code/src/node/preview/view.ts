@@ -2,7 +2,7 @@ import * as path from 'path';
 import * as vscode from 'vscode'
 
 import { Commands } from "../constants";
-import { Logger } from "../log";
+import { Logger } from "../core/log";
 import { EsbonioClient } from "../lsp/client";
 
 
