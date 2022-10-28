@@ -84,13 +84,18 @@ export class ServerManager {
 
       Please upgrade to at least version v${Server.REQUIRED_VERSION}.`
 
-      let response = await this.editor.showErrorMessage(message, { title: "Update Server" })
-      if (!response || response.title !== "Update Server") {
-        return undefined
+      let response = await this.editor.showErrorMessage(message, { title: "Update Server" }, { title: "Disable Server" })
+      if (response && response.title == "Update Server") {
+        await this.updateServer()
+        return this.bootstrap(retry - 1)
       }
 
-      await this.updateServer()
-      return this.bootstrap(retry - 1)
+      if (response && response.title == "Disable Server") {
+        let config = this.editor.getConfiguration("esbonio")
+        await config.update("server.enabled", false)
+      }
+
+      return undefined
     }
 
     // Otherwise, do the regular update checks
@@ -232,6 +237,7 @@ export class ServerManager {
       options.push({ title: "Switch Environments" })
     }
 
+    options.push({ title: 'Disable Server' })
     let response = await this.editor.showWarningMessage(message, ...options)
 
     if (response && (response.title === "Yes")) {
@@ -241,6 +247,11 @@ export class ServerManager {
     if (response && (response.title === "Switch Environments")) {
       await this.python.selectEnvironment()
       return NextAction.Retry
+    }
+
+    if (response && (response.title === "Disable Server")) {
+      let config = this.editor.getConfiguration("esbonio")
+      await config.update("server.enabled", false)
     }
 
     return NextAction.Abort

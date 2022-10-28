@@ -1,0 +1,1 @@
+The extension now gives the option for you to disable the language server when it requests you install/update it.
