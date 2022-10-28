@@ -1,13 +1,12 @@
 import * as net from "net";
-import * as vscode from "vscode";
 
 import { join } from "path";
 import { LanguageClient, LanguageClientOptions, ServerOptions } from "vscode-languageclient/node";
 
-import { Commands } from "../constants";
 import { PythonManager } from "./python";
 import { ServerManager } from "./server";
-import { Logger } from "../log";
+import { Logger } from "../core/log";
+import { Configuration, EditorIntegrations, OutputChannel, WorkspaceState } from "../core/editor";
 
 
 const DEBUG = process.env.VSCODE_LSP_DEBUG === "true"
@@ -189,20 +188,14 @@ export class EsbonioClient {
   private buildCompleteCallbacks: Array<(params: BuildCompleteResult) => void> = []
 
   constructor(
+    private editor: EditorIntegrations,
     private logger: Logger,
     private python: PythonManager,
     private server: ServerManager,
-    private channel: vscode.OutputChannel,
-    private context: vscode.ExtensionContext
+    private channel: OutputChannel,
+    private state: WorkspaceState,
   ) {
-    context.subscriptions.push(vscode.commands.registerCommand(Commands.RESTART_SERVER, this.restartServer, this))
-    context.subscriptions.push(vscode.commands.registerCommand(Commands.COPY_BUILD_COMMAND, this.copyBuildCommand, this))
-    context.subscriptions.push(vscode.commands.registerCommand(Commands.SET_BUILD_COMMAND, this.setBuildCommand, this))
-    context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_BUILDDIR, selectBuildDir))
-    context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_CONFDIR, selectConfDir))
-    context.subscriptions.push(vscode.commands.registerCommand(Commands.SELECT_SRCDIR, selectSrcDir))
 
-    context.subscriptions.push(vscode.workspace.onDidChangeConfiguration(this.configChanged, this))
   }
 
   async stop() {
@@ -226,13 +219,14 @@ export class EsbonioClient {
     }
 
     if (!this.client) {
-      let message = "Unable to start language server.\n" +
-        "See output window for more details"
-      vscode.window.showErrorMessage(message, { title: "Show Output" }).then(opt => {
-        if (opt && opt.title === "Show Output") {
-          this.channel.show()
-        }
-      })
+      let message = `Unable to start language server.
+      See output window for more details`
+
+      let response = await this.editor.showErrorMessage(message, { title: "Show Output" })
+      if (response && response.title === "Show Output") {
+        this.channel.show()
+      }
+
       return
     }
 
@@ -259,7 +253,7 @@ export class EsbonioClient {
    * Restart the language server.
    */
   async restartServer() {
-    let config = vscode.workspace.getConfiguration("esbonio.server")
+    let config = this.editor.getConfiguration("esbonio.server")
     if (this.allowRestarts && config.get("enabled")) {
       this.logger.info("==================== RESTARTING SERVER =====================")
       await this.stop()
@@ -272,7 +266,7 @@ export class EsbonioClient {
       return
     }
 
-    await vscode.env.clipboard.writeText(this.sphinxInfo.command.join(' '))
+    await this.editor.writeTextToClipboard(this.sphinxInfo.command.join(' '))
   }
 
   /**
@@ -280,9 +274,10 @@ export class EsbonioClient {
    */
   async setBuildCommand() {
 
-    let config = vscode.workspace.getConfiguration("esbonio")
+    let config = this.editor.getConfiguration("esbonio")
     let currentCliArgs = await this.sphinxConfigToCLI(config);
-    let cliArgs = await vscode.window.showInputBox({
+
+    let cliArgs = await this.editor.showInputBox({
       value: currentCliArgs,
       placeHolder: '-M html ...',
       prompt: 'Set sphinx-build arguments',
@@ -296,7 +291,7 @@ export class EsbonioClient {
     let sphinxConfig = await this.sphinxCLIToConfig(cliArgs);
     if (!sphinxConfig) {
       // Actually an error we should care about.
-      let res = await vscode.window.showErrorMessage("Unable to update sphinx-build command", "Show Output")
+      let res = await this.editor.showErrorMessage("Unable to update sphinx-build command", "Show Output")
       if (res == 'Show Output') {
         this.channel.show()
       }
@@ -313,7 +308,7 @@ export class EsbonioClient {
    * @param sphinxConfig The SphinxConfig to use
    * @param config The "esbonio" configuration namespace
    */
-  private async setSphinxConfig(sphinxConfig: SphinxConfig, config: vscode.WorkspaceConfiguration) {
+  private async setSphinxConfig(sphinxConfig: SphinxConfig, config: Configuration) {
     // Based on [1] it would appear that there is no way to bulk update configuration values.
     // Instead, we'll just have to turn off the restart mechanism until this is complete.
     //
@@ -362,7 +357,7 @@ export class EsbonioClient {
    * @param config The "esbonio" configuration namespace
    * @returns
    */
-  private async sphinxConfigToCLI(config: vscode.WorkspaceConfiguration): Promise<string | undefined> {
+  private async sphinxConfigToCLI(config: Configuration): Promise<string | undefined> {
     let currentConfig = this.getSphinxOptions(config);
 
     try {
@@ -392,7 +387,7 @@ export class EsbonioClient {
     }
 
     let command = await this.python.getCmd()
-    let config = vscode.workspace.getConfiguration("esbonio")
+    let config = this.editor.getConfiguration("esbonio")
 
     let startupModule = config.get<string>("server.startupModule")
 
@@ -425,7 +420,7 @@ export class EsbonioClient {
    * Typically used while debugging.
    */
   private async getTcpClient(): Promise<LanguageClient | undefined> {
-    let config = vscode.workspace.getConfiguration("esbonio")
+    let config = this.editor.getConfiguration("esbonio")
 
     let serverOptions: ServerOptions = () => {
       return new Promise((resolve) => {
@@ -466,7 +461,7 @@ export class EsbonioClient {
    * Returns the LanguageClient options that are common to both modes of
    * transport.
    */
-  private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
+  private getLanguageClientOptions(config: Configuration): LanguageClientOptions {
 
     let initOptions: InitOptions = {
       sphinx: this.getSphinxOptions(config),
@@ -491,19 +486,19 @@ export class EsbonioClient {
     let clientOptions: LanguageClientOptions = {
       documentSelector: documentSelector,
       initializationOptions: initOptions,
-      outputChannel: this.channel
+      outputChannel: <any>this.channel
     }
     this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions, null, 2)}`)
     return clientOptions
   }
 
-  private getSphinxOptions(config: vscode.WorkspaceConfiguration): SphinxConfig {
+  private getSphinxOptions(config: Configuration): SphinxConfig {
 
     let buildDir = config.get<string>('sphinx.buildDir')
     let numJobs = config.get<number>('sphinx.numJobs')
 
     if (!buildDir) {
-      let cache = this.context.storageUri.path
+      let cache = this.state.workspaceStorage
       buildDir = join(cache, 'sphinx')
     }
 
@@ -526,30 +521,6 @@ export class EsbonioClient {
     };
   }
 
-  /**
-   * Listen to changes in the user's configuration and decide if we should
-   * restart the language server.
-   */
-  private async configChanged(event: vscode.ConfigurationChangeEvent) {
-    this.logger.debug(`ConfigurationChangeEvent`)
-
-    let config = vscode.workspace.getConfiguration("esbonio")
-    if (!config.get("server.enabled")) {
-      await this.stop()
-      return
-    }
-
-
-    let conditions = [
-      event.affectsConfiguration("esbonio"),
-      !config.get<string>('server.pythonPath') && event.affectsConfiguration("python.pythonPath")
-    ]
-
-    if (conditions.some(i => i)) {
-      await this.restartServer()
-    }
-  }
-
   onClientStart(callback: (_: void) => void) {
     this.clientStartCallbacks.push(callback)
   }
@@ -565,36 +536,4 @@ export class EsbonioClient {
   onBuildStart(callback: (_: void) => void) {
     this.buildStartCallbacks.push(callback)
   }
-}
-
-async function selectBuildDir() {
-  return await selectFolder("buildDir")
-}
-
-
-async function selectConfDir() {
-  return await selectFolder("confDir")
-}
-
-
-async function selectSrcDir() {
-  return await selectFolder("srcDir")
-}
-
-
-async function selectFolder(name: string) {
-  let rootUri
-  let config = vscode.workspace.getConfiguration("esbonio.sphinx")
-
-  let rootFolders = vscode.workspace.workspaceFolders
-  if (rootFolders) {
-    rootUri = rootFolders[0].uri
-  }
-
-  let uri = await vscode.window.showOpenDialog({ canSelectFolders: true, defaultUri: rootUri, canSelectMany: false })
-  if (!uri) {
-    return
-  }
-
-  config.update(name, uri[0].path, vscode.ConfigurationTarget.Workspace)
 }
