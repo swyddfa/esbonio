@@ -234,7 +234,7 @@
                     "esbonio.server.updateFrequency": {
                         "scope": "window",
                         "type": "string",
-                        "default": "weekly",
+                        "default": "never",
                         "enum": [
                             "never",
                             "monthly",
