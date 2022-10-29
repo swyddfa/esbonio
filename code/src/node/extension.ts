@@ -11,6 +11,7 @@ import { PythonManager } from "./lsp/python";
 import { ServerManager } from "./lsp/server";
 import { StatusManager } from "./lsp/status";
 import { PreviewManager } from "./preview/view";
+import { request, RequestOptions } from "https";
 
 let esbonio: EsbonioClient
 let logger: OutputChannelLogger
@@ -167,6 +168,22 @@ const editor: EditorIntegrations = {
 
     return vscode.workspace.workspaceFolders.map(folder => {
       return { fsPath: folder.uri.fsPath, uri: folder.uri.toString() }
+    })
+  },
+
+  httpGet(options: RequestOptions): Promise<string> {
+    return new Promise((resolve, reject) => {
+      request(options, (response) => {
+        let body = ''
+
+        response.on('data', (chunk) => body += chunk)
+        response.on('end', () => {
+          resolve(body)
+        })
+
+      }).on('error', (err) => {
+        reject(err)
+      }).end()
     })
   },
 
