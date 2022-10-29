@@ -74,9 +74,12 @@ suite("PythonManager", () => {
     test('it should make sure the Python version is valid', async () => {
       let editor = mockEditorIntegrations({
         python: { status: 'active', pythonPath: '/path/to/python' },
-        systemCommands: new Map(
-          [["/path/to/python", ["not-a-version", ""]]]
-        ),
+        systemCommands: new Map([
+          [
+            '/path/to/python -c import sys ; print("{0.major}.{0.minor}.{0.micro}".format(sys.version_info))',
+            ["not-a-version", ""]
+          ]
+        ]),
       })
 
       let python = new PythonManager(editor, logger)
@@ -87,9 +90,12 @@ suite("PythonManager", () => {
     test('it should return the version', async () => {
       let editor = mockEditorIntegrations({
         python: { status: 'active', pythonPath: '/path/to/python' },
-        systemCommands: new Map(
-          [["/path/to/python", ["3.7.4   ", ""]]]
-        ),
+        systemCommands: new Map([
+          [
+            '/path/to/python -c import sys ; print("{0.major}.{0.minor}.{0.micro}".format(sys.version_info))',
+            ["3.7.4   ", ""]
+          ]
+        ]),
       })
 
       let python = new PythonManager(editor, logger)

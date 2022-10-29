@@ -7,6 +7,7 @@ import { PythonManager } from "./python";
 import { ServerManager } from "./server";
 import { Logger } from "../core/log";
 import { Configuration, EditorIntegrations, OutputChannel, WorkspaceState } from "../core/editor";
+import { Server } from "../constants";
 
 
 const DEBUG = process.env.VSCODE_LSP_DEBUG === "true"
@@ -373,7 +374,9 @@ export class EsbonioClient {
    */
   private async getStdioClient(): Promise<LanguageClient | undefined> {
 
-    let version = await this.server.bootstrap()
+    let version = await this.server.bootstrap(
+      Server.REQUIRED_PYTHON, Server.REQUIRED_VERSION, new Date(Date.now())
+    )
     if (!version) {
       return undefined
     }
