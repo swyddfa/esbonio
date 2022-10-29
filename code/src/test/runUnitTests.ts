@@ -4,7 +4,8 @@ import * as glob from "glob";
 
 const mocha = new Mocha({
   ui: 'tdd',
-  color: true
+  color: true,
+  reporter: 'dot'
 })
 
 const testsRoot = path.resolve(__dirname, 'unit')

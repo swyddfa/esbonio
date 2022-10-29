@@ -45,20 +45,6 @@
             }
         },
         {
-            "name": "VSCode Tests",
-            "type": "extensionHost",
-            "request": "launch",
-            "runtimeExecutable": "${execPath}",
-            "args": [
-                "--extensionDevelopmentPath=${workspaceFolder}/code",
-                "--extensionTestsPath=${workspaceFolder}/code/dist/node/test/suite/index"
-            ],
-            "outFiles": [
-                "${workspaceFolder}/code/dist/node/test/**/*.js"
-            ],
-            "preLaunchTask": "Build Tests",
-        },
-        {
             "name": "Language Server",
             "type": "python",
             "request": "launch",

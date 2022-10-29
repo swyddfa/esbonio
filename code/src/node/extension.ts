@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 
 import { promisify } from "util";
 
-import { Commands } from "./constants";
+import { Commands, Server } from "./constants";
 import { EditorIntegrations, WorkspaceState } from "./core/editor";
 import { Logger } from "./core/log";
 import { EsbonioClient } from "./lsp/client";
@@ -40,8 +40,12 @@ export async function activate(context: vscode.ExtensionContext) {
 
   let subscriptions = [
     vscode.workspace.onDidChangeConfiguration(configChanged),
-    vscode.commands.registerCommand(Commands.INSTALL_SERVER, server.installServer, server),
-    vscode.commands.registerCommand(Commands.UPDATE_SERVER, server.updateServer, server),
+    vscode.commands.registerCommand(Commands.INSTALL_SERVER, async () => {
+      return await server.installServer(Server.REQUIRED_VERSION, new Date(Date.now()))
+    }),
+    vscode.commands.registerCommand(Commands.UPDATE_SERVER, async () => {
+      return await server.updateServer(Server.REQUIRED_VERSION, new Date(Date.now()))
+    }),
     vscode.commands.registerCommand(Commands.RESTART_SERVER, esbonio.restartServer, esbonio),
     vscode.commands.registerCommand(Commands.COPY_BUILD_COMMAND, esbonio.copyBuildCommand, esbonio),
     vscode.commands.registerCommand(Commands.SET_BUILD_COMMAND, esbonio.setBuildCommand, esbonio),

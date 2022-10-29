@@ -1,8 +1,10 @@
+import * as assert from "assert";
+
 import { RequestOptions } from "https"
 import { PYTHON_EXTENSION } from "../node/constants"
 import { CommandOutput, Configuration, EditorIntegrations, WorkspaceFolder, WorkspaceState } from "../node/core/editor"
 
-export interface MockManagerOptions {
+export interface MockEditorOptions {
 
   /// Set the result of any command executions.
   commands?: Map<string, any>
@@ -25,6 +27,9 @@ export interface MockManagerOptions {
   /// Sets the state of the "python extension"
   python?: MockPythonExtOptions
 
+  /// Set the expected tasks
+  expectedTasks?: Map<string, string[]>
+
   /// Set the expected warning messages and their responses.
   warningMessages?: Map<string, any>
 
@@ -37,7 +42,7 @@ export interface MockPythonExtOptions {
   pythonPath?: string
 }
 
-export function mockEditorIntegrations(options: MockManagerOptions): EditorIntegrations {
+export function mockEditorIntegrations(options: MockEditorOptions): EditorIntegrations {
   return {
 
     executeEditorCommand(commandId: string, ...args: any[]) {
@@ -54,16 +59,27 @@ export function mockEditorIntegrations(options: MockManagerOptions): EditorInteg
     },
 
     executeSystemCommand(program: string, args: string[]): Promise<CommandOutput> {
-      if (!options.systemCommands || !options.systemCommands.has(program)) {
-        throw new Error(`Unexpected command: ${program}`)
+      let key = [program, ...args].join(' ')
+
+      if (!options.systemCommands || !options.systemCommands.has(key)) {
+        throw new Error(`Unexpected command: ${key}`)
       }
 
-      let [stdout, stderr] = options.systemCommands.get(program)
+      let [stdout, stderr] = options.systemCommands.get(key)
+      if (!stdout) {
+        throw new Error(stderr)
+      }
       return Promise.resolve({ stdout, stderr })
     },
 
     executeTask(name: string, program: string, args: string[]): Promise<void> {
-      throw new Error('executeTask: not implemented')
+      if (!options.expectedTasks || !options.expectedTasks.has(program)) {
+        throw new Error(`Unexpected task: ${program}`)
+      }
+
+      let expected = options.expectedTasks.get(program)
+      assert.deepStrictEqual(args, expected)
+      return Promise.resolve(null)
     },
 
     getExtension(extensionId: string) {
