@@ -1,3 +1,5 @@
+import { RequestOptions } from "http";
+
 /**
  * In order to make the extension easy to test, it's necessary to enforce
  * a hard divide between the logic of the extension and any code that interacts
@@ -19,6 +21,8 @@ export interface EditorIntegrations {
   getExtension(extensionId: string): any
 
   getWorkspaceFolders(): WorkspaceFolder[] | undefined
+
+  httpGet(options: RequestOptions): Promise<string>
 
   showErrorMessage(message: string, ...items: any[]): Promise<any | undefined>
 

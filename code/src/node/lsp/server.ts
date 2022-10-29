@@ -1,4 +1,4 @@
-import { request, RequestOptions } from "https";
+import { RequestOptions } from "https";
 import * as semver from "semver";
 
 import { Server } from "../constants";
@@ -158,7 +158,16 @@ export class ServerManager {
       return currentVersion
     }
 
-    let latestVersion = await this.getLatestVersion()
+    let latestVersion: string
+
+    try {
+      latestVersion = await this.getLatestVersion(today)
+    } catch (err) {
+      this.logger.debug(`Unable to fetch version from PyPi ${err.message}`)
+      this.logger.debug(`Continuing with current version.`)
+      return currentVersion
+    }
+
     if (!semver.lt(currentVersion, latestVersion)) {
       return currentVersion
     }
@@ -260,35 +269,23 @@ export class ServerManager {
   /**
    * Check PyPi for the latest released version of the language server.
    */
-  private getLatestVersion(): Promise<string> {
-    return new Promise((resolve, reject) => {
+  private async getLatestVersion(today: Date): Promise<string> {
 
-      let options: RequestOptions = {
-        host: 'pypi.org',
-        path: '/pypi/esbonio/json'
-      }
+    let options: RequestOptions = {
+      host: 'pypi.org',
+      path: '/pypi/esbonio/json'
+    }
 
-      this.logger.debug("Fetching latest version from PyPi")
-      request(options, (response) => {
-        let body = ''
-        response.on('data', (chunk) => body += chunk)
+    this.logger.debug("Fetching latest version from PyPi")
+    let res = await this.editor.httpGet(options)
+    let esbonio = JSON.parse(res)
 
-        response.on('end', () => {
-          let esbonio = JSON.parse(body)
+    let version = esbonio.info.version
+    this.logger.debug(`Latest version: ${version}`)
 
-          let version = esbonio.info.version
-          this.logger.debug(`Latest version: ${version}`)
+    this.state.update(ServerManager.LAST_UPDATE, today.toISOString())
 
-          let today = new Date(Date.now())
-          this.state.update(this.LAST_UPDATE, today.toISOString())
-
-          resolve(version)
-        })
-      }).on('error', (err) => {
-        this.logger.debug(`Unable to fetch version from PyPi ${err.message}`)
-        reject(err)
-      }).end()
-    })
+    return version
   }
 
   /**

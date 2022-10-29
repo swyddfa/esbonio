@@ -1,3 +1,4 @@
+import { RequestOptions } from "https"
 import { PYTHON_EXTENSION } from "../node/constants"
 import { CommandOutput, Configuration, EditorIntegrations, WorkspaceFolder, WorkspaceState } from "../node/core/editor"
 
@@ -14,6 +15,9 @@ export interface MockManagerOptions {
 
   /// Set the expected error messages and their responses.
   errorMessages?: Map<string, any>
+
+  /// Set mocked http request responses
+  httpResponses?: Map<string, Promise<string>>
 
   /// Set the expected info messages and their responses.
   infoMessages?: Map<string, any>
@@ -82,6 +86,15 @@ export function mockEditorIntegrations(options: MockManagerOptions): EditorInteg
 
     getWorkspaceFolders() {
       return options.workspaces || []
+    },
+
+    httpGet(request: RequestOptions): Promise<string> {
+      let url = `https://${request.host}${request.path}`
+      if (!options.httpResponses || !options.httpResponses.has(url)) {
+        return Promise.reject(new Error(`Unexpected http request: ${url}`))
+      }
+
+      return options.httpResponses.get(url)
     },
 
     showErrorMessage(message, ...items: any[]) {
