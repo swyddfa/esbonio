@@ -24,7 +24,7 @@
         "watch": "webpack --mode development --watch",
         "test": "npm run compile-test && node ./dist/test/runUnitTests.js",
         "clean": "rm -r dist",
-        "deploy": "vsce publish --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
+        "deploy": "vsce publish -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "vscode:prepublish": "webpack --mode production"
     },
