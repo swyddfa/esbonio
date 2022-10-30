@@ -1,0 +1,80 @@
+name: Language Server PR
+on:
+  pull_request:
+    branches:
+    - develop
+    - release
+    paths:
+    - 'lib/esbonio/**'
+
+jobs:
+  lsp:
+    name: "Python v${{ matrix.python-version }} -- ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+        # Python 3.6 is not available on Windows or MacOS runners
+        exclude:
+        - os: macos-latest
+          python-version: "3.6"
+
+        - os: windows-latest
+          python-version: "3.6"
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - run: |
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade tox bump2version
+      name: Setup Environment
+
+    - run: |
+        set -e
+
+        # Despite the script's name, this is only used to obtain a
+        # dev version number e.g. v1.2.3-dev4
+        ./scripts/make-release.sh lsp
+      name: Set Version
+      if: matrix.python-version == '3.10' && matrix.os == 'ubuntu-latest'
+
+    - run: |
+        cd lib/esbonio
+
+        version=$(echo ${{ matrix.python-version }} | tr -d .)
+        python -m tox -e `tox -l | grep $version | tr '\n' ','`
+      name: Run Tests (when not on Windows)
+      if: matrix.os != 'windows-latest'
+
+    - run: |
+        cd lib/esbonio
+
+        $version=$(echo "${{ matrix.python-version }}" | tr -d ".")
+        $envs=$(tox -l | grep $version)
+
+        echo $($envs -join ",")
+        python -m tox -e $($envs -join ",")
+      name: Run Tests (when on Windows)
+      if: matrix.os == 'windows-latest'
+
+    - name: Package
+      run: |
+        cd lib/esbonio
+        python -m tox -e pkg
+      if: always() && matrix.python-version == '3.10' && matrix.os == 'ubuntu-latest'
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'dist'
+        path: lib/esbonio/dist
+      if: always() && matrix.python-version == '3.10' && matrix.os == 'ubuntu-latest'
