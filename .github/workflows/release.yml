@@ -1,5 +1,4 @@
-name: Esbonio
-
+name: Release
 on:
   pull_request:
     branches:
@@ -71,17 +70,17 @@ jobs:
     name: VSCode Extension
     needs: [trigger, extensions]
     if: always() && needs.trigger.outputs.vscode
-    runs-on: ubuntu-20.04 # TODO: Enable windows, macOS builds.
+    runs-on: ubuntu-latest
     steps:
-    - uses: 'actions/checkout@v2'
+    - uses: 'actions/checkout@v3'
 
-    - uses: 'actions/setup-node@v1'
+    - uses: 'actions/setup-node@v3'
       with:
-        node-version: 14.x
+        node-version: 16.x
 
-    - uses: 'actions/setup-python@v1'
+    - uses: 'actions/setup-python@v4'
       with:
-        python-version: 3.8
+        python-version: "3.10"
 
     - run: |
         sudo apt update
@@ -90,7 +89,6 @@ jobs:
         python --version
         python -m pip install --upgrade pip
         python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
-
       name: Install Build Tools
 
     - run: |
@@ -102,27 +100,15 @@ jobs:
 
     - run: |
         cd code
-        npm install
-
-        mkdir dist
-        xvfb-run -a npm test
-      name: Test Extension
-
-    - run: |
-        cd code
         rm -r dist
         npm run package
-
-        vsix=$(find . -name '*.vsix' -exec basename {} \;)
-        echo "::set-output name=VSIX::$vsix"
-      id: assets
-      name: Package
+      name: Package Extension
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v3
       with:
         name: 'vsix'
-        path: code/${{ steps.assets.outputs.VSIX }}
+        path: code/*.vsix
 
     - name: 'Publish Extension'
       run: |

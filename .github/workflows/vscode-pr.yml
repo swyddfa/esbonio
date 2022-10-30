@@ -1,0 +1,62 @@
+name: VSCode PR
+on:
+  pull_request:
+    branches:
+    - develop
+    - release
+    paths:
+    - 'code/**'
+jobs:
+  vscode:
+    name: Test Extension
+    runs-on: ubuntu-latest
+    steps:
+    - uses: 'actions/checkout@v3'
+
+    - uses: 'actions/setup-node@v3'
+      with:
+        node-version: 16.x
+
+    - uses: 'actions/setup-python@v4'
+      with:
+        python-version: "3.10"
+
+    - run: |
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade bump2version
+
+      name: Install Build Tools
+
+    - run: |
+        set -e
+
+        # Despite the script's name, this is only used to obtain a
+        # dev version number e.g. v1.2.3-dev4
+        ./scripts/make-release.sh vscode
+      name: Set Version
+
+    - run: |
+        set -e
+
+        cd code
+        npm ci
+
+        mkdir dist
+        npm test
+      name: Test Extension
+
+    - run: |
+        set -e
+
+        cd code
+        rm -r dist
+        npm run package
+      id: assets
+      name: Package Extension
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'vsix'
+        path: code/*.vsix
