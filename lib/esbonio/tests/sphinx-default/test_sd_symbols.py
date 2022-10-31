@@ -1,7 +1,7 @@
 from typing import List
 from typing import Optional
 
-import py.test
+import pytest
 from pygls.lsp.types import DocumentSymbol
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
@@ -61,7 +61,7 @@ def symbol(
     )
 
 
-@py.test.mark.parametrize(
+@pytest.mark.parametrize(
     "filepath,expected",
     [
         ("conf.py", None),
