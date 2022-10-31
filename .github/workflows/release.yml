@@ -138,21 +138,16 @@ jobs:
       if: success() && startsWith(github.ref, 'refs/heads/release')
 
   extensions:
-    name: "Sphinx Extensions -- Python v${{ matrix.python-version }}"
+    name: "Sphinx Extensions"
     needs: [trigger, lsp]
     if: always() && needs.trigger.outputs.extensions
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-        os: [ubuntu-20.04]
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+    - uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.10
 
     - run: |
         sudo apt update
@@ -169,25 +164,17 @@ jobs:
         ./scripts/make-release.sh extensions
       name: Set Version
       id: info
-      if: matrix.python-version == '3.8'
-
-    - run: |
-        cd lib/esbonio-extensions
-        python -m tox -e py`echo ${{ matrix.python-version }} | tr -d .`
-      name: Test
 
     - name: Package
       run: |
         cd lib/esbonio-extensions
         python -m tox -e pkg
-      if: matrix.python-version == '3.8'
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v3
       with:
         name: 'dist'
         path: lib/esbonio-extensions/dist
-      if: matrix.python-version == '3.8'
 
     - name: Publish
       id: assets
@@ -201,7 +188,7 @@ jobs:
 
         src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
         echo "::set-output name=SRC::$src"
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+      if: success() && startsWith(github.ref, 'refs/heads/release')
 
     - name: Create Release
       id: release
@@ -213,7 +200,7 @@ jobs:
         draft: false
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+      if: success() && startsWith(github.ref, 'refs/heads/release')
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1.0.1
@@ -224,7 +211,7 @@ jobs:
         asset_path: lib/esbonio-extensions/dist/${{ steps.assets.outputs.WHL }}
         asset_name: ${{ steps.assets.outputs.WHL }}
         asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+      if: success() && startsWith(github.ref, 'refs/heads/release')
 
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1.0.1
@@ -235,7 +222,7 @@ jobs:
         asset_path: lib/esbonio-extensions/dist/${{ steps.assets.outputs.SRC }}
         asset_name: ${{ steps.assets.outputs.SRC }}
         asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+      if: success() && startsWith(github.ref, 'refs/heads/release')
 
   lsp:
     name: Language Server
