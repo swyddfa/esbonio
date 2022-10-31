@@ -16,7 +16,7 @@ jobs:
       lsp: ${{steps.check-lsp.outputs.build}}
       vscode: ${{steps.check-vscode.outputs.build}}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -84,7 +84,7 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
+        python -m pip install --upgrade tox bump2version towncrier docutils
       name: Install Build Tools
 
     - run: |
@@ -155,7 +155,7 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
+        python -m pip install --upgrade tox bump2version towncrier docutils
       name: Setup Environment
 
     - run: |
@@ -244,7 +244,7 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
+        python -m pip install --upgrade tox bump2version towncrier docutils
       name: Setup Environment
 
     - run: |
@@ -317,13 +317,13 @@ jobs:
     name: Documentation
     needs: [trigger, vscode]
     if: always() && needs.trigger.outputs.docs
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
-    - uses: 'actions/checkout@v2.3.1'
+    - uses: actions/checkout@v3
 
-    - uses: 'actions/setup-python@v1'
+    - uses: actions/setup-python@v4
       with:
-        python-version: 3.8
+        python-version: 3.10
 
     - run: |
         set -e
@@ -343,13 +343,13 @@ jobs:
       name: Build Docs
 
     - name: 'Upload Aritfact'
-      uses: 'actions/upload-artifact@v1.0.0'
+      uses: 'actions/upload-artifact@v3
       with:
         name: 'docs'
         path: 'docs/_build/${{ steps.build.outputs.version }}'
 
     - name: 'Publish Docs'
-      uses: JamesIves/github-pages-deploy-action@4.1.5
+      uses: JamesIves/github-pages-deploy-action@v4
       with:
         branch: gh-pages
         folder: docs/_build/${{ steps.build.outputs.version }}
