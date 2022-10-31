@@ -1,7 +1,7 @@
 import pathlib
 from unittest import mock
 
-import py.test
+import pytest
 from docutils.io import StringInput
 from docutils.parsers.rst import Parser
 from docutils.parsers.rst import directives
@@ -11,7 +11,7 @@ from sphinx.ext.doctest import DoctestDirective
 from esbonio.tutorial import Solution
 
 
-@py.test.fixture(scope="session")
+@pytest.fixture(scope="session")
 def testdata():
     """Given the name of a file in the data/ folder and return its contents.
 
@@ -32,7 +32,7 @@ def testdata():
     return loader
 
 
-@py.test.fixture(scope="session")
+@pytest.fixture(scope="session")
 def rst_mock_settings():
     """Return a mock that can pretend to be the settings object needed to parse rst
     sources.
@@ -71,7 +71,7 @@ def rst_mock_settings():
     return settings
 
 
-@py.test.fixture(scope="session")
+@pytest.fixture(scope="session")
 def parse_rst(rst_mock_settings):
     """A fixture that attempts to produce a doctree from rst source in a representative
     environment."""
