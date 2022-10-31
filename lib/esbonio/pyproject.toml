@@ -67,7 +67,7 @@ legacy_tox_ini = """
 [tox]
 isolated_build = True
 skip_missing_interpreters = true
-envlist = py{36,37,38,39}-sphinx{3,4,5}, py310-sphinx{4,5}
+envlist = py{36,37,38,39}-sphinx{3,4,5}, py{310,311}-sphinx{4,5}
 
 [testenv]
 deps =
@@ -80,7 +80,7 @@ deps =
 extras = test
 commands =
     python ../../scripts/check-sphinx-version.py
-    py{38,39,310}-sphinx5: mypy --namespace-packages --explicit-package-bases -p esbonio
+    py{38,39,310,311}-sphinx5: mypy --namespace-packages --explicit-package-bases -p esbonio
     pytest {posargs}
 
 [testenv:pkg]
