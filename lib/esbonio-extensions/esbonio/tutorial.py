@@ -28,7 +28,7 @@ logger = getLogger(__name__)
 CELL_TYPES = {"markdown": nbf.new_markdown_cell, "code": nbf.new_code_cell}
 REPL_PATTERN = re.compile(r"^(>>>|\.\.\.) ?", re.MULTILINE)
 
-CODE_LANGUAGES = {"default", "python", "pycon3"}
+CODE_LANGUAGES = {"default", "python", "pycon3", "pycon"}
 """The set of languages we support being exported as a notebook."""
 
 
