@@ -1,6 +1,9 @@
 import logging
+import pathlib
+import traceback
 import typing
 from typing import List
+from typing import Tuple
 
 import pygls.uris as uri
 from pygls.lsp.types import Diagnostic
@@ -53,6 +56,17 @@ class LspHandler(logging.Handler):
         self.server = server
         self.show_deprecation_warnings = show_deprecation_warnings
 
+    def get_warning_path(self, warning: str) -> Tuple[str, List[str]]:
+        """Determine the filepath that the warning was emitted from."""
+
+        path, *parts = warning.split(":")
+
+        # On windows the rest of the path will be in the first element of parts.
+        if pathlib.Path(warning).drive:
+            path += f":{parts.pop(0)}"
+
+        return path, parts
+
     def handle_warning(self, record: logging.LogRecord):
         """Publish warnings to the client as diagnostics."""
 
@@ -70,11 +84,18 @@ class LspHandler(logging.Handler):
             return
 
         warning, *_ = argument.split("\n")
-        path, linenum, category, *msg = warning.split(":")
+        path, (linenum, category, *msg) = self.get_warning_path(warning)
 
-        line = int(linenum)
         category = category.strip()
-        message = ":".join(msg)
+        message = ":".join(msg).strip()
+
+        try:
+            line = int(linenum)
+        except ValueError:
+            line = 1
+            self.server.logger.debug(
+                "Unable to parse line number: '%s'\n%s", linenum, traceback.format_exc()
+            )
 
         tags = []
         if category == "DeprecationWarning":
