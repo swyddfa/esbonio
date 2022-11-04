@@ -117,7 +117,8 @@ export class PreviewManager {
       return undefined
     }
 
-    let srcDir = config.srcDir
+    // Convert to a uri and back to ensure we have consistent casing on Windows
+    let srcDir = vscode.Uri.from({ scheme: 'file', path: config.srcDir }).fsPath
     let buildDir = config.buildDir
     let sourceUri = editor.document.uri
 
