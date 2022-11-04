@@ -3,7 +3,6 @@ on:
   push:
     branches:
     - release
-    - develop
 
 jobs:
   # Simple job the checks to see which parts we actually have to build.
@@ -104,30 +103,15 @@ jobs:
         npm run deploy
       env:
         VSCE_PAT: ${{ secrets.VSCODE_PAT }}
-      if: success() && startsWith(github.ref, 'refs/heads/release')
 
     - name: Create Release
-      id: release
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ steps.info.outputs.TAG }}
-        release_name: Esbonio VSCode Extension v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
-        body_path: code/.changes.html
-        draft: false
+      run: |
+        gh release create "v${VERSION}" \
+          --title "Esbonio VSCode Extension v${VERSION} - ${RELEASE_DATE}" \
+          -F code/.changes.html \
+          ./code/*.vsix
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success() && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: code/${{ steps.assets.outputs.VSIX }}
-        asset_name: ${{ steps.assets.outputs.VSIX }}
-        asset_content_type: application/octet-stream
-      if: success() && startsWith(github.ref, 'refs/heads/release')
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   extensions:
     name: "Sphinx Extensions"
@@ -139,7 +123,7 @@ jobs:
 
     - uses: actions/setup-python@v4
       with:
-        python-version: 3.10
+        python-version: "3.10"
 
     - run: |
         sudo apt update
@@ -175,46 +159,14 @@ jobs:
         python -m pip install twine
         python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
 
-        whl=$(find dist/ -name '*.whl' -exec basename {} \;)
-        echo "::set-output name=WHL::$whl"
-
-        src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
-        echo "::set-output name=SRC::$src"
-      if: success() && startsWith(github.ref, 'refs/heads/release')
-
     - name: Create Release
-      id: release
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ steps.info.outputs.TAG }}
-        release_name: Esbonio Extensions v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
-        body_path: lib/esbonio-extensions/.changes.html
-        draft: false
+      run: |
+        gh release create "v${VERSION}" \
+          --title "Esbonio Extensions v${VERSION} - ${RELEASE_DATE}" \
+          -F lib/esbonio-extensions/.changes.html \
+          ./lib/esbonio-extensions/dist/*
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success() && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/esbonio-extensions/dist/${{ steps.assets.outputs.WHL }}
-        asset_name: ${{ steps.assets.outputs.WHL }}
-        asset_content_type: application/octet-stream
-      if: success() && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/esbonio-extensions/dist/${{ steps.assets.outputs.SRC }}
-        asset_name: ${{ steps.assets.outputs.SRC }}
-        asset_content_type: application/octet-stream
-      if: success() && startsWith(github.ref, 'refs/heads/release')
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   lsp:
     name: Language Server
@@ -258,49 +210,16 @@ jobs:
         path: lib/esbonio/dist
 
     - name: Publish
-      id: assets
       run: |
         cd lib/esbonio
         python -m pip install twine
         python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
 
-        whl=$(find dist/ -name '*.whl' -exec basename {} \;)
-        echo "::set-output name=WHL::$whl"
-
-        src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
-        echo "::set-output name=SRC::$src"
-      if: startsWith(github.ref, 'refs/heads/release')
-
     - name: Create Release
-      id: release
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ steps.info.outputs.TAG }}
-        release_name: Esbonio Language Server v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
-        body_path: lib/esbonio/.changes.html
-        draft: false
+      run: |
+        gh release create "v${VERSION}" \
+          --title "Esbonio Language Server v${VERSION} - ${RELEASE_DATE}" \
+          -F lib/esbonio/.changes.html \
+          ./lib/esbonio/dist/*
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success() && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/esbonio/dist/${{ steps.assets.outputs.WHL }}
-        asset_name: ${{ steps.assets.outputs.WHL }}
-        asset_content_type: application/octet-stream
-      if: success() && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/esbonio/dist/${{ steps.assets.outputs.SRC }}
-        asset_name: ${{ steps.assets.outputs.SRC }}
-        asset_content_type: application/octet-stream
-      if: success() && startsWith(github.ref, 'refs/heads/release')
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
