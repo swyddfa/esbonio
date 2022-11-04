@@ -54,14 +54,6 @@ jobs:
         ./scripts/should-build.sh lsp
       name: "Build LSP?"
 
-    - id: check-docs
-      run: |
-        set -e
-        echo ${BASE}
-
-        ./scripts/should-build.sh docs
-      name: "Build Docs?"
-
   vscode:
     name: VSCode Extension
     needs: [trigger, extensions]
@@ -312,47 +304,3 @@ jobs:
         asset_name: ${{ steps.assets.outputs.SRC }}
         asset_content_type: application/octet-stream
       if: success() && startsWith(github.ref, 'refs/heads/release')
-
-  docs:
-    name: Documentation
-    needs: [trigger, vscode]
-    if: always() && needs.trigger.outputs.docs
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
-
-    - uses: actions/setup-python@v4
-      with:
-        python-version: 3.10
-
-    - run: |
-        set -e
-
-        python --version
-        python -m pip install --upgrade pip
-        python -m pip install -r docs/requirements.txt
-
-      name: Setup Environment
-
-    - id: build
-      run: |
-        set -e
-
-        cd docs
-        make html
-      name: Build Docs
-
-    - name: 'Upload Aritfact'
-      uses: 'actions/upload-artifact@v3
-      with:
-        name: 'docs'
-        path: 'docs/_build/${{ steps.build.outputs.version }}'
-
-    - name: 'Publish Docs'
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        branch: gh-pages
-        folder: docs/_build/${{ steps.build.outputs.version }}
-        target-folder: docs/${{ steps.build.outputs.version }}
-        clean: true
-      if: success() && ( startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/develop') )
