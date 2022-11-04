@@ -128,8 +128,6 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     pandoc CHANGES.rst -f rst -t gfm -o CHANGELOG.md
 
     # Export info that can be picked up in later steps.
-    echo "::set-output name=VERSION::${VERSION}"
-    echo "::set-output name=TAG::${TAG}"
-    echo "::set-output name=DATE::${DATE}"
-
+    echo "VERSION=${VERSION}" >> $GITHUB_ENV
+    echo "RELEASE_DATE::${RELEASE_DATE}" >> $GITHUB_ENV
 fi
