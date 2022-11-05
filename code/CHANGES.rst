@@ -1,3 +1,31 @@
+v0.10.2 - 2022-11-05
+--------------------
+
+Fixes
+^^^^^
+
+- The extension no longer shows an annoying second error notification when you dismiss install/update requests. (`#286 <https://github.com/swyddfa/esbonio/issues/286>`_)
+- An error while checking for the latest release of the language server no longer prevents the existing server from starting. (`#454 <https://github.com/swyddfa/esbonio/issues/454>`_)
+- Language status items should no longer disappear on Windows when configured using explicit filepaths. (`#458 <https://github.com/swyddfa/esbonio/issues/458>`_)
+- The preview panel should now open on Windows when configured with explicit file paths (`#466 <https://github.com/swyddfa/esbonio/issues/466>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- Add ``esbonio.server.showDeprecationWarnings`` option.
+
+  This is flag is primarily aimed at developers working either directly on esbonio, or one of its extensions.
+  When enabled, any warnings (such as ``DeprecationWarnings``) will be logged and published to the client as diagnostics. (`#443 <https://github.com/swyddfa/esbonio/issues/443>`_)
+- The extension now gives the option for you to disable the language server when it requests you install/update it. (`#468 <https://github.com/swyddfa/esbonio/issues/468>`_)
+
+
+Misc
+^^^^
+
+- The default value for the ``esbonio.server.updateFrequency`` setting has been changed to ``never``. (`#454 <https://github.com/swyddfa/esbonio/issues/454>`_)
+
+
 v0.10.1 - 2022-09-07
 --------------------
 

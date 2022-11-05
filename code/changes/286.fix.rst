@@ -1,1 +1,0 @@
-The extension no longer shows an annoying second error notification when you dismiss install/update requests.

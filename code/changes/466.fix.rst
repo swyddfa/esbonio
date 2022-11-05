@@ -1,1 +1,0 @@
-The preview panel should now open on Windows when configured with explicit file paths

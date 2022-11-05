@@ -1,1 +1,0 @@
-Language status items should no longer disappear on Windows when configured using explicit filepaths.
