@@ -9,7 +9,7 @@ from sphinx.util.docutils import SphinxDirective
 from sphinx.util.nodes import make_id
 from sphinx.util.nodes import nested_parse_with_titles
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 
 class relevant_to_script(nodes.Element):

@@ -1,3 +1,12 @@
+v0.2.1 - 2022-11-05
+-------------------
+
+Misc
+^^^^
+
+- Add Python 3.11 support (`#470 <https://github.com/swyddfa/esbonio/issues/470>`_)
+
+
 v0.2.0 - 2022-06-29
 -------------------
 

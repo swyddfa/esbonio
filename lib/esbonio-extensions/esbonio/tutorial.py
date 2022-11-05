@@ -22,7 +22,7 @@ from sphinx.util.logging import getLogger
 from sphinx.util.osutil import copyfile
 from sphinx.util.osutil import relative_uri
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 logger = getLogger(__name__)
 CELL_TYPES = {"markdown": nbf.new_markdown_cell, "code": nbf.new_code_cell}
