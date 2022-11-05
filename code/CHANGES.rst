@@ -1,3 +1,12 @@
+v0.10.3 - 2022-11-05
+--------------------
+
+Misc
+^^^^
+
+- Fix broken release pipeline (`#480 <https://github.com/swyddfa/esbonio/issues/480>`_)
+
+
 v0.10.2 - 2022-11-05
 --------------------
 
