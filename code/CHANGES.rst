@@ -1,3 +1,12 @@
+v0.10.5 - 2022-11-05
+--------------------
+
+Misc
+^^^^
+
+- Ensure npm deps are installed in release pipeline (`#482 <https://github.com/swyddfa/esbonio/issues/482>`_)
+
+
 v0.10.4 - 2022-11-05
 --------------------
 
