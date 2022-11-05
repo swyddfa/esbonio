@@ -1,3 +1,12 @@
+v0.10.4 - 2022-11-05
+--------------------
+
+Misc
+^^^^
+
+- Fix VSCode packaging step in release pipeline (`#481 <https://github.com/swyddfa/esbonio/issues/481>`_)
+
+
 v0.10.3 - 2022-11-05
 --------------------
 
