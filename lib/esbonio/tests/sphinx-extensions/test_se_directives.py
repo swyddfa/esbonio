@@ -3,8 +3,8 @@ from typing import Set
 
 import pytest
 from pygls.lsp.types import MarkupKind
-from pytest_lsp import check
 from pytest_lsp import Client
+from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 
@@ -18,15 +18,15 @@ EXPECTED = {
     "image",
     "toctree",
     "macro",
+    "c:macro",
     "not-a-true-directive",  # Ensure the server doesn't crash on non-standard directives.
     "function",
+    "std:program",
+    "std:option",
 }
 
 UNEXPECTED = {
-    "c:macro",
     "module",
-    "std:program",
-    "std:option",
     "restructuredtext-test-directive",
 }
 
@@ -41,13 +41,7 @@ UNEXPECTED = {
         (".. d", EXPECTED, UNEXPECTED),
         (".. code-b", EXPECTED, UNEXPECTED),
         (".. codex-block:: ", None, None),
-        (".. _some_label:", None, None),
-        (
-            ".. py:",
-            {"py:function", "py:module"},
-            {"image", "toctree", "macro", "function"},
-        ),
-        (".. c:", None, None),
+        (".. py:", EXPECTED, UNEXPECTED),
         ("   .", None, None),
         ("   ..", EXPECTED, UNEXPECTED),
         ("   .. ", EXPECTED, UNEXPECTED),
@@ -55,13 +49,7 @@ UNEXPECTED = {
         ("   .. doctest:: ", None, None),
         ("   .. code-b", EXPECTED, UNEXPECTED),
         ("   .. codex-block:: ", None, None),
-        ("   .. _some_label:", None, None),
-        (
-            "   .. py:",
-            {"py:function", "py:module"},
-            {"image", "toctree", "macro", "function"},
-        ),
-        ("   .. c:", None, None),
+        ("   .. py:", EXPECTED, UNEXPECTED),
     ],
 )
 async def test_directive_completions(
@@ -75,10 +63,13 @@ async def test_directive_completions(
     results = await completion_request(client, test_uri, text)
 
     items = {item.label for item in results.items}
-    expected = expected or set()
     unexpected = unexpected or set()
 
-    assert expected == items & expected
+    if expected is None:
+        assert items == set()
+    else:
+        assert expected == items & expected
+
     assert set() == items & unexpected
 
     check.completion_items(client, results.items)

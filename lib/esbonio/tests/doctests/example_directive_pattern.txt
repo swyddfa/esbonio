@@ -1,0 +1,14 @@
+>>> from esbonio.lsp.util.patterns import DIRECTIVE
+>>> match = DIRECTIVE.match(".. py:function:: print")
+
+>>> match.group("name")
+'function'
+
+>>> match.group("domain")
+'py'
+
+>>> match.group("directive")
+'.. py:function::'
+
+>>> match.group("argument")
+'print'

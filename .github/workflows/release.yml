@@ -1,14 +1,8 @@
-name: Esbonio
-
+name: Release
 on:
-  pull_request:
-    branches:
-    - release
-    - develop
   push:
     branches:
     - release
-    - develop
 
 jobs:
   # Simple job the checks to see which parts we actually have to build.
@@ -21,7 +15,7 @@ jobs:
       lsp: ${{steps.check-lsp.outputs.build}}
       vscode: ${{steps.check-vscode.outputs.build}}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
@@ -59,29 +53,21 @@ jobs:
         ./scripts/should-build.sh lsp
       name: "Build LSP?"
 
-    - id: check-docs
-      run: |
-        set -e
-        echo ${BASE}
-
-        ./scripts/should-build.sh docs
-      name: "Build Docs?"
-
   vscode:
     name: VSCode Extension
     needs: [trigger, extensions]
     if: always() && needs.trigger.outputs.vscode
-    runs-on: ubuntu-20.04 # TODO: Enable windows, macOS builds.
+    runs-on: ubuntu-latest
     steps:
-    - uses: 'actions/checkout@v2'
+    - uses: 'actions/checkout@v3'
 
-    - uses: 'actions/setup-node@v1'
+    - uses: 'actions/setup-node@v3'
       with:
-        node-version: 14.x
+        node-version: 16.x
 
-    - uses: 'actions/setup-python@v1'
+    - uses: 'actions/setup-python@v4'
       with:
-        python-version: 3.8
+        python-version: "3.10"
 
     - run: |
         sudo apt update
@@ -89,8 +75,7 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
-
+        python -m pip install --upgrade tox bump2version towncrier docutils
       name: Install Build Tools
 
     - run: |
@@ -102,27 +87,15 @@ jobs:
 
     - run: |
         cd code
-        npm install
-
-        mkdir dist
-        xvfb-run -a npm test
-      name: Test Extension
-
-    - run: |
-        cd code
         rm -r dist
         npm run package
-
-        vsix=$(find . -name '*.vsix' -exec basename {} \;)
-        echo "::set-output name=VSIX::$vsix"
-      id: assets
-      name: Package
+      name: Package Extension
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v3
       with:
         name: 'vsix'
-        path: code/${{ steps.assets.outputs.VSIX }}
+        path: code/*.vsix
 
     - name: 'Publish Extension'
       run: |
@@ -130,47 +103,27 @@ jobs:
         npm run deploy
       env:
         VSCE_PAT: ${{ secrets.VSCODE_PAT }}
-      if: success() && startsWith(github.ref, 'refs/heads/release')
 
     - name: Create Release
-      id: release
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ steps.info.outputs.TAG }}
-        release_name: Esbonio VSCode Extension v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
-        body_path: code/.changes.html
-        draft: false
+      run: |
+        gh release create "v${VERSION}" \
+          --title "Esbonio VSCode Extension v${VERSION} - ${RELEASE_DATE}" \
+          -F code/.changes.html \
+          ./code/*.vsix
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success() && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: code/${{ steps.assets.outputs.VSIX }}
-        asset_name: ${{ steps.assets.outputs.VSIX }}
-        asset_content_type: application/octet-stream
-      if: success() && startsWith(github.ref, 'refs/heads/release')
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   extensions:
-    name: "Sphinx Extensions -- Python v${{ matrix.python-version }}"
+    name: "Sphinx Extensions"
     needs: [trigger, lsp]
     if: always() && needs.trigger.outputs.extensions
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
-        os: [ubuntu-20.04]
+    runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+    - uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.10"
 
     - run: |
         sudo apt update
@@ -178,7 +131,7 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
+        python -m pip install --upgrade tox bump2version towncrier docutils
       name: Setup Environment
 
     - run: |
@@ -187,25 +140,17 @@ jobs:
         ./scripts/make-release.sh extensions
       name: Set Version
       id: info
-      if: matrix.python-version == '3.8'
-
-    - run: |
-        cd lib/esbonio-extensions
-        python -m tox -e py`echo ${{ matrix.python-version }} | tr -d .`
-      name: Test
 
     - name: Package
       run: |
         cd lib/esbonio-extensions
         python -m tox -e pkg
-      if: matrix.python-version == '3.8'
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v3
       with:
         name: 'dist'
         path: lib/esbonio-extensions/dist
-      if: matrix.python-version == '3.8'
 
     - name: Publish
       id: assets
@@ -214,210 +159,67 @@ jobs:
         python -m pip install twine
         python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
 
-        whl=$(find dist/ -name '*.whl' -exec basename {} \;)
-        echo "::set-output name=WHL::$whl"
-
-        src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
-        echo "::set-output name=SRC::$src"
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
-
     - name: Create Release
-      id: release
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ steps.info.outputs.TAG }}
-        release_name: Esbonio Extensions v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
-        body_path: lib/esbonio-extensions/.changes.html
-        draft: false
+      run: |
+        gh release create "v${VERSION}" \
+          --title "Esbonio Extensions v${VERSION} - ${RELEASE_DATE}" \
+          -F lib/esbonio-extensions/.changes.html \
+          ./lib/esbonio-extensions/dist/*
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/esbonio-extensions/dist/${{ steps.assets.outputs.WHL }}
-        asset_name: ${{ steps.assets.outputs.WHL }}
-        asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/esbonio-extensions/dist/${{ steps.assets.outputs.SRC }}
-        asset_name: ${{ steps.assets.outputs.SRC }}
-        asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.8' && startsWith(github.ref, 'refs/heads/release')
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   lsp:
-    name: "Language Server -- Python v${{ matrix.python-version }} -- ${{ matrix.os }}"
+    name: Language Server
     needs: trigger
     if: always() && needs.trigger.outputs.lsp
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
-        os: [ubuntu-20.04, windows-latest, macos-latest]
-
-        # Python 3.6 is not available on Windows or MacOS runners
-        exclude:
-        - os: macos-latest
-          python-version: "3.6"
-
-        - os: windows-latest
-          python-version: "3.6"
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+    - uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: "3.10"
 
     - run: |
-        python --version
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version towncrier==19.2 docutils
-      name: Setup Environment
-
-    - run: |
-        set -e
 
         sudo apt update
         sudo apt install pandoc
 
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade tox bump2version towncrier docutils
+      name: Setup Environment
+
+    - run: |
+        set -e
+
         ./scripts/make-release.sh lsp
       name: Set Version
       id: info
-      if: matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04'
-
-    - run: |
-        cd lib/esbonio
-
-        version=$(echo ${{ matrix.python-version }} | tr -d .)
-        python -m tox -e `tox -l | grep $version | tr '\n' ','`
-      name: Run Tests (when not on Windows)
-      if: matrix.os != 'windows-latest'
-
-    - run: |
-        cd lib/esbonio
-
-        $version=$(echo "${{ matrix.python-version }}" | tr -d ".")
-        $envs=$(tox -l | grep $version)
-
-        echo $($envs -join ",")
-        python -m tox -e $($envs -join ",")
-      name: Run Tests (when on Windows)
-      if: matrix.os == 'windows-latest'
 
     - name: Package
       run: |
         cd lib/esbonio
         python -m tox -e pkg
-      if: always() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04'
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v3
       with:
         name: 'dist'
         path: lib/esbonio/dist
-      if: always() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04'
 
     - name: Publish
-      id: assets
       run: |
         cd lib/esbonio
         python -m pip install twine
         python -m twine upload dist/* -u alcarney -p ${{ secrets.PYPI_PASS }}
 
-        whl=$(find dist/ -name '*.whl' -exec basename {} \;)
-        echo "::set-output name=WHL::$whl"
-
-        src=$(find dist/ -name '*.tar.gz' -exec basename {} \;)
-        echo "::set-output name=SRC::$src"
-      if: success() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04' && startsWith(github.ref, 'refs/heads/release')
-
     - name: Create Release
-      id: release
-      uses: actions/create-release@v1
-      with:
-        tag_name: ${{ steps.info.outputs.TAG }}
-        release_name: Esbonio Language Server v${{ steps.info.outputs.VERSION  }} - ${{ steps.info.outputs.DATE }}
-        body_path: lib/esbonio/.changes.html
-        draft: false
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      if: success() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04' && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/esbonio/dist/${{ steps.assets.outputs.WHL }}
-        asset_name: ${{ steps.assets.outputs.WHL }}
-        asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04' && startsWith(github.ref, 'refs/heads/release')
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1.0.1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.release.outputs.upload_url }}
-        asset_path: lib/esbonio/dist/${{ steps.assets.outputs.SRC }}
-        asset_name: ${{ steps.assets.outputs.SRC }}
-        asset_content_type: application/octet-stream
-      if: success() && matrix.python-version == '3.8' && matrix.os == 'ubuntu-20.04' && startsWith(github.ref, 'refs/heads/release')
-
-  docs:
-    name: Documentation
-    needs: [trigger, vscode]
-    if: always() && needs.trigger.outputs.docs
-    runs-on: ubuntu-20.04
-    steps:
-    - uses: 'actions/checkout@v2.3.1'
-
-    - uses: 'actions/setup-python@v1'
-      with:
-        python-version: 3.8
-
-    - run: |
-        set -e
-
-        python --version
-        python -m pip install --upgrade pip
-        python -m pip install -r docs/requirements.txt
-
-      name: Setup Environment
-
-    - id: build
       run: |
-        set -e
-
-        cd docs
-        make html
-      name: Build Docs
-
-    - name: 'Upload Aritfact'
-      uses: 'actions/upload-artifact@v1.0.0'
-      with:
-        name: 'docs'
-        path: 'docs/_build/${{ steps.build.outputs.version }}'
-
-    - name: 'Publish Docs'
-      uses: JamesIves/github-pages-deploy-action@4.1.5
-      with:
-        branch: gh-pages
-        folder: docs/_build/${{ steps.build.outputs.version }}
-        target-folder: docs/${{ steps.build.outputs.version }}
-        clean: true
-      if: success() && ( startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/develop') )
+        gh release create "v${VERSION}" \
+          --title "Esbonio Language Server v${VERSION} - ${RELEASE_DATE}" \
+          -F lib/esbonio/.changes.html \
+          ./lib/esbonio/dist/*
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

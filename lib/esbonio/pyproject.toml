@@ -2,7 +2,13 @@
 requires = ["setuptools >= 35.0.2", "wheel >= 0.29.0"]
 build-backend = "setuptools.build_meta"
 
+[tool.isort]
+force_single_line = true
+known_first_party = ["esbonio"]
+profile = "black"
+
 [tool.pytest.ini_options]
+addopts = "--doctest-glob='*.txt'"
 asyncio_mode = "auto"
 filterwarnings = [
     "ignore:'contextfunction' is renamed to 'pass_context',*:DeprecationWarning",
@@ -61,7 +67,7 @@ legacy_tox_ini = """
 [tox]
 isolated_build = True
 skip_missing_interpreters = true
-envlist = py{36,37,38,39}-sphinx{3,4,5}, py310-sphinx{4,5}
+envlist = py{36,37,38,39}-sphinx{3,4,5}, py{310,311}-sphinx{4,5}
 
 [testenv]
 deps =
@@ -71,9 +77,10 @@ deps =
     sphinx4: sphinx>=4,<5
 
     sphinx5: sphinx>=5,<6
-extras= dev
+extras = test
 commands =
-    py{38,39,310}-sphinx5: mypy --namespace-packages --explicit-package-bases -p esbonio
+    python ../../scripts/check-sphinx-version.py
+    py{38,39,310,311}-sphinx5: mypy --namespace-packages --explicit-package-bases -p esbonio
     pytest {posargs}
 
 [testenv:pkg]

@@ -1,4 +1,11 @@
 {
+    "[python]": {
+        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": true
+        },
+        "editor.formatOnSave": true,
+    },
     "[restructuredtext]": {
         "editor.tabSize": 3,
     },
@@ -25,9 +32,12 @@
         "**/.mypy_cache": true
     },
     "esbonio.sphinx.buildDir": "${confDir}/_build",
+    "isort.args": [
+        "--settings-file",
+        "./lib/esbonio/pyproject.toml"
+    ],
     "python.defaultInterpreterPath": "${workspaceRoot}/.env/bin/python",
     "python.pythonPath": "${workspaceRoot}/.env/bin/python",
-    "python.formatting.provider": "black",
     "python.testing.pytestArgs": [
         "lib/esbonio/tests"
     ],

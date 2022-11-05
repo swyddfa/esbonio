@@ -1,5 +1,7 @@
 """Support for Sphinx domains."""
 import pathlib
+from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Set
@@ -7,6 +9,7 @@ from typing import Tuple
 
 import pygls.uris as Uri
 from docutils import nodes
+from docutils.parsers.rst import Directive
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import Location
@@ -15,12 +18,13 @@ from pygls.lsp.types import Range
 from pygls.workspace import Document
 from sphinx.domains import Domain
 
+from esbonio.lsp import CompletionContext
+from esbonio.lsp import DefinitionContext
+from esbonio.lsp import DocumentLinkContext
+from esbonio.lsp.directives import DirectiveLanguageFeature
+from esbonio.lsp.directives import Directives
 from esbonio.lsp.roles import Roles
-from esbonio.lsp.rst import CompletionContext
-from esbonio.lsp.rst import DefinitionContext
-from esbonio.lsp.rst import DocumentLinkContext
 from esbonio.lsp.sphinx import SphinxLanguageServer
-
 
 TARGET_KINDS = {
     "attribute": CompletionItemKind.Field,
@@ -32,6 +36,100 @@ TARGET_KINDS = {
     "module": CompletionItemKind.Module,
     "term": CompletionItemKind.Text,
 }
+
+
+class DomainDirectives(DirectiveLanguageFeature):
+    """Support for directives coming from Sphinx's domains."""
+
+    def __init__(self, rst: SphinxLanguageServer):
+        self.rst = rst
+
+        self._directives: Optional[Dict[str, Directive]] = None
+        """Cache for known directives."""
+
+    @property
+    def domains(self) -> Dict[str, Domain]:
+        """Return a dictionary of known domains."""
+
+        if self.rst.app is None or self.rst.app.env is None:
+            return dict()
+
+        return self.rst.app.env.domains  # type: ignore
+
+    @property
+    def directives(self) -> Dict[str, Directive]:
+
+        if self._directives is not None:
+            return self._directives
+
+        directives = {}
+        for prefix, domain in self.domains.items():
+            for name, directive in domain.directives.items():
+                directives[f"{prefix}:{name}"] = directive
+
+        self._directives = directives
+        return self._directives
+
+    def get_default_domain(self, uri: str) -> Optional[str]:
+        """Return the default domain for the given uri."""
+
+        # TODO: Add support for .. default-domain::
+        if self.rst.app is not None:
+            return self.rst.app.config.primary_domain
+
+        return None
+
+    def get_implementation(
+        self, directive: str, domain: Optional[str]
+    ) -> Optional[Directive]:
+
+        if domain is not None:
+            return self.directives.get(f"{domain}:{directive}", None)
+
+        if self.rst.app is None:
+            return None
+
+        # Try the default domain
+        primary_domain = self.rst.app.config.primary_domain
+        impl = self.directives.get(f"{primary_domain}:{directive}", None)
+        if impl is not None:
+            return impl
+
+        # Try the std domain
+        return self.directives.get(f"std:{directive}", None)
+
+    def index_directives(self) -> Dict[str, Directive]:
+        return self.directives
+
+    def suggest_directives(
+        self, context: CompletionContext
+    ) -> Iterable[Tuple[str, Directive]]:
+
+        # In addition to providing each directive fully qualified, we should provide a
+        # suggestion for directives in the std and primary domains without the prefix.
+        items = self.directives.copy()
+        primary_domain = self.get_default_domain(context.doc.uri)
+
+        for key, directive in self.directives.items():
+
+            if key.startswith("std:"):
+                items[key.replace("std:", "")] = directive
+                continue
+
+            if primary_domain and key.startswith(f"{primary_domain}:"):
+                items[key.replace(f"{primary_domain}:", "")] = directive
+
+        return items.items()
+
+    def suggest_options(
+        self, context: CompletionContext, directive: str, domain: Optional[str]
+    ) -> Iterable[str]:
+
+        impl = self.get_implementation(directive, domain)
+        if impl is None:
+            return []
+
+        return impl.option_spec.keys()
 
 
 class DomainFeatures:
@@ -298,9 +396,11 @@ def project_to_completion_item(project: str) -> CompletionItem:
     )
 
 
-def esbonio_setup(rst: SphinxLanguageServer, roles: Roles):
+def esbonio_setup(rst: SphinxLanguageServer, roles: Roles, directives: Directives):
     domains = DomainFeatures(rst)
 
     roles.add_target_definition_provider(domains)
     roles.add_target_completion_provider(domains)
     roles.add_target_link_provider(domains)
+
+    directives.add_feature(DomainDirectives(rst))

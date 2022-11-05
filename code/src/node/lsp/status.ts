@@ -1,7 +1,7 @@
 import * as path from 'path';
 import * as vscode from "vscode";
 import { Commands } from "../constants";
-import { Logger } from "../log";
+import { Logger } from "../core/log";
 import { BuildCompleteResult, EsbonioClient } from "./client";
 
 
@@ -81,8 +81,12 @@ export class StatusManager {
     }
 
     if (sphinx.confDir) {
+      // Have VSCode normalize the path to how it expects it to look
+      let uri = vscode.Uri.from({ scheme: 'file', path: sphinx.confDir })
+      let pattern = path.join(uri.fsPath, 'conf.py').replace(/\\/g, '/')
+
       confDir = `Config - ${renderPath(workspaceRoot, sphinx.confDir)}`
-      selector.push({ language: 'python', pattern: `${sphinx.confDir}/conf.py` })
+      selector.push({ language: 'python', pattern: pattern })
     }
 
     if (sphinx.builderName) {
@@ -90,8 +94,12 @@ export class StatusManager {
     }
 
     if (sphinx.srcDir) {
+      // Have VSCode normalize the path to how it expects it to look
+      let uri = vscode.Uri.from({ scheme: 'file', path: sphinx.srcDir })
+      let pattern = path.join(uri.fsPath, '**', '*').replace(/\\/g, '/')
+
       srcDir = `Sources - ${renderPath(workspaceRoot, sphinx.srcDir)}`
-      selector.push({ language: 'restructuredtext', pattern: `${sphinx.srcDir}/**/*` })
+      selector.push({ language: 'restructuredtext', pattern: pattern })
     }
 
     if (sphinx.version) {

@@ -7,8 +7,8 @@ from pygls.lsp.types import DiagnosticSeverity
 from pygls.lsp.types import DocumentLink
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
-from pytest_lsp import check
 from pytest_lsp import Client
+from pytest_lsp import check
 
 
 @pytest.mark.asyncio

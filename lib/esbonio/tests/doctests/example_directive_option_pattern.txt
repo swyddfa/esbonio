@@ -1,0 +1,14 @@
+>>> from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
+>>> match = DIRECTIVE_OPTION.match("   :align: center")
+
+>>> match.group("name")
+'align'
+
+>>> match.group("option")
+':align:'
+
+>>> match.group("indent")
+'   '
+
+>>> match.group("value")
+'center'

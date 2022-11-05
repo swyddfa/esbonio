@@ -4,19 +4,19 @@ import pathlib
 import platform
 import traceback
 import typing
+import warnings
 from functools import partial
 from multiprocessing import Process
 from multiprocessing import Queue
+from typing import IO
 from typing import Any
 from typing import Dict
-from typing import IO
 from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
 
 import pygls.uris as Uri
-from docutils.parsers.rst import Directive
 from pygls.lsp.types import DeleteFilesParams
 from pygls.lsp.types import Diagnostic
 from pygls.lsp.types import DiagnosticSeverity
@@ -61,14 +61,15 @@ IS_LINUX = platform.system() == "Linux"
 DEFAULT_MODULES = [
     "esbonio.lsp.directives",         # Generic directive support
     "esbonio.lsp.roles",              # Generic roles support
-    "esbonio.lsp.rst.directives",     # Specialised support for docutils directives
-    "esbonio.lsp.rst.roles",          # Specialised support for docutils roles
-    "esbonio.lsp.sphinx.codeblocks",  # Support for code-block, highlight, etc.
-    "esbonio.lsp.sphinx.domains",     # Support for Sphinx domains
-    "esbonio.lsp.sphinx.directives",  # Specialised support for Sphinx directives
-    "esbonio.lsp.sphinx.images",      # Support for image, figure etc
-    "esbonio.lsp.sphinx.includes",    # Support for include, literal-include etc.
-    "esbonio.lsp.sphinx.roles",       # Support for misc roles added by Sphinx e.g. :download:
+    "esbonio.lsp.rst.directives",     # docutils directives
+    "esbonio.lsp.rst.roles",          # docutils roles
+    "esbonio.lsp.sphinx.autodoc",     # automodule, autoclass, etc.
+    "esbonio.lsp.sphinx.codeblocks",  # code-block, highlight, etc.
+    "esbonio.lsp.sphinx.domains",     # Sphinx domains
+    "esbonio.lsp.sphinx.directives",  # Sphinx directives
+    "esbonio.lsp.sphinx.images",      # image, figure etc
+    "esbonio.lsp.sphinx.includes",    # include, literal-include etc.
+    "esbonio.lsp.sphinx.roles",       # misc roles added by Sphinx e.g. :download:
 ]
 """The modules to load in the default configuration of the server."""
 # fmt: on
@@ -287,6 +288,12 @@ class SphinxLanguageServer(RstLanguageServer):
 
         if not server.hide_sphinx_output and not sphinx.silent:
             sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
+
+            # Be sure to remove any old handlers.
+            for handler in sphinx_logger.handlers:
+                if isinstance(handler, SphinxLogHandler):
+                    sphinx_logger.handlers.remove(handler)
+
             self.sphinx_log = SphinxLogHandler(app, self)
             sphinx_logger.addHandler(self.sphinx_log)
 
@@ -448,25 +455,21 @@ class SphinxLanguageServer(RstLanguageServer):
 
             yield prefix, domain
 
-    def get_directives(self) -> Dict[str, Directive]:
-        """Return a dictionary of the known directives"""
-
-        if self._directives is not None:
-            return self._directives
-
-        self._directives = super().get_directives()
-
-        for prefix, domain in self.get_domains():
-            fmt = "{prefix}:{name}" if prefix else "{name}"
-
-            for name, directive in domain.directives.items():
-                key = fmt.format(name=name, prefix=prefix)
-                self._directives[key] = directive
-
-        return self._directives
-
     def get_directive_options(self, name: str) -> Dict[str, Any]:
-        """Return the options specification for the given directive."""
+        """Return the options specification for the given directive.
+
+        .. deprecated:: 0.14.2
+
+           This will be removed in ``v1.0``
+        """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_directive_options() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         directive = self.get_directives().get(name, None)
         if directive is None:

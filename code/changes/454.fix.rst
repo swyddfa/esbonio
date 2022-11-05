@@ -1,0 +1,1 @@
+An error while checking for the latest release of the language server no longer prevents the existing server from starting.

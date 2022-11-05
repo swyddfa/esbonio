@@ -1,5 +1,4 @@
 import collections
-import importlib
 import inspect
 import logging
 import pathlib
@@ -15,9 +14,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
-from typing import Union
 
-import docutils.parsers.rst.directives as docutils_directives
 import docutils.parsers.rst.roles as docutils_roles
 import pygls.uris as Uri
 from docutils.parsers.rst import Directive
@@ -41,10 +38,10 @@ from pygls.lsp.types import Position
 from pygls.server import LanguageServer
 from pygls.workspace import Document
 
-from .io import read_initial_doctree
 from esbonio.cli import setup_cli
 from esbonio.lsp.log import setup_logging
 
+from .io import read_initial_doctree
 
 LF = TypeVar("LF", bound="LanguageFeature")
 TRIPLE_QUOTE = re.compile("(\"\"\"|''')")
@@ -394,6 +391,9 @@ class ServerConfig(BaseModel):
     log_filter: List[str] = Field(default_factory=list, alias="logFilter")
     """A list of logger names to restrict output to."""
 
+    show_deprecation_warnings = Field(False, alias="showDeprecationWarnings")
+    """Developer flag to enable deprecation warnings."""
+
 
 class InitializationOptions(BaseModel):
     """The initialization options we can expect to receive from a client."""
@@ -421,7 +421,7 @@ class RstLanguageServer(LanguageServer):
         """Record of modules that have been loaded."""
 
         self._features: Dict[str, LanguageFeature] = {}
-        """The list of language features registered with the server."""
+        """The collection of language features registered with the server."""
 
         self._directives: Optional[Dict[str, Directive]] = None
         """Cache for known directives."""
@@ -591,27 +591,45 @@ class RstLanguageServer(LanguageServer):
             return None
 
     def get_directives(self) -> Dict[str, Directive]:
-        """Return a dictionary of the known directives"""
+        """Return a dictionary of the known directives
 
-        if self._directives is not None:
-            return self._directives
+        .. deprecated:: 0.14.2
 
-        ignored_directives = ["restructuredtext-test-directive"]
-        found_directives = {
-            **docutils_directives._directive_registry,
-            **docutils_directives._directives,
-        }
+           This will be removed in ``v1.0``.
+           Use the :meth:`~esbonio.lsp.directives.Directives.get_directives` method
+           instead.
+        """
 
-        self._directives = {
-            k: resolve_directive(v)
-            for k, v in found_directives.items()
-            if k not in ignored_directives
-        }
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_directives() is deprecated and will be removed in v1.0."
+            " Instead call the get_directives() method on the Directives language "
+            "feature.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
-        return self._directives
+        feature = self.get_feature("esbonio.lsp.directives.Directives")
+        if feature is None:
+            return {}
+
+        return feature.get_directives()  # type: ignore
 
     def get_directive_options(self, name: str) -> Dict[str, Any]:
-        """Return the options specification for the given directive."""
+        """Return the options specification for the given directive.
+
+        .. deprecated:: 0.14.2
+
+           This will be removed in ``v1.0``
+        """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_directive_options() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         directive = self.get_directives().get(name, None)
         if directive is None:
@@ -660,6 +678,21 @@ class RstLanguageServer(LanguageServer):
 
             if clear_source and clear_uri:
                 self._diagnostics[key] = []
+
+    def add_diagnostics(self, source: str, uri, diagnostic: Diagnostic):
+        """Add a diagnostic to the given source and uri.
+
+        Parameters
+        ----------
+        source
+           The source the diagnostics are from
+        uri
+           The uri the diagnostics are associated with
+        diagnostic
+           The diagnostic to add
+        """
+        key = (source, normalise_uri(uri))
+        self._diagnostics.setdefault(key, []).append(diagnostic)
 
     def set_diagnostics(
         self, source: str, uri: str, diagnostics: List[Diagnostic]
@@ -787,23 +820,6 @@ class RstLanguageServer(LanguageServer):
         """
         idx = doc.offset_at_position(position)
         return doc.source[:idx]
-
-
-def resolve_directive(directive: Union[Directive, Tuple[str, str]]) -> Directive:
-    """Return the directive based on the given reference.
-
-    'Core' docutils directives are returned as tuples ``(modulename, ClassName)``
-    so they need to be resolved manually.
-    """
-
-    if isinstance(directive, tuple):
-        mod, cls = directive
-
-        modulename = "docutils.parsers.rst.directives.{}".format(mod)
-        module = importlib.import_module(modulename)
-        return getattr(module, cls)
-
-    return directive
 
 
 def normalise_uri(uri: str) -> str:

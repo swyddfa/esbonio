@@ -1,12 +1,12 @@
 import pathlib
 
 import nbformat.v4 as nbformat
-import py.test
+import pytest
 
 import esbonio.tutorial as tutorial
 
 
-@py.test.mark.parametrize(
+@pytest.mark.parametrize(
     "name",
     [
         "bare_link",

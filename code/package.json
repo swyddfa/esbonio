@@ -18,36 +18,35 @@
     ],
     "scripts": {
         "compile": "webpack --mode development",
-        "compile-test": "npm run clean && tsc -p ./src/node",
+        "compile-test": "tsc -p ./src/test",
         "serve": "npx serve --cors -l 5000",
         "tunnel": "npx localtunnel -p 5000",
         "watch": "webpack --mode development --watch",
-        "test": "npm run compile-test && node ./dist/node/test/runTests.js",
+        "test": "npm run compile-test && node ./dist/test/runUnitTests.js",
         "clean": "rm -r dist",
-        "deploy": "vsce publish --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
+        "deploy": "vsce publish -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "vscode:prepublish": "webpack --mode production"
     },
     "main": "dist/node/extension",
     "browser": "dist/browser/extension",
     "dependencies": {
-        "semver": "^7.3.5",
+        "semver": "^7.3.8",
         "vscode-languageclient": "^7.0.0"
     },
     "devDependencies": {
-        "@types/glob": "^7.1.4",
-        "@types/mocha": "^8.2.3",
+        "@types/glob": "^8.0.0",
+        "@types/mocha": "^10.0.0",
         "@types/node": "^14.17.15",
-        "@types/semver": "^7.3.8",
+        "@types/semver": "^7.3.13",
         "@types/vscode": "1.66.0",
-        "@vscode/test-electron": "^2.1.3",
-        "mocha": "^9.2.0",
+        "mocha": "^10.1.0",
         "path-browserify": "^1.0.1",
-        "ts-loader": "^8.3.0",
+        "ts-loader": "^9.4.1",
         "typescript": "^4.4.3",
-        "vsce": "^2.10.0",
-        "webpack": "^5.52.1",
-        "webpack-cli": "^4.8.0"
+        "vsce": "^2.13.0",
+        "webpack": "^5.74.0",
+        "webpack-cli": "^4.10.0"
     },
     "engines": {
         "vscode": "^1.66.0"
@@ -187,6 +186,12 @@
                         "default": "",
                         "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
                     },
+                    "esbonio.server.showDeprecationWarnings": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Developer flag to enable deprecation warnings."
+                    },
                     "esbonio.server.hideSphinxOutput": {
                         "scope": "window",
                         "type": "boolean",
@@ -229,7 +234,7 @@
                     "esbonio.server.updateFrequency": {
                         "scope": "window",
                         "type": "string",
-                        "default": "weekly",
+                        "default": "never",
                         "enum": [
                             "never",
                             "monthly",

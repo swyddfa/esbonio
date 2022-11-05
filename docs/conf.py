@@ -15,17 +15,16 @@ from typing import List
 sys.path.insert(0, os.path.abspath("../lib/esbonio"))
 sys.path.insert(0, os.path.abspath("./ext"))
 
-from docutils.parsers.rst import nodes
-from sphinx.application import Sphinx
-
 import pygls.lsp.methods as M
+from docutils.parsers.rst import nodes
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
-
-from esbonio.lsp.roles import Roles, TargetCompletion
-from esbonio.lsp.rst import CompletionContext
+from sphinx.application import Sphinx
 
 import esbonio.lsp
+from esbonio.lsp.roles import Roles
+from esbonio.lsp.roles import TargetCompletion
+from esbonio.lsp.rst import CompletionContext
 
 # -- Project information -----------------------------------------------------
 project = "Esbonio"
@@ -34,6 +33,7 @@ author = "the Esbonio project"
 release = esbonio.lsp.__version__
 
 DEV_BUILD = os.getenv("BUILDDIR", None) == "latest"
+BRANCH = "develop" if DEV_BUILD else "release"
 
 # -- i18n configuration ------------------------------------------------------
 locale_dirs = ["locale/"]
@@ -50,7 +50,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinxcontrib.autodoc_pydantic",
-    "sphinx_panels",
     "esbonio.relevant_to",
     "esbonio.tutorial",
     "cli_help",
@@ -85,7 +84,11 @@ html_title = "Esbonio"
 html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
 html_favicon = "favicon.svg"
 # html_static_path = ["_static"]
-html_theme_options = {}
+html_theme_options = {
+    "source_repository": "https://github.com/swyddfa/esbonio/",
+    "source_branch": BRANCH,
+    "source_directory": "docs/",
+}
 
 if DEV_BUILD:
     html_theme_options["announcement"] = (

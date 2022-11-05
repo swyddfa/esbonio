@@ -7,8 +7,8 @@ import pytest
 from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
-from pytest_lsp import check
 from pytest_lsp import Client
+from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import hover_request
@@ -22,15 +22,15 @@ EXPECTED = {
     "toctree",
     "c:macro",
     "c:function",
+    "py:function",
+    "py:module",
+    "std:program",
+    "std:option",
 }
 
 UNEXPECTED = {
     "autoclass",
     "automodule",
-    "py:function",
-    "py:module",
-    "std:program",
-    "std:option",
     "restructuredtext-test-directive",
 }
 
@@ -45,9 +45,15 @@ UNEXPECTED = {
         (".. d", EXPECTED, UNEXPECTED),
         (".. code-b", EXPECTED, UNEXPECTED),
         (".. codex-block:: ", None, None),
-        (".. py:", None, None),
-        (".. c:", {"c:macro", "c:function"}, {"function", "image", "toctree"}),
-        (".. _some_label:", None, None),
+        (".. c:", EXPECTED, UNEXPECTED),
+        pytest.param(
+            ".. _some_label:",
+            None,
+            None,
+            marks=pytest.mark.xfail(
+                reason="TODO: Is there a way not to offer directive suggestions here?"
+            ),
+        ),
         ("   .", None, None),
         ("   ..", EXPECTED, UNEXPECTED),
         ("   .. ", EXPECTED, UNEXPECTED),
@@ -55,9 +61,15 @@ UNEXPECTED = {
         ("   .. doctest:: ", None, None),
         ("   .. code-b", EXPECTED, UNEXPECTED),
         ("   .. codex-block:: ", None, None),
-        ("   .. py:", None, None),
-        ("   .. _some_label:", None, None),
-        ("   .. c:", {"c:macro", "c:function"}, {"function", "image", "toctree"}),
+        pytest.param(
+            "   .. _some_label:",
+            None,
+            None,
+            marks=pytest.mark.xfail(
+                reason="TODO: Is there a way not to offer directive suggestions here?"
+            ),
+        ),
+        ("   .. c:", EXPECTED, UNEXPECTED),
     ],
 )
 async def test_directive_completions(
@@ -71,10 +83,13 @@ async def test_directive_completions(
     results = await completion_request(client, test_uri, text)
 
     items = {item.label for item in results.items}
-    expected = expected or set()
     unexpected = unexpected or set()
 
-    assert expected == items & expected
+    if expected is None:
+        assert items == set()
+    else:
+        assert expected == items & expected
+
     assert set() == items & unexpected
 
     check.completion_items(client, results.items)

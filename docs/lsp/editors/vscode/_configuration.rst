@@ -6,18 +6,17 @@ The following options are available.
 
    A flag that can be used to completely disable the language server, if required.
 
-.. confval:: esbonio.server.pythonPath (string)
+.. confval:: esbonio.server.enabledInPyFiles (boolean)
 
-   If the official `Python Extension`_ is available the extension will use the same
-   Python environment as you have configured for your workspace. However, if you wish
-   to use a different environment or do not have the Python extension installed this
-   option can be set to tell the extension which environment to use.
+   A flag that controls if the language server is enabled in Python files.
 
-   Currently accepted values include:
+.. confval:: esbonio.server.excludedModules (string[])
 
-   - ``/path/to/python/`` - An absolute path
-   - ``${workspaceRoot}/../venv/bin/python`` - A path relative to the root of your workspace
-   - ``${workspaceFolder}/../venv/bin/python`` -  Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
+   A list of :ref:`lsp-extension-modules` to exclude from the server.
+
+.. confval:: esbonio.server.includedModules (string[])
+
+   A list of additional :ref:`lsp-extension-modules` to include in the server.
 
 .. confval:: esbonio.server.installBehavior (string)
 
@@ -30,6 +29,23 @@ The following options are available.
    - ``prompt`` (default) - Ask for confirmation before installing the server
    - ``automatic`` - Never ask for confirmation, the language server will be installed
      automatically in new environments
+
+.. confval:: esbonio.server.showDeprecationWarnings (boolean)
+
+   Flag to enable deprecation warnings, useful for developers.
+
+.. confval:: esbonio.server.pythonPath (string)
+
+   If the official `Python Extension`_ is available the extension will use the same
+   Python environment as you have configured for your workspace. However, if you wish
+   to use a different environment or do not have the Python extension installed this
+   option can be set to tell the extension which environment to use.
+
+   Currently accepted values include:
+
+   - ``/path/to/python/`` - An absolute path
+   - ``${workspaceRoot}/../venv/bin/python`` - A path relative to the root of your workspace
+   - ``${workspaceFolder}/../venv/bin/python`` -  Same as ``${workspaceRoot}``, placeholder for true multi-root workspace support.
 
 .. confval:: esbonio.server.updateFrequency (string)
 

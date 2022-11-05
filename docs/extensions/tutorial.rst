@@ -229,61 +229,49 @@ a `Jupyter Lab`_ instance.
 Packaging
 """""""""
 
-.. tabbed:: setuptools
+The exported tutorial can be bundled in your Python package using the
+`Data Files`_ support built into setuptools. This requires you to add the
+following flag to your ``setup.cfg`` (or ``setup.py``) file
 
-   The exported tutorial can be bundled in your Python package using the
-   `Data Files`_ support built into setuptools. This requires you to add the
-   following flag to your ``setup.cfg`` (or ``setup.py``) file
+.. code-block:: ini
 
-   .. code-block:: ini
+   [options]
+   include_package_data = True
 
-      [options]
-      include_package_data = True
+Additionally you need to specify the folder(s) to include in your
+``MANIFEST.in`` file (create one in the same folder as your ``setup.cfg``)
+file if you don't have one already). To use the ``esbonio-extensions``
+package as an example, you would add the following line
 
-   Additionally you need to specify the folder(s) to include in your
-   ``MANIFEST.in`` file (create one in the same folder as your ``setup.cfg``)
-   file if you don't have one already). To use the ``esbonio-extensions``
-   package as an example, you would add the following line
+.. code-block:: none
 
-   .. code-block:: none
-
-      recursive-include esbonio/tutorial/demo *
+   recursive-include esbonio/tutorial/demo *
 
 
-   If it's setup correctly, you should see your tutorial files listed in the
-   build output when you run
+If it's setup correctly, you should see your tutorial files listed in the
+build output when you run
 
-   .. code-block:: console
-      :emphasize-lines: 6-12
+.. code-block:: console
+   :emphasize-lines: 6-12
 
-      $ python setup.py sdist bdist_wheel
-      ...
-      adding 'esbonio/tutorial/__init__.py'
-      adding 'esbonio/tutorial/__main__.py'
-      adding 'esbonio/tutorial/commands.py'
-      adding 'esbonio/tutorial/demo/extensions/tutorial/formatting-example.ipynb'
-      adding 'esbonio/tutorial/demo/extensions/tutorial/hello-world.ipynb'
-      adding 'esbonio/tutorial/demo/extensions/tutorial/solution-example.ipynb'
-      adding 'esbonio/tutorial/demo/resources/extensions/tutorial/formatting-example/vscode-screenshot.png'
-      adding 'esbonio/tutorial/demo/resources/extensions/tutorial/solution-example/solution-example-soln-01.py'
-      adding 'esbonio/tutorial/demo/resources/extensions/tutorial/solution-example/solution-example-soln-02.py'
-      adding 'esbonio/tutorial/demo/resources/extensions/tutorial/solution-example/solution-example-soln-03.py'
-      adding 'esbonio_extensions-0.0.2.dist-info/LICENSE'
-      adding 'esbonio_extensions-0.0.2.dist-info/METADATA'
-      adding 'esbonio_extensions-0.0.2.dist-info/WHEEL'
-      adding 'esbonio_extensions-0.0.2.dist-info/top_level.txt'
-      adding 'esbonio_extensions-0.0.2.dist-info/RECORD'
+   $ python setup.py sdist bdist_wheel
+   ...
+   adding 'esbonio/tutorial/__init__.py'
+   adding 'esbonio/tutorial/__main__.py'
+   adding 'esbonio/tutorial/commands.py'
+   adding 'esbonio/tutorial/demo/extensions/tutorial/formatting-example.ipynb'
+   adding 'esbonio/tutorial/demo/extensions/tutorial/hello-world.ipynb'
+   adding 'esbonio/tutorial/demo/extensions/tutorial/solution-example.ipynb'
+   adding 'esbonio/tutorial/demo/resources/extensions/tutorial/formatting-example/vscode-screenshot.png'
+   adding 'esbonio/tutorial/demo/resources/extensions/tutorial/solution-example/solution-example-soln-01.py'
+   adding 'esbonio/tutorial/demo/resources/extensions/tutorial/solution-example/solution-example-soln-02.py'
+   adding 'esbonio/tutorial/demo/resources/extensions/tutorial/solution-example/solution-example-soln-03.py'
+   adding 'esbonio_extensions-0.0.2.dist-info/LICENSE'
+   adding 'esbonio_extensions-0.0.2.dist-info/METADATA'
+   adding 'esbonio_extensions-0.0.2.dist-info/WHEEL'
+   adding 'esbonio_extensions-0.0.2.dist-info/top_level.txt'
+   adding 'esbonio_extensions-0.0.2.dist-info/RECORD'
 
-.. TODO: Outline how other tools can be used to accomplish this e.g.
-
-   .. tabbed:: poetry
-
-
-   .. tabbed:: flit
-
-
-Binder
-^^^^^^
 
 Examples
 --------

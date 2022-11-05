@@ -1,11 +1,16 @@
 import re
+import traceback
 import typing
+import warnings
 from typing import Any
 from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
+from docutils.parsers.rst import Directive
 from pygls.lsp.types import CompletionItem
 from pygls.lsp.types import CompletionItemKind
 from pygls.lsp.types import DocumentLink
@@ -16,6 +21,7 @@ from pygls.lsp.types import MarkupKind
 from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.lsp.types import TextEdit
+from typing_extensions import Protocol
 
 from esbonio.lsp import CompletionContext
 from esbonio.lsp import DefinitionContext
@@ -29,16 +35,102 @@ from esbonio.lsp.util.inspect import get_object_location
 from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
 
-try:
-    from typing import Protocol
-except ImportError:
-    # Protocol is only available in Python 3.8+
-    class Protocol:  # type: ignore
-        ...
+
+class DirectiveLanguageFeature:
+    """Base class for directive language features."""
+
+    def complete_arguments(
+        self, context: CompletionContext, domain: str, name: str
+    ) -> List[CompletionItem]:
+        """Return a list of completion items representing valid targets for the given
+        directive.
+
+        Parameters
+        ----------
+        context:
+           The completion context
+        domain:
+           The name of the domain the directive is a member of
+        name:
+           The name of the domain
+        """
+        return []
+
+    def get_implementation(
+        self, directive: str, domain: Optional[str]
+    ) -> Optional[Directive]:
+        """Return the implementation for the given directive name."""
+        return self.index_directives().get(directive, None)
+
+    def index_directives(self) -> Dict[str, Directive]:
+        """Return all known directives."""
+        return dict()
+
+    def suggest_directives(
+        self, context: CompletionContext
+    ) -> Iterable[Tuple[str, Directive]]:
+        """Suggest directives that may be used, given a completion context."""
+        return self.index_directives().items()
+
+    def suggest_options(
+        self, context: CompletionContext, directive: str, domain: Optional[str]
+    ) -> Iterable[str]:
+        """Suggest directive options that may be used, given a completion context."""
+        return []
+
+    def resolve_argument_link(
+        self,
+        context: DocumentLinkContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> Union[Tuple[str, str], str, None]:
+        """Resolve a document link request for the given argument.
+
+        Parameters
+        ----------
+        context:
+           The context of the document link request.
+        directive:
+           The name of the directive the argument is associated with.
+        domain:
+           The name of the domain the directive belongs to, if applicable.
+        argument:
+           The argument to resolve the link for.
+        """
+        return None
+
+    def find_argument_definitions(
+        self,
+        context: DefinitionContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> List[Location]:
+        """Return a list of locations representing definitions of the given argument.
+
+        Parameters
+        ----------
+        context:
+           The context of the definition request.
+        directive:
+           The name of the directive the argument is associated with.
+        domain:
+           The name of the domain the directive belongs to, if applicable.
+        argument:
+           The argument to find the definition of.
+        """
+        return []
 
 
 class ArgumentCompletion(Protocol):
-    """A completion provider for directive arguments."""
+    """A completion provider for directive arguments.
+
+    .. deprecated:: 0.14.2
+
+       This will be removed in ``v1.0``, use subclasses of
+       :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` instead.
+    """
 
     def complete_arguments(
         self, context: CompletionContext, domain: str, name: str
@@ -58,7 +150,13 @@ class ArgumentCompletion(Protocol):
 
 
 class ArgumentDefinition(Protocol):
-    """A definition provider for directive arguments."""
+    """A definition provider for directive arguments.
+
+    .. deprecated:: 0.14.2
+
+       This will be removed in ``v1.0``, use subclasses of
+       :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` instead.
+    """
 
     def find_definitions(
         self,
@@ -83,7 +181,13 @@ class ArgumentDefinition(Protocol):
 
 
 class ArgumentLink(Protocol):
-    """A document link resolver for directive arguments."""
+    """A document link resolver for directive arguments.
+
+    .. deprecated:: 0.14.2
+
+       This will be removed in ``v1.0``, use subclasses of
+       :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` instead.
+    """
 
     def resolve_link(
         self,
@@ -116,49 +220,123 @@ class Directives(LanguageFeature):
         self._documentation: Dict[str, Dict[str, str]] = {}
         """Cache for documentation."""
 
-        self._argument_completion_providers: Dict[str, ArgumentCompletion] = {}
-        """A dictionary of providers that give completion suggestions for directive
-        arguments."""
+        self._features: Dict[str, DirectiveLanguageFeature] = {}
+        """The collection of registered features."""
 
-        self._argument_definition_providers: Dict[str, ArgumentDefinition] = {}
-        """A dictionary of providers that locate definitions for directive arguments."""
+    def add_feature(self, feature: DirectiveLanguageFeature):
+        """Register a directive language feature.
 
-        self._argument_link_providers: Dict[str, ArgumentLink] = {}
-        """A dictionary of providers that resolve document links for directive
-        arguments."""
+        Parameters
+        ----------
+        feature
+           The directive language feature
+        """
+        key = f"{feature.__module__}.{feature.__class__.__name__}"
+
+        # Create an unique key for this instance.
+        if key in self._features:
+            key += f".{len([k for k in self._features.keys() if k.startswith(key)])}"
+
+        self._features[key] = feature
 
     def add_argument_completion_provider(self, provider: ArgumentCompletion) -> None:
         """Register an :class:`~esbonio.lsp.directives.ArgumentCompletion` provider.
 
+        .. deprecated:: 0.14.2
+
+           This will be removed in ``v1.0``, use
+           :meth:`~esbonio.lsp.directives.Directives.add_feature` with a
+           :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
+
         Parameters
         ----------
         provider:
            The provider to register.
         """
-        key = f"{provider.__module__}.{provider.__class__.__name__}"
-        self._argument_completion_providers[key] = provider
+        warnings.warn(
+            "ArgumentCompletion providers are deprecated in favour of "
+            "DirectiveLanguageFeatures, this method will be removed in v1.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        name = provider.__class__.__name__
+        key = f"{provider.__module__}.{name}.completion"
+
+        # Automatically derive the feature definition from the provider.
+        feature = type(
+            f"{name}CompletionProvider",
+            (DirectiveLanguageFeature,),
+            {"complete_arguments": provider.complete_arguments},
+        )()
+
+        self._features[key] = feature
 
     def add_argument_definition_provider(self, provider: ArgumentDefinition) -> None:
         """Register an :class:`~esbonio.lsp.directives.ArgumentDefinition` provider.
 
+        .. deprecated:: 0.14.2
+
+           This will be removed in ``v1.0``, use
+           :meth:`~esbonio.lsp.directives.Directives.add_feature` with a
+           :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
+
         Parameters
         ----------
         provider:
            The provider to register.
         """
-        key = f"{provider.__module__}.{provider.__class__.__name__}"
-        self._argument_definition_providers[key] = provider
+        warnings.warn(
+            "ArgumentDefinition providers are deprecated in favour of "
+            "DirectiveLanguageFeatures, this method will be removed in v1.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        name = provider.__class__.__name__
+        key = f"{provider.__module__}.{name}.definitions"
+
+        # Automatically derive the feature definition from the provider.
+        feature = type(
+            f"{name}DefinitionProvider",
+            (DirectiveLanguageFeature,),
+            {"find_argument_definitions": provider.find_definitions},
+        )()
+
+        self._features[key] = feature
 
     def add_argument_link_provider(self, provider: ArgumentLink) -> None:
         """Register an :class:`~esbonio.lsp.directives.ArgumentLink` provider.
 
+        .. deprecated:: 0.14.2
+
+           This will be removed in ``v1.0``, use
+           :meth:`~esbonio.lsp.directives.Directives.add_feature` with a
+           :class:`~esbonio.lsp.directives.DirectiveLanguageFeature` subclass instead.
+
         Parameters
         ----------
         provider:
            The provider to register.
         """
-        key = f"{provider.__module__}.{provider.__class__.__name__}"
-        self._argument_link_providers[key] = provider
+        warnings.warn(
+            "ArgumentLink providers are deprecated in favour of "
+            "DirectiveLanguageFeatures, this method will be removed in v1.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        name = provider.__class__.__name__
+        key = f"{provider.__module__}.{name}.links"
+
+        # Automatically derive the feature definition from the provider.
+        feature = type(
+            f"{name}LinkProvider",
+            (DirectiveLanguageFeature,),
+            {"resolve_argument_link": provider.resolve_link},
+        )()
+
+        self._features[key] = feature
 
     def add_documentation(self, documentation: Dict[str, Dict[str, Any]]) -> None:
         """Register directive documentation.
@@ -238,6 +416,99 @@ class Directives(LanguageFeature):
             doc["description"] = "\n".join(description)
             self._documentation[key] = doc
 
+    def get_directives(self) -> Dict[str, Directive]:
+        """Return a dictionary of all known directives."""
+
+        directives = {}
+
+        for name, feature in self._features.items():
+            try:
+                directives.update(feature.index_directives())
+            except Exception:
+                self.logger.error(
+                    "Unable to index directives, error in feature '%s'\n%s",
+                    name,
+                    traceback.format_exc(),
+                )
+
+        return directives
+
+    def get_implementation(
+        self, directive: str, domain: Optional[str]
+    ) -> Optional[Directive]:
+        """Suggest directives that may be used, given a completion context.
+
+        Parameters
+        ----------
+        context
+           The CompletionContext.
+        """
+
+        if domain:
+            name = f"{domain}:{directive}"
+        else:
+            name = directive
+
+        for feature_name, feature in self._features.items():
+            try:
+                impl = feature.get_implementation(directive, domain)
+                if impl is not None:
+                    return impl
+            except Exception:
+                self.logger.error(
+                    "Unable to get implementation for '%s', error in feature: '%s'\n%s",
+                    name,
+                    feature_name,
+                    traceback.format_exc(),
+                )
+
+        self.logger.debug(
+            "Unable to get implementation for '%s', unknown directive", name
+        )
+        return None
+
+    def suggest_directives(
+        self, context: CompletionContext
+    ) -> Iterable[Tuple[str, Directive]]:
+        """Suggest directives that may be used, given a completion context.
+
+        Parameters
+        ----------
+        context
+           The CompletionContext.
+        """
+
+        for name, feature in self._features.items():
+            try:
+                yield from feature.suggest_directives(context)
+            except Exception:
+                self.logger.error(
+                    "Unable to suggest directives, error in feature: '%s'\n%s",
+                    name,
+                    traceback.format_exc(),
+                )
+
+    def suggest_options(
+        self, context: CompletionContext, directive: str, domain: Optional[str]
+    ) -> Iterable[str]:
+        """Suggest directive options that may be used, given a completion context."""
+
+        if domain:
+            name = f"{domain}:{directive}"
+        else:
+            name = directive
+
+        for feature_name, feature in self._features.items():
+            try:
+                yield from feature.suggest_options(context, directive, domain)
+            except Exception:
+                self.logger.error(
+                    "Unable to suggest options for directive '%s', error in feature: '%s'\n%s",
+                    name,
+                    feature_name,
+                    traceback.format_exc(),
+                )
+
     completion_triggers = [DIRECTIVE, DIRECTIVE_OPTION]
     definition_triggers = [DIRECTIVE]
     hover_triggers = [DIRECTIVE]
@@ -286,8 +557,8 @@ class Directives(LanguageFeature):
         name = context.match.group("name")
         domain = context.match.group("domain") or ""
 
-        for provider_name, provider in self._argument_completion_providers.items():
-            arguments += provider.complete_arguments(context, domain, name) or []
+        for feature in self._features.values():
+            arguments += feature.complete_arguments(context, domain, name) or []
 
         return arguments
 
@@ -297,10 +568,6 @@ class Directives(LanguageFeature):
         items = []
         match = context.match
         groups = match.groupdict()
-
-        domain = ""
-        if groups["domain"]:
-            domain = f'{groups["domain"]}:'
 
         # Calculate the range of text the CompletionItems should edit.
         # If there is an existing argument to the directive, we should leave it untouched
@@ -318,10 +585,7 @@ class Directives(LanguageFeature):
             end=Position(line=context.position.line, character=end),
         )
 
-        for name, directive in self.rst.get_directives().items():
-
-            if not name.startswith(domain):
-                continue
+        for name, directive in self.suggest_directives(context):
 
             # TODO: Give better names to arguments based on what they represent.
             if include_argument:
@@ -374,23 +638,20 @@ class Directives(LanguageFeature):
 
     def complete_options(self, context: CompletionContext) -> List[CompletionItem]:
 
-        surrounding_directive = self.get_surrounding_directive(context)
+        surrounding_directive = self._get_surrounding_directive(context)
         if not surrounding_directive:
             return []
 
-        domain = ""
-        if surrounding_directive.group("domain"):
-            domain = f'{surrounding_directive.group("domain")}:'
-
-        name = f"{domain}{surrounding_directive.group('name')}"
-        directive = self.rst.get_directives().get(name, None)
-
-        if not directive:
+        name = surrounding_directive.group("name")
+        domain = surrounding_directive.group("domain")
+        impl = self.get_implementation(name, domain)
+        if impl is None:
             return []
 
         items = []
         match = context.match
         groups = match.groupdict()
+        impl_name = f"{impl.__module__}.{impl.__name__}"
 
         option = groups["option"]
         start = match.span()[0] + match.group(0).find(option)
@@ -401,19 +662,23 @@ class Directives(LanguageFeature):
             end=Position(line=context.position.line, character=end),
         )
 
-        for option in self.rst.get_directive_options(name):
-            insert_text = f":{option}:"
+        for feature in self._features.values():
+            for option in feature.suggest_options(context, name, domain):
+                insert_text = f":{option}:"
 
-            items.append(
-                CompletionItem(
-                    label=option,
-                    detail=f"{directive.__module__}.{directive.__name__}:{option}",
-                    kind=CompletionItemKind.Field,
-                    filter_text=insert_text,
-                    text_edit=TextEdit(range=range_, new_text=insert_text),
-                    data={"completion_type": "directive_option", "for_directive": name},
+                items.append(
+                    CompletionItem(
+                        label=option,
+                        detail=f"{impl_name}:{option}",
+                        kind=CompletionItemKind.Field,
+                        filter_text=insert_text,
+                        text_edit=TextEdit(range=range_, new_text=insert_text),
+                        data={
+                            "completion_type": "directive_option",
+                            "for_directive": name,
+                        },
+                    )
                 )
-            )
 
         return items
 
@@ -476,9 +741,10 @@ class Directives(LanguageFeature):
     ) -> List[Location]:
         definitions = []
 
-        for _, provider in self._argument_definition_providers.items():
+        for feature in self._features.values():
             definitions += (
-                provider.find_definitions(context, directive, domain, argument) or []
+                feature.find_argument_definitions(context, directive, domain, argument)
+                or []
             )
 
         return definitions
@@ -498,11 +764,17 @@ class Directives(LanguageFeature):
 
                 target = None
                 tooltip = None
-                for provider in self._argument_link_providers.values():
-                    target, tooltip = provider.resolve_link(
+                for feature in self._features.values():
+                    result = feature.resolve_argument_link(
                         context, name, domain, argument
                     )
-                    if target:
+
+                    if isinstance(result, str):
+                        target = result
+                        break
+
+                    if isinstance(result, tuple) and isinstance(result[0], str):
+                        target, tooltip = result
                         break
 
                 if not target:
@@ -584,21 +856,22 @@ class Directives(LanguageFeature):
         self, context: ImplementationContext, name: str, domain: Optional[str]
     ) -> List[Location]:
 
-        directives = self.rst.get_directives()
-        key = f"{domain}:{name}" if domain is not None else name
-
-        impl = directives.get(key, None)
+        impl = self.get_implementation(name, domain)
         if impl is None:
             return []
 
-        self.logger.debug("Getting implementation of '%s' (%s)", key, impl)
+        self.logger.debug(
+            "Getting implementation of '%s' (%s)",
+            f"{domain}:{name}" if domain else name,
+            impl,
+        )
         location = get_object_location(impl, self.logger)
         if location is None:
             return []
 
         return [location]
 
-    def get_surrounding_directive(
+    def _get_surrounding_directive(
         self, context: CompletionContext
     ) -> Optional["re.Match"]:
         """Used to determine which directive we should be offering completions for.

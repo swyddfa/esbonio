@@ -1,7 +1,6 @@
 import re
 
-
-DIRECTIVE = re.compile(
+DIRECTIVE: "re.Pattern" = re.compile(
     r"""
     (\s*)                             # directives can be indented
     (?P<directive>
@@ -22,18 +21,38 @@ DIRECTIVE = re.compile(
 """A regular expression to detect and parse partial and complete directives.
 
 This does **not** include any options or content that may be included underneath
-the initial declaration. The language server breaks a directive down into a number
-of parts::
+the initial declaration. A number of named capture groups are available.
 
-                   vvvvvv argument
-   .. c:function:: malloc
-   ^^^^^^^^^^^^^^^ directive
-        ^^^^^^^^ name
-      ^ domain (optional)
+``name``
+   The name of the directive, not including the domain prefix.
+
+``domain``
+   The domain prefix
+
+``directive``
+   Everything that makes up a directive, from the initial ``..`` up to and including the
+   ``::`` characters.
+
+``argument``
+   All argument text.
+
+``substitution``
+   If the directive is part of a substitution definition, this group will contain
+
+**Example**
+
+Here is an example with a "standard" directive
+
+.. include:: ../../../lib/esbonio/tests/doctests/example_directive_pattern.txt
+
+And here is an example with a substitution definition
+
+.. include:: ../../../lib/esbonio/tests/doctests/example_directive_substitution_pattern.txt
+
 """
 
 
-DIRECTIVE_OPTION = re.compile(
+DIRECTIVE_OPTION: "re.Pattern" = re.compile(
     r"""
     (?P<indent>\s+)       # directive options must be indented
     (?P<option>
@@ -49,14 +68,27 @@ DIRECTIVE_OPTION = re.compile(
 )
 """A regular expression used to detect and parse partial and complete directive options.
 
-The language server breaks an option down into a number of parts::
+A number of named capture groups are available
 
-               vvvvvv value
-   |   :align: center
-       ^^^^^^^ option
-        ^^^^^ name
-    ^^^ indent
+``name``
+   The name of the option
+
+``option``
+   The name of the option including the surrounding ``:`` characters.
+
+``indent``
+   The whitespace characters making preceeding the initial ``:`` character
+
+``value``
+   The value passed to the option
+
+**Example**
+
+.. include:: ../../../lib/esbonio/tests/doctests/example_directive_option_pattern.txt
+
 """
+
+
 ROLE = re.compile(
     r"""
     ([^\w:]|^\s*)                     # roles cannot be preceeded by letter chars

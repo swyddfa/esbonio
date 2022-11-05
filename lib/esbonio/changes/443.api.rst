@@ -1,0 +1,1 @@
+Added ``add_diagnostics`` method to the ``RstLanguageServer`` to enable adding diagnostics to a document incrementally.

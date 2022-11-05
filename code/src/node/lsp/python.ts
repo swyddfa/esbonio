@@ -1,13 +1,9 @@
-import * as child_process from "child_process";
 import * as semver from "semver";
-import * as vscode from "vscode";
-
-import { promisify } from "util";
 
 import { PYTHON_EXTENSION } from "../constants";
-import { Logger } from "../log";
+import { CommandOutput, EditorIntegrations } from "../core/editor";
+import { Logger } from "../core/log";
 
-const execFile = promisify(child_process.execFile)
 
 /**
  * Represents a python command to run.
@@ -18,14 +14,6 @@ export interface PythonCommand {
 }
 
 /**
- * Represents output from a command.
- */
-export interface CommandOutput {
-  stdout: string,
-  stderr: string
-}
-
-/**
  * Class responsible for managing all things related to the Python interpreter.
  */
 export class PythonManager {
@@ -33,7 +21,10 @@ export class PythonManager {
   private pythonExtension
   private checkedExtension = false
 
-  constructor(private logger: Logger) { }
+  constructor(
+    private editor: EditorIntegrations,
+    private logger: Logger
+  ) { }
 
   /**
    * Get the command required to run Python from within the configured environment.
@@ -43,18 +34,18 @@ export class PythonManager {
    *   environment to use.
    */
   async getCmd(): Promise<string[] | undefined> {
-    let userPython = vscode.workspace.getConfiguration('esbonio').get<string>('server.pythonPath')
 
+    let userPython = this.editor.getConfiguration('esbonio').get<string>('server.pythonPath')
     if (userPython) {
 
       // Support for ${workspaceRoot}/...
       let match = userPython.match(/^\${(\w+)}/)
       if (match && (match[1] === 'workspaceRoot' || match[1] === 'workspaceFolder')) {
         let workspaceRoot = ""
-        let workspaceFolders = vscode.workspace.workspaceFolders
+        let workspaceFolders = this.editor.getWorkspaceFolders()
 
         if (workspaceFolders) {
-          workspaceRoot = workspaceFolders[0].uri.fsPath
+          workspaceRoot = workspaceFolders[0].fsPath
         }
 
         userPython = userPython.replace(match[0], workspaceRoot)
@@ -64,35 +55,26 @@ export class PythonManager {
       return [userPython]
     }
 
-    await this.ensurePythonExtension()
-    if (this.pythonExtension) {
-      return this.pythonExtension.settings.getExecutionDetails().execCommand
+    let python = await this.getPythonExtension()
+    if (python) {
+      return python.settings.getExecutionDetails().execCommand
     }
 
     // TODO: Implement a fallback that attempts to find the system python.
   }
 
-  /**
-   * Returns true if the user has the Python Extension available.
-   */
-  async hasPythonExtension(): Promise<boolean> {
-    await this.ensurePythonExtension()
-    if (this.pythonExtension) {
-      return true
-    }
-
-    return false
+  public async hasPythonExtension(): Promise<boolean> {
+    return (await this.getPythonExtension()) !== undefined
   }
 
   /**
    * If the Python extension is available, change the active environment.
    */
-  async changeEnvironment(): Promise<any> {
-    await this.ensurePythonExtension()
-    if (this.pythonExtension) {
-      return await vscode.commands.executeCommand("python.setInterpreter")
+  async selectEnvironment(): Promise<any> {
+    let python = await this.getPythonExtension()
+    if (python) {
+      return await this.editor.executeEditorCommand("python.setInterpreter")
     }
-
   }
 
   /**
@@ -110,18 +92,21 @@ export class PythonManager {
       ]
     }
 
-    let { stdout } = await this.execCommand(command)
-    let version = stdout.trim()
-    this.logger.info(`Python version '${version}'`)
+    let result = await this.execCommand(command)
+    if (!result) {
+      return undefined
+    }
+
+    let version = result.stdout.trim()
+    this.logger.info(`Python version: '${version}'`)
 
     // Ensure we extracted a valid version number
     if (!semver.parse(version)) {
-      this.logger.error("Unable to parse Python version.")
+      this.logger.error(`Unable to parse Python version: '${version}'`)
       return undefined
     }
 
     return version
-
   }
 
   /**
@@ -129,18 +114,19 @@ export class PythonManager {
    *
    * The resolved promise will contain the stdout of the command.
    */
-  async execCommand(command: PythonCommand): Promise<CommandOutput> {
+  async execCommand(command: PythonCommand): Promise<CommandOutput | undefined> {
     let pythonCmd = await this.getCmd()
     if (!pythonCmd) {
       let message = "Unable to run Python command, no environment configured."
-      await vscode.window.showErrorMessage(message, { title: "Close" })
-      return
+      await this.editor.showErrorMessage(message, { title: "Close" })
+
+      return undefined
     }
 
     let fullCommand = [...pythonCmd, ...command.args]
     this.logger.debug(`Running Command: ${fullCommand.join(" ")}`)
 
-    return await execFile(fullCommand[0], fullCommand.slice(1))
+    return await this.editor.executeSystemCommand(fullCommand[0], fullCommand.slice(1))
   }
 
   /**
@@ -148,48 +134,37 @@ export class PythonManager {
    *
    * This does not capture the output.
    */
-  async runCommand(command: PythonCommand): Promise<null> {
+  async runCommand(command: PythonCommand): Promise<void> {
     let pythonCmd = await this.getCmd()
     if (!pythonCmd) {
       let message = "Unable to run Python command, no environment configured."
-      await vscode.window.showErrorMessage(message, { title: "Close" })
-      return
+      await this.editor.showErrorMessage(message, { title: "Close" })
+      return Promise.resolve(null)
     }
 
     let fullCommand = [...pythonCmd, ...command.args]
     this.logger.debug(`Running Command: ${fullCommand.join(" ")}`)
 
-    let process = new vscode.ProcessExecution(fullCommand[0], fullCommand.slice(1))
-    let task = new vscode.Task(
-      { type: 'process' }, vscode.TaskScope.Workspace, command.name, 'esbonio', process
-    )
-
-    let execution = await vscode.tasks.executeTask(task)
-    let taskFinished: Promise<null> = new Promise((resolve, reject) => {
-
-      let listener = vscode.tasks.onDidEndTask(ended => {
-        if (execution === ended.execution) {
-          this.logger.debug("Task finished.")
-          listener.dispose()
-          resolve(null)
-        }
-      })
-    })
-
-    return await taskFinished
+    return this.editor.executeTask(command.name, fullCommand[0], fullCommand.slice(1))
   }
 
   /**
- * Ensures that if the Python extension is available
- */
-  private async ensurePythonExtension() {
+   * Ensures that if the Python extension is available
+   */
+  private async getPythonExtension(): Promise<any | undefined> {
 
     // No need to repeatedly reload the extension.
-    if (this.checkedExtension) {
-      return
+    if (this.pythonExtension) {
+      return this.pythonExtension
     }
 
-    let pythonExt = vscode.extensions.getExtension(PYTHON_EXTENSION)
+    if (this.checkedExtension && !this.pythonExtension) {
+      return undefined
+    }
+
+    let pythonExt = this.editor.getExtension(PYTHON_EXTENSION)
+    this.checkedExtension = true
+
     if (pythonExt) {
       this.logger.debug("Python extension is available")
 
@@ -202,6 +177,6 @@ export class PythonManager {
       }
     }
 
-    this.checkedExtension = true
+    return this.pythonExtension
   }
 }
