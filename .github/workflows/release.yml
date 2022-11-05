@@ -87,7 +87,6 @@ jobs:
 
     - run: |
         cd code
-        rm -r dist
         npm run package
       name: Package Extension
 
