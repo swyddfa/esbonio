@@ -1,2 +1,0 @@
-The ``Directives`` language feature can now be extended by registering ``DirectiveLanguageFeatures`` using the new ``add_feature`` method.
-This is now the preferred extension mechanism and should be used by all extensions going forward.

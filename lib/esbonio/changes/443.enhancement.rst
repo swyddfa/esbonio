@@ -1,4 +1,0 @@
-Add ``esbonio.server.showDeprecationWarnings`` option.
-
-This is flag is primarily aimed at developers working either directly on esbonio, or one of its extensions.
-When enabled, any warnings (such as ``DeprecationWarnings``) will be logged and published to the client as diagnostics.

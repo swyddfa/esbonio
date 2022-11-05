@@ -1,6 +1,0 @@
-``DirectiveLanguageFeatures`` can now implement the following methods.
-
-- ``index_directives``: used to discover available directive implementations
-- ``suggest_directives``: used to determine which directive names can be suggested in the current completion context (``function`` vs ``py:function`` vs ``c:function`` etc.)
-- ``get_implementation``: used to go from a directive name (``function`` vs ``py:function``) to its implementation
-- ``suggest_options``: used to determine which directive options can be suggested in the current completion context

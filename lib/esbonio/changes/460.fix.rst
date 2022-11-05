@@ -1,1 +1,0 @@
-Spinx log messages are no longer duplicated after refreshing the application instance

@@ -1,3 +1,51 @@
+v0.14.2 - 2022-11-05
+--------------------
+
+Enhancements
+^^^^^^^^^^^^
+
+- Add ``esbonio.server.showDeprecationWarnings`` option.
+
+  This is flag is primarily aimed at developers working either directly on esbonio, or one of its extensions.
+  When enabled, any warnings (such as ``DeprecationWarnings``) will be logged and published to the client as diagnostics. (`#443 <https://github.com/swyddfa/esbonio/issues/443>`_)
+
+
+Fixes
+^^^^^
+
+- Spinx log messages are no longer duplicated after refreshing the application instance (`#460 <https://github.com/swyddfa/esbonio/issues/460>`_)
+
+
+API Changes
+^^^^^^^^^^^
+
+- Added ``add_diagnostics`` method to the ``RstLanguageServer`` to enable adding diagnostics to a document incrementally. (`#443 <https://github.com/swyddfa/esbonio/issues/443>`_)
+- The ``Directives`` language feature can now be extended by registering ``DirectiveLanguageFeatures`` using the new ``add_feature`` method.
+  This is now the preferred extension mechanism and should be used by all extensions going forward. (`#444 <https://github.com/swyddfa/esbonio/issues/444>`_)
+- ``DirectiveLanguageFeatures`` can now implement the following methods.
+
+  - ``index_directives``: used to discover available directive implementations
+  - ``suggest_directives``: used to determine which directive names can be suggested in the current completion context (``function`` vs ``py:function`` vs ``c:function`` etc.)
+  - ``get_implementation``: used to go from a directive name (``function`` vs ``py:function``) to its implementation
+  - ``suggest_options``: used to determine which directive options can be suggested in the current completion context (`#453 <https://github.com/swyddfa/esbonio/issues/453>`_)
+
+
+Deprecated
+^^^^^^^^^^
+
+- ``ArgumentCompletion``, ``ArgumentDefinition`` and ``ArgumentLink`` directive providers have been deprecated in favour of ``DirectiveLanguageFeatures`` and will be removed in ``v1.0`` (`#444 <https://github.com/swyddfa/esbonio/issues/444>`_)
+- Calling the ``get_directives()`` method on the ``RstLanguageServer`` and ``SphinxLanguageServer`` objects is deprecated in favour of calling the ``get_directives()`` method on the ``Directives`` language feature.
+  It will be removed in ``v1.0``
+
+  Calling the ``get_directive_options()`` method on the ``RstLanguageServer`` and ``SphinxLanguageServer`` objects deprecated and will be removed in ``v1.0``. (`#453 <https://github.com/swyddfa/esbonio/issues/453>`_)
+
+
+Misc
+^^^^
+
+- Add Python 3.11 support (`#470 <https://github.com/swyddfa/esbonio/issues/470>`_)
+
+
 v0.14.1 - 2022-09-11
 --------------------
 
