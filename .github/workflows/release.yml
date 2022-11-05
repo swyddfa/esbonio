@@ -87,6 +87,7 @@ jobs:
 
     - run: |
         cd code
+        npm ci
         npm run package
       name: Package Extension
 
