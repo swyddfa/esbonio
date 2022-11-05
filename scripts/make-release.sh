@@ -105,11 +105,11 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     fi
 
     # Write the release notes for github
-    python -m towncrier --draft --version="${VERSION}" | \
+    python -m towncrier build --draft --version="${VERSION}" | \
         rst2html.py --template=changes/github-template.html > .changes.html
 
     # Write the release notes for the changelog
-    python -m towncrier --yes --version="${VERSION}"
+    python -m towncrier build --yes --version="${VERSION}"
 
     # Setup git, commit, tag and push all the changes.
     git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
