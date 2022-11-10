@@ -93,6 +93,12 @@ class SphinxConfig(BaseModel):
     warning_is_error: bool = Field(False, alias="warningIsError")
     """Treat any warning as an error"""
 
+    useCustomTranslator: bool = Field(False, alias="useCustomTranslator")
+    """Custome translator to add classes with line numbers"""
+
+    buildSphinxOnChange: bool = Field(False, alias="buildSphinxOnChange")
+    """Set it to True if you want to build Sphinx app on change event"""
+
     @property
     def parallel(self) -> int:
         """The parsed value of the ``num_jobs`` field."""

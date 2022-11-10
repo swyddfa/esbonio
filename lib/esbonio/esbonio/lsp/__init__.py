@@ -76,6 +76,7 @@ logger = logging.getLogger(__name__)
 # Commands
 ESBONIO_SERVER_CONFIGURATION = "esbonio.server.configuration"
 ESBONIO_SERVER_PREVIEW = "esbonio.server.preview"
+ESBONIO_SERVER_SPHINX_BUILD_UNSAVED_FILE = "esbonio.server.sphinx.build.unsaved.file"
 
 
 class Patched(LanguageServerProtocol):
@@ -161,6 +162,14 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
     @server.feature(TEXT_DOCUMENT_DID_CHANGE)
     def on_change(ls: RstLanguageServer, params: DidChangeTextDocumentParams):
         pass
+
+    @server.command(ESBONIO_SERVER_SPHINX_BUILD_UNSAVED_FILE)
+    def trigger_build_for_usaved_file(
+        ls: RstLanguageServer, params: DidChangeTextDocumentParams
+    ):
+        """Sphinx build unsaved file. Pass file path as param"""
+        ls.logger.debug("%s: %s", ESBONIO_SERVER_SPHINX_BUILD_UNSAVED_FILE, params)
+        ls.trigger_sphinx_build_for_usaved_file(params)
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(ls: RstLanguageServer, params: DidSaveTextDocumentParams):

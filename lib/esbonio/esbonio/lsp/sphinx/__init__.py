@@ -46,6 +46,8 @@ from esbonio.lsp.sphinx.config import SphinxServerConfig
 from esbonio.lsp.sphinx.preview import make_preview_server
 from esbonio.lsp.sphinx.preview import start_preview_server
 
+from .translator import CustomHTMLTranslator
+
 __all__ = [
     "InitializationOptions",
     "MissingConfigError",
@@ -98,6 +100,21 @@ class SphinxLanguageServer(RstLanguageServer):
         self._role_target_types: Optional[Dict[str, List[str]]] = None
         """Cache for role target types."""
 
+        self.is_preview: bool = False
+        """Enable callbacks, that limit and inject files to only the current unsaved file."""
+        
+        self.preview_docname: str = ""
+        """Name of the current (unsaved) file."""
+        
+        self.preview_content: str = ""
+        """Content of the current (unsaved) file."""
+
+        self.useCustomTranslator: bool = False
+        """Enable necessary feature for scroll sync of the rst previewer."""
+
+        self.buildSphinxOnChange: bool = False
+        """Enable Sphinx build for unsaved file content for onChange event"""
+
     @property
     def configuration(self) -> Dict[str, Any]:
         """Return the server's actual configuration."""
@@ -125,6 +142,9 @@ class SphinxLanguageServer(RstLanguageServer):
         config["sphinx"]["version"] = __sphinx_version__
 
         config["server"] = self.user_config.server.dict(by_alias=True)  # type: ignore
+
+        self.useCustomTranslator = self.user_config.sphinx.useCustomTranslator
+        self.buildSphinxOnChange = self.user_config.sphinx.buildSphinxOnChange
 
         return config
 
@@ -212,6 +232,30 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self.build()
 
+    def remove_prefix(self, text, prefix):
+        return text[len(prefix) :] if text.startswith(prefix) else text
+
+    """
+    Trigger sphinx build for an unsaved file. So the build would be done on workspace content rather than from file itself 
+    """
+
+    def trigger_sphinx_build_for_usaved_file(self, params: str):
+        if not self.buildSphinxOnChange:
+            return
+        file_path = pathlib.Path(self.remove_prefix(params[0], "file://"))
+        content = self.workspace.get_document("file://" + str(file_path)).source
+        rel_path_without_extension = str(
+            file_path.relative_to(self.sphinx_args["srcdir"]).with_suffix("")
+        )
+        self.build_preview_from_content(rel_path_without_extension, content)
+
+    def build_preview_from_content(self, preview_docname: str, preview_content: str):
+        """Handle build with preview from content."""
+        self.is_preview = True
+        self.preview_content = preview_content
+        self.preview_docname = preview_docname
+        self.build()
+
     def build(self):
 
         if not self.app:
@@ -252,6 +296,24 @@ class SphinxLanguageServer(RstLanguageServer):
             },
         )
 
+    def cb_env_before_read_docs(self, app, env, docnames: List[str]):
+        """Callback handling env-before-read-docs event."""
+        CustomHTMLTranslator.progress = 0
+        CustomHTMLTranslator.docnames = docnames
+        CustomHTMLTranslator.doccount = len(docnames)
+        # comm.log(f"cb_env_before_read_docs {docnames}")
+        # add our edited file to inject content in source-read, even if not physically changed
+        if self.is_preview & (self.preview_docname not in docnames):
+            # don't care about any other docs
+            docnames.clear()
+            docnames.append(self.preview_docname)
+
+    def cb_source_read(self, app, docname, source):
+        """Callback handling source_read event."""
+        if self.is_preview & (docname == self.preview_docname):
+            # log(f"Injecting live-preview content for {docname}")
+            source[0] = self.preview_content
+
     def create_sphinx_app(self, options: InitializationOptions) -> Optional[Sphinx]:
         """Create a Sphinx application instance with the given config."""
         sphinx = options.sphinx
@@ -270,6 +332,15 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self._load_sphinx_extensions(app)
         self._load_sphinx_config(app)
+
+        # TODO This creates a problem, if other extensions already use a custom builder
+        # or translator, because either this or the other one is overwritten.
+        if self.user_config.sphinx.useCustomTranslator:
+            app.set_translator("html", CustomHTMLTranslator, True)
+
+        if self.user_config.sphinx.buildSphinxOnChange:
+            app.connect("env-before-read-docs", self.cb_env_before_read_docs)
+            app.connect("source-read", self.cb_source_read)
 
         return app
 
