@@ -1,5 +1,4 @@
 """CustomHTMLTranslator class."""
-from pathlib import Path
 from typing import List
 
 from docutils.nodes import Node

@@ -102,10 +102,10 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self.is_preview: bool = False
         """Enable callbacks, that limit and inject files to only the current unsaved file."""
-        
+
         self.preview_docname: str = ""
         """Name of the current (unsaved) file."""
-        
+
         self.preview_content: str = ""
         """Content of the current (unsaved) file."""
 
@@ -236,7 +236,7 @@ class SphinxLanguageServer(RstLanguageServer):
         return text[len(prefix) :] if text.startswith(prefix) else text
 
     """
-    Trigger sphinx build for an unsaved file. So the build would be done on workspace content rather than from file itself 
+    Trigger sphinx build for an unsaved file. So the build would be done on workspace content rather than from file itself
     """
 
     def trigger_sphinx_build_for_usaved_file(self, params: str):
