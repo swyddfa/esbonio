@@ -93,8 +93,10 @@ class SphinxConfig(BaseModel):
     warning_is_error: bool = Field(False, alias="warningIsError")
     """Treat any warning as an error"""
 
-    enableLivePreview: bool = Field(False, alias="enableLivePreview")
-    """Custome translator to add classes with line numbers"""
+    addLineNumbersToEnableScrollSync: bool = Field(
+        False, alias="addLineNumbersToEnableScrollSync"
+    )
+    """Enable custom transformation to add classes with line numbers"""
 
     buildSphinxOnChange: bool = Field(False, alias="buildSphinxOnChange")
     """Set it to True if you want to build Sphinx app on change event"""

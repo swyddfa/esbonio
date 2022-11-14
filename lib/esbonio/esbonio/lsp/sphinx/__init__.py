@@ -109,7 +109,7 @@ class SphinxLanguageServer(RstLanguageServer):
         self.preview_content: str = ""
         """Content of the current (unsaved) file."""
 
-        self.enableLivePreview: bool = False
+        self.addLineNumbersToEnableScrollSync: bool = False
         """Enable necessary feature for scroll sync of the rst previewer."""
 
         self.buildSphinxOnChange: bool = False
@@ -143,7 +143,9 @@ class SphinxLanguageServer(RstLanguageServer):
 
         config["server"] = self.user_config.server.dict(by_alias=True)  # type: ignore
 
-        self.enableLivePreview = self.user_config.sphinx.enableLivePreview
+        self.addLineNumbersToEnableScrollSync = (
+            self.user_config.sphinx.addLineNumbersToEnableScrollSync
+        )
         self.buildSphinxOnChange = self.user_config.sphinx.buildSphinxOnChange
 
         return config
@@ -298,9 +300,6 @@ class SphinxLanguageServer(RstLanguageServer):
 
     def cb_env_before_read_docs(self, app, env, docnames: List[str]):
         """Callback handling env-before-read-docs event."""
-        app.builder.get_translator_class().docnames = docnames
-        app.builder.get_translator_class().doccount = len(docnames)
-        # comm.log(f"cb_env_before_read_docs {docnames}")
         # add our edited file to inject content in source-read, even if not physically changed
         if self.is_preview & (self.preview_docname not in docnames):
             # don't care about any other docs
@@ -310,7 +309,6 @@ class SphinxLanguageServer(RstLanguageServer):
     def cb_source_read(self, app, docname, source):
         """Callback handling source_read event."""
         if self.is_preview & (docname == self.preview_docname):
-            # log(f"Injecting live-preview content for {docname}")
             source[0] = self.preview_content
 
     def create_sphinx_app(self, options: InitializationOptions) -> Optional[Sphinx]:
@@ -332,12 +330,7 @@ class SphinxLanguageServer(RstLanguageServer):
         self._load_sphinx_extensions(app)
         self._load_sphinx_config(app)
 
-        # TODO This creates a problem, if other extensions already use a custom builder
-        # or translator, because either this or the other one is overwritten.
-        if self.user_config.sphinx.enableLivePreview:
-            # translator_class = CustomHTMLTranslatorWrapper(app)
-            # app.set_translator("html", translator_class, True)
-
+        if self.user_config.sphinx.addLineNumbersToEnableScrollSync:
             app.add_transform(LineNumberTransform)
 
         if self.user_config.sphinx.buildSphinxOnChange:
