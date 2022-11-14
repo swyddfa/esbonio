@@ -46,7 +46,7 @@ from esbonio.lsp.sphinx.config import SphinxServerConfig
 from esbonio.lsp.sphinx.preview import make_preview_server
 from esbonio.lsp.sphinx.preview import start_preview_server
 
-from .translator import CustomHTMLTranslator
+from .line_number_transform import LineNumberTransform
 
 __all__ = [
     "InitializationOptions",
@@ -109,7 +109,7 @@ class SphinxLanguageServer(RstLanguageServer):
         self.preview_content: str = ""
         """Content of the current (unsaved) file."""
 
-        self.useCustomTranslator: bool = False
+        self.enableLivePreview: bool = False
         """Enable necessary feature for scroll sync of the rst previewer."""
 
         self.buildSphinxOnChange: bool = False
@@ -143,7 +143,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
         config["server"] = self.user_config.server.dict(by_alias=True)  # type: ignore
 
-        self.useCustomTranslator = self.user_config.sphinx.useCustomTranslator
+        self.enableLivePreview = self.user_config.sphinx.enableLivePreview
         self.buildSphinxOnChange = self.user_config.sphinx.buildSphinxOnChange
 
         return config
@@ -298,9 +298,8 @@ class SphinxLanguageServer(RstLanguageServer):
 
     def cb_env_before_read_docs(self, app, env, docnames: List[str]):
         """Callback handling env-before-read-docs event."""
-        CustomHTMLTranslator.progress = 0
-        CustomHTMLTranslator.docnames = docnames
-        CustomHTMLTranslator.doccount = len(docnames)
+        app.builder.get_translator_class().docnames = docnames
+        app.builder.get_translator_class().doccount = len(docnames)
         # comm.log(f"cb_env_before_read_docs {docnames}")
         # add our edited file to inject content in source-read, even if not physically changed
         if self.is_preview & (self.preview_docname not in docnames):
@@ -335,8 +334,11 @@ class SphinxLanguageServer(RstLanguageServer):
 
         # TODO This creates a problem, if other extensions already use a custom builder
         # or translator, because either this or the other one is overwritten.
-        if self.user_config.sphinx.useCustomTranslator:
-            app.set_translator("html", CustomHTMLTranslator, True)
+        if self.user_config.sphinx.enableLivePreview:
+            # translator_class = CustomHTMLTranslatorWrapper(app)
+            # app.set_translator("html", translator_class, True)
+
+            app.add_transform(LineNumberTransform)
 
         if self.user_config.sphinx.buildSphinxOnChange:
             app.connect("env-before-read-docs", self.cb_env_before_read_docs)
