@@ -397,6 +397,12 @@ class ServerConfig(BaseModel):
     show_deprecation_warnings = Field(False, alias="showDeprecationWarnings")
     """Developer flag to enable deprecation warnings."""
 
+    enable_scroll_sync: bool = Field(False, alias="enableScrollSync")
+    """Enable custom transformation to add classes with line numbers"""
+
+    enable_live_preview: bool = Field(False, alias="enableLivePreview")
+    """Set it to True if you want to build Sphinx app on change event"""
+
 
 class InitializationOptions(BaseModel):
     """The initialization options we can expect to receive from a client."""

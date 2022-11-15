@@ -109,12 +109,6 @@ class SphinxLanguageServer(RstLanguageServer):
         self.preview_content: str = ""
         """Content of the current (unsaved) file."""
 
-        self.addLineNumbersToEnableScrollSync: bool = False
-        """Enable necessary feature for scroll sync of the rst previewer."""
-
-        self.buildSphinxOnChange: bool = False
-        """Enable Sphinx build for unsaved file content for onChange event"""
-
     @property
     def configuration(self) -> Dict[str, Any]:
         """Return the server's actual configuration."""
@@ -142,11 +136,6 @@ class SphinxLanguageServer(RstLanguageServer):
         config["sphinx"]["version"] = __sphinx_version__
 
         config["server"] = self.user_config.server.dict(by_alias=True)  # type: ignore
-
-        self.addLineNumbersToEnableScrollSync = (
-            self.user_config.sphinx.addLineNumbersToEnableScrollSync
-        )
-        self.buildSphinxOnChange = self.user_config.sphinx.buildSphinxOnChange
 
         return config
 
@@ -242,7 +231,7 @@ class SphinxLanguageServer(RstLanguageServer):
     """
 
     def trigger_sphinx_build_for_usaved_file(self, params: str):
-        if not self.buildSphinxOnChange:
+        if not self.user_config.server.enable_live_preview:
             return
         file_path = pathlib.Path(self.remove_prefix(params[0], "file://"))
         content = self.workspace.get_document("file://" + str(file_path)).source
@@ -330,10 +319,10 @@ class SphinxLanguageServer(RstLanguageServer):
         self._load_sphinx_extensions(app)
         self._load_sphinx_config(app)
 
-        if self.user_config.sphinx.addLineNumbersToEnableScrollSync:
+        if self.user_config.server.enable_scroll_sync:
             app.add_transform(LineNumberTransform)
 
-        if self.user_config.sphinx.buildSphinxOnChange:
+        if self.user_config.server.enable_live_preview:
             app.connect("env-before-read-docs", self.cb_env_before_read_docs)
             app.connect("source-read", self.cb_source_read)
 

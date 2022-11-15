@@ -5,7 +5,7 @@ from docutils.transforms import Transform
 class LineNumberTransform(Transform):
     default_priority = 500
 
-    def apply(self):
+    def apply(self, **kwargs):
         for node in self.document.traverse(nodes.paragraph):
             if node.line:
                 node["classes"].append("linemarker")
