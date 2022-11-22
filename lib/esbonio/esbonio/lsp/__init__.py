@@ -173,6 +173,11 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(ls: RstLanguageServer, params: DidSaveTextDocumentParams):
+
+        # Keep track of the version for unsaved detection.
+        doc = ls.workspace.get_document(params.text_document.uri)
+        doc.last_saved_version = doc.version
+
         ls.save(params)
 
         for feature in ls._features.values():

@@ -290,15 +290,32 @@ class SphinxLanguageServer(RstLanguageServer):
     def cb_env_before_read_docs(self, app, env, docnames: List[str]):
         """Callback handling env-before-read-docs event."""
         # add our edited file to inject content in source-read, even if not physically changed
-        if self.is_preview & (self.preview_docname not in docnames):
-            # don't care about any other docs
-            docnames.clear()
-            docnames.append(self.preview_docname)
+        # if self.is_preview & (self.preview_docname not in docnames):
+        #     # don't care about any other docs
+        #     docnames.clear()
+        #     docnames.append(self.preview_docname)
+        is_building = set(docnames)
+        for docname in env.found_docs - is_building:
+
+            filepath = env.doc2path(docname, base=True)
+            uri = Uri.from_fs_path(filepath)
+            doc = self.workspace.get_document(uri)
+
+            current_version = doc.version or 0
+            last_saved_version = getattr(doc, 'last_saved_version', current_version) or 0
+
+            if last_saved_version < current_version:
+                docnames.append(docname)
 
     def cb_source_read(self, app, docname, source):
         """Callback handling source_read event."""
-        if self.is_preview & (docname == self.preview_docname):
-            source[0] = self.preview_content
+
+        filepath = app.env.doc2path(docname, base=True)
+        uri = Uri.from_fs_path(filepath)
+
+        doc = self.workspace.get_document(uri)
+        source[0] = doc.source
+
 
     def create_sphinx_app(self, options: InitializationOptions) -> Optional[Sphinx]:
         """Create a Sphinx application instance with the given config."""
