@@ -7,6 +7,7 @@ import traceback
 from typing import Any
 from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Type
 
 from pygls.lsp.methods import CODE_ACTION
@@ -76,7 +77,7 @@ logger = logging.getLogger(__name__)
 # Commands
 ESBONIO_SERVER_CONFIGURATION = "esbonio.server.configuration"
 ESBONIO_SERVER_PREVIEW = "esbonio.server.preview"
-ESBONIO_SERVER_SPHINX_BUILD_UNSAVED_FILE = "esbonio.server.sphinx.build.unsaved.file"
+ESBONIO_SERVER_BUILD = "esbonio.server.build"
 
 
 class Patched(LanguageServerProtocol):
@@ -163,20 +164,15 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
     def on_change(ls: RstLanguageServer, params: DidChangeTextDocumentParams):
         pass
 
-    @server.command(ESBONIO_SERVER_SPHINX_BUILD_UNSAVED_FILE)
-    def trigger_build_for_usaved_file(
-        ls: RstLanguageServer, params: DidChangeTextDocumentParams
-    ):
-        """Sphinx build unsaved file. Pass file path as param"""
-        ls.logger.debug("%s: %s", ESBONIO_SERVER_SPHINX_BUILD_UNSAVED_FILE, params)
-        ls.trigger_sphinx_build_for_usaved_file(params)
+    @server.command(ESBONIO_SERVER_BUILD)
+    def build(ls: RstLanguageServer, *args):
+        params = {} if not args[0] else args[0][0]._asdict()
+        force_all: bool = params.get("force_all", False)
+        filenames: List[str] = params.get("filenames", None)
+        ls.build(force_all, filenames)
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(ls: RstLanguageServer, params: DidSaveTextDocumentParams):
-
-        # Keep track of the version for unsaved detection.
-        doc = ls.workspace.get_document(params.text_document.uri)
-        doc.last_saved_version = doc.version
 
         ls.save(params)
 

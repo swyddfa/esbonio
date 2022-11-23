@@ -464,6 +464,9 @@ class RstLanguageServer(LanguageServer):
     def delete_files(self, params: DeleteFilesParams):
         pass
 
+    def build(self, force_all: bool = False, filenames: List[str] = None):
+        pass
+
     def load_extension(self, name: str, setup: Callable):
         """Load the given setup function as an extension.
 
