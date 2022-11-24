@@ -8,6 +8,7 @@ from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
+from typing import Optional
 from typing import Type
 
 from pygls.lsp.methods import CODE_ACTION
