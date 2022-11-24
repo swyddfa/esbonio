@@ -224,7 +224,7 @@ class SphinxLanguageServer(RstLanguageServer):
     Trigger sphinx build for an unsaved file. So the build would be done on workspace content rather than from file itself
     """
 
-    def build(self, force_all: bool = False, filenames: List[str] = None) -> None:
+    def build(self, force_all: bool = False, filenames: Optional[List[str]] = None) -> None:
 
         if not self.app:
             return
@@ -268,7 +268,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def cb_env_before_read_docs(self, app, env, docnames: List[str]):
         """Callback handling env-before-read-docs event."""
         # add our edited file to inject content in source-read, even if not physically changed
-        if not self.user_config.server.enable_live_preview:
+        if not self.user_config.server.enable_live_preview:   # type: ignore
             return
         is_building = set(docnames)
         for docname in env.found_docs - is_building:
@@ -304,7 +304,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def cb_source_read(self, app, docname, source):
         """Callback handling source_read event."""
 
-        if not self.user_config.server.enable_live_preview:
+        if not self.user_config.server.enable_live_preview:  # type: ignore
             return
 
         filepath = app.env.doc2path(docname, base=True)
@@ -332,10 +332,10 @@ class SphinxLanguageServer(RstLanguageServer):
         self._load_sphinx_extensions(app)
         self._load_sphinx_config(app)
 
-        if self.user_config.server.enable_scroll_sync:
+        if self.user_config.server.enable_scroll_sync:  # type: ignore
             app.add_transform(LineNumberTransform)
 
-        if self.user_config.server.enable_live_preview:
+        if self.user_config.server.enable_live_preview:  # type: ignore
             app.connect("env-before-read-docs", self.cb_env_before_read_docs)
             app.connect("source-read", self.cb_source_read)
             app.connect("build-finished", self.cb_build_finished)

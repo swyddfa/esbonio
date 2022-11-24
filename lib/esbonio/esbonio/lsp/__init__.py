@@ -168,7 +168,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
     def build(ls: RstLanguageServer, *args):
         params = {} if not args[0] else args[0][0]._asdict()
         force_all: bool = params.get("force_all", False)
-        filenames: List[str] = params.get("filenames", None)
+        filenames: Optional[List[str]] = params.get("filenames", None)
         ls.build(force_all, filenames)
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
