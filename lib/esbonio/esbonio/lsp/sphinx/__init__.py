@@ -217,15 +217,10 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self.build()
 
-    def remove_prefix(self, text, prefix):
-        return text[len(prefix) :] if text.startswith(prefix) else text
-
-    """
-    Trigger sphinx build for an unsaved file. So the build would be done on workspace content rather than from file itself
-    """
-
-    def build(self, force_all: bool = False, filenames: Optional[List[str]] = None) -> None:
-
+    def build(
+        self, force_all: bool = False, filenames: Optional[List[str]] = None
+    ) -> None:
+        """Trigger sphinx build. Force complete rebuild with flag or build only selected files in the list."""
         if not self.app:
             return
 
@@ -268,7 +263,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def cb_env_before_read_docs(self, app, env, docnames: List[str]):
         """Callback handling env-before-read-docs event."""
         # add our edited file to inject content in source-read, even if not physically changed
-        if not self.user_config.server.enable_live_preview:   # type: ignore
+        if not self.user_config.server.enable_live_preview:  # type: ignore
             return
         is_building = set(docnames)
         for docname in env.found_docs - is_building:
