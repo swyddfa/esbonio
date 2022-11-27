@@ -1,0 +1,1 @@
+The language server should now correctly handle errors that occur while generating completion suggestions for a directive's options
