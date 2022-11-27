@@ -436,12 +436,15 @@ class Directives(LanguageFeature):
     def get_implementation(
         self, directive: str, domain: Optional[str]
     ) -> Optional[Directive]:
-        """Suggest directives that may be used, given a completion context.
+        """Return the implementation of a directive given its name
 
         Parameters
         ----------
-        context
-           The CompletionContext.
+        directive
+           The name of the directive.
+
+        domain
+           The domain of the directive, if applicable.
         """
 
         if domain:
