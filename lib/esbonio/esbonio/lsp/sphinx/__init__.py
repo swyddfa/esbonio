@@ -101,7 +101,7 @@ class SphinxLanguageServer(RstLanguageServer):
         self._role_target_types: Optional[Dict[str, List[str]]] = None
         """Cache for role target types."""
 
-        self.file_list_pending_build_version_updates: List[Tuple(str, int)] = []
+        self.file_list_pending_build_version_updates: List[Tuple[str, int]] = []
         """List of all the files that need an updated last_build_version"""
 
     @property
@@ -281,7 +281,7 @@ class SphinxLanguageServer(RstLanguageServer):
             uri = Uri.from_fs_path(filepath)
             doc = self.workspace.get_document(uri)
             current_version = doc.version or 0
-            self.file_list_pending_build_version_updates.append((uri, current_version))
+            self.file_list_pending_build_version_updates.append((uri, current_version))  # type: ignore
 
     def cb_build_finished(self, app, exception):
         """Callback handling build-finished event."""
@@ -293,7 +293,7 @@ class SphinxLanguageServer(RstLanguageServer):
             doc = self.workspace.get_document(uri)
             last_build_version = getattr(doc, "last_build_version", 0)
             if last_build_version < updated_version:
-                doc.last_build_version = updated_version
+                doc.last_build_version = updated_version  # type: ignore
 
         self.file_list_pending_build_version_updates = []
 
