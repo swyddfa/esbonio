@@ -142,7 +142,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def _initialize_sphinx(self):
 
         try:
-            return self.create_sphinx_app(self.user_config)
+            return self.create_sphinx_app(self.user_config)  # type: ignore
         except MissingConfigError:
             self.show_message(
                 message="Unable to find your 'conf.py', features that depend on Sphinx will be unavailable",
