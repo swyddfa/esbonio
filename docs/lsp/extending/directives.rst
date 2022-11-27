@@ -24,6 +24,7 @@ API Reference
              add_documentation,
              add_feature,
              get_directives,
+             get_documentation,
              get_implementation,
              suggest_directives,
              suggest_options

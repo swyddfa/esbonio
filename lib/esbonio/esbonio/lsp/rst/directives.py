@@ -1,7 +1,6 @@
 import importlib
 import json
 from typing import Dict
-from typing import Iterable
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -10,7 +9,6 @@ import pkg_resources
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives as docutils_directives
 
-from esbonio.lsp import CompletionContext
 from esbonio.lsp.directives import DirectiveLanguageFeature
 from esbonio.lsp.directives import Directives
 
@@ -50,17 +48,6 @@ class Docutils(DirectiveLanguageFeature):
 
     def index_directives(self) -> Dict[str, Directive]:
         return self.directives
-
-    def suggest_options(
-        self, context: CompletionContext, directive: str, domain: Optional[str]
-    ) -> Iterable[str]:
-
-        impl = self.directives.get(directive, None)
-        if impl is None:
-            return []
-
-        option_spec = impl.option_spec or {}
-        return option_spec.keys()
 
 
 def resolve_directive(directive: Union[Directive, Tuple[str, str]]) -> Directive:

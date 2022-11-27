@@ -1,0 +1,1 @@
+The default ``suggest_options`` implementation for ``DirectiveLanguageFeatures`` should now be more useful in that it will return the keys from a directive's ``option_spec``
