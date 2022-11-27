@@ -665,23 +665,22 @@ class Directives(LanguageFeature):
             end=Position(line=context.position.line, character=end),
         )
 
-        for feature in self._features.values():
-            for option in feature.suggest_options(context, name, domain):
-                insert_text = f":{option}:"
+        for option in self.suggest_options(context, name, domain):
+            insert_text = f":{option}:"
 
-                items.append(
-                    CompletionItem(
-                        label=option,
-                        detail=f"{impl_name}:{option}",
-                        kind=CompletionItemKind.Field,
-                        filter_text=insert_text,
-                        text_edit=TextEdit(range=range_, new_text=insert_text),
-                        data={
-                            "completion_type": "directive_option",
-                            "for_directive": name,
-                        },
-                    )
+            items.append(
+                CompletionItem(
+                    label=option,
+                    detail=f"{impl_name}:{option}",
+                    kind=CompletionItemKind.Field,
+                    filter_text=insert_text,
+                    text_edit=TextEdit(range=range_, new_text=insert_text),
+                    data={
+                        "completion_type": "directive_option",
+                        "for_directive": name,
+                    },
                 )
+            )
 
         return items
 
