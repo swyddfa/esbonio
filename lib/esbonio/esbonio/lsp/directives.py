@@ -825,7 +825,7 @@ class Directives(LanguageFeature):
         label = f"{domain}:{name}" if domain else name
         self.logger.debug("Calculating hover for directive '%s'", label)
 
-        directive = self.rst.get_directives().get(label, None)
+        directive = self.get_implementation(name, domain)
         if not directive:
             return ""
 
