@@ -658,7 +658,7 @@ class SphinxLogHandler(LspHandler):
             return
 
         # Let sphinx do what it does to warning/error messages
-        self.translator.filter(record)
+        self.translator.filter(record)  # type: ignore
 
         loc = record.location if isinstance(record, SphinxLogRecord) else ""
         doc, lineno = self.get_location(loc)
