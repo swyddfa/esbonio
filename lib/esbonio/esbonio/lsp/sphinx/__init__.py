@@ -46,6 +46,8 @@ from esbonio.lsp.sphinx.config import SphinxServerConfig
 from esbonio.lsp.sphinx.preview import make_preview_server
 from esbonio.lsp.sphinx.preview import start_preview_server
 
+from .line_number_transform import LineNumberTransform
+
 __all__ = [
     "InitializationOptions",
     "MissingConfigError",
@@ -98,6 +100,9 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self._role_target_types: Optional[Dict[str, List[str]]] = None
         """Cache for role target types."""
+
+        self.file_list_pending_build_version_updates: List[Tuple(str, int)] = []
+        """List of all the files that need an updated last_build_version"""
 
     @property
     def configuration(self) -> Dict[str, Any]:
@@ -213,8 +218,10 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self.build()
 
-    def build(self):
-
+    def build(
+        self, force_all: bool = False, filenames: Optional[List[str]] = None
+    ) -> None:
+        """Trigger sphinx build. Force complete rebuild with flag or build only selected files in the list."""
         if not self.app:
             return
 
@@ -231,7 +238,7 @@ class SphinxLanguageServer(RstLanguageServer):
             self.sphinx_log.diagnostics = {}
 
         try:
-            self.app.build()
+            self.app.build(force_all, filenames)
         except Exception as exc:
             error = True
             self.logger.error(traceback.format_exc())
@@ -244,6 +251,7 @@ class SphinxLanguageServer(RstLanguageServer):
                 self.set_diagnostics("sphinx", doc, diagnostics)
 
         self.sync_diagnostics()
+
         self.send_notification(
             "esbonio/buildComplete",
             {
@@ -252,6 +260,54 @@ class SphinxLanguageServer(RstLanguageServer):
                 "warnings": self.app._warncount,
             },
         )
+
+    def cb_env_before_read_docs(self, app, env, docnames: List[str]):
+        """Callback handling env-before-read-docs event."""
+        # add our edited file to inject content in source-read, even if not physically changed
+        if not self.user_config.server.enable_live_preview:  # type: ignore
+            return
+        is_building = set(docnames)
+        for docname in env.found_docs - is_building:
+            filepath = env.doc2path(docname, base=True)
+            uri = Uri.from_fs_path(filepath)
+            doc = self.workspace.get_document(uri)
+            current_version = doc.version or 0
+            last_build_version = getattr(doc, "last_build_version", 0)
+            if last_build_version < current_version:
+                docnames.append(docname)
+
+        for docname in docnames:
+            filepath = env.doc2path(docname, base=True)
+            uri = Uri.from_fs_path(filepath)
+            doc = self.workspace.get_document(uri)
+            current_version = doc.version or 0
+            self.file_list_pending_build_version_updates.append((uri, current_version))
+
+    def cb_build_finished(self, app, exception):
+        """Callback handling build-finished event."""
+        if exception:
+            self.file_list_pending_build_version_updates = []
+            return
+
+        for uri, updated_version in self.file_list_pending_build_version_updates:
+            doc = self.workspace.get_document(uri)
+            last_build_version = getattr(doc, "last_build_version", 0)
+            if last_build_version < updated_version:
+                doc.last_build_version = updated_version
+
+        self.file_list_pending_build_version_updates = []
+
+    def cb_source_read(self, app, docname, source):
+        """Callback handling source_read event."""
+
+        if not self.user_config.server.enable_live_preview:  # type: ignore
+            return
+
+        filepath = app.env.doc2path(docname, base=True)
+        uri = Uri.from_fs_path(filepath)
+
+        doc = self.workspace.get_document(uri)
+        source[0] = doc.source
 
     def create_sphinx_app(self, options: InitializationOptions) -> Optional[Sphinx]:
         """Create a Sphinx application instance with the given config."""
@@ -271,6 +327,14 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self._load_sphinx_extensions(app)
         self._load_sphinx_config(app)
+
+        if self.user_config.server.enable_scroll_sync:  # type: ignore
+            app.add_transform(LineNumberTransform)
+
+        if self.user_config.server.enable_live_preview:  # type: ignore
+            app.connect("env-before-read-docs", self.cb_env_before_read_docs)
+            app.connect("source-read", self.cb_source_read)
+            app.connect("build-finished", self.cb_build_finished)
 
         return app
 

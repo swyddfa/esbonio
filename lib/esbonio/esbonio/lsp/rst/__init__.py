@@ -394,6 +394,12 @@ class ServerConfig(BaseModel):
     show_deprecation_warnings = Field(False, alias="showDeprecationWarnings")
     """Developer flag to enable deprecation warnings."""
 
+    enable_scroll_sync: bool = Field(False, alias="enableScrollSync")
+    """Enable custom transformation to add classes with line numbers"""
+
+    enable_live_preview: bool = Field(False, alias="enableLivePreview")
+    """Set it to True if you want to build Sphinx app on change event"""
+
 
 class InitializationOptions(BaseModel):
     """The initialization options we can expect to receive from a client."""
@@ -453,6 +459,9 @@ class RstLanguageServer(LanguageServer):
         pass
 
     def delete_files(self, params: DeleteFilesParams):
+        pass
+
+    def build(self, force_all: bool = False, filenames: Optional[List[str]] = None):
         pass
 
     def load_extension(self, name: str, setup: Callable):
