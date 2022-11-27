@@ -1,0 +1,7 @@
+Add initial support for synced scrolling and live previews of HTML builds. 
+**Note** Both of these features rely on additional integrations outside of the LSP protocol therefore requiring dedicated support from clients.
+
+Synced scrolling support can be enabled by setting the ``server.enableScrollSync`` initialization option to ``True`` and works by injecting line numbers into the generated HTML which a client can use to align the preview window to the source window.
+
+Live preview support can be enabled by setting the ``server.enableLivePreview`` initialization option to ``True``, the language server will then pass the contents of unsaved files for Sphinx to build.
+Currently clients are responsible for triggering intermediate builds with the new ``esbonio.server.build`` command, though this requirement may be removed in future.
