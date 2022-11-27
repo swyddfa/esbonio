@@ -25,39 +25,31 @@ class Simple(DirectiveLanguageFeature):
     def __init__(self, names: List[str]):
         self.directives = {name: Directive for name in names}
 
-    def get_implementation(
-        self, directive: str, domain: Optional[str]
-    ) -> Optional[Directive]:
-        return self.directives.get(directive, None)
-
     def index_directives(self) -> Dict[str, Directive]:
         return self.directives
-
-    # The default `suggest_directives` implementation should be sufficient.
 
     def suggest_options(
         self, context: CompletionContext, directive: str, domain: Optional[str]
     ) -> Iterable[str]:
         return iter(directive) if directive in self.directives else []
 
+    # The default `suggest_directives` implementation should be sufficient.
+    # The default `get_implementation` implementation should be sufficient.
+
 
 class Broken(DirectiveLanguageFeature):
     """A directive language feature that only throws exceptions."""
 
-    def get_implementation(
-        self, directive: str, domain: Optional[str]
-    ) -> Optional[Directive]:
-        raise NotImplementedError()
-
     def index_directives(self) -> Dict[str, Directive]:
         raise NotImplementedError()
-
-    # The default `suggest_directives` implementation should be sufficient.
 
     def suggest_options(
         self, context: CompletionContext, directive: str, domain: Optional[str]
     ) -> Iterable[str]:
         raise NotImplementedError()
+
+    # The default `suggest_directives` implementation should be sufficient.
+    # The default `get_implementation` implementation should be sufficient.
 
 
 @pytest.fixture()
@@ -116,7 +108,7 @@ def test_get_directives_error(broken: Directives):
 
 
 def test_get_implementation(simple: Directives):
-    """Ensure that we can correctly combine directives from multiple sources."""
+    """Ensure that we can correctly look up directives from multiple sources."""
 
     impl = simple.get_implementation("one", None)
     assert impl == Directive

@@ -75,8 +75,14 @@ class DirectiveLanguageFeature:
     def suggest_options(
         self, context: CompletionContext, directive: str, domain: Optional[str]
     ) -> Iterable[str]:
-        """Suggest directive options that may be used, given a completion context."""
-        return []
+        """Suggest options that may be used, given a completion context."""
+
+        impl = self.get_implementation(directive, domain)
+        if impl is None:
+            return []
+
+        option_spec = impl.option_spec or {}
+        return option_spec.keys()
 
     def resolve_argument_link(
         self,
