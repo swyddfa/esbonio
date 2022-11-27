@@ -32,12 +32,12 @@
         "**/.mypy_cache": true
     },
     "esbonio.sphinx.buildDir": "${confDir}/_build",
+    "esbonio.server.showDeprecationWarnings": true,
     "isort.args": [
         "--settings-file",
         "./lib/esbonio/pyproject.toml"
     ],
     "python.defaultInterpreterPath": "${workspaceRoot}/.env/bin/python",
-    "python.pythonPath": "${workspaceRoot}/.env/bin/python",
     "python.testing.pytestArgs": [
         "lib/esbonio/tests"
     ],
