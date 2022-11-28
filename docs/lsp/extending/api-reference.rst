@@ -61,29 +61,6 @@ Language Features
    :members:
 
 
-Roles
-^^^^^
-
-.. currentmodule:: esbonio.lsp.roles
-
-.. autodata:: ROLE
-   :annotation: = re.compile(...)
-
-.. autodata:: DEFAULT_ROLE
-   :annotation: = re.compile(...)
-
-.. autoclass:: Roles
-   :members: add_documentation, add_target_definition_provider, add_target_completion_provider, add_target_link_provider
-
-.. autoclass:: TargetCompletion
-   :members:
-
-.. autoclass:: TargetDefinition
-   :members:
-
-.. autoclass:: TargetLink
-   :members:
-
 Testing
 -------
 
