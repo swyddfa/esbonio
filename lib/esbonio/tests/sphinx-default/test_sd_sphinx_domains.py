@@ -93,8 +93,8 @@ from esbonio.lsp.testing import role_target_patterns
             role_target_patterns("py:func"),
             [
                 (
-                    None,
                     {"pythagoras.calc_hypotenuse", "pythagoras.calc_side"},
+                    None,
                 ),
             ],
         ),
@@ -116,7 +116,7 @@ from esbonio.lsp.testing import role_target_patterns
         *itertools.product(
             role_target_patterns("py:meth"),
             [
-                (None, {"pythagoras.Triangle.is_right_angled"}),
+                ({"pythagoras.Triangle.is_right_angled"}, None),
             ],
         ),
         *itertools.product(
@@ -143,7 +143,6 @@ from esbonio.lsp.testing import role_target_patterns
             role_target_patterns("py:obj"),
             [
                 (
-                    None,
                     {
                         "pythagoras",
                         "pythagoras.PI",
@@ -156,6 +155,7 @@ from esbonio.lsp.testing import role_target_patterns
                         "pythagoras.calc_hypotenuse",
                         "pythagoras.calc_side",
                     },
+                    None,
                 ),
             ],
         ),
