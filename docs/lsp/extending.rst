@@ -10,6 +10,7 @@ This section of the documentation outlines the server's architecture and how you
    :maxdepth: 1
 
    extending/directives
+   extending/roles
    extending/api-reference
 
 .. _lsp_architecture:
