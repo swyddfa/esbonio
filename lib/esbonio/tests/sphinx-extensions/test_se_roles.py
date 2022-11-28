@@ -10,11 +10,8 @@ from pytest_lsp import check
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import role_patterns
 
-EXPECTED = {"doc", "py:func", "py:mod", "ref", "func"}
-UNEXPECTED = {"c:func", "c:macro", "restructuredtext-unimplemented-role"}
-
-PY_EXPECTED = {"py:func", "py:mod"}
-PY_UNEXPECTED = {"c:func", "c:macro"}
+EXPECTED = {"doc", "py:func", "py:mod", "ref", "func", "c:func", "c:macro"}
+UNEXPECTED = {"restructuredtext-unimplemented-role"}
 
 
 @pytest.mark.asyncio
@@ -31,7 +28,7 @@ PY_UNEXPECTED = {"c:func", "c:macro"}
         ),
         *itertools.product(
             role_patterns(":py:"),
-            [(PY_EXPECTED, PY_UNEXPECTED)],
+            [(EXPECTED, UNEXPECTED)],
         ),
         *itertools.product(
             role_patterns(":c:"),
