@@ -17,10 +17,10 @@ from esbonio.lsp.testing import role_patterns
 from esbonio.lsp.testing import sphinx_version
 
 C_EXPECTED = {"c:func", "c:macro"}
-C_UNEXPECTED = {"py:func", "py:mod"}
+C_UNEXPECTED = {"restructuredtext-unimplemented-role"}
 
 EXPECTED = {"doc", "func", "mod", "ref", "c:func"}
-UNEXPECTED = {"py:func", "py:mod", "restructuredtext-unimplemented-role"}
+UNEXPECTED = {"restructuredtext-unimplemented-role"}
 
 
 @pytest.mark.asyncio
