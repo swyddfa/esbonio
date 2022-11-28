@@ -123,7 +123,14 @@ def create_language_server(
     if "logger" not in kwargs:
         kwargs["logger"] = logger
 
-    server = server_cls(*args, **kwargs, protocol_cls=Patched)
+    try:
+        server = server_cls(*args, **kwargs, protocol_cls=Patched)
+    except TypeError:
+        # Work around older version of pygls on Python 3.6
+        kwargs.pop("name", None)
+        kwargs.pop("version", None)
+
+        server = server_cls(*args, **kwargs, protocol_cls=Patched)
 
     for module in modules:
         _load_module(server, module)
