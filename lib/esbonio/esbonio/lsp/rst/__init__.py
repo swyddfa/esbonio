@@ -15,7 +15,6 @@ from typing import Tuple
 from typing import Type
 from typing import TypeVar
 
-import docutils.parsers.rst.roles as docutils_roles
 import pygls.uris as Uri
 from docutils.parsers.rst import Directive
 from pydantic import BaseModel
@@ -429,12 +428,6 @@ class RstLanguageServer(LanguageServer):
         self._features: Dict[str, LanguageFeature] = {}
         """The collection of language features registered with the server."""
 
-        self._directives: Optional[Dict[str, Directive]] = None
-        """Cache for known directives."""
-
-        self._roles: Optional[Dict[str, Any]] = None
-        """Cache for known roles."""
-
     @property
     def configuration(self) -> Dict[str, Any]:
         """Return the server's actual configuration."""
@@ -647,20 +640,27 @@ class RstLanguageServer(LanguageServer):
         return directive.option_spec or {}
 
     def get_roles(self) -> Dict[str, Any]:
-        """Return a dictionary of known roles."""
+        """Return a dictionary of known roles.
 
-        if self._roles is not None:
-            return self._roles
+        .. deprecated:: xxx
 
-        found_roles = {**docutils_roles._roles, **docutils_roles._role_registry}
+           This will be removed in ``v1.0``.
+           Use the :meth:`~esbonio.lsp.roles.Roles.get_roles` method instead.
+        """
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_roles() is deprecated and will be removed in v1.0. "
+            "Instead call the get_roles() method on the Roles language "
+            "feature.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
-        self._roles = {
-            k: v
-            for k, v in found_roles.items()
-            if v != docutils_roles.unimplemented_role
-        }
+        feature = self.get_feature("esbonio.lsp.roles.Roles")
+        if feature is None:
+            return {}
 
-        return self._roles
+        return feature.get_roles()  # type: ignore
 
     def get_default_role(self) -> Tuple[Optional[str], Optional[str]]:
         """Return the default role for the project."""
