@@ -477,6 +477,10 @@ class SphinxLanguageServer(RstLanguageServer):
     def get_domain(self, name: str) -> Optional[Domain]:
         """Return the domain with the given name.
 
+        .. deprecated:: xxx
+
+           This will be removed in ``v1.0``
+
         If a domain with the given name cannot be found, this method will return None.
 
         Parameters
@@ -484,6 +488,13 @@ class SphinxLanguageServer(RstLanguageServer):
         name:
            The name of the domain
         """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_domains() is deprecated and will be removed in v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         if self.app is None or self.app.env is None:
             return None
@@ -494,6 +505,10 @@ class SphinxLanguageServer(RstLanguageServer):
     def get_domains(self) -> Iterator[Tuple[str, Domain]]:
         """Get all the domains registered with an applications.
 
+        .. deprecated:: xxx
+
+           This will be removed in ``v1.0``
+
         Returns a generator that iterates through all of an application's domains,
         taking into account configuration variables such as ``primary_domain``.
         Yielded values will be a tuple of the form ``(prefix, domain)`` where
@@ -503,6 +518,13 @@ class SphinxLanguageServer(RstLanguageServer):
         - ``domain`` is the domain object itself.
 
         """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_domains() is deprecated and will be removed in v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         if self.app is None or self.app.env is None:
             return []
@@ -553,23 +575,6 @@ class SphinxLanguageServer(RstLanguageServer):
 
         return options or {}
 
-    def get_roles(self) -> Dict[str, Any]:
-        """Return a dictionary of known roles."""
-
-        if self._roles is not None:
-            return self._roles
-
-        self._roles = super().get_roles()
-
-        for prefix, domain in self.get_domains():
-            fmt = "{prefix}:{name}" if prefix else "{name}"
-
-            for name, role in domain.roles.items():
-                key = fmt.format(name=name, prefix=prefix)
-                self._roles[key] = role
-
-        return self._roles
-
     def get_default_role(self) -> Tuple[Optional[str], Optional[str]]:
         """Return the project's default role"""
 
@@ -594,6 +599,10 @@ class SphinxLanguageServer(RstLanguageServer):
         """Return a map indicating which object types a role is capable of linking
         with.
 
+        .. deprecated:: xxx
+
+           This will be removed in ``v1.0``
+
         For example
 
         .. code-block:: python
@@ -603,6 +612,14 @@ class SphinxLanguageServer(RstLanguageServer):
                "class": ["class", "exception"]
            }
         """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_role_target_types() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         key = f"{domain_name}:{name}" if domain_name else name
 
@@ -638,6 +655,14 @@ class SphinxLanguageServer(RstLanguageServer):
            The domain the role is a part of, if applicable.
         """
 
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_role_targets() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         targets: List[tuple] = []
         domain_obj: Optional[Domain] = None
 
@@ -664,7 +689,20 @@ class SphinxLanguageServer(RstLanguageServer):
         return targets
 
     def get_intersphinx_projects(self) -> List[str]:
-        """Return the list of configured intersphinx project names."""
+        """Return the list of configured intersphinx project names.
+
+        .. deprecated:: xxx
+
+           This will be removed in ``v.1.0``
+        """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_intersphinx_projects() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         if self.app is None:
             return []
@@ -678,6 +716,10 @@ class SphinxLanguageServer(RstLanguageServer):
         """Return ``True`` if the given intersphinx project has targets targeted by the
         given role.
 
+        .. deprecated:: xxx
+
+           This will be removed in ``v1.0``
+
         Parameters
         ----------
         project:
@@ -687,6 +729,14 @@ class SphinxLanguageServer(RstLanguageServer):
         domain:
            The domain the role is a part of, if applicable.
         """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.has_intersphinx_targets() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         targets = self.get_intersphinx_targets(project, name, domain)
 
@@ -700,6 +750,10 @@ class SphinxLanguageServer(RstLanguageServer):
     ) -> Dict[str, Dict[str, tuple]]:
         """Return the intersphinx objects targeted by the given role.
 
+        .. deprecated:: xxx
+
+           This will be removed in ``v1.0``
+
         Parameters
         ----------
         project:
@@ -709,6 +763,14 @@ class SphinxLanguageServer(RstLanguageServer):
         domain:
            The domain the role is a part of, if applicable.
         """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_intersphinx_targets() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         if self.app is None:
             return {}
