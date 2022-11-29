@@ -477,7 +477,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def get_domain(self, name: str) -> Optional[Domain]:
         """Return the domain with the given name.
 
-        .. deprecated:: xxx
+        .. deprecated:: 0.15.0
 
            This will be removed in ``v1.0``
 
@@ -505,7 +505,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def get_domains(self) -> Iterator[Tuple[str, Domain]]:
         """Get all the domains registered with an applications.
 
-        .. deprecated:: xxx
+        .. deprecated:: 0.15.0
 
            This will be removed in ``v1.0``
 
@@ -599,7 +599,7 @@ class SphinxLanguageServer(RstLanguageServer):
         """Return a map indicating which object types a role is capable of linking
         with.
 
-        .. deprecated:: xxx
+        .. deprecated:: 0.15.0
 
            This will be removed in ``v1.0``
 
@@ -691,7 +691,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def get_intersphinx_projects(self) -> List[str]:
         """Return the list of configured intersphinx project names.
 
-        .. deprecated:: xxx
+        .. deprecated:: 0.15.0
 
            This will be removed in ``v.1.0``
         """
@@ -716,7 +716,7 @@ class SphinxLanguageServer(RstLanguageServer):
         """Return ``True`` if the given intersphinx project has targets targeted by the
         given role.
 
-        .. deprecated:: xxx
+        .. deprecated:: 0.15.0
 
            This will be removed in ``v1.0``
 
@@ -750,7 +750,7 @@ class SphinxLanguageServer(RstLanguageServer):
     ) -> Dict[str, Dict[str, tuple]]:
         """Return the intersphinx objects targeted by the given role.
 
-        .. deprecated:: xxx
+        .. deprecated:: 0.15.0
 
            This will be removed in ``v1.0``
 

@@ -120,7 +120,7 @@ class RoleLanguageFeature:
 class TargetDefinition(Protocol):
     """A definition provider for role targets.
 
-    .. deprecated:: xxx
+    .. deprecated:: 0.15.0
 
        This will be removed in ``v1.0``, use a subclass of
        :class:`~esbonio.lsp.roles.RoleLanguageFeature` instead.
@@ -148,7 +148,7 @@ class TargetDefinition(Protocol):
 class TargetCompletion(Protocol):
     """A completion provider for role targets.
 
-    .. deprecated:: xxx
+    .. deprecated:: 0.15.0
 
        This will be removed in ``v1.0``, use a subclass of
        :class:`~esbonio.lsp.roles.RoleLanguageFeature` instead.
@@ -174,7 +174,7 @@ class TargetCompletion(Protocol):
 class TargetLink(Protocol):
     """A document link provider for role targets.
 
-    .. deprecated:: xxx
+    .. deprecated:: 0.15.0
 
        This will be removed in ``v1.0``, use a subclass of
        :class:`~esbonio.lsp.roles.RoleLanguageFeature` instead.
@@ -232,7 +232,7 @@ class Roles(LanguageFeature):
     def add_target_definition_provider(self, provider: TargetDefinition) -> None:
         """Register a :class:`~esbonio.lsp.roles.TargetDefinition` provider.
 
-        .. deprecated:: xxx
+        .. deprecated:: 0.15.0
 
            This will be removed in ``v1.0`` use
            :meth:`~esbonio.lsp.roles.Roles.add_feature` with a
@@ -268,7 +268,7 @@ class Roles(LanguageFeature):
     def add_target_link_provider(self, provider: TargetLink) -> None:
         """Register a :class:`~esbonio.lsp.roles.TargetLink` provider.
 
-        .. deprecated:: xxx
+        .. deprecated:: 0.15.0
 
            This will be removed in ``v1.0`` use
            :meth:`~esbonio.lsp.roles.Roles.add_feature` with a
@@ -301,7 +301,7 @@ class Roles(LanguageFeature):
     def add_target_completion_provider(self, provider: TargetCompletion) -> None:
         """Register a :class:`~esbonio.lsp.roles.TargetCompletion` provider.
 
-        .. deprecated:: xxx
+        .. deprecated:: 0.15.0
 
            This will be removed in ``v1.0`` use
            :meth:`~esbonio.lsp.roles.Roles.add_feature` with a

@@ -642,7 +642,7 @@ class RstLanguageServer(LanguageServer):
     def get_roles(self) -> Dict[str, Any]:
         """Return a dictionary of known roles.
 
-        .. deprecated:: xxx
+        .. deprecated:: 0.15.0
 
            This will be removed in ``v1.0``.
            Use the :meth:`~esbonio.lsp.roles.Roles.get_roles` method instead.
