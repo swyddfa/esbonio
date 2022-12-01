@@ -204,9 +204,6 @@ class SphinxLanguageServer(RstLanguageServer):
                 self.sync_diagnostics()
                 self.app = self._initialize_sphinx()
 
-        else:
-            self.clear_diagnostics("sphinx", params.text_document.uri)
-
         self.build()
 
     def delete_files(self, params: DeleteFilesParams):
@@ -263,22 +260,28 @@ class SphinxLanguageServer(RstLanguageServer):
 
     def cb_env_before_read_docs(self, app, env, docnames: List[str]):
         """Callback handling env-before-read-docs event."""
-        # add our edited file to inject content in source-read, even if not physically changed
-        if not self.user_config.server.enable_live_preview:  # type: ignore
-            return
-        is_building = set(docnames)
-        for docname in env.found_docs - is_building:
-            filepath = env.doc2path(docname, base=True)
-            uri = Uri.from_fs_path(filepath)
-            doc = self.workspace.get_document(uri)
-            current_version = doc.version or 0
-            last_build_version = getattr(doc, "last_build_version", 0)
-            if last_build_version < current_version:
-                docnames.append(docname)
 
+        # Determine if any unsaved files need to be added to the build list
+        if self.user_config.server.enable_live_preview:  # type: ignore
+            is_building = set(docnames)
+
+            for docname in env.found_docs - is_building:
+                filepath = env.doc2path(docname, base=True)
+                uri = Uri.from_fs_path(filepath)
+
+                doc = self.workspace.get_document(uri)
+                current_version = doc.version or 0
+
+                last_build_version = getattr(doc, "last_build_version", 0)
+                if last_build_version < current_version:
+                    docnames.append(docname)
+
+        # Clear diagnostics for any to-be built files
         for docname in docnames:
             filepath = env.doc2path(docname, base=True)
             uri = Uri.from_fs_path(filepath)
+            self.clear_diagnostics("sphinx", uri)
+
             doc = self.workspace.get_document(uri)
             current_version = doc.version or 0
             self.file_list_pending_build_version_updates.append((uri, current_version))  # type: ignore
@@ -331,8 +334,9 @@ class SphinxLanguageServer(RstLanguageServer):
         if self.user_config.server.enable_scroll_sync:  # type: ignore
             app.add_transform(LineNumberTransform)
 
+        app.connect("env-before-read-docs", self.cb_env_before_read_docs)
+
         if self.user_config.server.enable_live_preview:  # type: ignore
-            app.connect("env-before-read-docs", self.cb_env_before_read_docs)
             app.connect("source-read", self.cb_source_read)
             app.connect("build-finished", self.cb_build_finished)
 
