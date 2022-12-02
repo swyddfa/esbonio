@@ -139,6 +139,11 @@ Configuration
    Emacs (lsp-mode)
       .. include:: ./editors/emacs-lsp-mode/_configuration.rst
 
+Sphinx Options
+^^^^^^^^^^^^^^
+
+The following options control the creation of the Sphinx application object managed by the server.
+
 .. confval:: sphinx.buildDir (string)
 
    By default the language server will choose a cache directory (as determined by `appdirs <https://pypi.org/project/appdirs>`_) to place Sphinx's build output.
@@ -260,6 +265,20 @@ Configuration
 
    Treat warnings as errors. (Default: ``false``)
 
+Server Options
+^^^^^^^^^^^^^^
+
+The following options control the behavior of the language server as a whole.
+
+.. confval:: server.enableScrollSync (boolean)
+
+   When enabled, the server will inject line numbers into HTML build output making it possible for clients to implement synced scrolling.
+
+.. confval:: server.enableLivePreview (boolean)
+
+   When enabled, the server will report diagnostics and build projects taking into account the state of unsaved files.
+   **Note:** The server currently relies on the client to tell it when to build unsaved files by issuing a :command:`esbonio.server.build` command.
+
 .. confval:: server.logLevel (string)
 
    This can be used to set the level of log messages emitted by the server.
@@ -283,6 +302,11 @@ Configuration
 
    Normally any build output from Sphinx will be forwarded to the client as log messages.
    If you prefer this flag can be used to exclude any Sphinx output from the log.
+
+.. confval:: server.showDeprecationWarnings (boolean)
+
+   Developer flag which, when enabled, the server will publish any deprecation warnings as diagnostics.
+
 
 Examples
 --------

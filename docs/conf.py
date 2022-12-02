@@ -138,6 +138,10 @@ def setup(app: Sphinx):
     app.add_role("lsp", lsp_role)
 
     app.add_object_type(
+        "command", "command", objname="command", indextemplate="pair: %s; command"
+    )
+
+    app.add_object_type(
         "confval",
         "confval",
         objname="configuration value",
