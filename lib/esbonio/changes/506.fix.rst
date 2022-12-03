@@ -1,0 +1,1 @@
+Errors thrown by ``DirectiveLanguageFeatures`` during ``textDocument/documentLink`` or ``textDocument/definition`` requests are now caught and no longer result in frustrating error banners in clients

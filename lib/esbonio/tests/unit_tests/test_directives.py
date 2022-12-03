@@ -3,15 +3,21 @@ from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Tuple
 
 import pytest
 from docutils.parsers.rst import Directive
+from pygls.lsp.types import Location
+from pygls.lsp.types import Position
+from pygls.lsp.types import Range
 
 from esbonio.lsp import CompletionContext
+from esbonio.lsp import DefinitionContext
 from esbonio.lsp.directives import DIRECTIVE
 from esbonio.lsp.directives import DIRECTIVE_OPTION
 from esbonio.lsp.directives import DirectiveLanguageFeature
 from esbonio.lsp.directives import Directives
+from esbonio.lsp.rst import DocumentLinkContext
 
 if sys.version_info.minor < 8:
     from mock import Mock
@@ -36,6 +42,40 @@ class Simple(DirectiveLanguageFeature):
     # The default `suggest_directives` implementation should be sufficient.
     # The default `get_implementation` implementation should be sufficient.
 
+    def find_argument_definitions(
+        self,
+        context: DefinitionContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> List[Location]:
+
+        if directive not in self.directives:
+            return []
+
+        return [
+            Location(
+                uri=f"file:///{directive}.rst",
+                range=Range(
+                    start=Position(line=1, character=0),
+                    end=Position(line=2, character=0),
+                ),
+            )
+        ]
+
+    def resolve_argument_link(
+        self,
+        context: DocumentLinkContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> Tuple[Optional[str], Optional[str]]:
+
+        if directive not in self.directives:
+            return None, None
+
+        return f"file:///{directive}.rst", None
+
 
 class Broken(DirectiveLanguageFeature):
     """A directive language feature that only throws exceptions."""
@@ -50,6 +90,24 @@ class Broken(DirectiveLanguageFeature):
 
     # The default `suggest_directives` implementation should be sufficient.
     # The default `get_implementation` implementation should be sufficient.
+
+    def find_argument_definitions(
+        self,
+        context: DefinitionContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> List[Location]:
+        raise NotImplementedError()
+
+    def resolve_argument_link(
+        self,
+        context: DocumentLinkContext,
+        directive: str,
+        domain: Optional[str],
+        argument: str,
+    ) -> Tuple[Optional[str], Optional[str]]:
+        raise NotImplementedError()
 
 
 @pytest.fixture()
@@ -192,6 +250,68 @@ def test_suggest_options_error(broken: Directives):
     broken.logger.error.assert_called_once()
     args = broken.logger.error.call_args.args
     assert args[0].startswith("Unable to suggest options for ")
+
+
+def test_find_argument_definitions(simple: Directives):
+    """Ensure that we can correctly combine definitions from multiple sources."""
+
+    context = DefinitionContext(
+        doc=Mock(), location="rst", match=Mock(), position=Mock()
+    )
+
+    locations = simple.find_argument_definition(context, "one", "", "example")
+    assert locations[0].uri == "file:///one.rst"
+
+    locations = simple.find_argument_definition(context, "four", "", "example")
+    assert locations[0].uri == "file:///four.rst"
+
+    # All should be well
+    simple.logger.error.assert_not_called()
+
+
+def test_find_argument_definitions_error(broken: Directives):
+    """Ensure that we can gracefully handle errors in directive language features."""
+
+    context = DefinitionContext(
+        doc=Mock(), location="rst", match=Mock(), position=Mock()
+    )
+
+    locations = broken.find_argument_definition(context, "four", "", "example")
+    assert locations[0].uri == "file:///four.rst"
+
+    # The error should've been logged
+    broken.logger.error.assert_called_once()
+    args = broken.logger.error.call_args.args
+    assert args[0].startswith("Unable to find definitions")
+
+
+def test_resolve_argument_link(simple: Directives):
+    """Ensure that we can use multiple sources to resolve a document link."""
+
+    context = DocumentLinkContext(doc=Mock(), capabilities=Mock())
+
+    target, _ = simple.resolve_argument_link(context, "one", "", "example")
+    assert target == "file:///one.rst"
+
+    target, _ = simple.resolve_argument_link(context, "four", "", "example")
+    assert target == "file:///four.rst"
+
+    # All should be well
+    simple.logger.error.assert_not_called()
+
+
+def test_resolve_argument_link_error(broken: Directives):
+    """Ensure that we gracefully handle errors when resolving argument links."""
+
+    context = DocumentLinkContext(doc=Mock(), capabilities=Mock())
+
+    target, _ = broken.resolve_argument_link(context, "four", "", "example")
+    assert target == "file:///four.rst"
+
+    # The error should've been logged
+    broken.logger.error.assert_called_once()
+    args = broken.logger.error.call_args.args
+    assert args[0].startswith("Unable to resolve argument link")
 
 
 @pytest.mark.parametrize(
