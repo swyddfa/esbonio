@@ -8,7 +8,6 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
-from typing import Union
 
 from docutils.parsers.rst import Directive
 from pygls.lsp.types import CompletionItem
@@ -90,21 +89,24 @@ class DirectiveLanguageFeature:
         directive: str,
         domain: Optional[str],
         argument: str,
-    ) -> Union[Tuple[str, str], str, None]:
+    ) -> Tuple[Optional[str], Optional[str]]:
         """Resolve a document link request for the given argument.
 
         Parameters
         ----------
-        context:
+        context
            The context of the document link request.
-        directive:
+
+        directive
            The name of the directive the argument is associated with.
-        domain:
+
+        domain
            The name of the domain the directive belongs to, if applicable.
-        argument:
+
+        argument
            The argument to resolve the link for.
         """
-        return None
+        return None, None
 
     def find_argument_definitions(
         self,
@@ -117,13 +119,16 @@ class DirectiveLanguageFeature:
 
         Parameters
         ----------
-        context:
+        context
            The context of the definition request.
-        directive:
+
+        directive
            The name of the directive the argument is associated with.
-        domain:
+
+        domain
            The name of the domain the directive belongs to, if applicable.
-        argument:
+
+        argument
            The argument to find the definition of.
         """
         return []
@@ -747,15 +752,52 @@ class Directives(LanguageFeature):
         domain: Optional[str],
         argument: str,
     ) -> List[Location]:
+
         definitions = []
 
-        for feature in self._features.values():
-            definitions += (
-                feature.find_argument_definitions(context, directive, domain, argument)
-                or []
-            )
+        for feature_name, feature in self._features.items():
+            try:
+                definitions += (
+                    feature.find_argument_definitions(
+                        context, directive, domain, argument
+                    )
+                    or []
+                )
+            except Exception:
+                self.logger.error(
+                    "Unable to find definitions of '%s' for directive '%s', "
+                    "error in feature: '%s'",
+                    argument,
+                    f"{domain}:{directive}" if domain else directive,
+                    feature_name,
+                    exc_info=True,
+                )
 
         return definitions
+
+    def resolve_argument_link(
+        self, context: DocumentLinkContext, name: str, domain: str, argument: str
+    ) -> Tuple[Optional[str], Optional[str]]:
+
+        for feature_name, feature in self._features.items():
+            try:
+                target, tooltip = feature.resolve_argument_link(
+                    context, name, domain, argument
+                )
+
+                if target:
+                    return target, tooltip
+            except Exception:
+                self.logger.error(
+                    "Unable to resolve argument link '%s' for directive '%s', "
+                    "error in feature: '%s'",
+                    argument,
+                    f"{domain}:{name}" if domain else name,
+                    feature_name,
+                    exc_info=True,
+                )
+
+        return None, None
 
     def document_link(self, context: DocumentLinkContext) -> List[DocumentLink]:
         links = []
@@ -770,21 +812,9 @@ class Directives(LanguageFeature):
                 domain = match.group("domain")
                 name = match.group("name")
 
-                target = None
-                tooltip = None
-                for feature in self._features.values():
-                    result = feature.resolve_argument_link(
-                        context, name, domain, argument
-                    )
-
-                    if isinstance(result, str):
-                        target = result
-                        break
-
-                    if isinstance(result, tuple) and isinstance(result[0], str):
-                        target, tooltip = result
-                        break
-
+                target, tooltip = self.resolve_argument_link(
+                    context, name, domain, argument
+                )
                 if not target:
                     continue
 
