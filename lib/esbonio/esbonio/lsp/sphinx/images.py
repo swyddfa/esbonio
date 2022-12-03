@@ -78,6 +78,9 @@ class Images:
         if domain or directive not in {"figure", "image"}:
             return None, None
 
+        if argument.startswith("https://") or argument.startswith("http://"):
+            return argument, None
+
         return self.resolve_path(context.doc, argument), None
 
     def resolve_path(self, doc: Document, argument: str) -> Optional[str]:
@@ -95,11 +98,16 @@ class Images:
         else:
             basedir = pathlib.Path(Uri.to_fs_path(doc.uri)).parent
 
-        fpath = (basedir / argument).resolve()
-        if not fpath.exists():
-            return None
+        try:
+            fullpath = basedir / argument
+            fpath = fullpath.resolve()
 
-        return Uri.from_fs_path(str(fpath))
+            if fpath.exists():
+                return Uri.from_fs_path(str(fpath))
+        except Exception:
+            self.logger.debug("Unable to resolve filepath '%s'", fullpath)
+
+        return None
 
 
 def esbonio_setup(rst: SphinxLanguageServer, directives: Directives):

@@ -338,6 +338,16 @@ async def test_completion_suppression(client: Client, extension: str, setup):
             None,
         ),
         (
+            ".. function:: ",
+            Position(line=0, character=5),
+            "Describes a module-level function.",
+        ),
+        (
+            ".. py:function:: ",
+            Position(line=0, character=5),
+            "Describes a module-level function.",
+        ),
+        (
             ".. c:function:: ",
             Position(line=0, character=1),
             "Describes a C function",

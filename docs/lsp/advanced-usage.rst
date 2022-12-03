@@ -90,13 +90,28 @@ Commands
 The bundled language servers offer some commands that can be invoked from a language client using
 a :lsp:`workspace/executeCommand` request.
 
-.. relevant-to:: Startup Module
 
-   esbonio
-      .. include:: ./advanced/_esbonio.lsp.sphinx_commands.rst
+.. command:: esbonio.server.build
 
-   esbonio.lsp.rst
-      ``esbonio.server.configuration``
+   .. relevant-to:: Startup Module
+
+      esbonio
+         .. include:: ./advanced/_esbonio.lsp.sphinx_build_command.rst
+
+      esbonio.lsp.rst
+         Currently a placeholder.
+
+      esbonio.lsp.sphinx
+         .. include:: ./advanced/_esbonio.lsp.sphinx_build_command.rst
+
+.. command:: esbonio.server.configuration
+
+   .. relevant-to:: Startup Module
+
+      esbonio
+         .. include:: ./advanced/_esbonio.lsp.sphinx_configuration_command.rst
+
+      esbonio.lsp.rst
          Returns the server's current configuration.
 
          .. code-block:: json
@@ -109,11 +124,24 @@ a :lsp:`workspace/executeCommand` request.
               }
             }
 
-      ``esbonio.sever.preview``
+
+      esbonio.lsp.sphinx
+         .. include:: ./advanced/_esbonio.lsp.sphinx_configuration_command.rst
+
+.. command:: esbonio.server.preview
+
+   .. relevant-to:: Startup Module
+
+      esbonio
+         .. include:: ./advanced/_esbonio.lsp.sphinx_preview_command.rst
+
+      esbonio.lsp.rst
          Currently a placeholder.
 
-   esbonio.lsp.sphinx
-      .. include:: ./advanced/_esbonio.lsp.sphinx_commands.rst
+      esbonio.lsp.sphinx
+         .. include:: ./advanced/_esbonio.lsp.sphinx_preview_command.rst
+
+
 
 Notifications
 -------------

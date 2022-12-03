@@ -48,7 +48,10 @@ class SymbolVisitor(NodeVisitor):
         if not current_symbol:
             self.symbols.append(symbol)
         else:
-            current_symbol.children.append(symbol)
+            if current_symbol.children is None:
+                current_symbol.children = [symbol]
+            else:
+                current_symbol.children.append(symbol)
 
         self.symbol_stack.append(symbol)
         return symbol

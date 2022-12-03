@@ -87,7 +87,9 @@ def main(cli: argparse.ArgumentParser):
     logger.addHandler(handler)
     warnlog.addHandler(handler)
 
-    server = create_language_server(args.server_cls, modules)
+    server = create_language_server(
+        args.server_cls, modules, name="esbonio", version=__version__
+    )
 
     if args.port:
         server.start_tcp("localhost", args.port)

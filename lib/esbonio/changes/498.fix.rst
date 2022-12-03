@@ -1,0 +1,3 @@
+The language server should now correctly handle errors that occur while generating completion suggestions for a directive's options
+
+The language server should now show hovers for directives in the primary domain.

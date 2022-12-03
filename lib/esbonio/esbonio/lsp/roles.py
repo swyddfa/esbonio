@@ -1,7 +1,9 @@
 """Role support."""
 import typing
+import warnings
 from typing import Any
 from typing import Dict
+from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -31,8 +33,98 @@ from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import ROLE
 
 
+class RoleLanguageFeature:
+    """Base class for role language features."""
+
+    def complete_targets(
+        self, context: CompletionContext, name: str, domain: str
+    ) -> List[CompletionItem]:
+        """Return a list of completion items representing valid targets for the given
+        role.
+
+        Parameters
+        ----------
+        context
+           The completion context
+
+        name
+           The name of the role to generate completion suggestions for.
+
+        domain
+           The name of the domain the role is a member of
+        """
+        return []
+
+    def find_target_definitions(
+        self, context: DefinitionContext, name: str, domain: str, label: str
+    ) -> List[Location]:
+        """Return a list of locations representing the definition of the given role
+        target.
+
+        Parameters
+        ----------
+        doc:
+           The document containing the match
+        match:
+           The match object that triggered the definition request
+        name:
+           The name of the role
+        domain:
+           The domain the role is part of, if applicable.
+        """
+        return []
+
+    def get_implementation(self, role: str, domain: str) -> Optional[Any]:
+        """Return the implementation for the given role name.
+
+        Parameters
+        ----------
+        role
+           The name of the role
+
+        domain
+           The domain the role belongs to, if any
+        """
+        return self.index_roles().get(role, None)
+
+    def index_roles(self) -> Dict[str, Any]:
+        """Return all known roles."""
+        return dict()
+
+    def resolve_target_link(
+        self, context: DocumentLinkContext, name: str, domain: Optional[str], label: str
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """Return a link corresponding to the given target.
+
+        Parameters
+        ----------
+        context
+           The document link context
+
+        domain
+           The name (if applicable) of the domain the role is a member of
+
+        name
+           The name of the role to generate completion suggestions for.
+
+        label
+           The label of the target to provide the link for
+        """
+        return None, None
+
+    def suggest_roles(self, context: CompletionContext) -> Iterable[Tuple[str, Any]]:
+        """Suggest roles that may be used, given a completion context."""
+        return self.index_roles().items()
+
+
 class TargetDefinition(Protocol):
-    """A definition provider for role targets"""
+    """A definition provider for role targets.
+
+    .. deprecated:: 0.15.0
+
+       This will be removed in ``v1.0``, use a subclass of
+       :class:`~esbonio.lsp.roles.RoleLanguageFeature` instead.
+    """
 
     def find_definitions(
         self, context: DefinitionContext, name: str, domain: Optional[str]
@@ -54,7 +146,13 @@ class TargetDefinition(Protocol):
 
 
 class TargetCompletion(Protocol):
-    """A completion provider for role targets"""
+    """A completion provider for role targets.
+
+    .. deprecated:: 0.15.0
+
+       This will be removed in ``v1.0``, use a subclass of
+       :class:`~esbonio.lsp.roles.RoleLanguageFeature` instead.
+    """
 
     def complete_targets(
         self, context: CompletionContext, name: str, domain: Optional[str]
@@ -74,7 +172,13 @@ class TargetCompletion(Protocol):
 
 
 class TargetLink(Protocol):
-    """A document link provider for role targets"""
+    """A document link provider for role targets.
+
+    .. deprecated:: 0.15.0
+
+       This will be removed in ``v1.0``, use a subclass of
+       :class:`~esbonio.lsp.roles.RoleLanguageFeature` instead.
+    """
 
     def resolve_link(
         self, context: DocumentLinkContext, name: str, domain: Optional[str], label: str
@@ -106,45 +210,126 @@ class Roles(LanguageFeature):
         self._documentation: Dict[str, Dict[str, str]] = {}
         """Cache for documentation."""
 
-        self._target_definition_providers: List[TargetDefinition] = []
-        """A list of providers that locate the definition for the given role target."""
+        self._features: Dict[str, RoleLanguageFeature] = {}
+        """Collection of registered features"""
 
-        self._target_link_providers: List[TargetLink] = []
-        """A list of providers that resolve document links for role targets."""
+    def add_feature(self, feature: RoleLanguageFeature):
+        """Register a role language feature
 
-        self._target_completion_providers: List[TargetCompletion] = []
-        """A list of providers that give completion suggestions for role target
-        objects."""
+        Parameters
+        ----------
+        feature
+           The role language feature
+        """
+        key = f"{feature.__module__}.{feature.__class__.__name__}"
+
+        # Create a unique key for this instance.
+        if key in self._features:
+            key += f".{len([k for k in self._features.keys() if k.startswith(key)])}"
+
+        self._features[key] = feature
 
     def add_target_definition_provider(self, provider: TargetDefinition) -> None:
         """Register a :class:`~esbonio.lsp.roles.TargetDefinition` provider.
 
+        .. deprecated:: 0.15.0
+
+           This will be removed in ``v1.0`` use
+           :meth:`~esbonio.lsp.roles.Roles.add_feature` with a
+           :class:`~esbonio.lsp.roles.RoleLanguageFeature` subclass instead.
+
         Parameters
         ----------
         provider
            The provider to register
         """
-        self._target_definition_providers.append(provider)
+
+        warnings.warn(
+            "TargetDefinition providers are deprecated in favour of "
+            "RoleLanguageFeatures, this method will be removed in v1.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        name = provider.__class__.__name__
+        key = f"{provider.__module__}.{name}.definition"
+
+        def find_target_definitions(self, context, name, domain, label):
+            return provider.find_definitions(context, name, domain)
+
+        feature = type(
+            f"{name}TargetDefinitionProvider",
+            (RoleLanguageFeature,),
+            {"find_target_definitions": find_target_definitions},
+        )()
+
+        self._features[key] = feature
 
     def add_target_link_provider(self, provider: TargetLink) -> None:
         """Register a :class:`~esbonio.lsp.roles.TargetLink` provider.
 
+        .. deprecated:: 0.15.0
+
+           This will be removed in ``v1.0`` use
+           :meth:`~esbonio.lsp.roles.Roles.add_feature` with a
+           :class:`~esbonio.lsp.roles.RoleLanguageFeature` subclass instead.
+
         Parameters
         ----------
         provider
            The provider to register
         """
-        self._target_link_providers.append(provider)
+
+        warnings.warn(
+            "TargetLink providers are deprecated in favour of "
+            "RoleLanguageFeatures, this method will be removed in v1.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        name = provider.__class__.__name__
+        key = f"{provider.__module__}.{name}.link"
+
+        feature = type(
+            f"{name}TargetLinkProvider",
+            (RoleLanguageFeature,),
+            {"resolve_target_link": provider.resolve_link},
+        )()
+
+        self._features[key] = feature
 
     def add_target_completion_provider(self, provider: TargetCompletion) -> None:
         """Register a :class:`~esbonio.lsp.roles.TargetCompletion` provider.
 
+        .. deprecated:: 0.15.0
+
+           This will be removed in ``v1.0`` use
+           :meth:`~esbonio.lsp.roles.Roles.add_feature` with a
+           :class:`~esbonio.lsp.roles.RoleLanguageFeature` subclass instead.
+
         Parameters
         ----------
         provider
            The provider to register
         """
-        self._target_completion_providers.append(provider)
+
+        warnings.warn(
+            "TargetCompletion providers are deprecated in favour of "
+            "RoleLanguageFeatures, this method will be removed in v1.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+        name = provider.__class__.__name__
+        key = f"{provider.__module__}.{name}.completion"
+
+        feature = type(
+            f"{name}TargetCompletionProvider",
+            (RoleLanguageFeature,),
+            {"complete_targets": provider.complete_targets},
+        )()
+
+        self._features[key] = feature
 
     def add_documentation(self, documentation: Dict[str, Dict[str, Any]]) -> None:
         """Register role documentation.
@@ -222,13 +407,36 @@ class Roles(LanguageFeature):
 
     def definition(self, context: DefinitionContext) -> List[Location]:
 
-        domain = context.match.group("domain") or None
+        domain = context.match.group("domain") or ""
         name = context.match.group("name")
+        label = context.match.group("label")
+
+        # Be sure to only match complete roles
+        if not label or not context.match.group(0).endswith("`"):
+            return []
+
+        return self.find_target_definitions(context, name, domain, label)
+
+    def find_target_definitions(
+        self, context: DefinitionContext, name: str, domain: str, label: str
+    ) -> List[Location]:
 
         definitions = []
 
-        for provide in self._target_definition_providers:
-            definitions += provide.find_definitions(context, name, domain) or []
+        for feature_name, feature in self._features.items():
+            try:
+                definitions += feature.find_target_definitions(
+                    context, name, domain, label
+                )
+            except Exception:
+                self.logger.error(
+                    "Unable to find definitions of '%s' for role ':%s:', "
+                    "error in feature: '%s'",
+                    label,
+                    f"{domain}:{name}" if domain else name,
+                    feature_name,
+                    exc_info=True,
+                )
 
         return definitions
 
@@ -247,15 +455,7 @@ class Roles(LanguageFeature):
                 domain = match.group("domain")
                 name = match.group("name")
 
-                target = None
-                tooltip = None
-                for provider in self._target_link_providers:
-                    target, tooltip = provider.resolve_link(
-                        context, name, domain, label
-                    )
-                    if target:
-                        break
-
+                target, tooltip = self.resolve_target_link(context, name, domain, label)
                 if not target:
                     continue
 
@@ -263,18 +463,43 @@ class Roles(LanguageFeature):
                 start = match.start() + idx
                 end = start + len(label)
 
-                links.append(
-                    DocumentLink(
-                        target=target,
-                        tooltip=tooltip if context.tooltip_support else None,
-                        range=Range(
-                            start=Position(line=line, character=start),
-                            end=Position(line=line, character=end),
-                        ),
-                    )
+                link = DocumentLink(
+                    target=target,
+                    tooltip=tooltip if context.tooltip_support else None,
+                    range=Range(
+                        start=Position(line=line, character=start),
+                        end=Position(line=line, character=end),
+                    ),
                 )
 
+                links.append(link)
+
         return links
+
+    def resolve_target_link(
+        self, context: DocumentLinkContext, name: str, domain: str, label: str
+    ) -> Tuple[Optional[str], Optional[str]]:
+        """Resolve a given document link."""
+
+        for feature_name, feature in self._features.items():
+            try:
+                target, tooltip = feature.resolve_target_link(
+                    context, name, domain, label
+                )
+
+                if target:
+                    return target, tooltip
+            except Exception:
+                self.logger.error(
+                    "Unable to resolve target link '%s' for role ':%s:', "
+                    "error in feature: '%s'",
+                    label,
+                    f"{domain}:{name}" if domain else name,
+                    feature_name,
+                    exc_info=True,
+                )
+
+        return None, None
 
     def complete(self, context: CompletionContext) -> List[CompletionItem]:
         """Generate completion suggestions relevant to the current context.
@@ -348,6 +573,24 @@ class Roles(LanguageFeature):
 
         return item
 
+    def suggest_roles(self, context: CompletionContext) -> Iterable[Tuple[str, Any]]:
+        """Suggest roles that may be used, given a completion context.
+
+        Parameters
+        ----------
+        context
+           The completion context
+        """
+        for name, feature in self._features.items():
+            try:
+                yield from feature.suggest_roles(context)
+            except Exception:
+                self.logger.error(
+                    "Unable to suggest roles, error in feature: '%s'",
+                    name,
+                    exc_info=True,
+                )
+
     def complete_roles(self, context: CompletionContext) -> List[CompletionItem]:
 
         match = context.match
@@ -364,7 +607,7 @@ class Roles(LanguageFeature):
             end=Position(line=context.position.line, character=end),
         )
 
-        for name, role in self.rst.get_roles().items():
+        for name, role in self.suggest_roles(context):
 
             if not name.startswith(domain):
                 continue
@@ -404,6 +647,25 @@ class Roles(LanguageFeature):
 
         item.documentation = MarkupContent(kind=kind, value=description)
         return item
+
+    def suggest_targets(
+        self, context: CompletionContext, name: str, domain: str
+    ) -> List[CompletionItem]:
+
+        targets = []
+
+        for feature_name, feature in self._features.items():
+            try:
+                targets += feature.complete_targets(context, name, domain)
+            except Exception:
+                self.logger.error(
+                    "Unable to suggest targets for role ':%s:', error in feature: '%s'",
+                    f"{domain}:{name}" if domain else name,
+                    feature_name,
+                    exc_info=True,
+                )
+
+        return targets
 
     def complete_targets(self, context: CompletionContext) -> List[CompletionItem]:
         """Generate the list of role target completion suggestions."""
@@ -446,30 +708,27 @@ class Roles(LanguageFeature):
         prefix = context.match.group(0)[start:]
         modifier = groups["modifier"] or ""
 
-        for provide in self._target_completion_providers:
-            candidates = provide.complete_targets(context, name, domain) or []
+        for candidate in self.suggest_targets(context, name, domain):
 
-            for candidate in candidates:
+            # Don't interfere with items that already carry a `text_edit`, allowing
+            # some providers (like filepaths) to do something special.
+            if not candidate.text_edit:
+                new_text = candidate.insert_text or candidate.label
 
-                # Don't interfere with items that already carry a `text_edit`, allowing
-                # some providers (like filepaths) to do something special.
-                if not candidate.text_edit:
-                    new_text = candidate.insert_text or candidate.label
+                # This is rather annoying, but `filter_text` needs to start with
+                # the text we are going to replace, otherwise VSCode won't show our
+                # suggestions!
+                candidate.filter_text = f"{prefix}{new_text}"
 
-                    # This is rather annoying, but `filter_text` needs to start with
-                    # the text we are going to replace, otherwise VSCode won't show our
-                    # suggestions!
-                    candidate.filter_text = f"{prefix}{new_text}"
+                candidate.text_edit = TextEdit(
+                    range=range_, new_text=f"{modifier}{new_text}"
+                )
+                candidate.insert_text = None
 
-                    candidate.text_edit = TextEdit(
-                        range=range_, new_text=f"{modifier}{new_text}"
-                    )
-                    candidate.insert_text = None
+            if not candidate.text_edit.new_text.endswith(endchars):
+                candidate.text_edit.new_text += endchars
 
-                if not candidate.text_edit.new_text.endswith(endchars):
-                    candidate.text_edit.new_text += endchars
-
-                targets.append(candidate)
+            targets.append(candidate)
 
         return targets
 
@@ -490,12 +749,10 @@ class Roles(LanguageFeature):
 
         return self.hover_role(context, name, domain)
 
-    def hover_role(
-        self, context: HoverContext, name: str, domain: Optional[str]
-    ) -> str:
+    def hover_role(self, context: HoverContext, name: str, domain: str) -> str:
 
         label = f"{domain}:{name}" if domain else name
-        role = self.rst.get_roles().get(label, None)
+        role = self.get_implementation(name, domain)
         if not role:
             return ""
 
@@ -516,6 +773,55 @@ class Roles(LanguageFeature):
         # TODO: Add extension point for providers to contribute hovers for a target.
         return ""
 
+    def get_roles(self) -> Dict[str, Any]:
+        """Return a dictionary of all known roles."""
+
+        roles = {}
+
+        for name, feature in self._features.items():
+            self.logger.debug("calling '%s'", name)
+            try:
+                roles.update(feature.index_roles())
+            except Exception:
+                self.logger.error(
+                    "Unable to index roles, error in feature '%s'", name, exc_info=True
+                )
+
+        return roles
+
+    def get_implementation(self, role: str, domain: str) -> Optional[Any]:
+        """Return the implementation of a role given its name
+
+        Parameters
+        ----------
+        role
+           The name of the role.
+
+        domain
+           The domain of the role, if applicable.
+        """
+
+        if domain:
+            name = f"{domain}:{role}"
+        else:
+            name = role
+
+        for feature_name, feature in self._features.items():
+            try:
+                impl = feature.get_implementation(role, domain)
+                if impl is not None:
+                    return impl
+            except Exception:
+                self.logger.error(
+                    "Unable to get implementation for ':%s:', error in feature: '%s'\n%s",
+                    name,
+                    feature_name,
+                    exc_info=True,
+                )
+
+        self.logger.debug("Unable to get implementation for ':%s:', unknown role", name)
+        return None
+
     def implementation(self, context: ImplementationContext) -> List[Location]:
 
         region = context.match.group("role")
@@ -534,18 +840,13 @@ class Roles(LanguageFeature):
         return []
 
     def find_role_implementation(
-        self, context: ImplementationContext, name: str, domain: Optional[str]
+        self, context: ImplementationContext, name: str, domain: str
     ) -> List[Location]:
 
-        roles = self.rst.get_roles()
-        key = f"{domain}:{name}" if domain is not None else name
-        self.logger.debug("Key is: '%s'", key)
-
-        impl = roles.get(key, None)
+        impl = self.get_implementation(name, domain)
         if impl is None:
             return []
 
-        self.logger.debug("Getting implementation of '%s' (%s)", key, impl)
         location = get_object_location(impl, self.logger)
         if location is not None:
             return [location]

@@ -8,7 +8,6 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
-from typing import Union
 
 from docutils.parsers.rst import Directive
 from pygls.lsp.types import CompletionItem
@@ -75,8 +74,14 @@ class DirectiveLanguageFeature:
     def suggest_options(
         self, context: CompletionContext, directive: str, domain: Optional[str]
     ) -> Iterable[str]:
-        """Suggest directive options that may be used, given a completion context."""
-        return []
+        """Suggest options that may be used, given a completion context."""
+
+        impl = self.get_implementation(directive, domain)
+        if impl is None:
+            return []
+
+        option_spec = impl.option_spec or {}
+        return option_spec.keys()
 
     def resolve_argument_link(
         self,
@@ -84,21 +89,24 @@ class DirectiveLanguageFeature:
         directive: str,
         domain: Optional[str],
         argument: str,
-    ) -> Union[Tuple[str, str], str, None]:
+    ) -> Tuple[Optional[str], Optional[str]]:
         """Resolve a document link request for the given argument.
 
         Parameters
         ----------
-        context:
+        context
            The context of the document link request.
-        directive:
+
+        directive
            The name of the directive the argument is associated with.
-        domain:
+
+        domain
            The name of the domain the directive belongs to, if applicable.
-        argument:
+
+        argument
            The argument to resolve the link for.
         """
-        return None
+        return None, None
 
     def find_argument_definitions(
         self,
@@ -111,13 +119,16 @@ class DirectiveLanguageFeature:
 
         Parameters
         ----------
-        context:
+        context
            The context of the definition request.
-        directive:
+
+        directive
            The name of the directive the argument is associated with.
-        domain:
+
+        domain
            The name of the domain the directive belongs to, if applicable.
-        argument:
+
+        argument
            The argument to find the definition of.
         """
         return []
@@ -436,12 +447,15 @@ class Directives(LanguageFeature):
     def get_implementation(
         self, directive: str, domain: Optional[str]
     ) -> Optional[Directive]:
-        """Suggest directives that may be used, given a completion context.
+        """Return the implementation of a directive given its name
 
         Parameters
         ----------
-        context
-           The CompletionContext.
+        directive
+           The name of the directive.
+
+        domain
+           The domain of the directive, if applicable.
         """
 
         if domain:
@@ -662,23 +676,22 @@ class Directives(LanguageFeature):
             end=Position(line=context.position.line, character=end),
         )
 
-        for feature in self._features.values():
-            for option in feature.suggest_options(context, name, domain):
-                insert_text = f":{option}:"
+        for option in self.suggest_options(context, name, domain):
+            insert_text = f":{option}:"
 
-                items.append(
-                    CompletionItem(
-                        label=option,
-                        detail=f"{impl_name}:{option}",
-                        kind=CompletionItemKind.Field,
-                        filter_text=insert_text,
-                        text_edit=TextEdit(range=range_, new_text=insert_text),
-                        data={
-                            "completion_type": "directive_option",
-                            "for_directive": name,
-                        },
-                    )
+            items.append(
+                CompletionItem(
+                    label=option,
+                    detail=f"{impl_name}:{option}",
+                    kind=CompletionItemKind.Field,
+                    filter_text=insert_text,
+                    text_edit=TextEdit(range=range_, new_text=insert_text),
+                    data={
+                        "completion_type": "directive_option",
+                        "for_directive": name,
+                    },
                 )
+            )
 
         return items
 
@@ -739,15 +752,52 @@ class Directives(LanguageFeature):
         domain: Optional[str],
         argument: str,
     ) -> List[Location]:
+
         definitions = []
 
-        for feature in self._features.values():
-            definitions += (
-                feature.find_argument_definitions(context, directive, domain, argument)
-                or []
-            )
+        for feature_name, feature in self._features.items():
+            try:
+                definitions += (
+                    feature.find_argument_definitions(
+                        context, directive, domain, argument
+                    )
+                    or []
+                )
+            except Exception:
+                self.logger.error(
+                    "Unable to find definitions of '%s' for directive '%s', "
+                    "error in feature: '%s'",
+                    argument,
+                    f"{domain}:{directive}" if domain else directive,
+                    feature_name,
+                    exc_info=True,
+                )
 
         return definitions
+
+    def resolve_argument_link(
+        self, context: DocumentLinkContext, name: str, domain: str, argument: str
+    ) -> Tuple[Optional[str], Optional[str]]:
+
+        for feature_name, feature in self._features.items():
+            try:
+                target, tooltip = feature.resolve_argument_link(
+                    context, name, domain, argument
+                )
+
+                if target:
+                    return target, tooltip
+            except Exception:
+                self.logger.error(
+                    "Unable to resolve argument link '%s' for directive '%s', "
+                    "error in feature: '%s'",
+                    argument,
+                    f"{domain}:{name}" if domain else name,
+                    feature_name,
+                    exc_info=True,
+                )
+
+        return None, None
 
     def document_link(self, context: DocumentLinkContext) -> List[DocumentLink]:
         links = []
@@ -762,21 +812,9 @@ class Directives(LanguageFeature):
                 domain = match.group("domain")
                 name = match.group("name")
 
-                target = None
-                tooltip = None
-                for feature in self._features.values():
-                    result = feature.resolve_argument_link(
-                        context, name, domain, argument
-                    )
-
-                    if isinstance(result, str):
-                        target = result
-                        break
-
-                    if isinstance(result, tuple) and isinstance(result[0], str):
-                        target, tooltip = result
-                        break
-
+                target, tooltip = self.resolve_argument_link(
+                    context, name, domain, argument
+                )
                 if not target:
                     continue
 
@@ -823,7 +861,7 @@ class Directives(LanguageFeature):
         label = f"{domain}:{name}" if domain else name
         self.logger.debug("Calculating hover for directive '%s'", label)
 
-        directive = self.rst.get_directives().get(label, None)
+        directive = self.get_implementation(name, domain)
         if not directive:
             return ""
 

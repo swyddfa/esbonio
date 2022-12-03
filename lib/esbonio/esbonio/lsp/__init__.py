@@ -7,6 +7,8 @@ import traceback
 from typing import Any
 from typing import Dict
 from typing import Iterable
+from typing import List
+from typing import Optional
 from typing import Type
 
 from pygls.lsp.methods import CODE_ACTION
@@ -76,6 +78,7 @@ logger = logging.getLogger(__name__)
 # Commands
 ESBONIO_SERVER_CONFIGURATION = "esbonio.server.configuration"
 ESBONIO_SERVER_PREVIEW = "esbonio.server.preview"
+ESBONIO_SERVER_BUILD = "esbonio.server.build"
 
 
 class Patched(LanguageServerProtocol):
@@ -120,7 +123,14 @@ def create_language_server(
     if "logger" not in kwargs:
         kwargs["logger"] = logger
 
-    server = server_cls(*args, **kwargs, protocol_cls=Patched)
+    try:
+        server = server_cls(*args, **kwargs, protocol_cls=Patched)
+    except TypeError:
+        # Work around older version of pygls on Python 3.6
+        kwargs.pop("name", None)
+        kwargs.pop("version", None)
+
+        server = server_cls(*args, **kwargs, protocol_cls=Patched)
 
     for module in modules:
         _load_module(server, module)
@@ -162,8 +172,16 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
     def on_change(ls: RstLanguageServer, params: DidChangeTextDocumentParams):
         pass
 
+    @server.command(ESBONIO_SERVER_BUILD)
+    def build(ls: RstLanguageServer, *args):
+        params = {} if not args[0] else args[0][0]._asdict()
+        force_all: bool = params.get("force_all", False)
+        filenames: Optional[List[str]] = params.get("filenames", None)
+        ls.build(force_all, filenames)
+
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(ls: RstLanguageServer, params: DidSaveTextDocumentParams):
+
         ls.save(params)
 
         for feature in ls._features.values():

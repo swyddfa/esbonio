@@ -88,6 +88,21 @@
             ],
             "justMyCode": false
         },
+        {
+            "name": "Python: Remote Attach",
+            "type": "python",
+            "request": "attach",
+            "connect": {
+                "host": "localhost",
+                "port": 5678
+            },
+            "pathMappings": [
+                {
+                    "localRoot": "${workspaceFolder}/lib/esbonio",
+                    "remoteRoot": "."
+                }
+            ]
+        }
     ],
     "compounds": [
         {

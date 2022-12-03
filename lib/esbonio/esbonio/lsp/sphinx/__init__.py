@@ -46,6 +46,8 @@ from esbonio.lsp.sphinx.config import SphinxServerConfig
 from esbonio.lsp.sphinx.preview import make_preview_server
 from esbonio.lsp.sphinx.preview import start_preview_server
 
+from .line_number_transform import LineNumberTransform
+
 __all__ = [
     "InitializationOptions",
     "MissingConfigError",
@@ -99,6 +101,9 @@ class SphinxLanguageServer(RstLanguageServer):
         self._role_target_types: Optional[Dict[str, List[str]]] = None
         """Cache for role target types."""
 
+        self.file_list_pending_build_version_updates: List[Tuple[str, int]] = []
+        """List of all the files that need an updated last_build_version"""
+
     @property
     def configuration(self) -> Dict[str, Any]:
         """Return the server's actual configuration."""
@@ -142,7 +147,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def _initialize_sphinx(self):
 
         try:
-            return self.create_sphinx_app(self.user_config)
+            return self.create_sphinx_app(self.user_config)  # type: ignore
         except MissingConfigError:
             self.show_message(
                 message="Unable to find your 'conf.py', features that depend on Sphinx will be unavailable",
@@ -199,9 +204,6 @@ class SphinxLanguageServer(RstLanguageServer):
                 self.sync_diagnostics()
                 self.app = self._initialize_sphinx()
 
-        else:
-            self.clear_diagnostics("sphinx", params.text_document.uri)
-
         self.build()
 
     def delete_files(self, params: DeleteFilesParams):
@@ -213,8 +215,10 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self.build()
 
-    def build(self):
-
+    def build(
+        self, force_all: bool = False, filenames: Optional[List[str]] = None
+    ) -> None:
+        """Trigger sphinx build. Force complete rebuild with flag or build only selected files in the list."""
         if not self.app:
             return
 
@@ -231,7 +235,7 @@ class SphinxLanguageServer(RstLanguageServer):
             self.sphinx_log.diagnostics = {}
 
         try:
-            self.app.build()
+            self.app.build(force_all, filenames)
         except Exception as exc:
             error = True
             self.logger.error(traceback.format_exc())
@@ -244,6 +248,7 @@ class SphinxLanguageServer(RstLanguageServer):
                 self.set_diagnostics("sphinx", doc, diagnostics)
 
         self.sync_diagnostics()
+
         self.send_notification(
             "esbonio/buildComplete",
             {
@@ -252,6 +257,60 @@ class SphinxLanguageServer(RstLanguageServer):
                 "warnings": self.app._warncount,
             },
         )
+
+    def cb_env_before_read_docs(self, app, env, docnames: List[str]):
+        """Callback handling env-before-read-docs event."""
+
+        # Determine if any unsaved files need to be added to the build list
+        if self.user_config.server.enable_live_preview:  # type: ignore
+            is_building = set(docnames)
+
+            for docname in env.found_docs - is_building:
+                filepath = env.doc2path(docname, base=True)
+                uri = Uri.from_fs_path(filepath)
+
+                doc = self.workspace.get_document(uri)
+                current_version = doc.version or 0
+
+                last_build_version = getattr(doc, "last_build_version", 0)
+                if last_build_version < current_version:
+                    docnames.append(docname)
+
+        # Clear diagnostics for any to-be built files
+        for docname in docnames:
+            filepath = env.doc2path(docname, base=True)
+            uri = Uri.from_fs_path(filepath)
+            self.clear_diagnostics("sphinx", uri)
+
+            doc = self.workspace.get_document(uri)
+            current_version = doc.version or 0
+            self.file_list_pending_build_version_updates.append((uri, current_version))  # type: ignore
+
+    def cb_build_finished(self, app, exception):
+        """Callback handling build-finished event."""
+        if exception:
+            self.file_list_pending_build_version_updates = []
+            return
+
+        for uri, updated_version in self.file_list_pending_build_version_updates:
+            doc = self.workspace.get_document(uri)
+            last_build_version = getattr(doc, "last_build_version", 0)
+            if last_build_version < updated_version:
+                doc.last_build_version = updated_version  # type: ignore
+
+        self.file_list_pending_build_version_updates = []
+
+    def cb_source_read(self, app, docname, source):
+        """Callback handling source_read event."""
+
+        if not self.user_config.server.enable_live_preview:  # type: ignore
+            return
+
+        filepath = app.env.doc2path(docname, base=True)
+        uri = Uri.from_fs_path(filepath)
+
+        doc = self.workspace.get_document(uri)
+        source[0] = doc.source
 
     def create_sphinx_app(self, options: InitializationOptions) -> Optional[Sphinx]:
         """Create a Sphinx application instance with the given config."""
@@ -271,6 +330,15 @@ class SphinxLanguageServer(RstLanguageServer):
 
         self._load_sphinx_extensions(app)
         self._load_sphinx_config(app)
+
+        if self.user_config.server.enable_scroll_sync:  # type: ignore
+            app.add_transform(LineNumberTransform)
+
+        app.connect("env-before-read-docs", self.cb_env_before_read_docs)
+
+        if self.user_config.server.enable_live_preview:  # type: ignore
+            app.connect("source-read", self.cb_source_read)
+            app.connect("build-finished", self.cb_build_finished)
 
         return app
 
@@ -413,6 +481,10 @@ class SphinxLanguageServer(RstLanguageServer):
     def get_domain(self, name: str) -> Optional[Domain]:
         """Return the domain with the given name.
 
+        .. deprecated:: 0.15.0
+
+           This will be removed in ``v1.0``
+
         If a domain with the given name cannot be found, this method will return None.
 
         Parameters
@@ -420,6 +492,13 @@ class SphinxLanguageServer(RstLanguageServer):
         name:
            The name of the domain
         """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_domains() is deprecated and will be removed in v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         if self.app is None or self.app.env is None:
             return None
@@ -430,6 +509,10 @@ class SphinxLanguageServer(RstLanguageServer):
     def get_domains(self) -> Iterator[Tuple[str, Domain]]:
         """Get all the domains registered with an applications.
 
+        .. deprecated:: 0.15.0
+
+           This will be removed in ``v1.0``
+
         Returns a generator that iterates through all of an application's domains,
         taking into account configuration variables such as ``primary_domain``.
         Yielded values will be a tuple of the form ``(prefix, domain)`` where
@@ -439,6 +522,13 @@ class SphinxLanguageServer(RstLanguageServer):
         - ``domain`` is the domain object itself.
 
         """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_domains() is deprecated and will be removed in v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         if self.app is None or self.app.env is None:
             return []
@@ -489,23 +579,6 @@ class SphinxLanguageServer(RstLanguageServer):
 
         return options or {}
 
-    def get_roles(self) -> Dict[str, Any]:
-        """Return a dictionary of known roles."""
-
-        if self._roles is not None:
-            return self._roles
-
-        self._roles = super().get_roles()
-
-        for prefix, domain in self.get_domains():
-            fmt = "{prefix}:{name}" if prefix else "{name}"
-
-            for name, role in domain.roles.items():
-                key = fmt.format(name=name, prefix=prefix)
-                self._roles[key] = role
-
-        return self._roles
-
     def get_default_role(self) -> Tuple[Optional[str], Optional[str]]:
         """Return the project's default role"""
 
@@ -530,6 +603,10 @@ class SphinxLanguageServer(RstLanguageServer):
         """Return a map indicating which object types a role is capable of linking
         with.
 
+        .. deprecated:: 0.15.0
+
+           This will be removed in ``v1.0``
+
         For example
 
         .. code-block:: python
@@ -539,6 +616,14 @@ class SphinxLanguageServer(RstLanguageServer):
                "class": ["class", "exception"]
            }
         """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_role_target_types() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         key = f"{domain_name}:{name}" if domain_name else name
 
@@ -574,6 +659,14 @@ class SphinxLanguageServer(RstLanguageServer):
            The domain the role is a part of, if applicable.
         """
 
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_role_targets() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
         targets: List[tuple] = []
         domain_obj: Optional[Domain] = None
 
@@ -600,7 +693,20 @@ class SphinxLanguageServer(RstLanguageServer):
         return targets
 
     def get_intersphinx_projects(self) -> List[str]:
-        """Return the list of configured intersphinx project names."""
+        """Return the list of configured intersphinx project names.
+
+        .. deprecated:: 0.15.0
+
+           This will be removed in ``v.1.0``
+        """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_intersphinx_projects() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         if self.app is None:
             return []
@@ -614,6 +720,10 @@ class SphinxLanguageServer(RstLanguageServer):
         """Return ``True`` if the given intersphinx project has targets targeted by the
         given role.
 
+        .. deprecated:: 0.15.0
+
+           This will be removed in ``v1.0``
+
         Parameters
         ----------
         project:
@@ -623,6 +733,14 @@ class SphinxLanguageServer(RstLanguageServer):
         domain:
            The domain the role is a part of, if applicable.
         """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.has_intersphinx_targets() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         targets = self.get_intersphinx_targets(project, name, domain)
 
@@ -636,6 +754,10 @@ class SphinxLanguageServer(RstLanguageServer):
     ) -> Dict[str, Dict[str, tuple]]:
         """Return the intersphinx objects targeted by the given role.
 
+        .. deprecated:: 0.15.0
+
+           This will be removed in ``v1.0``
+
         Parameters
         ----------
         project:
@@ -645,6 +767,14 @@ class SphinxLanguageServer(RstLanguageServer):
         domain:
            The domain the role is a part of, if applicable.
         """
+
+        clsname = self.__class__.__name__
+        warnings.warn(
+            f"{clsname}.get_intersphinx_targets() is deprecated and will be removed in "
+            "v1.0.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         if self.app is None:
             return {}

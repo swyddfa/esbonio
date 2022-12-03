@@ -76,7 +76,12 @@ class LspHandler(logging.Handler):
             )
             return
 
-        argument = record.args[0]
+        # The way warnings are logged is different in Python 3.11+
+        if len(record.args) == 0:
+            argument = record.msg
+        else:
+            argument = record.args[0]  # type: ignore
+
         if not isinstance(argument, str):
             self.server.logger.debug(
                 "Unable to handle warning, expected string got: %s", argument

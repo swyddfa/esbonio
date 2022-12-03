@@ -39,6 +39,13 @@ from pytest_lsp import check
                         end=Position(line=9, character=47),
                     ),
                 ),
+                DocumentLink(
+                    target="https://www.python.org/static/img/python-logo.png",
+                    range=Range(
+                        start=Position(line=11, character=11),
+                        end=Position(line=11, character=60),
+                    ),
+                ),
             ],
         )
     ],
@@ -49,11 +56,16 @@ async def test_document_links(client: Client, uri: str, expected: List[DocumentL
     test_uri = client.root_uri + uri
     links = await client.document_link_request(test_uri)
 
-    assert len(links) == len(expected)
+    expected_links = {link.target: link for link in expected}
+    actual_links = {link.target: link for link in links}
 
-    for expected, actual in zip(expected, links):
-        assert expected.range == actual.range
-        assert expected.target == actual.target
+    for target in expected_links:
+        assert target in actual_links
+
+        actual = actual_links.pop(target)
+        assert expected_links[target].range == actual.range
+
+    assert len(actual_links) == 0, f"Unexpected links {', '.join(actual_links.keys())}"
 
     check.document_links(client, links)
 

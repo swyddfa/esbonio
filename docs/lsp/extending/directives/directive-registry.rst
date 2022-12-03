@@ -6,23 +6,24 @@ Supporting Custom Directive Registries
 This guide walks through the process of teaching the language server how to discover directives stored in a custom registry.
 Once complete, the following LSP features should start working with your directives.
 
-- Basic directive completions i.e. ``.. directive-name::`` but no argument or option completions.
-- Documentation hovers (assuming you've provided documentation)
-- Goto Implementation
+- Basic directive completions i.e. ``.. directive-name::`` but no argument completions.
+- Basic option key completions i.e. ``:option-name:`` assuming options are declared in a directive's ``option_spec``, but no option value completions.
+- Documentation hovers assuming you've provided documentation.
+- Goto Implementation.
 
 .. note::
 
    You may not need this guide.
 
    If you're registering your directive directly with
-   `docutils <https://docutils.sourceforge.io/docs/howto/rst-directives.html#toc-entry-4>`__ or
+   `docutils <https://docutils.sourceforge.io/docs/howto/rst-directives.html#register-the-directive>`__ or
    `sphinx <https://www.sphinx-doc.org/en/master/extdev/appapi.html#sphinx.application.Sphinx.add_directive>`__,
    or using a `custom domain <https://www.sphinx-doc.org/en/master/extdev/domainapi.html>`__
    then you should find that the language server already has basic support for your custom directives out of the box.
 
-   This guide is indended for tools that maintain their own set of directives in a separate store to the standard locations.
+   This guide is indended for adding support for directives that are not registered in a standard location.
 
-Still here? Great! Let's get started
+Still here? Great! Let's get started.
 
 Indexing Directives
 -------------------
@@ -61,7 +62,7 @@ Instead you can implement the :meth:`~DirectiveLanguageFeature.suggest_directive
 
 .. tip::
 
-   If you do want to play around with your own version of the ``DomainDirectives`` class you can disable the built in version by:
+   If you want to play around with your own version of the ``DomainDirectives`` class you can disable the built in version by:
 
    - Passing the ``--exclude esbonio.lsp.sphinx.domains`` cli option, or
    - If you're using VSCode adding ``esbonio.lsp.sphinx.domains`` to the :confval:`esbonio.server.excludedModules (string[])` option.
@@ -92,7 +93,7 @@ However, in the case of Sphinx domains, we need to modify this to also include t
 
         return directives.items()
 
-Now if you were to try this version, the short forms of the relevant directives would be offered as completion suggestions, but you would notice features like documentation hovers still don't work.
+Now if you were to try this version, the short forms of the relevant directives would be offered as completion suggestions, but you would also notice that features like documentation hovers still don't work.
 This is due to the language server not knowing which class implements these short form directives.
 
 (Optional) Implementation Lookups

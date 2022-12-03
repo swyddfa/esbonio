@@ -19,12 +19,14 @@ from pytest_lsp import check
 from pytest_lsp import make_client_server
 from pytest_lsp import make_test_client
 
+from esbonio.lsp import ESBONIO_SERVER_BUILD
 from esbonio.lsp import ESBONIO_SERVER_CONFIGURATION
 from esbonio.lsp import ESBONIO_SERVER_PREVIEW
 from esbonio.lsp.rst import ServerConfig
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxConfig
 from esbonio.lsp.sphinx.config import SphinxServerConfig
+from esbonio.lsp.testing import sphinx_version
 
 
 class SphinxInfo(SphinxConfig):
@@ -895,7 +897,7 @@ async def test_diagnostics(good, bad, expected):
         with test_path.open("w") as f:
             f.write(good)
 
-        # Undo the changes, we should see the diagnostic be removed.
+        # Undo the changes, we should see the diagnostic removed.
         test.client.notify_did_change(test_uri, good)
         test.client.notify_did_save(test_uri, good)
 
@@ -906,6 +908,108 @@ async def test_diagnostics(good, bad, expected):
         test.client.notify_did_close(test_uri)
 
     # Cleanup
+    finally:
+        test_path.unlink()
+        await test.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.timeout(10)
+@pytest.mark.parametrize(
+    "good,bad,expected",
+    [
+        (
+            #  good
+            """\
+.. _example-label:
+
+Title
+-----
+
+:ref:`example-label`
+""",
+            #  bad
+            """\
+.. _example-label:
+
+Title
+-----
+
+:ref:`example`
+""",
+            Diagnostic(
+                source="sphinx",
+                message=(
+                    "undefined label: 'example'"
+                    if sphinx_version(gte=5)
+                    else "undefined label: example"
+                ),
+                severity=DiagnosticSeverity.Warning,
+                range=Range(
+                    start=Position(line=5, character=0),
+                    end=Position(line=6, character=0),
+                ),
+            ),
+        )
+    ],
+)
+async def test_live_build_clears_diagnostics(good, bad, expected):
+    """Ensure that when the server does a build that includes unsaved files it still
+    correctly clears diagnostics.
+    """
+
+    # Setup, start with the file in the "good" state.
+    workspace_root = pathlib.Path(__file__).parent / "workspace-src"
+    test_path = workspace_root / "index.rst"
+    test_uri = uri.from_fs_path(str(test_path))
+
+    if IS_WIN:
+        test_uri = test_uri.lower()
+
+    with test_path.open("w") as f:
+        f.write(good)
+
+    config = ClientServerConfig(
+        server_command=[sys.executable, "-m", "esbonio"],
+        root_uri=uri.from_fs_path(str(workspace_root)),
+        client_factory=make_esbonio_client,
+        initialization_options=InitializationOptions(
+            server=SphinxServerConfig(
+                # logLevel="debug",
+                enableLivePreview=True
+            )
+        ),
+    )
+
+    test = make_client_server(config)
+
+    try:
+        await test.start()
+        await test.client.wait_for_notification("esbonio/buildComplete")
+
+        test.client.notify_did_open(test_uri, "rst", good)
+
+        # Change the file so that it's in the bad state, we should see a diagnostic
+        # reporting the issue.
+        # Note: We don't have to update the file on disk since in live preview mode the
+        # server should be injecting the latest content into the build.
+        test.client.notify_did_change(test_uri, bad)
+        await test.client.execute_command_request(ESBONIO_SERVER_BUILD)
+
+        actual = test.client.diagnostics[test_uri][0]
+
+        assert actual.range == expected.range
+        assert actual.severity == expected.severity
+        assert actual.message == expected.message
+        assert actual.source == expected.source
+
+        # Undo the changes, we should see the diagnostic removed.
+        test.client.notify_did_change(test_uri, good)
+        await test.client.execute_command_request(ESBONIO_SERVER_BUILD)
+        assert len(test.client.diagnostics[test_uri]) == 0
+
+        test.client.notify_did_close(test_uri)
+
     finally:
         test_path.unlink()
         await test.stop()
