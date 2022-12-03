@@ -1,1 +1,0 @@
-The language server should now populate the ``serverInfo`` fields of its response to a client's ``initialize`` request.

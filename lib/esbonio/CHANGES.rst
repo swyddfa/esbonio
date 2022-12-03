@@ -1,3 +1,80 @@
+v0.15.0 - 2022-12-03
+--------------------
+
+Features
+^^^^^^^^
+
+- Add initial support for synced scrolling and live previews of HTML builds.
+  **Note** Both of these features rely on additional integrations outside of the LSP protocol therefore requiring dedicated support from clients.
+
+  Synced scrolling support can be enabled by setting the ``server.enableScrollSync`` initialization option to ``True`` and works by injecting line numbers into the generated HTML which a client can use to align the preview window to the source window.
+
+  Live preview support can be enabled by setting the ``server.enableLivePreview`` initialization option to ``True``, the language server will then pass the contents of unsaved files for Sphinx to build.
+  Currently clients are responsible for triggering intermediate builds with the new ``esbonio.server.build`` command, though this requirement may be removed in future. (`#490 <https://github.com/swyddfa/esbonio/issues/490>`_)
+
+
+Enhancements
+^^^^^^^^^^^^
+
+- Completion suggestions will now also be generated for the long form (``:py:func:``) of roles and directives in the primary and standard Sphinx domains. (`#416 <https://github.com/swyddfa/esbonio/issues/416>`_)
+- The language server should now populate the ``serverInfo`` fields of its response to a client's ``initialize`` request. (`#497 <https://github.com/swyddfa/esbonio/issues/497>`_)
+- The default ``suggest_options`` implementation for ``DirectiveLanguageFeatures`` should now be more useful in that it will return the keys from a directive's ``option_spec`` (`#498 <https://github.com/swyddfa/esbonio/issues/498>`_)
+- The language server now recognises and returns ``DocumentLinks`` for ``image::`` and ``figure::`` directives that use ``http://`` or ``https://`` references for images. (`#506 <https://github.com/swyddfa/esbonio/issues/506>`_)
+
+
+Fixes
+^^^^^
+
+- Fix handling of deprecation warnings in Python 3.11 (`#494 <https://github.com/swyddfa/esbonio/issues/494>`_)
+- The language server should now correctly handle errors that occur while generating completion suggestions for a directive's options
+
+  The language server should now show hovers for directives in the primary domain. (`#498 <https://github.com/swyddfa/esbonio/issues/498>`_)
+- Errors thrown by ``DirectiveLanguageFeatures`` during ``textDocument/documentLink`` or ``textDocument/definition`` requests are now caught and no longer result in frustrating error banners in clients.
+
+  The ``textDocument/documentLink`` handler for ``image::`` and ``figure::`` should no longer throw exceptions for invalid paths on Windows. (`#506 <https://github.com/swyddfa/esbonio/issues/506>`_)
+
+
+API Changes
+^^^^^^^^^^^
+
+- ``RoleLanguageFeatures`` have been introduced as the preferred method of extending role support going forward.
+  Subclasses can be implement any of the following methods
+
+  - ``complete_targets`` called when generating role target completion items
+  - ``find_target_definitions`` used to implement goto definition for role targets
+  - ``get_implementation`` used to get the implementation of a role given its name
+  - ``index_roles`` used to tell the language server which roles exist
+  - ``resolve_target_link`` used to implement document links for role targets
+  - ``suggest_roles`` called when generating role completion suggestions
+
+  and are registered using the new ``Roles.add_feature()`` method. (`#495 <https://github.com/swyddfa/esbonio/issues/495>`_)
+
+
+Deprecated
+^^^^^^^^^^
+
+- The following protocols have been deprecated and will be removed in ``v1.0``
+
+  - ``TargetDefinition``
+  - ``TargetCompletion``
+  - ``TargetLink``
+
+  The following methods have been deprecated and will be removed in ``v1.0``
+
+  - ``Roles.add_target_definition_provider``
+  - ``Roles.add_target_link_provider``
+  - ``Roles.add_target_completion_provider``
+  - ``RstLanguageServer.get_roles()``
+  - ``SphinxLanguageServer.get_domain()``
+  - ``SphinxLanguageServer.get_domains()``
+  - ``SphinxLanguageServer.get_roles()``
+  - ``SphinxLanguageServer.get_role_target_types()``
+  - ``SphinxLanguageServer.get_role_targets()``
+  - ``SphinxLanguageServer.get_intersphinx_targets()``
+  - ``SphinxLanguageServer.has_intersphinx_targets()``
+  - ``SphinxLanguageServer.get_intersphinx_projects()`` (`#495 <https://github.com/swyddfa/esbonio/issues/495>`_)
+
+
 v0.14.3 - 2022-11-05
 --------------------
 

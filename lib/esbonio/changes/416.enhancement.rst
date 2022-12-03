@@ -1,1 +1,0 @@
-Completion suggestions will now also be generated for the long form (``:py:func:``) of roles and directives in the primary and standard Sphinx domains.

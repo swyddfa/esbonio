@@ -1,3 +1,0 @@
-Errors thrown by ``DirectiveLanguageFeatures`` during ``textDocument/documentLink`` or ``textDocument/definition`` requests are now caught and no longer result in frustrating error banners in clients.
-
-The ``textDocument/documentLink`` handler for ``image::`` and ``figure::`` should no longer throw exceptions for invalid paths on Windows.

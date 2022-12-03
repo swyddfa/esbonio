@@ -1,1 +1,0 @@
-The language server now recognises and returns ``DocumentLinks`` for ``image::`` and ``figure::`` directives that use ``http://`` or ``https://`` references for images.
