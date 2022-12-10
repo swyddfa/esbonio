@@ -91,20 +91,20 @@ A number of named capture groups are available
 
 ROLE = re.compile(
     r"""
-    ([^\w:]|^\s*)                     # roles cannot be preceeded by letter chars
+    ([^\w:]|^\s*)                        # roles cannot be preceeded by letter chars
     (?P<role>
-      :                               # roles begin with a ':' character
-      (?!:)                           # the next character cannot be a ':'
-      ((?P<domain>[\w]+):(?=\w))?     # roles may include a domain (that must be followed by a word character)
-      ((?P<name>[\w-]+):?)?           # roles have a name
+      :                                  # roles begin with a ':' character
+      (?!:)                              # the next character cannot be a ':'
+      ((?P<domain>[\w+-]+):(?=\w))?      # roles may include a domain (that must be followed by a word character)
+      ((?P<name>([\w+-]+:)*[\w+-]+):?)?  # roles have a name
     )
     (?P<target>
-      `                               # targets begin with a '`' character
-      ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
-      (?P<modifier>[!~])?             # targets may have a modifier
-      (?P<label>[^<`>]*)?             # targets contain a label
-      >?                              # labels end with a '>' when there's an alias
-      `?                              # targets end with a '`' character
+      `                                  # targets begin with a '`' character
+      ((?P<alias>[^<`>]*?)<)?            # targets may specify an alias
+      (?P<modifier>[!~])?                # targets may have a modifier
+      (?P<label>[^<`>]*)?                # targets contain a label
+      >?                                 # labels end with a '>' when there's an alias
+      `?                                 # targets end with a '`' character
     )?
     """,
     re.VERBOSE,
