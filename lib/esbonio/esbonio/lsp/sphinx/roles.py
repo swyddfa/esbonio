@@ -1,14 +1,17 @@
 """Extra support for roles added by sphinx."""
 import json
 import os.path
-from typing import Dict, List, Any
+from typing import Any
+from typing import Dict
+from typing import List
 from typing import Optional
 
 import pkg_resources
 import pygls.uris as Uri
 from pygls.lsp.types import CompletionItem
 
-from esbonio.lsp.roles import RoleLanguageFeature, Roles
+from esbonio.lsp.roles import RoleLanguageFeature
+from esbonio.lsp.roles import Roles
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.util.filepaths import complete_sphinx_filepaths
