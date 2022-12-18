@@ -244,12 +244,11 @@ class DomainRoles(RoleLanguageFeature, DomainHelpers):
 
         return targets
 
-    def get_implementation(
-        self, role: str, domain: Optional[str]
-    ) -> Optional[Directive]:
+    def get_implementation(self, role: str, domain: str) -> Optional[Any]:
 
-        if domain is not None:
-            return self.roles.get(f"{domain}:{role}", None)
+        impl = super().get_implementation(role, domain)
+        if impl:
+            return impl
 
         if self.rst.app is None:
             return None
@@ -450,26 +449,9 @@ class Intersphinx(RoleLanguageFeature):
     def complete_targets(
         self, context: CompletionContext, name: str, domain: str
     ) -> List[CompletionItem]:
-        role_prefix = context.match.group("domain") or ""
         # Intersphinx targets when using the "external" role style.
-        if role_prefix.startswith("external:"):
-            return self.complete_intersphinx_targets(
-                name=name,
-                domain=domain,
-                project=None,
-            )
-
-        prefix = "external+"
-        if role_prefix.startswith("external+"):
-            project = role_prefix[len(prefix) :]
-            split = name.split(":", maxsplit=1)
-            if len(split) > 1:
-                domain, name = split
-            return self.complete_intersphinx_targets(
-                name=name,
-                domain=domain,
-                project=project,
-            )
+        if domain.startswith("external"):
+            return self._complete_external_role_targets(name=name, domain=domain)
 
         # Old way of using intersphinx.
         label = context.match.group("label")
@@ -480,9 +462,40 @@ class Intersphinx(RoleLanguageFeature):
                 name=name,
                 domain=domain,
                 project=project,
+                include_project=True,
             )
 
         return self.complete_intersphinx_projects(name, domain)
+
+    def _split_domain_name(self, value):
+        split = value.split(":", maxsplit=1)
+        if len(split) > 1:
+            return split
+        return "", value
+
+    def _complete_external_role_targets(
+        self, name: str, domain: str
+    ) -> List[CompletionItem]:
+        external_domain, external_name = self._split_domain_name(name)
+
+        if domain == "external":
+            return self.complete_intersphinx_targets(
+                name=external_name,
+                domain=external_domain,
+                project=None,
+                include_project=False,
+            )
+
+        prefix = "external+"
+        if domain.startswith("external+"):
+            project = domain[len(prefix) :]
+            return self.complete_intersphinx_targets(
+                name=external_name,
+                domain=external_domain,
+                project=project,
+                include_project=False,
+            )
+        return []
 
     def complete_intersphinx_projects(
         self, name: str, domain: str
@@ -506,13 +519,16 @@ class Intersphinx(RoleLanguageFeature):
         name: str,
         domain: str,
         project: Optional[str],
+        include_project: bool = True,
     ) -> List[CompletionItem]:
         items = []
         intersphinx_targets = self.get_intersphinx_targets(project, name, domain)
 
         for type_, targets in intersphinx_targets.items():
             items += [
-                intersphinx_target_to_completion_item(project, label, target, type_)
+                intersphinx_target_to_completion_item(
+                    project, label, target, type_, include_project=include_project
+                )
                 for label, target in targets.items()
             ]
 
@@ -600,6 +616,8 @@ class Intersphinx(RoleLanguageFeature):
             if not inv:
                 return {}
 
+        # TODO: always show everything even if the target doesn't resolve locally?
+        # Esbonio/sphinx will retorn an error anyway.
         for target_type in self.domain._get_role_target_types(name, domain):
 
             explicit_domain = f"{domain}:{target_type}"
@@ -640,17 +658,28 @@ class Intersphinx(RoleLanguageFeature):
         unnamed_inventory = self._get_unnamed_inventory()
         named_inventory = self._get_named_inventory()
 
-        external_roles = {
-            f"external:{type_}": IntersphinxRole for type_ in unnamed_inventory.keys()
-        }
+        external_roles = {}
+        for type_ in unnamed_inventory.keys():
+            prefix = "std:"
+            if type_.startswith(prefix):
+                type_ = type_[len(prefix) :]
+            external_roles[f"external:{type_}"] = (
+                self._get_local_implementation(type_) or IntersphinxRole
+            )
 
         for name, invdata in named_inventory.items():
             for type_ in invdata.keys():
                 prefix = "std:"
                 if type_.startswith(prefix):
                     type_ = type_[len(prefix) :]
-                external_roles[f"external+{name}:{type_}"] = IntersphinxRole
+                external_roles[f"external+{name}:{type_}"] = (
+                    self._get_local_implementation(type_) or IntersphinxRole
+                )
         return external_roles
+
+    def _get_local_implementation(self, role: str) -> Optional[Any]:
+        domain, name = self._split_domain_name(role)
+        return self.domain.get_implementation(name, domain)
 
     def _get_named_inventory(self) -> Dict[str, Inventory]:
         """
@@ -674,12 +703,33 @@ class Intersphinx(RoleLanguageFeature):
             return {}
         return getattr(self.rst.app.env, "intersphinx_inventory", {})
 
+    def get_role_documentation(
+        self, role: str, implementation: str
+    ) -> Optional[Dict[str, Any]]:
+        if not role.startswith("external"):
+            return
+        # Remove the "external" part.
+        role = role.split(":", maxsplit=1)[-1]
+
+        feature = self.rst.get_feature(Roles)
+        if not feature:
+            return
+
+        key = f"{role}({implementation})"
+        documentation = feature._documentation.get(key)
+        if documentation:
+            return {
+                "description": documentation.get("description"),
+                "is_markdown": True,
+            }
+
 
 def intersphinx_target_to_completion_item(
     project: Optional[str],
     label: str,
     target: tuple,
     type_: str,
+    include_project: bool = True,
 ) -> CompletionItem:
 
     # _. _. url, _
@@ -690,7 +740,7 @@ def intersphinx_target_to_completion_item(
 
     if version:
         version = f" v{version}"
-    insert_text = f"{project}:{label}" if project else label
+    insert_text = f"{project}:{label}" if project and include_project else label
 
     return CompletionItem(
         label=label,

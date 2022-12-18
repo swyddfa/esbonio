@@ -26,7 +26,6 @@ from esbonio.lsp.rst import HoverContext
 from esbonio.lsp.rst import ImplementationContext
 from esbonio.lsp.rst import LanguageFeature
 from esbonio.lsp.rst import RstLanguageServer
-from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.util.inspect import get_object_location
 from esbonio.lsp.util.patterns import DEFAULT_ROLE
 from esbonio.lsp.util.patterns import DIRECTIVE
@@ -85,7 +84,8 @@ class RoleLanguageFeature:
         domain
            The domain the role belongs to, if any
         """
-        return self.index_roles().get(role, None)
+        label = f"{domain}:{role}" if domain else role
+        return self.index_roles().get(label)
 
     def index_roles(self) -> Dict[str, Any]:
         """Return all known roles."""
@@ -115,6 +115,32 @@ class RoleLanguageFeature:
     def suggest_roles(self, context: CompletionContext) -> Iterable[Tuple[str, Any]]:
         """Suggest roles that may be used, given a completion context."""
         return self.index_roles().items()
+
+    def get_role_documentation(
+        self, role: str, implementation: str
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Get the role documentation.
+
+        Parameters
+        ----------
+        role
+            Full role name (including domain).
+
+        implementation
+           The full dotted name of the role's implementation.
+
+        It should return a dictionary of the form ::
+
+            {
+                "is_markdown": true,
+                "description": '''
+                    # :raw:
+                    The raw role is used for...
+                '''
+           }
+        """
+        return None
 
 
 class TargetDefinition(Protocol):
@@ -880,23 +906,18 @@ class Roles(LanguageFeature):
         if documentation:
             return documentation
 
-        if not isinstance(self.rst, SphinxLanguageServer) or not self.rst.app:
-            return None
-
-        # Nothing found, try the primary domain
-        domain = self.rst.app.config.primary_domain
-        key = f"{domain}:{label}({implementation})"
-
-        documentation = self._documentation.get(key, None)
-        if documentation:
-            return documentation
-
-        # Still nothing, try the standard domain
-        key = f"std:{label}({implementation})"
-
-        documentation = self._documentation.get(key, None)
-        if documentation:
-            return documentation
+        for feature_name, feature in self._features.items():
+            try:
+                documentation = feature.get_role_documentation(label, implementation)
+                if documentation:
+                    return documentation
+            except Exception:
+                self.logger.error(
+                    "Unable to get documentation for ':%s:', error in feature: '%s'",
+                    label,
+                    feature_name,
+                    exc_info=True,
+                )
 
         return None
 
