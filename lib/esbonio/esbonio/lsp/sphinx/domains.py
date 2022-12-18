@@ -596,8 +596,8 @@ class Intersphinx(RoleLanguageFeature):
         Parameters
         ----------
         project
-           The project to return targets from.
-           If None, all targets are returned.
+           The project to return targets from. If None, all targets
+           from the unnamed inventory are returned.
 
         name
            The name of the role
@@ -707,13 +707,13 @@ class Intersphinx(RoleLanguageFeature):
         self, role: str, implementation: str
     ) -> Optional[Dict[str, Any]]:
         if not role.startswith("external"):
-            return
+            return None
         # Remove the "external" part.
         role = role.split(":", maxsplit=1)[-1]
 
         feature = self.rst.get_feature(Roles)
         if not feature:
-            return
+            return None
 
         key = f"{role}({implementation})"
         documentation = feature._documentation.get(key)
@@ -722,6 +722,7 @@ class Intersphinx(RoleLanguageFeature):
                 "description": documentation.get("description"),
                 "is_markdown": True,
             }
+        return None
 
 
 def intersphinx_target_to_completion_item(

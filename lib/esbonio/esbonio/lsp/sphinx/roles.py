@@ -23,11 +23,11 @@ class SphinxRoles(RoleLanguageFeature):
         self, role: str, implementation: str
     ) -> Optional[Dict[str, Any]]:
         if not self.rst.app:
-            return
+            return None
 
         feature = self.rst.get_feature(Roles)
         if not feature:
-            return
+            return None
 
         # Try with the primary domain.
         primary_domain = self.rst.app.config.primary_domain
