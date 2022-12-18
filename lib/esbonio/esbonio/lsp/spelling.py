@@ -48,7 +48,7 @@ class Spelling(LanguageFeature):
             if len(ranges) > 0 and diagnostic.range not in ranges:
                 continue
 
-            for fix in self.lang.candidates(error.text):
+            for fix in self.lang.candidates(error.text) or []:
                 actions.append(
                     CodeAction(
                         title=f"Correct '{error.text}' -> '{fix}'",
