@@ -63,6 +63,13 @@ This section contains notes on how to use the language server with your text edi
 
          Using Esbonio and Neovim with ``vim-lsp``
 
+   Sublime Text (LSP)
+      .. figure:: /images/sublimetext-lsp.png
+         :align: center
+         :target: /_images/sublimetext-lsp.png
+
+         Using Esbonio and Sublime Text with ``LSP``
+
 Installation
 ------------
 
@@ -116,6 +123,9 @@ For more information on this command see the documentation on pip's `VCS Support
    Vim (vim-lsp)
       .. include:: ./editors/vim-lsp/_installation.rst
 
+   Sublime Text (LSP)
+      .. include:: ./editors/sublimetext-lsp/_installation.rst
+
 Configuration
 -------------
 
@@ -138,6 +148,9 @@ Configuration
 
    Emacs (lsp-mode)
       .. include:: ./editors/emacs-lsp-mode/_configuration.rst
+
+   Sublime Text (LSP)
+      .. include:: ./editors/sublimetext-lsp/_configuration.rst
 
 Sphinx Options
 ^^^^^^^^^^^^^^
@@ -331,6 +344,9 @@ to help get you started.
    Emacs (lsp-mode)
       .. include:: ./editors/emacs-lsp-mode/_examples.rst
 
+   Sublime Text (LSP)
+      .. include:: ./editors/sublimetext-lsp/_examples.rst
+
 Debugging
 ---------
 
@@ -346,6 +362,9 @@ In the event that something does not work as expected, you can increase the logg
 
    Vim (vim-lsp)
       .. include:: ./editors/vim-lsp/_debugging.rst
+
+   Sublime Text (LSP)
+      .. include:: ./editors/sublimetext-lsp/_examples.rst
 
 Commands
 --------
