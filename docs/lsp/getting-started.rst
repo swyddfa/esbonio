@@ -364,7 +364,7 @@ In the event that something does not work as expected, you can increase the logg
       .. include:: ./editors/vim-lsp/_debugging.rst
 
    Sublime Text (LSP)
-      .. include:: ./editors/sublimetext-lsp/_examples.rst
+      .. include:: ./editors/sublimetext-lsp/_debugging.rst
 
 Commands
 --------
