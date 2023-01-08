@@ -18,6 +18,7 @@ from pygls.lsp.types import Position
 from pygls.lsp.types import Range
 from pygls.workspace import Document
 from sphinx.domains import Domain
+from sphinx.util.typing import Inventory
 
 from esbonio.lsp import CompletionContext
 from esbonio.lsp import DefinitionContext
@@ -243,12 +244,11 @@ class DomainRoles(RoleLanguageFeature, DomainHelpers):
 
         return targets
 
-    def get_implementation(
-        self, role: str, domain: Optional[str]
-    ) -> Optional[Directive]:
+    def get_implementation(self, role: str, domain: str) -> Optional[Any]:
 
-        if domain is not None:
-            return self.roles.get(f"{domain}:{role}", None)
+        impl = super().get_implementation(role, domain)
+        if impl:
+            return impl
 
         if self.rst.app is None:
             return None
@@ -449,14 +449,53 @@ class Intersphinx(RoleLanguageFeature):
     def complete_targets(
         self, context: CompletionContext, name: str, domain: str
     ) -> List[CompletionItem]:
+        # Intersphinx targets when using the "external" role style.
+        if domain.startswith("external"):
+            return self._complete_external_role_targets(name=name, domain=domain)
 
+        # Old way of using intersphinx.
         label = context.match.group("label")
-
         # Intersphinx targets contain ':' characters.
         if ":" in label:
-            return self.complete_intersphinx_targets(name, domain, label)
+            project, *_ = label.split(":")
+            return self.complete_intersphinx_targets(
+                name=name,
+                domain=domain,
+                project=project,
+                include_project=True,
+            )
 
         return self.complete_intersphinx_projects(name, domain)
+
+    def _split_domain_name(self, value):
+        split = value.split(":", maxsplit=1)
+        if len(split) > 1:
+            return split
+        return "", value
+
+    def _complete_external_role_targets(
+        self, name: str, domain: str
+    ) -> List[CompletionItem]:
+        external_domain, external_name = self._split_domain_name(name)
+
+        if domain == "external":
+            return self.complete_intersphinx_targets(
+                name=external_name,
+                domain=external_domain,
+                project=None,
+                include_project=False,
+            )
+
+        prefix = "external+"
+        if domain.startswith("external+"):
+            project = domain[len(prefix) :]
+            return self.complete_intersphinx_targets(
+                name=external_name,
+                domain=external_domain,
+                project=project,
+                include_project=False,
+            )
+        return []
 
     def complete_intersphinx_projects(
         self, name: str, domain: str
@@ -476,15 +515,20 @@ class Intersphinx(RoleLanguageFeature):
         return items
 
     def complete_intersphinx_targets(
-        self, name: str, domain: str, label: str
+        self,
+        name: str,
+        domain: str,
+        project: Optional[str],
+        include_project: bool = True,
     ) -> List[CompletionItem]:
         items = []
-        project, *_ = label.split(":")
         intersphinx_targets = self.get_intersphinx_targets(project, name, domain)
 
         for type_, targets in intersphinx_targets.items():
             items += [
-                intersphinx_target_to_completion_item(project, label, target, type_)
+                intersphinx_target_to_completion_item(
+                    project, label, target, type_, include_project=include_project
+                )
                 for label, target in targets.items()
             ]
 
@@ -517,7 +561,7 @@ class Intersphinx(RoleLanguageFeature):
         if self.rst.app is None:
             return []
 
-        inv = getattr(self.rst.app.env, "intersphinx_named_inventory", {})
+        inv = self._get_named_inventory()
         return list(inv.keys())
 
     def has_intersphinx_targets(
@@ -545,14 +589,15 @@ class Intersphinx(RoleLanguageFeature):
         return any([len(items) > 0 for items in targets.values()])
 
     def get_intersphinx_targets(
-        self, project: str, name: str, domain: str = ""
-    ) -> Dict[str, Dict[str, tuple]]:
+        self, project: Optional[str], name: str, domain: str = ""
+    ) -> Dict[str, Dict[str, Tuple[str, str, str, str]]]:
         """Return the intersphinx objects targeted by the given role.
 
         Parameters
         ----------
         project
-           The project to return targets from
+           The project to return targets from. If None, all targets
+           from the unnamed inventory are returned.
 
         name
            The name of the role
@@ -563,14 +608,16 @@ class Intersphinx(RoleLanguageFeature):
 
         if self.rst.app is None:
             return {}
-
-        inv = getattr(self.rst.app.env, "intersphinx_named_inventory", {})
-        if project not in inv:
-            return {}
-
         targets = {}
-        inv = inv[project]
+        if not project:
+            inv = self._get_unnamed_inventory()
+        else:
+            inv = self._get_named_inventory().get(project, {})
+            if not inv:
+                return {}
 
+        # TODO: always show everything even if the target doesn't resolve locally?
+        # Esbonio/sphinx will retorn an error anyway.
         for target_type in self.domain._get_role_target_types(name, domain):
 
             explicit_domain = f"{domain}:{target_type}"
@@ -589,9 +636,101 @@ class Intersphinx(RoleLanguageFeature):
 
         return targets
 
+    def index_roles(self) -> Dict[str, Any]:
+        return self._get_all_external_roles()
+
+    def _get_all_external_roles(self) -> Dict[str, Any]:
+        """
+        Get all external roles available in the project.
+
+        There are two types of external roles: `:external:` and `:external+{project}:`,
+        the former makes use of the unnamed inventory and the other one makes
+        use the named (project scoped) inventory.
+
+        See https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#explicitly-reference-external-objects.
+        """
+        try:
+            # Check if this Sphinx version supports external roles.
+            from sphinx.ext.intersphinx import IntersphinxRole
+        except ImportError:
+            return {}
+
+        unnamed_inventory = self._get_unnamed_inventory()
+        named_inventory = self._get_named_inventory()
+
+        external_roles = {}
+        for type_ in unnamed_inventory.keys():
+            prefix = "std:"
+            if type_.startswith(prefix):
+                type_ = type_[len(prefix) :]
+            external_roles[f"external:{type_}"] = (
+                self._get_local_implementation(type_) or IntersphinxRole
+            )
+
+        for name, invdata in named_inventory.items():
+            for type_ in invdata.keys():
+                prefix = "std:"
+                if type_.startswith(prefix):
+                    type_ = type_[len(prefix) :]
+                external_roles[f"external+{name}:{type_}"] = (
+                    self._get_local_implementation(type_) or IntersphinxRole
+                )
+        return external_roles
+
+    def _get_local_implementation(self, role: str) -> Optional[Any]:
+        domain, name = self._split_domain_name(role)
+        return self.domain.get_implementation(name, domain)
+
+    def _get_named_inventory(self) -> Dict[str, Inventory]:
+        """
+        Get named intersphinx inventory.
+
+        This is a dictionary of project names mapped to inventory data.
+        """
+        if not self.rst.app:
+            return {}
+        return getattr(self.rst.app.env, "intersphinx_named_inventory", {})
+
+    def _get_unnamed_inventory(self) -> Inventory:
+        """
+        Get the unnamed intersphinx inventory.
+
+        This is a dictionary of ALL intersphinx targets.
+        They aren't grouped by project, this list is used when an intersphinx
+        target is referred without a project.
+        """
+        if not self.rst.app:
+            return {}
+        return getattr(self.rst.app.env, "intersphinx_inventory", {})
+
+    def get_role_documentation(
+        self, role: str, implementation: str
+    ) -> Optional[Dict[str, Any]]:
+        if not role.startswith("external"):
+            return None
+        # Remove the "external" part.
+        role = role.split(":", maxsplit=1)[-1]
+
+        feature = self.rst.get_feature(Roles)
+        if not feature:
+            return None
+
+        key = f"{role}({implementation})"
+        documentation = feature._documentation.get(key)
+        if documentation:
+            return {
+                "description": documentation.get("description"),
+                "is_markdown": True,
+            }
+        return None
+
 
 def intersphinx_target_to_completion_item(
-    project: str, label: str, target: tuple, type_: str
+    project: Optional[str],
+    label: str,
+    target: tuple,
+    type_: str,
+    include_project: bool = True,
 ) -> CompletionItem:
 
     # _. _. url, _
@@ -602,12 +741,13 @@ def intersphinx_target_to_completion_item(
 
     if version:
         version = f" v{version}"
+    insert_text = f"{project}:{label}" if project and include_project else label
 
     return CompletionItem(
         label=label,
         detail=f"{display_name} - {source}{version}",
         kind=TARGET_KINDS.get(completion_kind, CompletionItemKind.Reference),
-        insert_text=f"{project}:{label}",
+        insert_text=insert_text,
     )
 
 

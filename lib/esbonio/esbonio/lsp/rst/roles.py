@@ -34,12 +34,6 @@ class Docutils(RoleLanguageFeature):
 
         return self._roles
 
-    def get_implementation(self, role: str, domain: str):
-        if domain:
-            return None
-
-        return self.roles.get(role, None)
-
     def index_roles(self) -> Dict[str, Any]:
         return self.roles
 

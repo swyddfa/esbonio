@@ -391,7 +391,7 @@ class Directives(LanguageFeature):
            A list of strings for the directive's main documentation.
 
         ``options``,
-           A dictionary, with a field for the documentaton of each of the directive's
+           A dictionary, with a field for the documentation of each of the directive's
            options.
 
         ``is_markdown``
