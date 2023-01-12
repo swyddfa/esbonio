@@ -10,16 +10,16 @@ from typing import Optional
 from typing import Tuple
 
 from docutils.parsers.rst import Directive
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionItemKind
-from pygls.lsp.types import DocumentLink
-from pygls.lsp.types import InsertTextFormat
-from pygls.lsp.types import Location
-from pygls.lsp.types import MarkupContent
-from pygls.lsp.types import MarkupKind
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pygls.lsp.types import TextEdit
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionItemKind
+from lsprotocol.types import DocumentLink
+from lsprotocol.types import InsertTextFormat
+from lsprotocol.types import Location
+from lsprotocol.types import MarkupContent
+from lsprotocol.types import MarkupKind
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from lsprotocol.types import TextEdit
 from typing_extensions import Protocol
 
 from esbonio.lsp import CompletionContext

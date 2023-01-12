@@ -11,11 +11,11 @@ from typing import Tuple
 import pygls.uris as Uri
 from docutils import nodes
 from docutils.parsers.rst import Directive
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionItemKind
-from pygls.lsp.types import Location
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionItemKind
+from lsprotocol.types import Location
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 from pygls.workspace import Document
 from sphinx.domains import Domain
 

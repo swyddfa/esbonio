@@ -4,9 +4,9 @@ import traceback
 from typing import Optional
 
 import pygls.uris as Uri
-from pygls.lsp.types import Location
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
+from lsprotocol.types import Location
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 
 
 def get_object_location(obj: object, logger: logging.Logger) -> Optional[Location]:

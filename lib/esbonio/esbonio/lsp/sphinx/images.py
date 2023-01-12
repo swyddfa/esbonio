@@ -5,10 +5,10 @@ from typing import Optional
 from typing import Tuple
 
 import pygls.uris as Uri
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import Location
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import Location
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 from pygls.workspace import Document
 
 from esbonio.lsp.directives import Directives

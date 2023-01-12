@@ -2,6 +2,17 @@ import argparse
 import logging
 import sys
 import warnings
+from typing import Union
+
+from pygls.protocol import default_converter
+from typing_extensions import Literal
+
+
+def esbonio_converter():
+    converter = default_converter()
+    converter.register_structure_hook(Union[Literal["auto"], int], lambda obj, _: obj)
+
+    return converter
 
 
 def setup_cli(progname: str, description: str) -> argparse.ArgumentParser:
@@ -88,7 +99,12 @@ def main(cli: argparse.ArgumentParser):
     warnlog.addHandler(handler)
 
     server = create_language_server(
-        args.server_cls, modules, name="esbonio", version=__version__
+        args.server_cls,
+        modules,
+        name="esbonio",
+        version=__version__,
+        # TODO: Figure out how to make this extensible
+        converter_factory=esbonio_converter,
     )
 
     if args.port:

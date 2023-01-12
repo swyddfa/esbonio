@@ -2,10 +2,10 @@
 import textwrap
 from typing import List
 
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionItemKind
-from pygls.lsp.types import MarkupContent
-from pygls.lsp.types import MarkupKind
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionItemKind
+from lsprotocol.types import MarkupContent
+from lsprotocol.types import MarkupKind
 from pygments.lexers import get_all_lexers
 
 from esbonio.lsp.directives import Directives
