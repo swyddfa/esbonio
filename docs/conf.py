@@ -15,10 +15,10 @@ from typing import List
 sys.path.insert(0, os.path.abspath("../lib/esbonio"))
 sys.path.insert(0, os.path.abspath("./ext"))
 
-import pygls.lsp.methods as M
 from docutils.parsers.rst import nodes
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionItemKind
+from lsprotocol.types import METHOD_TO_TYPES
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionItemKind
 from sphinx.application import Sphinx
 
 import esbonio.lsp
@@ -49,7 +49,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "sphinxcontrib.autodoc_pydantic",
     "esbonio.relevant_to",
     "esbonio.tutorial",
     "cli_help",
@@ -107,12 +106,8 @@ class LspMethod(TargetCompletion):
     def _index_methods(self):
         self.items = []
 
-        for name, meth in M.__dict__.items():
-
-            if not isinstance(meth, str) or not name.isupper():
-                continue
-
-            item = CompletionItem(label=meth, kind=CompletionItemKind.Constant)
+        for method in METHOD_TO_TYPES.keys():
+            item = CompletionItem(label=method, kind=CompletionItemKind.Constant)
             self.items.append(item)
 
     def complete_targets(
