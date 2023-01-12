@@ -2,11 +2,11 @@ from typing import List
 from typing import Optional
 
 import pytest
-from pygls.lsp.types import DocumentSymbol
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pygls.lsp.types import SymbolKind
-from pytest_lsp import Client
+from lsprotocol.types import DocumentSymbol
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from lsprotocol.types import SymbolKind
+from pytest_lsp import LanguageClient
 
 
 def from_str(spec: str):
@@ -160,7 +160,7 @@ def symbol(
     ],
 )
 async def test_document_symbols(
-    client: Client, filepath: str, expected: List[DocumentSymbol]
+    client: LanguageClient, filepath: str, expected: List[DocumentSymbol]
 ):
     """Ensure that we handle ``textDocument/documentSymbols`` requests correctly"""
 

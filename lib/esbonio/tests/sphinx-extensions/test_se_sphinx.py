@@ -3,11 +3,11 @@ from typing import List
 
 import pygls.uris as uri
 import pytest
-from pygls.lsp.types import DiagnosticSeverity
-from pygls.lsp.types import DocumentLink
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pytest_lsp import Client
+from lsprotocol.types import DiagnosticSeverity
+from lsprotocol.types import DocumentLink
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 
@@ -50,7 +50,9 @@ from pytest_lsp import check
         )
     ],
 )
-async def test_document_links(client: Client, uri: str, expected: List[DocumentLink]):
+async def test_document_links(
+    client: LanguageClient, uri: str, expected: List[DocumentLink]
+):
     """Ensure that we handle ``textDocument/documentLink`` requests correctly."""
 
     test_uri = client.root_uri + uri
@@ -71,7 +73,7 @@ async def test_document_links(client: Client, uri: str, expected: List[DocumentL
 
 
 @pytest.mark.asyncio
-async def test_docstring_diagnostics(client: Client):
+async def test_docstring_diagnostics(client: LanguageClient):
     """Ensure that we can correctly reports errors in autodoc'd docstrings."""
 
     workspace_root = pathlib.Path(uri.to_fs_path(client.root_uri))
@@ -92,7 +94,7 @@ async def test_docstring_diagnostics(client: Client):
 
 
 @pytest.mark.asyncio
-async def test_included_diagnostics(client: Client):
+async def test_included_diagnostics(client: LanguageClient):
     """Ensure that we can correctly reports errors in `.. included::` files."""
 
     workspace_root = pathlib.Path(uri.to_fs_path(client.root_uri))

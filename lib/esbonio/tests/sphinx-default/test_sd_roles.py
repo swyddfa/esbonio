@@ -6,9 +6,9 @@ from typing import Set
 from typing import Tuple
 
 import pytest
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pytest_lsp import Client
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
@@ -46,7 +46,7 @@ UNEXPECTED = {"restructuredtext-unimplemented-role"}
     ],
 )
 async def test_role_completions(
-    client: Client,
+    client: LanguageClient,
     text: str,
     setup: Tuple[str, Optional[Set[str]], Optional[Set[str]]],
 ):
@@ -146,7 +146,7 @@ async def test_role_completions(
     ],
 )
 async def test_role_insert_range(
-    client: Client, text: str, character: int, expected_range: Range
+    client: LanguageClient, text: str, character: int, expected_range: Range
 ):
     """Ensure that we generate completion items that work well with existing text.
 
@@ -217,7 +217,7 @@ async def test_role_insert_range(
         ),
     ],
 )
-async def test_completion_suppression(client: Client, extension: str, setup):
+async def test_completion_suppression(client: LanguageClient, extension: str, setup):
     """Ensure that we only offer completions when appropriate.
 
     Rather than focus on the actual completion items themselves, this test case is
@@ -253,38 +253,46 @@ async def test_completion_suppression(client: Client, extension: str, setup):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "text,position,expected",
+    "text,line,character,expected",
     [
         (
             ":option:`progname.--verbose`",
-            Position(line=0, character=4),
+            0,
+            4,
             "A command-line option",
         ),
         (
             ":option:`progname.--verbose`",
-            Position(line=0, character=12),
+            0,
+            12,
             None,
         ),
         (
             ":not-a-known-role:`progname.--verbose`",
-            Position(line=0, character=4),
+            0,
+            4,
             None,
         ),
         (
             ":c:expr:",
-            Position(line=0, character=1),
+            0,
+            1,
             "Insert a C expression or type",
         ),
     ],
 )
 async def test_role_hovers(
-    client: Client, text: str, position: Position, expected: Optional[str]
+    client: LanguageClient,
+    text: str,
+    line: int,
+    character: int,
+    expected: Optional[str],
 ):
     """Ensure that we can offer hovers for roles correctly."""
 
     test_uri = client.root_uri + "/test.rst"
 
-    hover = await hover_request(client, test_uri, text, position)
+    hover = await hover_request(client, test_uri, text, line, character)
     actual = hover.contents.value
 
     if expected is None:
@@ -363,7 +371,7 @@ async def test_role_hovers(
     ],
 )
 async def test_role_target_insert_range(
-    client: Client, text: str, pattern: str, expected_range: Range
+    client: LanguageClient, text: str, pattern: str, expected_range: Range
 ):
     """Ensure that we generate completion items that work well with existing text.
 
@@ -401,26 +409,30 @@ async def test_role_target_insert_range(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "uri,position,expected",
+    "uri,line,character,expected",
     [
         (
             "definitions.rst",
-            Position(line=5, character=34),
+            5,
+            34,
             None,
         ),
         (
             "definitions.rst",
-            Position(line=5, character=27),
+            5,
+            27,
             "sphinx/roles.py",
         ),
         (
             "definitions.rst",
-            Position(line=33, character=21),
+            33,
+            21,
             "sphinx/domains/cpp.py",
         ),
         pytest.param(
             "theorems/pythagoras.rst",
-            Position(line=50, character=19),
+            50,
+            19,
             "docutils/parsers/rst/roles.py",
             marks=pytest.mark.skipif(
                 sphinx_version(gte=5),
@@ -429,7 +441,8 @@ async def test_role_target_insert_range(
         ),
         pytest.param(
             "theorems/pythagoras.rst",
-            Position(line=50, character=19),
+            50,
+            19,
             "sphinx/roles.py",
             marks=pytest.mark.skipif(
                 sphinx_version(lt=5),
@@ -439,7 +452,11 @@ async def test_role_target_insert_range(
     ],
 )
 async def test_roles_implementation(
-    client: Client, uri: str, position: Position, expected: Optional[pathlib.Path]
+    client: LanguageClient,
+    uri: str,
+    line: int,
+    character: int,
+    expected: Optional[pathlib.Path],
 ):
     """Ensure that we can find the implementation of roles.
 
@@ -452,7 +469,7 @@ async def test_roles_implementation(
 
     test_uri = client.root_uri + f"/{uri}"
 
-    results = await client.implementation_request(test_uri, position)
+    results = await client.implementation_request(test_uri, line, character)
 
     if expected is None:
         assert len(results) == 0

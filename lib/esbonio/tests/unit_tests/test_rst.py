@@ -10,7 +10,7 @@ def test_get_feature_by_string():
     """Ensure that a language feature can be retrieved by a string, but raises a
     deprecation warning."""
 
-    rst = RstLanguageServer()
+    rst = RstLanguageServer(name="esbonio-test", version="v0.1")
     expected = Roles(rst)
 
     rst.add_feature(expected)
@@ -25,7 +25,7 @@ def test_get_feature_by_string():
 def test_get_feature_by_cls():
     """Ensure that a language feature can be retrieved via its class definition."""
 
-    rst = RstLanguageServer()
+    rst = RstLanguageServer(name="esbonio-test", version="v0.1")
     expected = Roles(rst)
 
     rst.add_feature(expected)
@@ -38,7 +38,7 @@ def test_get_missing_feature_by_string():
     """Ensure that if a language feature is missing ``None`` is returned, but a
     deprecation warning is raised."""
 
-    rst = RstLanguageServer()
+    rst = RstLanguageServer(name="esbonio-test", version="v0.1")
 
     with pytest.deprecated_call():
         actual = rst.get_feature("xxx")
@@ -49,7 +49,7 @@ def test_get_missing_feature_by_string():
 def test_get_missing_feature_by_cls():
     """Ensure that if a language feature is missing ``None`` is returned."""
 
-    rst = RstLanguageServer()
+    rst = RstLanguageServer(name="esbonio-test", version="v0.1")
     assert rst.get_feature(Roles) is None
 
 
@@ -60,7 +60,7 @@ def test_get_setup_arguments_rst_server():
     def setup(rst: RstLanguageServer):
         ...
 
-    server = RstLanguageServer()
+    server = RstLanguageServer(name="esbonio-test", version="v0.1")
     args = _get_setup_arguments(server, setup, "modname")
 
     assert args == {"rst": server}
@@ -73,7 +73,7 @@ def test_get_setup_arguments_server_superclass():
     def setup(rst: SphinxLanguageServer):
         ...
 
-    server = RstLanguageServer()
+    server = RstLanguageServer(name="esbonio-test", version="v0.1")
     args = _get_setup_arguments(server, setup, "modname")
 
     assert args is None
@@ -86,7 +86,7 @@ def test_get_setup_arguments_sphinx_server():
     def setup(ls: SphinxLanguageServer):
         ...
 
-    server = SphinxLanguageServer()
+    server = SphinxLanguageServer(name="esbonio-test", version="v0.1")
     args = _get_setup_arguments(server, setup, "modname")
 
     assert args == {"ls": server}
@@ -99,7 +99,7 @@ def test_get_setup_arguments_server_subclass():
     def setup(ls: RstLanguageServer):
         ...
 
-    server = SphinxLanguageServer()
+    server = SphinxLanguageServer(name="esbonio-test", version="v0.1")
     args = _get_setup_arguments(server, setup, "modname")
 
     assert args == {"ls": server}
@@ -111,7 +111,7 @@ def test_get_setup_arguments_server_and_feature():
     def setup(rst: RstLanguageServer, rs: Roles):
         ...
 
-    server = RstLanguageServer()
+    server = RstLanguageServer(name="esbonio-test", version="v0.1")
 
     roles = Roles(server)
     server.add_feature(roles)
@@ -127,7 +127,7 @@ def test_get_setup_arguments_feature_only():
     def setup(roles: Roles):
         ...
 
-    server = RstLanguageServer()
+    server = RstLanguageServer(name="esbonio-test", version="v0.1")
 
     roles = Roles(server)
     server.add_feature(roles)
@@ -143,7 +143,7 @@ def test_get_setup_arguments_missing_feature():
     def setup(rst: RstLanguageServer, rs: Roles):
         ...
 
-    server = RstLanguageServer()
+    server = RstLanguageServer(name="esbonio-test", version="v0.1")
     args = _get_setup_arguments(server, setup, "modname")
 
     assert args is None
@@ -155,7 +155,7 @@ def test_get_setup_arguments_wrong_type():
     def setup(rst: RstLanguageServer, rs: int):
         ...
 
-    server = RstLanguageServer()
+    server = RstLanguageServer(name="esbonio-test", version="v0.1")
     args = _get_setup_arguments(server, setup, "modname")
 
     assert args is None

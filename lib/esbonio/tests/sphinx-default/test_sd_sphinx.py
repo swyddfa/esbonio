@@ -6,15 +6,15 @@ from typing import List
 import appdirs
 import pygls.uris as uri
 import pytest
+from lsprotocol.types import Diagnostic
+from lsprotocol.types import DiagnosticSeverity
+from lsprotocol.types import DocumentLink
+from lsprotocol.types import MessageType
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 from pygls import IS_WIN
-from pygls.lsp.types import Diagnostic
-from pygls.lsp.types import DiagnosticSeverity
-from pygls.lsp.types import DocumentLink
-from pygls.lsp.types import MessageType
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pytest_lsp import Client
 from pytest_lsp import ClientServerConfig
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 from pytest_lsp import make_client_server
 from pytest_lsp import make_test_client
@@ -22,20 +22,10 @@ from pytest_lsp import make_test_client
 from esbonio.lsp import ESBONIO_SERVER_BUILD
 from esbonio.lsp import ESBONIO_SERVER_CONFIGURATION
 from esbonio.lsp import ESBONIO_SERVER_PREVIEW
-from esbonio.lsp.rst import ServerConfig
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxConfig
 from esbonio.lsp.sphinx.config import SphinxServerConfig
 from esbonio.lsp.testing import sphinx_version
-
-
-class SphinxInfo(SphinxConfig):
-
-    command: List[str]
-    """The equivalent ``sphinx-build`` command"""
-
-    version: str
-    """Sphinx's version number."""
 
 
 def make_esbonio_client(*args, **kwargs):
@@ -91,7 +81,9 @@ def make_esbonio_client(*args, **kwargs):
         )
     ],
 )
-async def test_document_links(client: Client, uri: str, expected: List[DocumentLink]):
+async def test_document_links(
+    client: LanguageClient, uri: str, expected: List[DocumentLink]
+):
     """Ensure that we handle ``textDocument/documentLink`` requests correctly."""
 
     test_uri = client.root_uri + uri
@@ -119,10 +111,10 @@ async def test_document_links(client: Client, uri: str, expected: List[DocumentL
             "workspace",
             SphinxConfig(),
             SphinxConfig(
-                confDir="ROOT",
-                srcDir="ROOT",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT",
+                src_dir="ROOT",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure the configured entry point works
@@ -130,140 +122,142 @@ async def test_document_links(client: Client, uri: str, expected: List[DocumentL
             "workspace",
             SphinxConfig(),
             SphinxConfig(
-                confDir="ROOT",
-                srcDir="ROOT",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT",
+                src_dir="ROOT",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure that we can set confDir to be an explicit path.
             [sys.executable, "-m", "esbonio"],
             ".",
-            SphinxConfig(confDir="ROOT/workspace"),
+            SphinxConfig(conf_dir="ROOT/workspace"),
             SphinxConfig(
-                confDir="ROOT/workspace",
-                srcDir="ROOT/workspace",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT/workspace",
+                src_dir="ROOT/workspace",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure that we can specifiy confDir relative to ${workspaceRoot}
             [sys.executable, "-m", "esbonio"],
             ".",
-            SphinxConfig(confDir="${workspaceRoot}/workspace"),
+            SphinxConfig(conf_dir="${workspaceRoot}/workspace"),
             SphinxConfig(
-                confDir="ROOT/workspace",
-                srcDir="ROOT/workspace",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT/workspace",
+                src_dir="ROOT/workspace",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure that we can specifiy confDir relative to ${workspaceFolder}
             [sys.executable, "-m", "esbonio"],
             ".",
-            SphinxConfig(confDir="${workspaceFolder}/workspace"),
+            SphinxConfig(conf_dir="${workspaceFolder}/workspace"),
             SphinxConfig(
-                confDir="ROOT/workspace",
-                srcDir="ROOT/workspace",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT/workspace",
+                src_dir="ROOT/workspace",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure that we can specifiy confDir to be exactly ${workspaceRoot}
             [sys.executable, "-m", "esbonio"],
             "workspace",
-            SphinxConfig(confDir="${workspaceRoot}"),
+            SphinxConfig(conf_dir="${workspaceRoot}"),
             SphinxConfig(
-                confDir="ROOT",
-                srcDir="ROOT",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT",
+                src_dir="ROOT",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure that we can specifiy confDir to be exactly ${workspaceFolder}
             [sys.executable, "-m", "esbonio"],
             "workspace",
-            SphinxConfig(confDir="${workspaceFolder}"),
+            SphinxConfig(conf_dir="${workspaceFolder}"),
             SphinxConfig(
-                confDir="ROOT",
-                srcDir="ROOT",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT",
+                src_dir="ROOT",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure that we can specifiy srcDir to be an exact path
             [sys.executable, "-m", "esbonio"],
             "workspace-src",
-            SphinxConfig(srcDir="ROOT/../workspace"),
+            SphinxConfig(src_dir="ROOT/../workspace"),
             SphinxConfig(
-                confDir="ROOT",
-                srcDir="ROOT/../workspace",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT",
+                src_dir="ROOT/../workspace",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure that we can specify srcDir relative to ${workspaceRoot}
             [sys.executable, "-m", "esbonio"],
             ".",
             SphinxConfig(
-                confDir="${workspaceRoot}/workspace-src",
-                srcDir="${workspaceRoot}/workspace",
+                conf_dir="${workspaceRoot}/workspace-src",
+                src_dir="${workspaceRoot}/workspace",
             ),
             SphinxConfig(
-                confDir="ROOT/workspace-src",
-                srcDir="ROOT/workspace",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT/workspace-src",
+                src_dir="ROOT/workspace",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure that we can specify srcDir relative to ${workspaceFolder}
             [sys.executable, "-m", "esbonio"],
             ".",
             SphinxConfig(
-                confDir="${workspaceRoot}/workspace-src",
-                srcDir="${workspaceFolder}/workspace",
+                conf_dir="${workspaceRoot}/workspace-src",
+                src_dir="${workspaceFolder}/workspace",
             ),
             SphinxConfig(
-                confDir="ROOT/workspace-src",
-                srcDir="ROOT/workspace",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT/workspace-src",
+                src_dir="ROOT/workspace",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure that we can specify srcDir to be exactly ${confDir}
             [sys.executable, "-m", "esbonio"],
             "workspace",
-            SphinxConfig(srcDir="${confDir}"),
+            SphinxConfig(src_dir="${confDir}"),
             SphinxConfig(
-                confDir="ROOT",
-                srcDir="ROOT",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT",
+                src_dir="ROOT",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
         (  # Ensure that we can specifiy srcDir to be relative to ${confDir}
             [sys.executable, "-m", "esbonio"],
             "workspace-src",
-            SphinxConfig(srcDir="${confDir}/../workspace"),
+            SphinxConfig(src_dir="${confDir}/../workspace"),
             SphinxConfig(
-                confDir="ROOT",
-                srcDir="ROOT/../workspace",
-                buildDir=appdirs.user_cache_dir("esbonio", "swyddfa"),
-                builderName="html",
+                conf_dir="ROOT",
+                src_dir="ROOT/../workspace",
+                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                builder_name="html",
             ),
         ),
     ],
 )
-async def test_initialization(command: List[str], path: str, options, expected):
+async def test_initialization(
+    converter, command: List[str], path: str, options, expected
+):
     """Ensure that the server responds correctly to various initialization options."""
 
     root_path = pathlib.Path(__file__).parent / path
     root_uri = uri.from_fs_path(str(root_path))
 
-    for key, value in options.dict().items():
-        if key in {"conf_dir", "src_dir", "build_dir"} and value is not None:
+    for key, value in converter.unstructure(options).items():
+        if key in {"confDir", "srcDir", "buildDir"} and value is not None:
             path = resolve_path(value, root_path)
-            setattr(options, key, str(path))
+            setattr(options, to_snake_case(key), str(path))
 
     config = ClientServerConfig(
         server_command=command,
@@ -289,7 +283,7 @@ async def test_initialization(command: List[str], path: str, options, expected):
         )
 
         assert "sphinx" in configuration
-        actual = SphinxInfo(**configuration["sphinx"])
+        actual = converter.structure(configuration["sphinx"], SphinxConfig)
 
         assert actual.version is not None
         assert expected.build_dir in actual.build_dir
@@ -315,7 +309,7 @@ async def test_initialization(command: List[str], path: str, options, expected):
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-async def test_initialization_build_dir():
+async def test_initialization_build_dir(converter):
     """Ensure that we can set the build_dir to an absolute path."""
 
     root_path = pathlib.Path(__file__).parent / "workspace"
@@ -326,7 +320,7 @@ async def test_initialization_build_dir():
             server_command=[sys.executable, "-m", "esbonio"],
             root_uri=root_uri,
             initialization_options=InitializationOptions(
-                sphinx=SphinxConfig(buildDir=build_dir)
+                sphinx=SphinxConfig(build_dir=build_dir)
             ),
             client_factory=make_esbonio_client,
         )
@@ -343,7 +337,7 @@ async def test_initialization_build_dir():
             assert len(test.client.messages) == 0
 
             assert "sphinx" in configuration
-            actual = SphinxInfo(**configuration["sphinx"])
+            actual = converter.structure(configuration["sphinx"], SphinxConfig)
 
             assert actual.version is not None
             assert actual.builder_name == "html"
@@ -367,7 +361,7 @@ async def test_initialization_build_dir():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-async def test_initialization_build_dir_workspace_var():
+async def test_initialization_build_dir_workspace_var(converter):
     """Ensure that we can set the build_dir relative to the workspace root."""
 
     root_path = pathlib.Path(__file__).parent / "workspace"
@@ -377,7 +371,7 @@ async def test_initialization_build_dir_workspace_var():
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=root_uri,
         initialization_options=InitializationOptions(
-            sphinx=SphinxConfig(buildDir="${workspaceRoot}/_build")
+            sphinx=SphinxConfig(build_dir="${workspaceRoot}/_build")
         ),
         client_factory=make_esbonio_client,
     )
@@ -394,7 +388,7 @@ async def test_initialization_build_dir_workspace_var():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxInfo(**configuration["sphinx"])
+        actual = converter.structure(configuration["sphinx"], SphinxConfig)
 
         assert actual.version is not None
         assert actual.builder_name == "html"
@@ -418,7 +412,7 @@ async def test_initialization_build_dir_workspace_var():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-async def test_initialization_build_dir_workspace_folder():
+async def test_initialization_build_dir_workspace_folder(converter):
     """Ensure that we can set the build_dir relative to the workspace root."""
 
     root_path = pathlib.Path(__file__).parent / "workspace"
@@ -428,7 +422,7 @@ async def test_initialization_build_dir_workspace_folder():
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=root_uri,
         initialization_options=InitializationOptions(
-            sphinx=SphinxConfig(buildDir="${workspaceFolder}/_build")
+            sphinx=SphinxConfig(build_dir="${workspaceFolder}/_build")
         ),
         client_factory=make_esbonio_client,
     )
@@ -445,7 +439,7 @@ async def test_initialization_build_dir_workspace_folder():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxInfo(**configuration["sphinx"])
+        actual = converter.structure(configuration["sphinx"], SphinxConfig)
 
         assert actual.version is not None
         assert actual.builder_name == "html"
@@ -469,7 +463,7 @@ async def test_initialization_build_dir_workspace_folder():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-async def test_initialization_build_dir_confdir():
+async def test_initialization_build_dir_confdir(converter):
     """Ensure that we can set the build_dir relative to the project's conf dir."""
 
     root_path = pathlib.Path(__file__).parent / "workspace"
@@ -479,7 +473,7 @@ async def test_initialization_build_dir_confdir():
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=root_uri,
         initialization_options=InitializationOptions(
-            sphinx=SphinxConfig(buildDir="${confDir}/../_build")
+            sphinx=SphinxConfig(build_dir="${confDir}/../_build")
         ),
         client_factory=make_esbonio_client,
     )
@@ -496,7 +490,7 @@ async def test_initialization_build_dir_confdir():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxInfo(**configuration["sphinx"])
+        actual = converter.structure(configuration["sphinx"], SphinxConfig)
         expected_dir = pathlib.Path(actual.conf_dir, "..", "_build", "html").resolve()
 
         assert actual.version is not None
@@ -528,7 +522,7 @@ async def test_initialization_sphinx_error():
         root_uri=root_uri,
         client_factory=make_esbonio_client,
         initialization_options=InitializationOptions(
-            server=ServerConfig(logLevel="debug")
+            server=SphinxServerConfig(log_level="debug")
         ),
     )
 
@@ -579,6 +573,9 @@ async def test_initialization_build_error():
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=root_uri,
         client_factory=make_esbonio_client,
+        initialization_options=InitializationOptions(
+            server=SphinxServerConfig(log_level="debug")
+        ),
     )
 
     test = make_client_server(config)
@@ -613,6 +610,9 @@ async def test_initialization_missing_conf():
             server_command=[sys.executable, "-m", "esbonio"],
             root_uri=root_uri,
             client_factory=make_esbonio_client,
+            initialization_options=InitializationOptions(
+                server=SphinxServerConfig(log_level="debug")
+            ),
         )
 
         test = make_client_server(config)
@@ -638,7 +638,7 @@ async def test_initialization_missing_conf():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-async def test_initialization_verbosity():
+async def test_initialization_verbosity(converter):
     """Ensure that the server respects Sphinx's verbosity setting."""
 
     root_path = pathlib.Path(__file__).parent / "workspace"
@@ -663,7 +663,7 @@ async def test_initialization_verbosity():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxInfo(**configuration["sphinx"])
+        actual = converter.structure(configuration["sphinx"], SphinxConfig)
 
         assert actual.version is not None
         assert actual.verbosity == 2
@@ -677,7 +677,7 @@ async def test_initialization_verbosity():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-async def test_initialization_hide_sphinx_output():
+async def test_initialization_hide_sphinx_output(converter):
     """Ensure that the server respects hide sphinx output setting."""
 
     root_path = pathlib.Path(__file__).parent / "workspace"
@@ -687,7 +687,7 @@ async def test_initialization_hide_sphinx_output():
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=root_uri,
         initialization_options=InitializationOptions(
-            server=SphinxServerConfig(hideSphinxOutput=True)
+            server=SphinxServerConfig(hide_sphinx_output=True)
         ),
         client_factory=make_esbonio_client,
     )
@@ -704,7 +704,7 @@ async def test_initialization_hide_sphinx_output():
         assert len(test.client.messages) == 0
 
         assert "server" in configuration
-        actual = SphinxServerConfig(**configuration["server"])
+        actual = converter.structure(configuration["server"], SphinxServerConfig)
 
         assert actual.hide_sphinx_output is True
         assert len(test.client.log_messages) == 0
@@ -715,7 +715,7 @@ async def test_initialization_hide_sphinx_output():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-async def test_initialization_silent():
+async def test_initialization_silent(converter):
     """Ensure that the server respects Sphinx's silent setting."""
 
     root_path = pathlib.Path(__file__).parent / "workspace"
@@ -740,7 +740,7 @@ async def test_initialization_silent():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxConfig(**configuration["sphinx"])
+        actual = converter.structure(configuration["sphinx"], SphinxConfig)
 
         assert actual.silent is True
         assert len(test.client.log_messages) == 0
@@ -751,7 +751,7 @@ async def test_initialization_silent():
 
 @pytest.mark.asyncio
 @pytest.mark.timeout(10)
-async def test_initialization_quiet():
+async def test_initialization_quiet(converter):
     """Ensure that the server respects Sphinx's quiet setting."""
 
     root_path = pathlib.Path(__file__).parent / "workspace"
@@ -776,7 +776,7 @@ async def test_initialization_quiet():
         assert len(test.client.messages) == 0
 
         assert "sphinx" in configuration
-        actual = SphinxConfig(**configuration["sphinx"])
+        actual = converter.structure(configuration["sphinx"], SphinxConfig)
 
         assert actual.quiet is True
         assert all(
@@ -867,6 +867,9 @@ async def test_diagnostics(good, bad, expected):
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=uri.from_fs_path(str(workspace_root)),
         client_factory=make_esbonio_client,
+        initialization_options=InitializationOptions(
+            server=SphinxServerConfig(log_level="debug")
+        ),
     )
 
     test = make_client_server(config)
@@ -974,10 +977,7 @@ async def test_live_build_clears_diagnostics(good, bad, expected):
         root_uri=uri.from_fs_path(str(workspace_root)),
         client_factory=make_esbonio_client,
         initialization_options=InitializationOptions(
-            server=SphinxServerConfig(
-                # logLevel="debug",
-                enableLivePreview=True
-            )
+            server=SphinxServerConfig(enable_live_preview=True)
         ),
     )
 
@@ -1081,6 +1081,9 @@ image file not readable: notfound.png""",
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=uri.from_fs_path(str(workspace_root)),
         client_factory=make_esbonio_client,
+        initialization_options=InitializationOptions(
+            server=SphinxServerConfig(log_level="debug")
+        ),
     )
 
     test = make_client_server(config)
@@ -1133,6 +1136,9 @@ async def test_preview_default():
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=root_uri,
         client_factory=make_esbonio_client,
+        initialization_options=InitializationOptions(
+            server=SphinxServerConfig(log_level="debug")
+        ),
     )
 
     test = make_client_server(config)
@@ -1169,6 +1175,9 @@ async def test_preview_no_show():
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=root_uri,
         client_factory=make_esbonio_client,
+        initialization_options=InitializationOptions(
+            server=SphinxServerConfig(log_level="debug")
+        ),
     )
 
     test = make_client_server(config)
@@ -1202,6 +1211,9 @@ async def test_preview_multiple_calls():
         server_command=[sys.executable, "-m", "esbonio"],
         root_uri=root_uri,
         client_factory=make_esbonio_client,
+        initialization_options=InitializationOptions(
+            server=SphinxServerConfig(log_level="debug")
+        ),
     )
 
     test = make_client_server(config)
@@ -1247,7 +1259,7 @@ async def test_preview_wrong_builder(builder):
         root_uri=root_uri,
         client_factory=make_esbonio_client,
         initialization_options=InitializationOptions(
-            sphinx=SphinxConfig(builderName=builder)
+            sphinx=SphinxConfig(builder_name=builder)
         ),
     )
 
@@ -1276,3 +1288,17 @@ def resolve_path(value: str, root_path: pathlib.Path) -> str:
         return value
 
     return str(pathlib.Path(value.replace("ROOT", str(root_path))).resolve())
+
+
+def to_snake_case(name: str) -> str:
+    """Convert camel case to snake case."""
+    s = ""
+
+    for c in name:
+        if c.isupper():
+            s += f"_{c.lower()}"
+            continue
+
+        s += c
+
+    return s

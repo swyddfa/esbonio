@@ -1,7 +1,7 @@
 import itertools
 
 import pytest
-from pytest_lsp import Client
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
@@ -196,7 +196,7 @@ from esbonio.lsp.testing import role_target_patterns
         ),
     ],
 )
-async def test_role_target_completions(client: Client, text: str, setup):
+async def test_role_target_completions(client: LanguageClient, text: str, setup):
     """Ensure that we can offer correct role target suggestions.
 
     This test case is focused on the list of completion items we return for a

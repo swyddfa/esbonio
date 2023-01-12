@@ -4,10 +4,11 @@ from typing import Optional
 from typing import Set
 
 import pytest
-from pygls.lsp.types import MarkupKind
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pytest_lsp import Client
+from lsprotocol.types import MarkupContent
+from lsprotocol.types import MarkupKind
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
@@ -73,7 +74,7 @@ UNEXPECTED = {
     ],
 )
 async def test_directive_completions(
-    client: Client,
+    client: LanguageClient,
     text: str,
     expected: Optional[Set[str]],
     unexpected: Optional[Set[str]],
@@ -135,7 +136,7 @@ async def test_directive_completions(
     ],
 )
 async def test_directive_completion_resolve(
-    client: Client, text: str, label: str, expected: str
+    client: LanguageClient, text: str, label: str, expected: str
 ):
     """Ensure that we handle ``completionItem/resolve`` requests correctly.
 
@@ -176,7 +177,9 @@ async def test_directive_completion_resolve(
     # Server should not be filling out docs by default
     assert item.documentation is None, "Unexpected documentation text."
 
-    item = await client.completion_resolve_request(item)
+    item = await client.completion_item_resolve_request(item)
+
+    assert isinstance(item.documentation, MarkupContent)
     assert item.documentation.kind == MarkupKind.Markdown
     assert item.documentation.value.startswith(expected)
 
@@ -236,7 +239,7 @@ C_FUNC_OPTS = {"noindexentry"}
     ],
 )
 async def test_directive_option_completions(
-    client: Client,
+    client: LanguageClient,
     text: str,
     expected: Optional[Set[str]],
     unexpected: Optional[Set[str]],
@@ -284,7 +287,7 @@ async def test_directive_option_completions(
         ),
     ],
 )
-async def test_completion_suppression(client: Client, extension: str, setup):
+async def test_completion_suppression(client: LanguageClient, extension: str, setup):
     """Ensure that we only offer completions when appropriate.
 
     Rather than focus on the actual completion items themselves, this test case is
@@ -320,48 +323,58 @@ async def test_completion_suppression(client: Client, extension: str, setup):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "text,position,expected",
+    "text,line,character,expected",
     [
         (
             ".. deprecated:: 0.12.0",
-            Position(line=0, character=4),
+            0,
+            4,
             "Similar to [versionchanged]",
         ),
         (
             ".. deprecated:: 0.12.0",
-            Position(line=0, character=16),
+            0,
+            16,
             None,
         ),
         (
             ".. not-a-known-directive:: ",
-            Position(line=0, character=4),
+            0,
+            4,
             None,
         ),
         (
             ".. function:: ",
-            Position(line=0, character=5),
+            0,
+            5,
             "Describes a module-level function.",
         ),
         (
             ".. py:function:: ",
-            Position(line=0, character=5),
+            0,
+            5,
             "Describes a module-level function.",
         ),
         (
             ".. c:function:: ",
-            Position(line=0, character=1),
+            0,
+            1,
             "Describes a C function",
         ),
     ],
 )
 async def test_directive_hovers(
-    client: Client, text: str, position: Position, expected: Optional[str]
+    client: LanguageClient,
+    text: str,
+    line: int,
+    character: int,
+    expected: Optional[str],
 ):
     """Ensure that we can offer hovers for directives correctly."""
 
     test_uri = client.root_uri + "/test.rst"
 
-    hover = await hover_request(client, test_uri, text, position)
+    hover = await hover_request(client, test_uri, text, line, character)
     actual = hover.contents.value
 
     if expected is None:
@@ -419,7 +432,7 @@ async def test_directive_hovers(
     ],
 )
 async def test_insert_range(
-    client: Client, text: str, character: int, expected_range: Range
+    client: LanguageClient, text: str, character: int, expected_range: Range
 ):
     """Ensure that we generate completion items that work well with existing text.
 
@@ -451,37 +464,46 @@ async def test_insert_range(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "uri,position,expected",
+    "uri,line,character,expected",
     [
         (
             "definitions.rst",
-            Position(line=25, character=18),
+            25,
+            18,
             None,
         ),
         (
             "definitions.rst",
-            Position(line=25, character=5),
+            25,
+            5,
             "docutils/parsers/rst/directives/images.py",
         ),
         (
             "definitions.rst",
-            Position(line=21, character=5),
+            21,
+            5,
             "sphinx/directives/code.py",
         ),
         (
             "theorems/pythagoras.rst",
-            Position(line=53, character=9),
+            53,
+            9,
             "sphinx/domains/python.py",
         ),
         (
             "code/cpp.rst",
-            Position(line=3, character=9),
+            3,
+            9,
             "sphinx/domains/cpp.py",
         ),
     ],
 )
 async def test_directive_implementation(
-    client: Client, uri: str, position: Position, expected: Optional[pathlib.Path]
+    client: LanguageClient,
+    uri: str,
+    line: int,
+    character: int,
+    expected: Optional[pathlib.Path],
 ):
     """Ensure that we can find the implementation of directives.
 
@@ -494,7 +516,7 @@ async def test_directive_implementation(
 
     test_uri = client.root_uri + f"/{uri}"
 
-    results = await client.implementation_request(test_uri, position)
+    results = await client.implementation_request(test_uri, line, character)
 
     if expected is None:
         assert len(results) == 0

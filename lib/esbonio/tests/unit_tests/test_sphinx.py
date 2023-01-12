@@ -18,10 +18,10 @@ def config_with(**kwargs) -> SphinxConfig:
     """Return a SphinxConfig object with the given config dir."""
 
     args = {k: str(v) if isinstance(v, pathlib.Path) else v for k, v in kwargs.items()}
-    for dir_ in ["buildDir", "confDir", "doctreeDir", "srcDir"]:
+    for dir_ in ["build_dir", "conf_dir", "doctree_dir", "src_dir"]:
         if dir_ not in args:
             args[dir_] = str(
-                pathlib.Path(f"/path/to/{dir_.replace('Dir', '')}").resolve()
+                pathlib.Path(f"/path/to/{dir_.replace('_dir', '')}").resolve()
             )
 
     return SphinxConfig(**args)
@@ -33,279 +33,285 @@ def config_with(**kwargs) -> SphinxConfig:
         *itertools.product(
             ["file:///path/to/root"],
             [
-                # buildDir handling
+                # build_dir handling
                 (
-                    config_with(buildDir="/path/to/build"),
-                    config_with(buildDir=pathlib.Path("/path/to/build/html")),
+                    config_with(build_dir="/path/to/build"),
+                    config_with(build_dir=pathlib.Path("/path/to/build/html")),
                 ),
                 (
-                    config_with(buildDir="~/path/to/build"),
+                    config_with(build_dir="~/path/to/build"),
                     config_with(
-                        buildDir=pathlib.Path("~/path/to/build/html").expanduser()
+                        build_dir=pathlib.Path("~/path/to/build/html").expanduser()
                     ),
                 ),
                 (
-                    config_with(buildDir="${workspaceRoot}/build"),
+                    config_with(build_dir="${workspaceRoot}/build"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/root/build/html").resolve()
+                        build_dir=pathlib.Path("/path/to/root/build/html").resolve()
                     ),
                 ),
                 (
-                    config_with(buildDir="${workspaceRoot}/../build"),
-                    config_with(buildDir=pathlib.Path("/path/to/build/html").resolve()),
-                ),
-                (
-                    config_with(buildDir="${workspaceFolder}/build"),
+                    config_with(build_dir="${workspaceRoot}/../build"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/root/build/html").resolve()
+                        build_dir=pathlib.Path("/path/to/build/html").resolve()
                     ),
                 ),
                 (
-                    config_with(buildDir="${workspaceFolder}/../build"),
-                    config_with(buildDir=pathlib.Path("/path/to/build/html").resolve()),
-                ),
-                (
-                    config_with(buildDir="${confDir}/build"),
+                    config_with(build_dir="${workspaceFolder}/build"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/conf/build/html").resolve()
+                        build_dir=pathlib.Path("/path/to/root/build/html").resolve()
                     ),
                 ),
                 (
-                    config_with(buildDir="${confDir}/../build"),
-                    config_with(buildDir=pathlib.Path("/path/to/build/html").resolve()),
+                    config_with(build_dir="${workspaceFolder}/../build"),
+                    config_with(
+                        build_dir=pathlib.Path("/path/to/build/html").resolve()
+                    ),
                 ),
                 (
-                    config_with(buildDir="/path/to/build", makeMode=False),
+                    config_with(build_dir="${confDir}/build"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build"), makeMode=False
+                        build_dir=pathlib.Path("/path/to/conf/build/html").resolve()
+                    ),
+                ),
+                (
+                    config_with(build_dir="${confDir}/../build"),
+                    config_with(
+                        build_dir=pathlib.Path("/path/to/build/html").resolve()
+                    ),
+                ),
+                (
+                    config_with(build_dir="/path/to/build", make_mode=False),
+                    config_with(
+                        build_dir=pathlib.Path("/path/to/build"), make_mode=False
                     ),
                 ),
                 # confDir handling
                 (
-                    config_with(confDir="/path/to/config"),
+                    config_with(conf_dir="/path/to/config"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        confDir=pathlib.Path("/path/to/config"),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        conf_dir=pathlib.Path("/path/to/config"),
                     ),
                 ),
                 (
-                    config_with(confDir="~/path/to/config"),
+                    config_with(conf_dir="~/path/to/config"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        confDir=pathlib.Path("~/path/to/config").expanduser(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        conf_dir=pathlib.Path("~/path/to/config").expanduser(),
                     ),
                 ),
                 (
-                    config_with(confDir="${workspaceRoot}/config"),
+                    config_with(conf_dir="${workspaceRoot}/config"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        confDir=pathlib.Path("/path/to/root/config").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        conf_dir=pathlib.Path("/path/to/root/config").resolve(),
                     ),
                 ),
                 (
-                    config_with(confDir="${workspaceRoot}/../config"),
+                    config_with(conf_dir="${workspaceRoot}/../config"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        confDir=pathlib.Path("/path/to/config").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        conf_dir=pathlib.Path("/path/to/config").resolve(),
                     ),
                 ),
                 (
-                    config_with(confDir="${workspaceFolder}/config"),
+                    config_with(conf_dir="${workspaceFolder}/config"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        confDir=pathlib.Path("/path/to/root/config").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        conf_dir=pathlib.Path("/path/to/root/config").resolve(),
                     ),
                 ),
                 (
-                    config_with(confDir="${workspaceFolder}/../config"),
+                    config_with(conf_dir="${workspaceFolder}/../config"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        confDir=pathlib.Path("/path/to/config").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        conf_dir=pathlib.Path("/path/to/config").resolve(),
                     ),
                 ),
                 # doctreeDir handling (make mode)
                 (
-                    config_with(buildDir="/path/to/build", doctreeDir=None),
+                    config_with(build_dir="/path/to/build", doctree_dir=None),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html"),
-                        doctreeDir=pathlib.Path("/path/to/build/doctrees"),
+                        build_dir=pathlib.Path("/path/to/build/html"),
+                        doctree_dir=pathlib.Path("/path/to/build/doctrees"),
                     ),
                 ),
                 (
                     config_with(
-                        buildDir="/path/to/build", doctreeDir="/path/to/doctrees"
+                        build_dir="/path/to/build", doctree_dir="/path/to/doctrees"
                     ),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html"),
-                        doctreeDir=pathlib.Path("/path/to/doctrees"),
-                    ),
-                ),
-                (
-                    config_with(
-                        buildDir="/path/to/build",
-                        doctreeDir="${workspaceRoot}/doctrees",
-                    ),
-                    config_with(
-                        buildDir=pathlib.Path("/path/to/build/html"),
-                        doctreeDir=pathlib.Path("/path/to/root/doctrees").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html"),
+                        doctree_dir=pathlib.Path("/path/to/doctrees"),
                     ),
                 ),
                 (
                     config_with(
-                        buildDir="/path/to/build",
-                        doctreeDir="${workspaceFolder}/../dts",
+                        build_dir="/path/to/build",
+                        doctree_dir="${workspaceRoot}/doctrees",
                     ),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html"),
-                        doctreeDir=pathlib.Path("/path/to/dts").resolve(),
-                    ),
-                ),
-                (
-                    config_with(
-                        buildDir="/path/to/build",
-                        doctreeDir="${confDir}/dts",
-                    ),
-                    config_with(
-                        buildDir=pathlib.Path("/path/to/build/html"),
-                        doctreeDir=pathlib.Path("/path/to/conf/dts").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html"),
+                        doctree_dir=pathlib.Path("/path/to/root/doctrees").resolve(),
                     ),
                 ),
                 (
                     config_with(
-                        buildDir="/path/to/build",
-                        doctreeDir="${buildDir}/dts",
+                        build_dir="/path/to/build",
+                        doctree_dir="${workspaceFolder}/../dts",
                     ),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html"),
-                        doctreeDir=pathlib.Path("/path/to/build/dts").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html"),
+                        doctree_dir=pathlib.Path("/path/to/dts").resolve(),
+                    ),
+                ),
+                (
+                    config_with(
+                        build_dir="/path/to/build",
+                        doctree_dir="${confDir}/dts",
+                    ),
+                    config_with(
+                        build_dir=pathlib.Path("/path/to/build/html"),
+                        doctree_dir=pathlib.Path("/path/to/conf/dts").resolve(),
+                    ),
+                ),
+                (
+                    config_with(
+                        build_dir="/path/to/build",
+                        doctree_dir="${buildDir}/dts",
+                    ),
+                    config_with(
+                        build_dir=pathlib.Path("/path/to/build/html"),
+                        doctree_dir=pathlib.Path("/path/to/build/dts").resolve(),
                     ),
                 ),
                 # doctreeDir handling (non make mode)
                 (
                     config_with(
-                        buildDir="/path/to/build", doctreeDir=None, makeMode=False
+                        build_dir="/path/to/build", doctree_dir=None, make_mode=False
                     ),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build"),
-                        doctreeDir=pathlib.Path("/path/to/build/.doctrees"),
-                        makeMode=False,
-                    ),
-                ),
-                (
-                    config_with(
-                        buildDir="/path/to/build",
-                        doctreeDir="/path/to/doctrees",
-                        makeMode=False,
-                    ),
-                    config_with(
-                        buildDir=pathlib.Path("/path/to/build"),
-                        doctreeDir=pathlib.Path("/path/to/doctrees"),
-                        makeMode=False,
+                        build_dir=pathlib.Path("/path/to/build"),
+                        doctree_dir=pathlib.Path("/path/to/build/.doctrees"),
+                        make_mode=False,
                     ),
                 ),
                 (
                     config_with(
-                        buildDir="/path/to/build",
-                        doctreeDir="${workspaceRoot}/doctrees",
-                        makeMode=False,
+                        build_dir="/path/to/build",
+                        doctree_dir="/path/to/doctrees",
+                        make_mode=False,
                     ),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build"),
-                        doctreeDir=pathlib.Path("/path/to/root/doctrees").resolve(),
-                        makeMode=False,
-                    ),
-                ),
-                (
-                    config_with(
-                        buildDir="/path/to/build",
-                        doctreeDir="${workspaceFolder}/../dts",
-                        makeMode=False,
-                    ),
-                    config_with(
-                        buildDir=pathlib.Path("/path/to/build"),
-                        doctreeDir=pathlib.Path("/path/to/dts").resolve(),
-                        makeMode=False,
+                        build_dir=pathlib.Path("/path/to/build"),
+                        doctree_dir=pathlib.Path("/path/to/doctrees"),
+                        make_mode=False,
                     ),
                 ),
                 (
                     config_with(
-                        buildDir="/path/to/build",
-                        doctreeDir="${confDir}/../dts",
-                        makeMode=False,
+                        build_dir="/path/to/build",
+                        doctree_dir="${workspaceRoot}/doctrees",
+                        make_mode=False,
                     ),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build"),
-                        doctreeDir=pathlib.Path("/path/to/dts").resolve(),
-                        makeMode=False,
+                        build_dir=pathlib.Path("/path/to/build"),
+                        doctree_dir=pathlib.Path("/path/to/root/doctrees").resolve(),
+                        make_mode=False,
                     ),
                 ),
                 (
                     config_with(
-                        buildDir="/path/to/build",
-                        doctreeDir="${buildDir}/dts",
-                        makeMode=False,
+                        build_dir="/path/to/build",
+                        doctree_dir="${workspaceFolder}/../dts",
+                        make_mode=False,
                     ),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build"),
-                        doctreeDir=pathlib.Path("/path/to/build/dts").resolve(),
-                        makeMode=False,
+                        build_dir=pathlib.Path("/path/to/build"),
+                        doctree_dir=pathlib.Path("/path/to/dts").resolve(),
+                        make_mode=False,
+                    ),
+                ),
+                (
+                    config_with(
+                        build_dir="/path/to/build",
+                        doctree_dir="${confDir}/../dts",
+                        make_mode=False,
+                    ),
+                    config_with(
+                        build_dir=pathlib.Path("/path/to/build"),
+                        doctree_dir=pathlib.Path("/path/to/dts").resolve(),
+                        make_mode=False,
+                    ),
+                ),
+                (
+                    config_with(
+                        build_dir="/path/to/build",
+                        doctree_dir="${buildDir}/dts",
+                        make_mode=False,
+                    ),
+                    config_with(
+                        build_dir=pathlib.Path("/path/to/build"),
+                        doctree_dir=pathlib.Path("/path/to/build/dts").resolve(),
+                        make_mode=False,
                     ),
                 ),
                 # srcDir handling
                 (
-                    config_with(srcDir="/path/to/src"),
+                    config_with(src_dir="/path/to/src"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        srcDir=pathlib.Path("/path/to/src"),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        src_dir=pathlib.Path("/path/to/src"),
                     ),
                 ),
                 (
-                    config_with(srcDir="~/path/to/src"),
+                    config_with(src_dir="~/path/to/src"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        srcDir=pathlib.Path("~/path/to/src").expanduser(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        src_dir=pathlib.Path("~/path/to/src").expanduser(),
                     ),
                 ),
                 (
-                    config_with(srcDir="${workspaceRoot}/src"),
+                    config_with(src_dir="${workspaceRoot}/src"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        srcDir=pathlib.Path("/path/to/root/src").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        src_dir=pathlib.Path("/path/to/root/src").resolve(),
                     ),
                 ),
                 (
-                    config_with(srcDir="${workspaceRoot}/../src"),
+                    config_with(src_dir="${workspaceRoot}/../src"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        srcDir=pathlib.Path("/path/to/src").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        src_dir=pathlib.Path("/path/to/src").resolve(),
                     ),
                 ),
                 (
-                    config_with(srcDir="${workspaceFolder}/src"),
+                    config_with(src_dir="${workspaceFolder}/src"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        srcDir=pathlib.Path("/path/to/root/src").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        src_dir=pathlib.Path("/path/to/root/src").resolve(),
                     ),
                 ),
                 (
-                    config_with(srcDir="${workspaceFolder}/../src"),
+                    config_with(src_dir="${workspaceFolder}/../src"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        srcDir=pathlib.Path("/path/to/src").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        src_dir=pathlib.Path("/path/to/src").resolve(),
                     ),
                 ),
                 (
-                    config_with(srcDir="${confDir}/src"),
+                    config_with(src_dir="${confDir}/src"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        srcDir=pathlib.Path("/path/to/conf/src").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        src_dir=pathlib.Path("/path/to/conf/src").resolve(),
                     ),
                 ),
                 (
-                    config_with(srcDir="${confDir}/../src"),
+                    config_with(src_dir="${confDir}/../src"),
                     config_with(
-                        buildDir=pathlib.Path("/path/to/build/html").resolve(),
-                        srcDir=pathlib.Path("/path/to/src").resolve(),
+                        build_dir=pathlib.Path("/path/to/build/html").resolve(),
+                        src_dir=pathlib.Path("/path/to/src").resolve(),
                     ),
                 ),
             ],

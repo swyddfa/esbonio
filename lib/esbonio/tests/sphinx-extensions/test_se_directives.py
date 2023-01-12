@@ -2,8 +2,9 @@ from typing import Optional
 from typing import Set
 
 import pytest
-from pygls.lsp.types import MarkupKind
-from pytest_lsp import Client
+from lsprotocol.types import MarkupContent
+from lsprotocol.types import MarkupKind
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
@@ -53,7 +54,7 @@ UNEXPECTED = {
     ],
 )
 async def test_directive_completions(
-    client: Client,
+    client: LanguageClient,
     text: str,
     expected: Optional[Set[str]],
     unexpected: Optional[Set[str]],
@@ -92,7 +93,7 @@ async def test_directive_completions(
     ],
 )
 async def test_directive_completion_resolve(
-    client: Client, text: str, label: str, expected: str
+    client: LanguageClient, text: str, label: str, expected: str
 ):
     """Ensure that we handle ``completionItem/resolve`` requests correctly.
 
@@ -133,7 +134,9 @@ async def test_directive_completion_resolve(
     # Server should not be filling out docs by default
     assert item.documentation is None, "Unexpected documentation text."
 
-    item = await client.completion_resolve_request(item)
+    item = await client.completion_item_resolve_request(item)
+
+    assert isinstance(item.documentation, MarkupContent)
     assert item.documentation.kind == MarkupKind.Markdown
     assert item.documentation.value.startswith(expected)
 
@@ -192,7 +195,7 @@ C_FUNC_OPTS = {"noindexentry"}
     ],
 )
 async def test_directive_option_completions(
-    client: Client,
+    client: LanguageClient,
     text: str,
     expected: Optional[Set[str]],
     unexpected: Optional[Set[str]],

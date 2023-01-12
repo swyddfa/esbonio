@@ -6,8 +6,8 @@ import sys
 import pygls.uris as uri
 import pytest
 import pytest_lsp
-from pytest_lsp import Client
 from pytest_lsp import ClientServerConfig
+from pytest_lsp import LanguageClient
 
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxServerConfig
@@ -51,7 +51,7 @@ def event_loop():
             client_factory=make_esbonio_client,
             server_command=[sys.executable, *SERVER_CMD],
             initialization_options=InitializationOptions(
-                server=SphinxServerConfig(logLevel=LOG_LEVEL)
+                server=SphinxServerConfig(log_level=LOG_LEVEL)
             ),
             root_uri=uri.from_fs_path(str(root_path)),
         ),
@@ -60,12 +60,12 @@ def event_loop():
             client_factory=make_esbonio_client,
             server_command=[sys.executable, *SERVER_CMD],
             initialization_options=InitializationOptions(
-                server=SphinxServerConfig(logLevel=LOG_LEVEL)
+                server=SphinxServerConfig(log_level=LOG_LEVEL)
             ),
             root_uri=uri.from_fs_path(str(root_path)),
         ),
     ],
 )
-async def client(client_: Client):
+async def client(client_: LanguageClient):
     # Wait for the server to initialize.
     await client_.wait_for_notification("esbonio/buildComplete")
