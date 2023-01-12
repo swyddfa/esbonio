@@ -17,13 +17,12 @@ from typing import Union
 from unittest import mock
 
 import appdirs
+import attrs
 import pygls.uris as Uri
-from pydantic import BaseModel
-from pydantic import Field
-from pygls.lsp.types import Diagnostic
-from pygls.lsp.types import DiagnosticSeverity
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
+from lsprotocol.types import Diagnostic
+from lsprotocol.types import DiagnosticSeverity
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 from sphinx.application import Sphinx
 from sphinx.cmd.build import main as sphinx_build
 from sphinx.util.logging import OnceFilter
@@ -43,54 +42,56 @@ class MissingConfigError(Exception):
     """Indicates that we couldn't locate the project's 'conf.py'"""
 
 
-class SphinxConfig(BaseModel):
+@attrs.define
+class SphinxConfig:
     """Configuration values to pass to the Sphinx application instance."""
 
-    build_dir: Optional[str] = Field(None, alias="buildDir")
+    build_dir: Optional[str] = attrs.field(default=None)
     """The directory to write build outputs into."""
 
-    builder_name: str = Field("html", alias="builderName")
+    builder_name: str = attrs.field(default="html")
     """The currently used builder name."""
 
-    conf_dir: Optional[str] = Field(None, alias="confDir")
+    conf_dir: Optional[str] = attrs.field(default=None)
     """The directory containing the project's ``conf.py``."""
 
-    config_overrides: Dict[str, Any] = Field(
-        default_factory=dict, alias="configOverrides"
-    )
+    config_overrides: Dict[str, Any] = attrs.field(factory=dict)
     """Any overrides to configuration values."""
 
-    doctree_dir: Optional[str] = Field(None, alias="doctreeDir")
+    doctree_dir: Optional[str] = attrs.field(default=None)
     """The directory to write doctrees into."""
 
-    force_full_build: bool = Field(False, alias="forceFullBuild")
+    force_full_build: bool = attrs.field(default=False)
     """Force a full build on startup."""
 
-    keep_going: bool = Field(False, alias="keepGoing")
+    keep_going: bool = attrs.field(default=False)
     """Continue building when errors (from warnings) are encountered."""
 
-    make_mode: bool = Field(True, alias="makeMode")
+    make_mode: bool = attrs.field(default=True)
     """Flag indicating if the server should align to "make mode" behavior."""
 
-    num_jobs: Union[Literal["auto"], int] = Field(1, alias="numJobs")
+    num_jobs: Union[Literal["auto"], int] = attrs.field(default=1)
     """The number of jobs to use for parallel builds."""
 
-    quiet: bool = Field(False)
+    quiet: bool = attrs.field(default=False)
     """Hide standard Sphinx output messages"""
 
-    silent: bool = Field(False)
+    silent: bool = attrs.field(default=False)
     """Hide all Sphinx output."""
 
-    src_dir: Optional[str] = Field(None, alias="srcDir")
+    src_dir: Optional[str] = attrs.field(default=None)
     """The directory containing the project's source."""
 
-    tags: List[str] = Field(default_factory=list)
+    tags: List[str] = attrs.field(factory=list)
     """Tags to enable during a build."""
 
-    verbosity: int = Field(0)
+    verbosity: int = attrs.field(default=0)
     """The verbosity of Sphinx's output."""
 
-    warning_is_error: bool = Field(False, alias="warningIsError")
+    version: Optional[str] = attrs.field(default=None)
+    """Sphinx's version number."""
+
+    warning_is_error: bool = attrs.field(default=False)
     """Treat any warning as an error"""
 
     @property
@@ -163,21 +164,21 @@ class SphinxConfig(BaseModel):
             return None
 
         return cls(
-            confDir=sphinx_args.get("confdir", None),
-            configOverrides=sphinx_args.get("confoverrides", {}),
-            buildDir=sphinx_args.get("outdir", None),
-            builderName=sphinx_args.get("buildername", "html"),
-            doctreeDir=sphinx_args.get("doctreedir", None),
-            forceFullBuild=sphinx_args.get("freshenv", False),
-            keepGoing=sphinx_args.get("keep_going", False),
-            makeMode=make_mode,
-            numJobs=sphinx_args.get("parallel", 1),
+            conf_dir=sphinx_args.get("confdir", None),
+            config_overrides=sphinx_args.get("confoverrides", {}),
+            build_dir=sphinx_args.get("outdir", None),
+            builder_name=sphinx_args.get("buildername", "html"),
+            doctree_dir=sphinx_args.get("doctreedir", None),
+            force_full_build=sphinx_args.get("freshenv", False),
+            keep_going=sphinx_args.get("keep_going", False),
+            make_mode=make_mode,
+            num_jobs=sphinx_args.get("parallel", 1),
             quiet=sphinx_args.get("status", 1) is None,
             silent=sphinx_args.get("warning", 1) is None,
-            srcDir=sphinx_args.get("srcdir", None),
+            src_dir=sphinx_args.get("srcdir", None),
             tags=sphinx_args.get("tags", []),
             verbosity=sphinx_args.get("verbosity", 0),
-            warningIsError=sphinx_args.get("warningiserror", False),
+            warning_is_error=sphinx_args.get("warningiserror", False),
         )
 
     def to_cli_args(self) -> List[str]:
@@ -305,21 +306,21 @@ class SphinxConfig(BaseModel):
             build_dir /= self.builder_name
 
         return SphinxConfig(
-            confDir=str(conf_dir),
-            configOverrides=self.config_overrides,
-            buildDir=str(build_dir),
-            builderName=self.builder_name,
-            doctreeDir=str(doctree_dir),
-            forceFullBuild=self.force_full_build,
-            keepGoing=self.keep_going,
-            makeMode=self.make_mode,
-            numJobs=self.num_jobs,
+            conf_dir=str(conf_dir),
+            config_overrides=self.config_overrides,
+            build_dir=str(build_dir),
+            builder_name=self.builder_name,
+            doctree_dir=str(doctree_dir),
+            force_full_build=self.force_full_build,
+            keep_going=self.keep_going,
+            make_mode=self.make_mode,
+            num_jobs=self.num_jobs,
             quiet=self.quiet,
             silent=self.silent,
-            srcDir=str(src_dir),
+            src_dir=str(src_dir),
             tags=self.tags,
             verbosity=self.verbosity,
-            warningIsError=self.warning_is_error,
+            warning_is_error=self.warning_is_error,
         )
 
     def resolve_build_dir(self, root_uri: str, actual_conf_dir: str) -> pathlib.Path:
@@ -528,6 +529,7 @@ class SphinxConfig(BaseModel):
         return pathlib.Path(src_dir).expanduser()
 
 
+@attrs.define
 class SphinxServerConfig(ServerConfig):
     """
     .. deprecated:: 0.12.0
@@ -537,17 +539,18 @@ class SphinxServerConfig(ServerConfig):
        options instead.
     """
 
-    hide_sphinx_output: bool = Field(False, alias="hideSphinxOutput")
+    hide_sphinx_output: bool = attrs.field(default=False)
     """A flag to indicate if Sphinx build output should be omitted from the log."""
 
 
-class InitializationOptions(BaseModel):
+@attrs.define
+class InitializationOptions:
     """The initialization options we can expect to receive from a client."""
 
-    sphinx: SphinxConfig = Field(default_factory=SphinxConfig)
+    sphinx: SphinxConfig = attrs.field(factory=SphinxConfig)
     """The ``esbonio.sphinx.*`` namespace of options."""
 
-    server: SphinxServerConfig = Field(default_factory=SphinxServerConfig)
+    server: SphinxServerConfig = attrs.field(factory=SphinxServerConfig)
     """The ``esbonio.server.*`` namespace of options."""
 
 

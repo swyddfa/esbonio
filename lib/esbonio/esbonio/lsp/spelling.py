@@ -6,16 +6,16 @@ from typing import Optional
 
 import pygls.uris as Uri
 from docutils import nodes
-from pygls.lsp.types import CodeAction
-from pygls.lsp.types import CodeActionKind
-from pygls.lsp.types import CodeActionParams
-from pygls.lsp.types import TextEdit
-from pygls.lsp.types import WorkspaceEdit
-from pygls.lsp.types.basic_structures import Diagnostic
-from pygls.lsp.types.basic_structures import DiagnosticSeverity
-from pygls.lsp.types.basic_structures import Position
-from pygls.lsp.types.basic_structures import Range
-from pygls.lsp.types.workspace import DidSaveTextDocumentParams
+from lsprotocol.types import CodeAction
+from lsprotocol.types import CodeActionKind
+from lsprotocol.types import CodeActionParams
+from lsprotocol.types import TextEdit
+from lsprotocol.types import WorkspaceEdit
+from lsprotocol.types.basic_structures import Diagnostic
+from lsprotocol.types.basic_structures import DiagnosticSeverity
+from lsprotocol.types.basic_structures import Position
+from lsprotocol.types.basic_structures import Range
+from lsprotocol.types.workspace import DidSaveTextDocumentParams
 from spellchecker import SpellChecker  # type: ignore
 
 from esbonio.lsp.rst import LanguageFeature

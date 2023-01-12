@@ -17,16 +17,16 @@ from typing import Optional
 from typing import Tuple
 
 import pygls.uris as Uri
-from pygls.lsp.types import DeleteFilesParams
-from pygls.lsp.types import Diagnostic
-from pygls.lsp.types import DiagnosticSeverity
-from pygls.lsp.types import DidSaveTextDocumentParams
-from pygls.lsp.types import InitializedParams
-from pygls.lsp.types import InitializeParams
-from pygls.lsp.types import MessageType
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pygls.lsp.types import ShowDocumentParams
+from lsprotocol.types import DeleteFilesParams
+from lsprotocol.types import Diagnostic
+from lsprotocol.types import DiagnosticSeverity
+from lsprotocol.types import DidSaveTextDocumentParams
+from lsprotocol.types import InitializedParams
+from lsprotocol.types import InitializeParams
+from lsprotocol.types import MessageType
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from lsprotocol.types import ShowDocumentParams
 from sphinx import __version__ as __sphinx_version__
 from sphinx.application import Sphinx
 from sphinx.domains import Domain
@@ -126,18 +126,18 @@ class SphinxLanguageServer(RstLanguageServer):
         # 'Make mode' isn't something that can be inferred from Sphinx args either.
         sphinx_config.make_mode = self.user_config.sphinx.make_mode  # type: ignore
 
-        config["sphinx"] = dict(**sphinx_config.dict(by_alias=True))
+        config["sphinx"] = self.converter.unstructure(sphinx_config)
         config["sphinx"]["command"] = ["sphinx-build"] + sphinx_config.to_cli_args()
         config["sphinx"]["version"] = __sphinx_version__
 
-        config["server"] = self.user_config.server.dict(by_alias=True)  # type: ignore
+        config["server"] = self.converter.unstructure(self.user_config.server)
 
         return config
 
     def initialize(self, params: InitializeParams):
         super().initialize(params)
-        self.user_config = InitializationOptions(
-            **typing.cast(Dict, params.initialization_options)
+        self.user_config = self.converter.structure(
+            params.initialization_options, InitializationOptions
         )
 
     def initialized(self, params: InitializedParams):
@@ -318,7 +318,9 @@ class SphinxLanguageServer(RstLanguageServer):
         server = options.server
 
         self.logger.debug("Workspace root '%s'", self.workspace.root_uri)
-        self.logger.debug("User Config %s", json.dumps(sphinx.dict(), indent=2))
+        self.logger.debug(
+            "User Config %s", json.dumps(self.converter.unstructure(sphinx), indent=2)
+        )
 
         sphinx_config = sphinx.resolve(self.workspace.root_uri)
         self.sphinx_args = sphinx_config.to_application_args()

@@ -2,10 +2,10 @@ from typing import Optional
 
 from docutils import nodes
 from docutils.nodes import NodeVisitor
-from pygls.lsp.types import DocumentSymbol
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pygls.lsp.types import SymbolKind
+from lsprotocol.types import DocumentSymbol
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from lsprotocol.types import SymbolKind
 
 
 class SymbolVisitor(NodeVisitor):

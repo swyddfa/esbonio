@@ -15,25 +15,26 @@ from typing import Tuple
 from typing import Type
 from typing import TypeVar
 
+import attrs
 import pygls.uris as Uri
 from docutils.parsers.rst import Directive
-from pydantic import BaseModel
-from pydantic import Field
+from lsprotocol.converters import get_converter
+from lsprotocol.types import ClientCapabilities
+from lsprotocol.types import CodeAction
+from lsprotocol.types import CodeActionParams
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionItemTag
+from lsprotocol.types import DeleteFilesParams
+from lsprotocol.types import Diagnostic
+from lsprotocol.types import DidSaveTextDocumentParams
+from lsprotocol.types import DocumentLink
+from lsprotocol.types import InitializedParams
+from lsprotocol.types import InitializeParams
+from lsprotocol.types import Location
+from lsprotocol.types import MarkupKind
+from lsprotocol.types import Position
 from pygls import IS_WIN
-from pygls.lsp.types import ClientCapabilities
-from pygls.lsp.types import CodeAction
-from pygls.lsp.types import CodeActionParams
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionItemTag
-from pygls.lsp.types import DeleteFilesParams
-from pygls.lsp.types import Diagnostic
-from pygls.lsp.types import DidSaveTextDocumentParams
-from pygls.lsp.types import DocumentLink
-from pygls.lsp.types import InitializedParams
-from pygls.lsp.types import InitializeParams
-from pygls.lsp.types import Location
-from pygls.lsp.types import MarkupKind
-from pygls.lsp.types import Position
+from pygls.capabilities import get_capability
 from pygls.server import LanguageServer
 from pygls.workspace import Document
 
@@ -42,6 +43,7 @@ from esbonio.lsp.log import setup_logging
 
 from .io import read_initial_doctree
 
+converter = get_converter()
 LF = TypeVar("LF", bound="LanguageFeature")
 TRIPLE_QUOTE = re.compile("(\"\"\"|''')")
 """A regular expression matching the triple quotes used to delimit python docstrings."""
@@ -95,52 +97,66 @@ class CompletionContext:
     @property
     def commit_characters_support(self) -> bool:
         """Indicates if the client supports commit characters."""
-        return self._client_capabilities.get_capability(
-            "text_document.completion.completion_item.commit_characters_support", False
+        return get_capability(
+            self._client_capabilities,
+            "text_document.completion.completion_item.commit_characters_support",
+            False,
         )
 
     @property
     def deprecated_support(self) -> bool:
         """Indicates if the client supports the deprecated field on a
         ``CompletionItem``."""
-        return self._client_capabilities.get_capability(
-            "text_document.completion.completion_item.deprecated_support", False
+        return get_capability(
+            self._client_capabilities,
+            "text_document.completion.completion_item.deprecated_support",
+            False,
         )
 
     @property
     def documentation_formats(self) -> List[MarkupKind]:
         """The list of documentation formats supported by the client."""
-        return self._client_capabilities.get_capability(
-            "text_document.completion.completion_item.documentation_format", []
+        return get_capability(
+            self._client_capabilities,
+            "text_document.completion.completion_item.documentation_format",
+            [],
         )
 
     @property
     def insert_replace_support(self) -> bool:
         """Indicates if the client supports ``InsertReplaceEdit``."""
-        return self._client_capabilities.get_capability(
-            "text_document.completion.completion_item.insert_replace_support", False
+        return get_capability(
+            self._client_capabilities,
+            "text_document.completion.completion_item.insert_replace_support",
+            False,
         )
 
     @property
     def preselect_support(self) -> bool:
         """Indicates if the client supports the preselect field on a
         ``CompletionItem``."""
-        return self._client_capabilities.get_capability(
-            "text_document.completion.completion_item.preselect_support", False
+        return get_capability(
+            self._client_capabilities,
+            "text_document.completion.completion_item.preselect_support",
+            False,
         )
 
     @property
     def snippet_support(self) -> bool:
         """Indicates if the client supports snippets"""
-        return self._client_capabilities.get_capability(
-            "text_document.completion.completion_item.snippet_support", False
+        return get_capability(
+            self._client_capabilities,
+            "text_document.completion.completion_item.snippet_support",
+            False,
         )
 
     @property
     def supported_tags(self) -> List[CompletionItemTag]:
         """The list of ``CompletionItemTags`` supported by the client."""
-        capabilities = self._client_capabilities.get_capability(
-            "text_document.completion.completion_item.tag_support", None
+        capabilities = get_capability(
+            self._client_capabilities,
+            "text_document.completion.completion_item.tag_support",
+            None,
         )
 
         if not capabilities:
@@ -162,8 +178,10 @@ class DocumentLinkContext:
     @property
     def tooltip_support(self) -> bool:
         """Indicates if the client supports tooltips."""
-        return self._client_capabilities.get_capability(
-            "text_document.document_link.tooltip_support", False
+        return get_capability(
+            self._client_capabilities,
+            "text_document.document_link.tooltip_support",
+            False,
         )
 
 
@@ -247,8 +265,8 @@ class HoverContext:
     @property
     def content_formats(self) -> List[MarkupKind]:
         """The list of content formats supported by the client."""
-        return self._client_capabilities.get_capability(
-            "text_document.hover.content_format", []
+        return get_capability(
+            self._client_capabilities, "text_document.hover.content_format", []
         )
 
 
@@ -381,29 +399,31 @@ class DiagnosticList(collections.UserList):
         self.data.append(item)
 
 
-class ServerConfig(BaseModel):
+@attrs.define
+class ServerConfig:
     """Configuration options for the server."""
 
-    log_level: str = Field("error", alias="logLevel")
+    log_level: str = attrs.field(default="error")
     """The logging level of server messages to display."""
 
-    log_filter: List[str] = Field(default_factory=list, alias="logFilter")
+    log_filter: List[str] = attrs.field(factory=list)
     """A list of logger names to restrict output to."""
 
-    show_deprecation_warnings = Field(False, alias="showDeprecationWarnings")
+    show_deprecation_warnings: bool = attrs.field(default=False)
     """Developer flag to enable deprecation warnings."""
 
-    enable_scroll_sync: bool = Field(False, alias="enableScrollSync")
+    enable_scroll_sync: bool = attrs.field(default=False)
     """Enable custom transformation to add classes with line numbers"""
 
-    enable_live_preview: bool = Field(False, alias="enableLivePreview")
+    enable_live_preview: bool = attrs.field(default=False)
     """Set it to True if you want to build Sphinx app on change event"""
 
 
-class InitializationOptions(BaseModel):
+@attrs.define
+class InitializationOptions:
     """The initialization options we can expect to receive from a client."""
 
-    server: ServerConfig = Field(default_factory=ServerConfig)
+    server: ServerConfig = attrs.field(factory=ServerConfig)
     """The ``esbonio.server.*`` namespace of options."""
 
 
@@ -416,7 +436,10 @@ class RstLanguageServer(LanguageServer):
         self.logger = logger or logging.getLogger(__name__)
         """The base logger that should be used for all language sever log entries."""
 
-        self.user_config: Optional[BaseModel] = None
+        self.converter = self.lsp._converter
+        """The cattrs converter instance we should use."""
+
+        self.user_config: Optional[Any] = None
         """The user's configuration."""
 
         self._diagnostics: Dict[Tuple[str, str], List[Diagnostic]] = {}
@@ -434,11 +457,11 @@ class RstLanguageServer(LanguageServer):
         if not self.user_config:
             return {}
 
-        return self.user_config.dict()
+        return converter.unstructure(self.user_config)
 
     def initialize(self, params: InitializeParams):
-        self.user_config = InitializationOptions(
-            **typing.cast(Dict, params.initialization_options)
+        self.user_config = converter.structure(
+            params.initialization_options, InitializationOptions
         )
         setup_logging(self, self.user_config.server)
 

@@ -6,11 +6,11 @@ from typing import List
 from typing import Tuple
 
 import pygls.uris as uri
-from pygls.lsp.types import Diagnostic
-from pygls.lsp.types import DiagnosticSeverity
-from pygls.lsp.types import DiagnosticTag
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
+from lsprotocol.types import Diagnostic
+from lsprotocol.types import DiagnosticSeverity
+from lsprotocol.types import DiagnosticTag
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 
 if typing.TYPE_CHECKING:
     from .rst import RstLanguageServer
