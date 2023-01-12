@@ -24,3 +24,18 @@ repos:
     - id: isort
       name: isort (python)
       args: [--settings-file=lib/esbonio/pyproject.toml]
+
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: 'v0.991'
+  hooks:
+  - id: mypy
+    name: mypy (esbonio)
+    args: [--config,lib/esbonio/pyproject.toml]
+    additional_dependencies:
+    - pygls
+    - pytest_lsp
+    - sphinx
+    - types-appdirs
+    - types-docutils
+    - types-pygments
+    files: 'lib/esbonio/esbonio/.*\.py'

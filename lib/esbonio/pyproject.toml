@@ -15,6 +15,11 @@ filterwarnings = [
     "ignore:'environmentfilter' is renamed to 'pass_environment',*:DeprecationWarning",
 ]
 
+[tool.mypy]
+mypy_path = "$MYPY_CONFIG_FILE_DIR"
+explicit_package_bases = true
+check_untyped_defs = true
+
 [tool.towncrier]
 filename = "CHANGES.rst"
 directory = "changes/"
@@ -80,7 +85,6 @@ deps =
 extras = test
 commands =
     python ../../scripts/check-sphinx-version.py
-    py{38,39,310,311}-sphinx5: mypy --namespace-packages --explicit-package-bases --check-untyped-defs -p esbonio
     pytest {posargs}
 
 [testenv:pkg]
