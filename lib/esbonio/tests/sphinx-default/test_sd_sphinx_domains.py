@@ -1,10 +1,10 @@
 import itertools
 
 import pytest
-from pygls.lsp.types import Location
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pytest_lsp import Client
+from lsprotocol.types import Location
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
@@ -180,7 +180,7 @@ from esbonio.lsp.testing import role_target_patterns
         *itertools.product(role_patterns("`some label <"), [(None, None)]),
     ],
 )
-async def test_role_target_completions(client: Client, text: str, setup):
+async def test_role_target_completions(client: LanguageClient, text: str, setup):
     """Ensure that we can offer correct role target suggestions.
 
     This test case is focused on the list of completion items we return for a
@@ -240,19 +240,20 @@ WELCOME_LABEL = Location(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "path,position,expected",
+    "path,line,character,expected",
     [
-        ("definitions.rst", Position(line=3, character=33), None),
-        ("definitions.rst", Position(line=5, character=13), None),
-        ("definitions.rst", Position(line=7, character=33), None),
-        ("definitions.rst", Position(line=9, character=42), None),
-        ("definitions.rst", Position(line=5, character=33), WELCOME_LABEL),
-        ("definitions.rst", Position(line=9, character=35), WELCOME_LABEL),
-        ("definitions.rst", Position(line=11, character=28), WELCOME_LABEL),
-        ("definitions.rst", Position(line=11, character=35), WELCOME_LABEL),
+        ("definitions.rst", 3, 33, None),
+        ("definitions.rst", 5, 13, None),
+        ("definitions.rst", 7, 33, None),
+        ("definitions.rst", 9, 42, None),
+        ("definitions.rst", 5, 33, WELCOME_LABEL),
+        ("definitions.rst", 9, 35, WELCOME_LABEL),
+        ("definitions.rst", 11, 28, WELCOME_LABEL),
+        ("definitions.rst", 11, 35, WELCOME_LABEL),
         (
             "definitions.rst",
-            Position(line=9, character=56),
+            9,
+            56,
             Location(
                 uri="theorems/pythagoras.rst",
                 range=Range(
@@ -263,7 +264,8 @@ WELCOME_LABEL = Location(
         ),
         (
             "definitions.rst",
-            Position(line=31, character=20),
+            31,
+            20,
             Location(
                 uri="glossary.rst",
                 range=Range(
@@ -274,7 +276,8 @@ WELCOME_LABEL = Location(
         ),
         (
             "definitions.rst",
-            Position(line=29, character=36),
+            29,
+            36,
             Location(
                 uri="index.rst",
                 range=Range(
@@ -285,7 +288,8 @@ WELCOME_LABEL = Location(
         ),
         (
             "definitions.rst",
-            Position(line=35, character=32),
+            35,
+            32,
             Location(
                 uri="theorems/pythagoras.rst",
                 range=Range(
@@ -296,11 +300,13 @@ WELCOME_LABEL = Location(
         ),
     ],
 )
-async def test_role_target_definitions(client: Client, path, position, expected):
+async def test_role_target_definitions(
+    client: LanguageClient, path, line, character, expected
+):
     """Ensure that we can offer the correct definitions for role targets."""
 
     test_uri = client.root_uri + f"/{path}"
-    results = await client.definition_request(test_uri, position)
+    results = await client.definition_request(test_uri, line, character)
 
     if expected is None:
         assert len(results) == 0

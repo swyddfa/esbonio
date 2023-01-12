@@ -4,7 +4,7 @@ from typing import Set
 from typing import Tuple
 
 import pytest
-from pytest_lsp import Client
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
@@ -37,7 +37,7 @@ UNEXPECTED = {"restructuredtext-unimplemented-role"}
     ],
 )
 async def test_role_completions(
-    client: Client,
+    client: LanguageClient,
     text: str,
     setup: Tuple[str, Optional[Set[str]], Optional[Set[str]]],
 ):

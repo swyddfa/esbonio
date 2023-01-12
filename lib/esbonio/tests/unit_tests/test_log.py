@@ -2,9 +2,9 @@ import logging
 import sys
 
 import pytest
+from lsprotocol.types import DiagnosticSeverity
+from lsprotocol.types import DiagnosticTag
 from pygls import IS_WIN
-from pygls.lsp.types import DiagnosticSeverity
-from pygls.lsp.types import DiagnosticTag
 
 from esbonio.lsp.log import LspHandler
 

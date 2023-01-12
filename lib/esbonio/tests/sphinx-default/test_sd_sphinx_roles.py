@@ -1,7 +1,7 @@
 import itertools
 
 import pytest
-from pytest_lsp import Client
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
@@ -62,7 +62,7 @@ def filepath_trigger_cases(path: str = ""):
         ),
     ],
 )
-async def test_download_completions(client: Client, text, setup):
+async def test_download_completions(client: LanguageClient, text, setup):
     """Ensure that we can offer correct filepath suggestions for the ``:download:``
     role."""
 

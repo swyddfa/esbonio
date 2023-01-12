@@ -7,9 +7,9 @@ from typing import Tuple
 
 import pytest
 from docutils.parsers.rst import Directive
-from pygls.lsp.types import Location
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
+from lsprotocol.types import Location
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 
 from esbonio.lsp import CompletionContext
 from esbonio.lsp import DefinitionContext
