@@ -106,7 +106,7 @@ jobs:
 
     - name: Create Release
       run: |
-        gh release create "v${VERSION}" \
+        gh release create "${RELEASE_TAG}" \
           --title "Esbonio VSCode Extension v${VERSION} - ${RELEASE_DATE}" \
           -F code/.changes.html \
           ./code/*.vsix
@@ -161,7 +161,7 @@ jobs:
 
     - name: Create Release
       run: |
-        gh release create "v${VERSION}" \
+        gh release create "${RELEASE_TAG}" \
           --title "Esbonio Extensions v${VERSION} - ${RELEASE_DATE}" \
           -F lib/esbonio-extensions/.changes.html \
           ./lib/esbonio-extensions/dist/*
@@ -217,7 +217,7 @@ jobs:
 
     - name: Create Release
       run: |
-        gh release create "v${VERSION}" \
+        gh release create "${RELEASE_TAG}" \
           --title "Esbonio Language Server v${VERSION} - ${RELEASE_DATE}" \
           -F lib/esbonio/.changes.html \
           ./lib/esbonio/dist/*
