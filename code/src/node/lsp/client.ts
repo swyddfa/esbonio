@@ -183,7 +183,7 @@ export class EsbonioClient {
   private client: LanguageClient
   private allowRestarts = true
 
-  private clientStartCallbacks: Array<(params: void) => void> = []
+  private clientStartedCallbacks: Array<(params: void) => void> = []
   private clientErrorCallbacks: Array<(params: void) => void> = []
   private buildStartCallbacks: Array<(params: void) => void> = []
   private buildCompleteCallbacks: Array<(params: BuildCompleteResult) => void> = []
@@ -225,16 +225,15 @@ export class EsbonioClient {
 
     try {
       this.logger.info("Starting Language Server")
-      this.client.start()
-      this.clientStartCallbacks.forEach(fn => fn())
+      this.configureHandlers()
 
       if (DEBUG) {
         // Auto open the output window when debugging
         this.client.outputChannel.show()
       }
 
-      await this.client.onReady()
-      this.configureHandlers()
+      await this.client.start()
+      this.clientStartedCallbacks.forEach(fn => fn())
 
     } catch (err) {
       this.clientErrorCallbacks.forEach(fn => fn(err))
@@ -517,7 +516,7 @@ export class EsbonioClient {
   }
 
   onClientStart(callback: (_: void) => void) {
-    this.clientStartCallbacks.push(callback)
+    this.clientStartedCallbacks.push(callback)
   }
 
   onClientError(callback: (_: void) => void) {

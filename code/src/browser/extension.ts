@@ -41,9 +41,8 @@ export function activate(context: vscode.ExtensionContext) {
   const worker = new Worker(path.toString())
 
   client = new LanguageClient("esbonio", "Esbonio", clientOptions, worker)
-  context.subscriptions.push(client.start())
 
-  client.onReady().then(() => {
+  client.start().then(() => {
     outputChannel.appendLine(`Server ready.`)
 
     client.onNotification("esbonio/buildComplete", (params) => {
