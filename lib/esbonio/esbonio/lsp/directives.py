@@ -8,6 +8,7 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Type
 
 from docutils.parsers.rst import Directive
 from lsprotocol.types import CompletionItem
@@ -57,17 +58,17 @@ class DirectiveLanguageFeature:
 
     def get_implementation(
         self, directive: str, domain: Optional[str]
-    ) -> Optional[Directive]:
+    ) -> Optional[Type[Directive]]:
         """Return the implementation for the given directive name."""
         return self.index_directives().get(directive, None)
 
-    def index_directives(self) -> Dict[str, Directive]:
+    def index_directives(self) -> Dict[str, Type[Directive]]:
         """Return all known directives."""
         return dict()
 
     def suggest_directives(
         self, context: CompletionContext
-    ) -> Iterable[Tuple[str, Directive]]:
+    ) -> Iterable[Tuple[str, Type[Directive]]]:
         """Suggest directives that may be used, given a completion context."""
         return self.index_directives().items()
 
@@ -80,7 +81,7 @@ class DirectiveLanguageFeature:
         if impl is None:
             return []
 
-        option_spec = impl.option_spec or {}
+        option_spec = getattr(impl, "option_spec", {})
         return option_spec.keys()
 
     def resolve_argument_link(
@@ -427,7 +428,7 @@ class Directives(LanguageFeature):
             doc["description"] = "\n".join(description)
             self._documentation[key] = doc
 
-    def get_directives(self) -> Dict[str, Directive]:
+    def get_directives(self) -> Dict[str, Type[Directive]]:
         """Return a dictionary of all known directives."""
 
         directives = {}
@@ -446,7 +447,7 @@ class Directives(LanguageFeature):
 
     def get_implementation(
         self, directive: str, domain: Optional[str]
-    ) -> Optional[Directive]:
+    ) -> Optional[Type[Directive]]:
         """Return the implementation of a directive given its name
 
         Parameters
@@ -483,7 +484,7 @@ class Directives(LanguageFeature):
 
     def suggest_directives(
         self, context: CompletionContext
-    ) -> Iterable[Tuple[str, Directive]]:
+    ) -> Iterable[Tuple[str, Type[Directive]]]:
         """Suggest directives that may be used, given a completion context.
 
         Parameters
@@ -604,9 +605,9 @@ class Directives(LanguageFeature):
             # TODO: Give better names to arguments based on what they represent.
             if include_argument:
                 insert_format = InsertTextFormat.Snippet
+                nargs = getattr(directive, "required_arguments", 0)
                 args = " " + " ".join(
-                    "${{{0}:arg{0}}}".format(i)
-                    for i in range(1, directive.required_arguments + 1)
+                    "${{{0}:arg{0}}}".format(i) for i in range(1, nargs + 1)
                 )
             else:
                 args = ""

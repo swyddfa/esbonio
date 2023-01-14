@@ -9,13 +9,13 @@ from docutils import nodes
 from lsprotocol.types import CodeAction
 from lsprotocol.types import CodeActionKind
 from lsprotocol.types import CodeActionParams
+from lsprotocol.types import Diagnostic
+from lsprotocol.types import DiagnosticSeverity
+from lsprotocol.types import DidSaveTextDocumentParams
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 from lsprotocol.types import TextEdit
 from lsprotocol.types import WorkspaceEdit
-from lsprotocol.types.basic_structures import Diagnostic
-from lsprotocol.types.basic_structures import DiagnosticSeverity
-from lsprotocol.types.basic_structures import Position
-from lsprotocol.types.basic_structures import Range
-from lsprotocol.types.workspace import DidSaveTextDocumentParams
 from spellchecker import SpellChecker  # type: ignore
 
 from esbonio.lsp.rst import LanguageFeature
@@ -48,7 +48,11 @@ class Spelling(LanguageFeature):
             if len(ranges) > 0 and diagnostic.range not in ranges:
                 continue
 
-            for fix in self.lang.candidates(error.text):
+            fixes = self.lang.candidates(error.text)
+            if fixes is None:
+                continue
+
+            for fix in fixes:
                 actions.append(
                     CodeAction(
                         title=f"Correct '{error.text}' -> '{fix}'",
