@@ -253,7 +253,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
                         ls.logger.debug("Completion context: %s", context)
 
                         for item in feature.complete(context):
-                            item.data = {"source_feature": name, **(item.data or {})}
+                            item.data = {"source_feature": name, **(item.data or {})}  # type: ignore
                             items.append(item)
 
         return CompletionList(is_incomplete=False, items=items)
@@ -264,7 +264,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
     def on_completion_resolve(
         ls: RstLanguageServer, item: CompletionItem
     ) -> CompletionItem:
-        source = (item.data or {}).get("source_feature", "")
+        source = (item.data or {}).get("source_feature", "")  # type: ignore
         feature = ls.get_feature(source)
 
         if not feature:

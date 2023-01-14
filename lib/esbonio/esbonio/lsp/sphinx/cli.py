@@ -4,6 +4,7 @@ import json
 import sys
 from typing import List
 
+from esbonio.cli import esbonio_converter
 from esbonio.lsp.sphinx import SphinxConfig
 
 
@@ -17,7 +18,8 @@ def config_cmd(args, extra):
 
 
 def config_to_cli(config: str):
-    conf = SphinxConfig(**json.loads(config))
+    converter = esbonio_converter()
+    conf = converter.structure(json.loads(config), SphinxConfig)
     print(" ".join(conf.to_cli_args()))
     return 0
 
@@ -27,7 +29,8 @@ def cli_to_config(cli_args: List[str]):
     if conf is None:
         return 1
 
-    print(json.dumps(conf.dict(by_alias=True), indent=2))
+    converter = esbonio_converter()
+    print(json.dumps(converter.unstructure(conf), indent=2))
     return 0
 
 
