@@ -3,38 +3,45 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    pytest-lsp.url = "github:swyddfa/lsp-devtools?dir=lib/pytest-lsp";
+    pytest-lsp.inputs.nixpkgs.follows = "nixpkgs";
     utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, utils }:
+  outputs = { self, nixpkgs, pytest-lsp, utils }:
 
     let
-      eachPythonVersion = versions: f: builtins.listToAttrs (builtins.map (version: {name = "py${version}"; value = f version; }) versions);
+      esbonio-overlay = import ./nix/esbonio-overlay.nix;
+      pytest-lsp-overlay = pytest-lsp.overlays.default;
+
+      eachPythonVersion = versions: f:
+        builtins.listToAttrs (builtins.map (version: {name = "py${version}"; value = f version; }) versions);
     in {
+
+    overlays.default = esbonio-overlay;
 
     devShells = utils.lib.eachDefaultSystemMap (system:
       let
-        pkgs = import nixpkgs { inherit system; };
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ pytest-lsp-overlay esbonio-overlay ];
+        };
       in
-        eachPythonVersion [ "37" "38" "39" "310" "311" ] (pyVersion:
+        eachPythonVersion [ "38" "39" "310" "311" ] (pyVersion:
+
           let
-            pytest-lsp = pkgs.callPackage ./nix/pytest-lsp.nix { pythonPackages = pkgs."python${pyVersion}Packages"; };
-            esbonio = pkgs.callPackage ./nix/esbonio.nix { pythonPackages = pkgs."python${pyVersion}Packages"; };
+            esbonio = pkgs."python${pyVersion}Packages".esbonio.overridePythonAttrs (_: { doCheck = false; });
           in
 
-          with pkgs; mkShell {
+          pkgs.mkShell {
             name = "py${pyVersion}";
 
-            packages = [
-              pkgs."python${pyVersion}"
-
+            packages = with pkgs."python${pyVersion}Packages"; [
               esbonio
 
-              # test suite dependencies
-              pkgs."python${pyVersion}Packages".mock
-              pkgs."python${pyVersion}Packages".pytest
-              pytest-lsp
-              pkgs."python${pyVersion}Packages".pytest-timeout
+              mock
+              pkgs."python${pyVersion}Packages".pytest-lsp
+              pytest-timeout
             ];
           }
       )

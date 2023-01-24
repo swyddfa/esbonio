@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1668852955,
-        "narHash": "sha256-1ozaNW9uFRvm3cP9M6FPx+hdqyFQnf49M3HrLQ6nqrk=",
+        "lastModified": 1675698036,
+        "narHash": "sha256-BgsQkQewdlQi8gapJN4phpxkI/FCE/2sORBaFcYbp/A=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "2fb6f9fb0ef3ca727cbd9ae30b90d1ce49d5fcca",
+        "rev": "1046c7b92e908a1202c0f1ba3fc21d19e1cf1b62",
         "type": "github"
       },
       "original": {
@@ -16,13 +16,52 @@
         "type": "github"
       }
     },
+    "pytest-lsp": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "utils": "utils"
+      },
+      "locked": {
+        "dir": "lib/pytest-lsp",
+        "lastModified": 1680461504,
+        "narHash": "sha256-yinReEwXWeCstM0+zY0A1JE2N59sdMnBsepEBgtZ9xM=",
+        "owner": "swyddfa",
+        "repo": "lsp-devtools",
+        "rev": "6ae80a24b55d2b6943b9d30805cf02440ebbaf5c",
+        "type": "github"
+      },
+      "original": {
+        "dir": "lib/pytest-lsp",
+        "owner": "swyddfa",
+        "repo": "lsp-devtools",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "utils": "utils"
+        "pytest-lsp": "pytest-lsp",
+        "utils": "utils_2"
       }
     },
     "utils": {
+      "locked": {
+        "lastModified": 1678901627,
+        "narHash": "sha256-U02riOqrKKzwjsxc/400XnElV+UtPUQWpANPlyazjH0=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "93a2b84fc4b70d9e089d029deacc3583435c2ed6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "utils_2": {
       "locked": {
         "lastModified": 1667395993,
         "narHash": "sha256-nuEHfE/LcWyuSWnS8t12N1wc105Qtau+/OdUAjtQ0rA=",
