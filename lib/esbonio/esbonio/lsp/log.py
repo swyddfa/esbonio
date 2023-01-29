@@ -14,7 +14,7 @@ from lsprotocol.types import Range
 
 if typing.TYPE_CHECKING:
     from .rst import RstLanguageServer
-    from .rst import ServerConfig
+    from .rst.config import ServerConfig
 
 
 LOG_NAMESPACE = "esbonio.lsp"

@@ -15,7 +15,6 @@ from typing import Tuple
 from typing import Type
 from typing import TypeVar
 
-import attrs
 import pygls.uris as Uri
 from docutils.parsers.rst import Directive
 from lsprotocol.converters import get_converter
@@ -41,6 +40,8 @@ from pygls.workspace import Document
 from esbonio.cli import setup_cli
 from esbonio.lsp.log import setup_logging
 
+from .config import InitializationOptions
+from .config import ServerCompletionConfig
 from .io import read_initial_doctree
 
 converter = get_converter()
@@ -70,6 +71,7 @@ class CompletionContext:
         location: str,
         match: "re.Match",
         position: Position,
+        config: ServerCompletionConfig,
         capabilities: ClientCapabilities,
     ):
 
@@ -85,6 +87,9 @@ class CompletionContext:
 
         self.position: Position = position
         """The position at which the completion request was made."""
+
+        self.config: ServerCompletionConfig = config
+        """User supplied configuration options."""
 
         self._client_capabilities: ClientCapabilities = capabilities
 
@@ -399,34 +404,6 @@ class DiagnosticList(collections.UserList):
         self.data.append(item)
 
 
-@attrs.define
-class ServerConfig:
-    """Configuration options for the server."""
-
-    log_level: str = attrs.field(default="error")
-    """The logging level of server messages to display."""
-
-    log_filter: List[str] = attrs.field(factory=list)
-    """A list of logger names to restrict output to."""
-
-    show_deprecation_warnings: bool = attrs.field(default=False)
-    """Developer flag to enable deprecation warnings."""
-
-    enable_scroll_sync: bool = attrs.field(default=False)
-    """Enable custom transformation to add classes with line numbers"""
-
-    enable_live_preview: bool = attrs.field(default=False)
-    """Set it to True if you want to build Sphinx app on change event"""
-
-
-@attrs.define
-class InitializationOptions:
-    """The initialization options we can expect to receive from a client."""
-
-    server: ServerConfig = attrs.field(factory=ServerConfig)
-    """The ``esbonio.server.*`` namespace of options."""
-
-
 class RstLanguageServer(LanguageServer):
     """A generic reStructuredText language server."""
 
@@ -439,7 +416,7 @@ class RstLanguageServer(LanguageServer):
         self.converter = self.lsp._converter
         """The cattrs converter instance we should use."""
 
-        self.user_config: Optional[Any] = None
+        self.user_config: InitializationOptions = InitializationOptions()
         """The user's configuration."""
 
         self._diagnostics: Dict[Tuple[str, str], List[Diagnostic]] = {}
@@ -454,9 +431,6 @@ class RstLanguageServer(LanguageServer):
     @property
     def configuration(self) -> Dict[str, Any]:
         """Return the server's actual configuration."""
-        if not self.user_config:
-            return {}
-
         return converter.unstructure(self.user_config)
 
     def initialize(self, params: InitializeParams):
