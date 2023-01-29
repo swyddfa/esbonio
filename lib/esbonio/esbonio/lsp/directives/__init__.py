@@ -14,7 +14,6 @@ from docutils.parsers.rst import Directive
 from lsprotocol.types import CompletionItem
 from lsprotocol.types import CompletionItemKind
 from lsprotocol.types import DocumentLink
-from lsprotocol.types import InsertTextFormat
 from lsprotocol.types import Location
 from lsprotocol.types import MarkupContent
 from lsprotocol.types import MarkupKind
@@ -34,6 +33,8 @@ from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.util.inspect import get_object_location
 from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
+
+from .completions import render_directive_completion
 
 
 class DirectiveLanguageFeature:
@@ -581,56 +582,12 @@ class Directives(LanguageFeature):
         self.logger.debug("Completing directives")
 
         items = []
-        match = context.match
-        groups = match.groupdict()
-
-        # Calculate the range of text the CompletionItems should edit.
-        # If there is an existing argument to the directive, we should leave it untouched
-        # otherwise, edit the whole line to insert any required arguments.
-        start = match.span()[0] + match.group(0).find(".")
-        include_argument = context.snippet_support
-        end = match.span()[1]
-
-        if groups["argument"]:
-            include_argument = False
-            end = match.span()[0] + match.group(0).find("::") + 2
-
-        range_ = Range(
-            start=Position(line=context.position.line, character=start),
-            end=Position(line=context.position.line, character=end),
-        )
-
         for name, directive in self.suggest_directives(context):
+            item = render_directive_completion(context, name, directive)
+            if item is None:
+                continue
 
-            # TODO: Give better names to arguments based on what they represent.
-            if include_argument:
-                insert_format = InsertTextFormat.Snippet
-                nargs = getattr(directive, "required_arguments", 0)
-                args = " " + " ".join(
-                    "${{{0}:arg{0}}}".format(i) for i in range(1, nargs + 1)
-                )
-            else:
-                args = ""
-                insert_format = InsertTextFormat.PlainText
-
-            try:
-                dotted_name = f"{directive.__module__}.{directive.__name__}"
-            except AttributeError:
-                dotted_name = f"{directive.__module__}.{directive.__class__.__name__}"
-
-            insert_text = f".. {name}::{args}"
-
-            items.append(
-                CompletionItem(
-                    label=name,
-                    kind=CompletionItemKind.Class,
-                    detail=dotted_name,
-                    filter_text=insert_text,
-                    text_edit=TextEdit(range=range_, new_text=insert_text),
-                    insert_text_format=insert_format,
-                    data={"completion_type": "directive"},
-                )
-            )
+            items.append(item)
 
         return items
 
