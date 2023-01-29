@@ -9,6 +9,8 @@ import pygls.uris as Uri
 from lsprotocol.types import CompletionItem
 from lsprotocol.types import CompletionList
 from lsprotocol.types import Hover
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 from pytest_lsp import LanguageClient
 from pytest_lsp import make_test_client
 from sphinx import __version__ as __sphinx_version__
@@ -85,6 +87,18 @@ def sphinx_version(
         return major <= lte
 
     return False
+
+
+def range_from_str(spec: str) -> Range:
+    """Create a range from the given string ``a:b-x:y``"""
+    start, end = spec.split("-")
+    sl, sc = start.split(":")
+    el, ec = end.split(":")
+
+    return Range(
+        start=Position(line=int(sl), character=int(sc)),
+        end=Position(line=int(el), character=int(ec)),
+    )
 
 
 def directive_argument_patterns(name: str, partial: str = "") -> List[str]:
