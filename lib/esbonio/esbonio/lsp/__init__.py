@@ -248,6 +248,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
                             location=location,
                             match=match,
                             position=pos,
+                            config=ls.user_config.server.completion,
                             capabilities=ls.client_capabilities,
                         )
                         ls.logger.debug("Completion context: %s", context)

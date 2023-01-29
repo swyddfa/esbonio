@@ -32,7 +32,7 @@ from typing_extensions import Literal
 
 from esbonio.lsp.log import LOG_NAMESPACE
 from esbonio.lsp.log import LspHandler
-from esbonio.lsp.rst import ServerConfig
+from esbonio.lsp.rst.config import ServerConfig
 
 PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")
 logger = logging.getLogger(LOG_NAMESPACE)
