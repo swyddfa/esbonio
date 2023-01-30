@@ -12,14 +12,12 @@ from typing import Type
 
 from docutils.parsers.rst import Directive
 from lsprotocol.types import CompletionItem
-from lsprotocol.types import CompletionItemKind
 from lsprotocol.types import DocumentLink
 from lsprotocol.types import Location
 from lsprotocol.types import MarkupContent
 from lsprotocol.types import MarkupKind
 from lsprotocol.types import Position
 from lsprotocol.types import Range
-from lsprotocol.types import TextEdit
 from typing_extensions import Protocol
 
 from esbonio.lsp import CompletionContext
@@ -35,6 +33,7 @@ from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
 
 from .completions import render_directive_completion
+from .completions import render_directive_option_completion
 
 
 class DirectiveLanguageFeature:
@@ -82,7 +81,7 @@ class DirectiveLanguageFeature:
         if impl is None:
             return []
 
-        option_spec = getattr(impl, "option_spec", {})
+        option_spec = getattr(impl, "option_spec", {}) or {}
         return option_spec.keys()
 
     def resolve_argument_link(
@@ -621,35 +620,13 @@ class Directives(LanguageFeature):
             return []
 
         items = []
-        match = context.match
-        groups = match.groupdict()
-        impl_name = f"{impl.__module__}.{impl.__name__}"
-
-        option = groups["option"]
-        start = match.span()[0] + match.group(0).find(option)
-        end = start + len(option)
-
-        range_ = Range(
-            start=Position(line=context.position.line, character=start),
-            end=Position(line=context.position.line, character=end),
-        )
 
         for option in self.suggest_options(context, name, domain):
-            insert_text = f":{option}:"
+            item = render_directive_option_completion(context, option, name, impl)
+            if item is None:
+                continue
 
-            items.append(
-                CompletionItem(
-                    label=option,
-                    detail=f"{impl_name}:{option}",
-                    kind=CompletionItemKind.Field,
-                    filter_text=insert_text,
-                    text_edit=TextEdit(range=range_, new_text=insert_text),
-                    data={
-                        "completion_type": "directive_option",
-                        "for_directive": name,
-                    },
-                )
-            )
+            items.append(item)
 
         return items
 
