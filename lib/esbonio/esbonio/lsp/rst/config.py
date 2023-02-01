@@ -1,7 +1,11 @@
 from typing import List
-from typing import Literal
 
 import attrs
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal  # type: ignore[assignment]
 
 
 @attrs.define
