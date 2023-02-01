@@ -1,19 +1,25 @@
 """Utility functions to help with testing Language Server features."""
 import logging
 import pathlib
+import re
 from typing import List
 from typing import Optional
 from typing import Union
 
 import pygls.uris as Uri
+from lsprotocol.types import ClientCapabilities
 from lsprotocol.types import CompletionItem
 from lsprotocol.types import CompletionList
 from lsprotocol.types import Hover
 from lsprotocol.types import Position
 from lsprotocol.types import Range
+from pygls.workspace import Document
 from pytest_lsp import LanguageClient
 from pytest_lsp import make_test_client
 from sphinx import __version__ as __sphinx_version__
+
+from esbonio.lsp import CompletionContext
+from esbonio.lsp.rst.config import ServerCompletionConfig
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +104,52 @@ def range_from_str(spec: str) -> Range:
     return Range(
         start=Position(line=int(sl), character=int(sc)),
         end=Position(line=int(el), character=int(ec)),
+    )
+
+
+def make_completion_context(
+    pattern: re.Pattern,
+    text: str,
+    *,
+    character: int = -1,
+    prefer_insert: bool = False,
+) -> CompletionContext:
+    """Helper for making test completion context instances.
+
+    Parameters
+    ----------
+    pattern
+       The regular expression pattern that corresponds to the completion request.
+
+    text
+       The text that "triggered" the completion request
+
+    character
+       The character column at which the request is being made.
+       If ``-1`` (the default), it will be assumed that the request is being made at
+       the end of ``text``.
+
+    prefer_insert
+       Flag to indicate if the ``preferred_insert_behavior`` option should be set to
+       ``insert``
+    """
+
+    match = pattern.match(text)
+    if not match:
+        raise ValueError(f"'{text}' is not valid in this completion context")
+
+    line = 0
+    character = len(text) if character == -1 else character
+
+    return CompletionContext(
+        doc=Document(uri="file:///test.txt"),
+        location="rst",
+        match=match,
+        position=Position(line=line, character=character),
+        config=ServerCompletionConfig(
+            preferred_insert_behavior="insert" if prefer_insert else "replace"
+        ),
+        capabilities=ClientCapabilities(),
     )
 
 

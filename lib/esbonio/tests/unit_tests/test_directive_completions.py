@@ -1,4 +1,3 @@
-import re
 from functools import partial
 from typing import Optional
 from typing import Type
@@ -6,70 +5,20 @@ from typing import Type
 import pytest
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst.directives.images import Image
-from lsprotocol.types import ClientCapabilities
 from lsprotocol.types import CompletionItem
 from lsprotocol.types import CompletionItemKind
 from lsprotocol.types import InsertTextFormat
-from lsprotocol.types import Position
 from lsprotocol.types import TextEdit
-from pygls.workspace import Document
 from sphinx.directives.code import CodeBlock
 from sphinx.domains.c import CFunctionObject
 
 from esbonio.lsp import CompletionContext
 from esbonio.lsp.directives.completions import render_directive_completion
 from esbonio.lsp.directives.completions import render_directive_option_completion
-from esbonio.lsp.rst.config import ServerCompletionConfig
+from esbonio.lsp.testing import make_completion_context
 from esbonio.lsp.testing import range_from_str
 from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
-
-
-def make_completion_context(
-    pattern: re.Pattern,
-    text: str,
-    *,
-    character: int = -1,
-    prefer_insert: bool = False,
-) -> CompletionContext:
-    """Helper for making test completion context instances.
-
-    Parameters
-    ----------
-    pattern
-       The regular expression pattern that corresponds to the completion request.
-
-    text
-       The text that "triggered" the completion request
-
-    character
-       The character column at which the request is being made.
-       If ``-1`` (the default), it will be assumed that the request is being made at
-       the end of ``text``.
-
-    prefer_insert
-       Flag to indicate if the ``preferred_insert_behavior`` option should be set to
-       ``insert``
-    """
-
-    match = pattern.match(text)
-    if not match:
-        raise ValueError(f"'{text}' is not valid in this completion context")
-
-    line = 0
-    character = len(text) if character == -1 else character
-
-    return CompletionContext(
-        doc=Document(uri="file:///test.txt"),
-        location="rst",
-        match=match,
-        position=Position(line=line, character=character),
-        config=ServerCompletionConfig(
-            preferred_insert_behavior="insert" if prefer_insert else "replace"
-        ),
-        capabilities=ClientCapabilities(),
-    )
-
 
 make_directive_completion_context = partial(make_completion_context, DIRECTIVE)
 make_directive_option_completion_context = partial(
