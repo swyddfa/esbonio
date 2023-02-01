@@ -16,7 +16,6 @@ from lsprotocol.types import MarkupKind
 from lsprotocol.types import Position
 from lsprotocol.types import Range
 from lsprotocol.types import TextEdit
-from typing_extensions import Protocol
 
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import DefinitionContext
@@ -32,6 +31,11 @@ from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import ROLE
 
 from .completions import render_role_completion
+
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol  # type: ignore[assignment]
 
 
 class RoleLanguageFeature:

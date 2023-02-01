@@ -5,7 +5,11 @@ import warnings
 from typing import Union
 
 from pygls.protocol import default_converter
-from typing_extensions import Literal
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal  # type: ignore[assignment]
 
 
 def esbonio_converter():

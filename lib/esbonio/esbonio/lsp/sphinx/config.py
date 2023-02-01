@@ -28,11 +28,16 @@ from sphinx.cmd.build import main as sphinx_build
 from sphinx.util.logging import OnceFilter
 from sphinx.util.logging import SphinxLogRecord
 from sphinx.util.logging import WarningLogRecordTranslator
-from typing_extensions import Literal
 
 from esbonio.lsp.log import LOG_NAMESPACE
 from esbonio.lsp.log import LspHandler
 from esbonio.lsp.rst.config import ServerConfig
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal  # type: ignore[assignment]
+
 
 PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")
 logger = logging.getLogger(LOG_NAMESPACE)
