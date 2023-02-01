@@ -9,7 +9,6 @@ from typing import Optional
 from typing import Tuple
 
 from lsprotocol.types import CompletionItem
-from lsprotocol.types import CompletionItemKind
 from lsprotocol.types import DocumentLink
 from lsprotocol.types import Location
 from lsprotocol.types import MarkupContent
@@ -31,6 +30,8 @@ from esbonio.lsp.util.inspect import get_object_location
 from esbonio.lsp.util.patterns import DEFAULT_ROLE
 from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import ROLE
+
+from .completions import render_role_completion
 
 
 class RoleLanguageFeature:
@@ -593,39 +594,12 @@ class Roles(LanguageFeature):
 
     def complete_roles(self, context: CompletionContext) -> List[CompletionItem]:
 
-        match = context.match
-        groups = match.groupdict()
-        domain = groups["domain"] or ""
         items = []
 
-        # Insert text starting from the starting ':' character of the role.
-        start = match.span()[0] + match.group(0).find(":")
-        end = start + len(groups["role"])
-
-        range_ = Range(
-            start=Position(line=context.position.line, character=start),
-            end=Position(line=context.position.line, character=end),
-        )
-
         for name, role in self.suggest_roles(context):
-
-            if not name.startswith(domain):
+            item = render_role_completion(context, name, role)
+            if item is None:
                 continue
-
-            try:
-                dotted_name = f"{role.__module__}.{role.__name__}"
-            except AttributeError:
-                dotted_name = f"{role.__module__}.{role.__class__.__name__}"
-
-            insert_text = f":{name}:"
-            item = CompletionItem(
-                label=name,
-                kind=CompletionItemKind.Function,
-                detail=f"{dotted_name}",
-                filter_text=insert_text,
-                text_edit=TextEdit(range=range_, new_text=insert_text),
-                data={"completion_type": "role"},
-            )
 
             items.append(item)
 
