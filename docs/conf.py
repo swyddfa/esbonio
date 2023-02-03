@@ -28,7 +28,7 @@ from esbonio.lsp.rst import CompletionContext
 
 # -- Project information -----------------------------------------------------
 project = "Esbonio"
-copyright = "2022"
+copyright = "2023"
 author = "the Esbonio project"
 release = esbonio.lsp.__version__
 
@@ -82,7 +82,7 @@ html_theme = "furo"
 html_title = "Esbonio"
 html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
 html_favicon = "favicon.svg"
-# html_static_path = ["_static"]
+html_static_path = ["_static"]
 html_theme_options = {
     "source_repository": "https://github.com/swyddfa/esbonio/",
     "source_branch": BRANCH,
@@ -131,7 +131,7 @@ def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
 
 def setup(app: Sphinx):
     app.add_role("lsp", lsp_role)
-
+    app.add_css_file("custom.css")
     app.add_object_type(
         "command", "command", objname="command", indextemplate="pair: %s; command"
     )

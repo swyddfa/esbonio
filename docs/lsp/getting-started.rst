@@ -40,8 +40,6 @@ This section contains notes on how to use the language server with your text edi
 
          Using the Esbonio language server within Kate.
 
-      `Kate <https://kate-editor.org/en-gb/>`_ is a text editor from the KDE project and comes with LSP support.
-
    Neovim (lspconfig)
       .. figure:: /images/nvim-lspconfig.png
          :align: center
@@ -73,32 +71,42 @@ This section contains notes on how to use the language server with your text edi
 Installation
 ------------
 
-The language server can be installed using pip
+The language server can be installed using pip, or if you prefer, conda.
 
-.. code-block:: console
-
-   $ pip install esbonio
-
-Sphinx and the reStructuredText format itself are highly extensible so the available
-features can differ greatly from project to project. For this reason the
-language server should be installed into the same environment you use when
-building your documentation e.g.
-
-.. code-block:: console
-
-   $ source .env/bin/activate
-   (.env) $ pip install esbonio
-
+Sphinx and the reStructuredText format itself are highly extensible so the available features can differ greatly from project to project.
+For this reason the ``esbonio`` should be installed into the same environment you use when building your documentation.
 Otherwise the language server will fail to properly understand your project.
 
-If you want to try the latest developments before they are released you can use ``pip`` to install from the development branch.
+.. relevant-to:: Package Manager
 
-.. code-block:: console
+   pip
+      .. code-block:: console
 
-   $ pip install "git+https://github.com/swyddfa/esbonio#egg=esbonio&subdirectory=lib/esbonio"
+         $ pip install esbonio
 
-For more information on this command see the documentation on pip's `VCS Support <https://pip.pypa.io/en/stable/topics/vcs-support/>`_.
+      If you want to try the latest developments before they are released you can use ``pip`` to install from the development branch.
 
+      .. code-block:: console
+
+         $ pip install "git+https://github.com/swyddfa/esbonio#egg=esbonio&subdirectory=lib/esbonio"
+
+      For more information on this command see the documentation on pip's `VCS Support <https://pip.pypa.io/en/stable/topics/vcs-support/>`_.
+
+   conda
+      The language server is available through the ``esbonio`` package on `conda forge <https://anaconda.org/conda-forge/esbonio>`__.
+
+      Installing ``esbonio`` from the ``conda-forge`` channel can be achieved by adding ``conda-forge`` to your channels with:
+
+      .. code-block:: console
+
+         $ conda config --add channels conda-forge
+         $ conda config --set channel_priority strict
+
+      Once the ``conda-forge`` channel has been enabled, ``esbonio`` can be installed with ``conda``
+
+      .. code-block:: console
+
+         $ conda install esbonio
 
 .. relevant-to:: Editor
 
@@ -126,6 +134,9 @@ For more information on this command see the documentation on pip's `VCS Support
    Sublime Text (LSP)
       .. include:: ./editors/sublimetext-lsp/_installation.rst
 
+
+.. _lsp-configuration:
+
 Configuration
 -------------
 
@@ -151,6 +162,9 @@ Configuration
 
    Sublime Text (LSP)
       .. include:: ./editors/sublimetext-lsp/_configuration.rst
+
+   Kate
+      .. include:: ./editors/kate/_configuration.rst
 
 Sphinx Options
 ^^^^^^^^^^^^^^
@@ -282,6 +296,22 @@ Server Options
 ^^^^^^^^^^^^^^
 
 The following options control the behavior of the language server as a whole.
+
+.. confval:: server.completion.preferredInsertBehavior (string)
+
+   Controls how completions behave when accepted, the following values are supported.
+
+   - ``replace`` (default)
+
+     Accepted completions will replace existing text, allowing the server to rewrite the current line in place.
+     This allows the server to return all possible completions within the current context.
+     In this mode the server will set the ``textEdit`` field of a ``CompletionItem``.
+
+   - ``insert``
+
+     Accepted completions will append to existing text rather than replacing it.
+     Since rewriting is not possible, only the completions that are compatible with any existing text will be returned.
+     In this mode the server will set the ``insertText`` field of a ``CompletionItem`` which should work better with editors that do no support ``textEdits``.
 
 .. confval:: server.enableScrollSync (boolean)
 

@@ -21,7 +21,10 @@ RstLanguageServer
 .. autoclass:: esbonio.lsp.rst.InitializationOptions
    :members:
 
-.. autoclass:: esbonio.lsp.rst.ServerConfig
+.. autoclass:: esbonio.lsp.rst.config.ServerConfig
+   :members:
+
+.. autoclass:: esbonio.lsp.rst.config.ServerCompletionConfig
    :members:
 
 
