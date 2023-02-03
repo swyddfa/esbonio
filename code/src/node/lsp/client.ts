@@ -399,6 +399,10 @@ export class EsbonioClient {
     let command = await this.python.getCmd()
     let config = this.editor.getConfiguration("esbonio")
 
+    if (config.get<boolean>('server.enableDevTools')) {
+      command.push("-m", "lsp_devtools", "agent", "--", ...command)
+    }
+
     let startupModule = config.get<string>("server.startupModule")
 
     // Entry point can either be a script, or it can be a python module.
