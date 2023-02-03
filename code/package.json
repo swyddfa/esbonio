@@ -186,12 +186,6 @@
                         "default": "",
                         "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
                     },
-                    "esbonio.server.showDeprecationWarnings": {
-                        "scope": "window",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Developer flag to enable deprecation warnings."
-                    },
                     "esbonio.server.hideSphinxOutput": {
                         "scope": "window",
                         "type": "boolean",
@@ -346,6 +340,36 @@
                         "type": "boolean",
                         "default": false,
                         "description": "Treat any warnings as errors."
+                    }
+                }
+            },
+            {
+                "title": "Completion",
+                "properties": {
+                    "esbonio.server.completion.preferredInsertBehavior": {
+                        "scope": "window",
+                        "type": "string",
+                        "enum": [
+                            "insert",
+                            "replace"
+                        ],
+                        "enumDescriptions": [
+                            "Completions will only append to existing text. Server will only provide suggestions compatible with existing text.",
+                            "Completions will replace existing text, allowing for complete rewrites of existing items. Server will respond with all valid options."
+                        ],
+                        "default": "replace",
+                        "description": "Indicate to the server how you would prefer completions to behave when accepted."
+                    }
+                }
+            },
+            {
+                "title": "Developer Options",
+                "properties": {
+                    "esbonio.server.showDeprecationWarnings": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Developer flag to enable deprecation warnings."
                     }
                 }
             }

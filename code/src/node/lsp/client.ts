@@ -108,6 +108,17 @@ export interface SphinxInfo extends SphinxConfig {
 }
 
 /**
+ * Configuration options related to completions.
+ */
+export interface ServerCompletionConfig {
+
+  /**
+   * Indicates how the user would prefer completion items to behave
+   */
+  preferredInsertBehavior: string
+}
+
+/**
  * Represents configuration options that should be passed to the server.
  */
 export interface ServerConfig {
@@ -131,6 +142,11 @@ export interface ServerConfig {
    * A flag to enable showing deprecation warnings.
    */
   showDeprecationWarnings: boolean
+
+  /**
+   * Server completion settings
+   */
+  completion: ServerCompletionConfig
 }
 
 /**
@@ -463,7 +479,10 @@ export class EsbonioClient {
         logLevel: config.get<string>('server.logLevel'),
         logFilter: config.get<string[]>('server.logFilter'),
         hideSphinxOutput: config.get<boolean>('server.hideSphinxOutput'),
-        showDeprecationWarnings: config.get<boolean>('server.showDeprecationWarnings')
+        showDeprecationWarnings: config.get<boolean>('server.showDeprecationWarnings'),
+        completion: {
+          preferredInsertBehavior: config.get<string>('server.completion.preferredInsertBehavior')
+        }
       }
     }
 
