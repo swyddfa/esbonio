@@ -365,6 +365,12 @@
             {
                 "title": "Developer Options",
                 "properties": {
+                    "esbonio.server.enableDevTools": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Enable lsp-devtools."
+                    },
                     "esbonio.server.showDeprecationWarnings": {
                         "scope": "window",
                         "type": "boolean",
