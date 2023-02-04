@@ -44,7 +44,7 @@ This method should return a dictionary where the keys are the canonical name of 
        def __init__(self, app: Sphinx):
            self.app = app  # Sphinx application instance.
 
-       def index_directives(self) -> Dict[str, Directive]:
+       def index_directives(self) -> Dict[str, Type[Directive]]:
            directives = {}
            for prefix, domain in self.app.domains.items():
                for name, directive in domain.directives.items():
@@ -74,12 +74,12 @@ The :meth:`~DirectiveLanguageFeature.suggest_directives` method is called each t
 It can be used to tailor the list of directives that are offered to the user, depending on the current context.
 Each ``DirectiveLanguageFeature`` has a default implementation, which may be sufficient depending on your use case::
 
-   def suggest_directives(self, context: CompletionContext) -> Iterable[Tuple[str, Directive]]:
+   def suggest_directives(self, context: CompletionContext) -> Iterable[Tuple[str, Type[Directive]]]:
        return self.index_directives().items()
 
 However, in the case of Sphinx domains, we need to modify this to also include the short form of the directives in the standard and primary domains::
 
-   def suggest_directives(self, context: CompletionContext) -> Iterable[Tuple[str, Directive]]:
+   def suggest_directives(self, context: CompletionContext) -> Iterable[Tuple[str, Type[Directive]]]:
        directives = self.index_directives()
        primary_domain = self.app.config.primary_domain
 
@@ -103,12 +103,12 @@ The :meth:`~DirectiveLanguageFeature.get_implementation` method is used by the l
 This powers features such as documentation hovers and goto implementation.
 As with ``suggest_directives``, each ``DirectiveLanguageFeature`` has a default implementation which may be sufficient for your use case::
 
-   def get_implementation(self, directive: str, domain: Optional[str]) -> Optional[Directive]:
+   def get_implementation(self, directive: str, domain: Optional[str]) -> Optional[Type[Directive]]:
        return self.index_directives().get(directive, None)
 
 In the case of Sphinx domains, if we see a directive without a domain prefix we need to see if it belongs to the standard or primary domains::
 
-   def get_implementation(self, directive: str, domain: Optional[str]) -> Optional[Directive]:
+   def get_implementation(self, directive: str, domain: Optional[str]) -> Optional[Type[Directive]]:
        directives = self.index_directives()
 
        if domain is not None:

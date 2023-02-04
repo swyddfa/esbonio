@@ -1,18 +1,25 @@
 """Utility functions to help with testing Language Server features."""
 import logging
 import pathlib
+import re
 from typing import List
 from typing import Optional
 from typing import Union
 
 import pygls.uris as Uri
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionList
-from pygls.lsp.types import Hover
-from pygls.lsp.types import Position
-from pytest_lsp import Client
+from lsprotocol.types import ClientCapabilities
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionList
+from lsprotocol.types import Hover
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from pygls.workspace import Document
+from pytest_lsp import LanguageClient
 from pytest_lsp import make_test_client
 from sphinx import __version__ as __sphinx_version__
+
+from esbonio.lsp import CompletionContext
+from esbonio.lsp.rst.config import ServerCompletionConfig
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +28,7 @@ def _noop(*args, **kwargs):
     ...
 
 
-def make_esbonio_client(*args, **kwargs) -> Client:
+def make_esbonio_client(*args, **kwargs) -> LanguageClient:
     """Construct a pytest-lsp client that is aware of esbonio specific messages"""
     client = make_test_client(*args, **kwargs)
     client.feature("esbonio/buildStart")(_noop)
@@ -68,7 +75,7 @@ def sphinx_version(
 
     """
 
-    major, _, _ = [int(v) for v in __sphinx_version__.split(".")]
+    major, _, _ = (int(v) for v in __sphinx_version__.split("."))
 
     if eq is not None:
         return major == eq
@@ -86,6 +93,64 @@ def sphinx_version(
         return major <= lte
 
     return False
+
+
+def range_from_str(spec: str) -> Range:
+    """Create a range from the given string ``a:b-x:y``"""
+    start, end = spec.split("-")
+    sl, sc = start.split(":")
+    el, ec = end.split(":")
+
+    return Range(
+        start=Position(line=int(sl), character=int(sc)),
+        end=Position(line=int(el), character=int(ec)),
+    )
+
+
+def make_completion_context(
+    pattern: re.Pattern,
+    text: str,
+    *,
+    character: int = -1,
+    prefer_insert: bool = False,
+) -> CompletionContext:
+    """Helper for making test completion context instances.
+
+    Parameters
+    ----------
+    pattern
+       The regular expression pattern that corresponds to the completion request.
+
+    text
+       The text that "triggered" the completion request
+
+    character
+       The character column at which the request is being made.
+       If ``-1`` (the default), it will be assumed that the request is being made at
+       the end of ``text``.
+
+    prefer_insert
+       Flag to indicate if the ``preferred_insert_behavior`` option should be set to
+       ``insert``
+    """
+
+    match = pattern.match(text)
+    if not match:
+        raise ValueError(f"'{text}' is not valid in this completion context")
+
+    line = 0
+    character = len(text) if character == -1 else character
+
+    return CompletionContext(
+        doc=Document(uri="file:///test.txt"),
+        location="rst",
+        match=match,
+        position=Position(line=line, character=character),
+        config=ServerCompletionConfig(
+            preferred_insert_behavior="insert" if prefer_insert else "replace"
+        ),
+        capabilities=ClientCapabilities(),
+    )
 
 
 def directive_argument_patterns(name: str, partial: str = "") -> List[str]:
@@ -199,7 +264,7 @@ def intersphinx_target_patterns(name: str, project: str) -> List[str]:
 
 
 async def completion_request(
-    client: Client, test_uri: str, text: str, character: Optional[int] = None
+    client: LanguageClient, test_uri: str, text: str, character: Optional[int] = None
 ) -> Union[CompletionList, List[CompletionItem], None]:
     """Make a completion request to a language server.
 
@@ -267,7 +332,7 @@ async def completion_request(
 
 
 async def hover_request(
-    client: Client, test_uri: str, text: str, position: Position
+    client: LanguageClient, test_uri: str, text: str, line: int, character: int
 ) -> Optional[Hover]:
     """Make a hover request to a language server.
 
@@ -287,14 +352,17 @@ async def hover_request(
     text
        The text that provides the context for the hover request.
 
-    position
-       The position at which to make the hover request from.
+    line
+       The line number to make the hover request from
+
+    character
+       The column number to make the hover request from
     """
     ext = pathlib.Path(Uri.to_fs_path(test_uri)).suffix
     lang_id = "python" if ext == ".py" else "rst"
 
     client.notify_did_open(test_uri, lang_id, text)
-    response = await client.hover_request(test_uri, position)
+    response = await client.hover_request(test_uri, line, character)
 
     client.notify_did_close(test_uri)
     return response

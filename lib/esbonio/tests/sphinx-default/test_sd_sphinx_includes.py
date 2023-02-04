@@ -1,10 +1,10 @@
 import itertools
 
 import pytest
-from pygls.lsp.types import Location
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pytest_lsp import Client
+from lsprotocol.types import Location
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
@@ -25,21 +25,24 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "path, position, expected",
+    "path, line, character, expected",
     [
         (
             "theorems/pythagoras.rst",
-            Position(line=8, character=4),
+            8,
+            4,
             None,
         ),
         (
             "definitions.rst",
-            Position(line=17, character=20),
+            17,
+            20,
             None,
         ),
         (
             "theorems/pythagoras.rst",
-            Position(line=8, character=18),
+            8,
+            18,
             Location(
                 uri="math.rst",
                 range=Range(
@@ -50,7 +53,8 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
         ),
         (
             "theorems/pythagoras.rst",
-            Position(line=10, character=22),
+            10,
+            22,
             Location(
                 uri="math.rst",
                 range=Range(
@@ -61,7 +65,8 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
         ),
         (
             "definitions.rst",
-            Position(line=21, character=20),
+            21,
+            20,
             Location(
                 uri="theorems/pythagoras.rst",
                 range=Range(
@@ -72,7 +77,8 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
         ),
         (
             "definitions.rst",
-            Position(line=23, character=25),
+            23,
+            25,
             Location(
                 uri="index.rst",
                 range=Range(
@@ -83,7 +89,8 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
         ),
         (
             "definitions.rst",
-            Position(line=25, character=25),
+            25,
+            25,
             Location(
                 uri="_static/vscode-screenshot.png",
                 range=Range(
@@ -92,20 +99,21 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
                 ),
             ),
         ),
-        ("definitions.rst", Position(line=27, character=25), None),
+        ("definitions.rst", 27, 25, None),
     ],
 )
 async def test_include_definitions(
-    client: Client,
+    client: LanguageClient,
     path: str,
-    position: Position,
+    line: int,
+    character: int,
     expected: Location,
 ):
     """Ensure that we can correctly handle ``textDocument/definition`` requests for
     ``include::`` directive arguments."""
 
     test_uri = client.root_uri + f"/{path}"
-    results = await client.definition_request(test_uri, position)
+    results = await client.definition_request(test_uri, line, character)
 
     if expected is None:
         assert len(results) == 0
@@ -157,7 +165,7 @@ def completion_trigger_cases(path: str = ""):
         ),
     ],
 )
-async def test_include_argument_completions(client: Client, text, setup):
+async def test_include_argument_completions(client: LanguageClient, text, setup):
     """Ensure that we can offer the correct filepath suggestions."""
 
     filepath, expected, unexpected = setup

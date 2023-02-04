@@ -1,0 +1,6 @@
+Migrate to pygls ``v1.0``
+
+There are some breaking changes, but only if you use Esbonio's extension APIs, if you simply use the language server in your favourite editor you *shouldn't* notice a difference.
+
+The most notable change is the replacement of ``pydantic`` type definitions with ``attrs`` and ``cattrs`` via the new `lsprotocol <https://github.com/microsoft/lsprotocol>`__ package.
+For more details see pygls' `migration guide <https://pygls.readthedocs.io/en/latest/pages/migrating-to-v1.html>`__.

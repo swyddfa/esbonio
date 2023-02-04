@@ -1,7 +1,7 @@
 import itertools
 
 import pytest
-from pytest_lsp import Client
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
@@ -61,7 +61,7 @@ def completion_trigger_cases(path: str = ""):
         ),
     ],
 )
-async def test_include_argument_completions(client: Client, text: str, setup):
+async def test_include_argument_completions(client: LanguageClient, text: str, setup):
     """Ensure that we can offer the correct filepath suggestions."""
 
     filepath, expected, unexpected = setup

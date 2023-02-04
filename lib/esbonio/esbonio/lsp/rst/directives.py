@@ -3,6 +3,7 @@ import json
 from typing import Dict
 from typing import Optional
 from typing import Tuple
+from typing import Type
 from typing import Union
 
 import pkg_resources
@@ -18,11 +19,11 @@ class Docutils(DirectiveLanguageFeature):
 
     def __init__(self) -> None:
 
-        self._directives: Optional[Dict[str, Directive]] = None
+        self._directives: Optional[Dict[str, Type[Directive]]] = None
         """Cache for known directives."""
 
     @property
-    def directives(self) -> Dict[str, Directive]:
+    def directives(self) -> Dict[str, Type[Directive]]:
         if self._directives is not None:
             return self._directives
 
@@ -46,11 +47,13 @@ class Docutils(DirectiveLanguageFeature):
 
         return self.directives.get(directive, None)
 
-    def index_directives(self) -> Dict[str, Directive]:
+    def index_directives(self) -> Dict[str, Type[Directive]]:
         return self.directives
 
 
-def resolve_directive(directive: Union[Directive, Tuple[str, str]]) -> Directive:
+def resolve_directive(
+    directive: Union[Type[Directive], Tuple[str, str]]
+) -> Type[Directive]:
     """Return the directive based on the given reference.
 
     'Core' docutils directives are returned as tuples ``(modulename, ClassName)``
@@ -60,7 +63,7 @@ def resolve_directive(directive: Union[Directive, Tuple[str, str]]) -> Directive
     if isinstance(directive, tuple):
         mod, cls = directive
 
-        modulename = "docutils.parsers.rst.directives.{}".format(mod)
+        modulename = f"docutils.parsers.rst.directives.{mod}"
         module = importlib.import_module(modulename)
         return getattr(module, cls)
 

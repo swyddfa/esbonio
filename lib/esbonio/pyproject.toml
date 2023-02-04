@@ -15,6 +15,11 @@ filterwarnings = [
     "ignore:'environmentfilter' is renamed to 'pass_environment',*:DeprecationWarning",
 ]
 
+[tool.mypy]
+mypy_path = "$MYPY_CONFIG_FILE_DIR"
+explicit_package_bases = true
+check_untyped_defs = true
+
 [tool.towncrier]
 filename = "CHANGES.rst"
 directory = "changes/"
@@ -39,7 +44,7 @@ showcontent = true
 
 [[tool.towncrier.type]]
 directory = "doc"
-name = "Docs"
+name = "Documentation"
 showcontent = true
 
 [[tool.towncrier.type]]
@@ -67,20 +72,18 @@ legacy_tox_ini = """
 [tox]
 isolated_build = True
 skip_missing_interpreters = true
-envlist = py{36,37,38,39}-sphinx{3,4,5}, py{310,311}-sphinx{4,5}
+envlist = py37-sphinx{4,5}, py{38,39,310,311}-sphinx{4,5,6}
 
 [testenv]
 deps =
-    sphinx3: sphinx>=3,<4
-    sphinx3: jinja2<3.1
-
     sphinx4: sphinx>=4,<5
 
     sphinx5: sphinx>=5,<6
+
+    sphinx6: sphinx>=6,<7
 extras = test
 commands =
     python ../../scripts/check-sphinx-version.py
-    py{38,39,310,311}-sphinx5: mypy --namespace-packages --explicit-package-bases --check-untyped-defs -p esbonio
     pytest {posargs}
 
 [testenv:pkg]

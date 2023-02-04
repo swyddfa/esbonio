@@ -1,0 +1,1 @@
+Add getting started guide for Sublime Text by @vkhitrin

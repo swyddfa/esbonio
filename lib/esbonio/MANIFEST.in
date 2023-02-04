@@ -1,3 +1,4 @@
-include esbonio/py.typed
+include esbonio/cli/py.typed
+include esbonio/lsp/py.typed
 include esbonio/lsp/rst/*.json
 include esbonio/lsp/sphinx/*.json

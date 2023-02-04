@@ -8,16 +8,14 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionItemKind
-from pygls.lsp.types import DocumentLink
-from pygls.lsp.types import Location
-from pygls.lsp.types import MarkupContent
-from pygls.lsp.types import MarkupKind
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pygls.lsp.types import TextEdit
-from typing_extensions import Protocol
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import DocumentLink
+from lsprotocol.types import Location
+from lsprotocol.types import MarkupContent
+from lsprotocol.types import MarkupKind
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from lsprotocol.types import TextEdit
 
 from esbonio.lsp.rst import CompletionContext
 from esbonio.lsp.rst import DefinitionContext
@@ -31,6 +29,13 @@ from esbonio.lsp.util.inspect import get_object_location
 from esbonio.lsp.util.patterns import DEFAULT_ROLE
 from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import ROLE
+
+from .completions import render_role_completion
+
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol  # type: ignore[assignment]
 
 
 class RoleLanguageFeature:
@@ -593,39 +598,12 @@ class Roles(LanguageFeature):
 
     def complete_roles(self, context: CompletionContext) -> List[CompletionItem]:
 
-        match = context.match
-        groups = match.groupdict()
-        domain = groups["domain"] or ""
         items = []
 
-        # Insert text starting from the starting ':' character of the role.
-        start = match.span()[0] + match.group(0).find(":")
-        end = start + len(groups["role"])
-
-        range_ = Range(
-            start=Position(line=context.position.line, character=start),
-            end=Position(line=context.position.line, character=end),
-        )
-
         for name, role in self.suggest_roles(context):
-
-            if not name.startswith(domain):
+            item = render_role_completion(context, name, role)
+            if item is None:
                 continue
-
-            try:
-                dotted_name = f"{role.__module__}.{role.__name__}"
-            except AttributeError:
-                dotted_name = f"{role.__module__}.{role.__class__.__name__}"
-
-            insert_text = f":{name}:"
-            item = CompletionItem(
-                label=name,
-                kind=CompletionItemKind.Function,
-                detail=f"{dotted_name}",
-                filter_text=insert_text,
-                text_edit=TextEdit(range=range_, new_text=insert_text),
-                data={"completion_type": "role"},
-            )
 
             items.append(item)
 

@@ -8,19 +8,16 @@ from typing import Iterable
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Type
 
 from docutils.parsers.rst import Directive
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionItemKind
-from pygls.lsp.types import DocumentLink
-from pygls.lsp.types import InsertTextFormat
-from pygls.lsp.types import Location
-from pygls.lsp.types import MarkupContent
-from pygls.lsp.types import MarkupKind
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pygls.lsp.types import TextEdit
-from typing_extensions import Protocol
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import DocumentLink
+from lsprotocol.types import Location
+from lsprotocol.types import MarkupContent
+from lsprotocol.types import MarkupKind
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 
 from esbonio.lsp import CompletionContext
 from esbonio.lsp import DefinitionContext
@@ -33,6 +30,14 @@ from esbonio.lsp.sphinx import SphinxLanguageServer
 from esbonio.lsp.util.inspect import get_object_location
 from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
+
+from .completions import render_directive_completion
+from .completions import render_directive_option_completion
+
+try:
+    from typing import Protocol
+except ImportError:
+    from typing_extensions import Protocol  # type: ignore[assignment]
 
 
 class DirectiveLanguageFeature:
@@ -57,17 +62,17 @@ class DirectiveLanguageFeature:
 
     def get_implementation(
         self, directive: str, domain: Optional[str]
-    ) -> Optional[Directive]:
+    ) -> Optional[Type[Directive]]:
         """Return the implementation for the given directive name."""
         return self.index_directives().get(directive, None)
 
-    def index_directives(self) -> Dict[str, Directive]:
+    def index_directives(self) -> Dict[str, Type[Directive]]:
         """Return all known directives."""
         return dict()
 
     def suggest_directives(
         self, context: CompletionContext
-    ) -> Iterable[Tuple[str, Directive]]:
+    ) -> Iterable[Tuple[str, Type[Directive]]]:
         """Suggest directives that may be used, given a completion context."""
         return self.index_directives().items()
 
@@ -80,7 +85,7 @@ class DirectiveLanguageFeature:
         if impl is None:
             return []
 
-        option_spec = impl.option_spec or {}
+        option_spec = getattr(impl, "option_spec", {}) or {}
         return option_spec.keys()
 
     def resolve_argument_link(
@@ -427,7 +432,7 @@ class Directives(LanguageFeature):
             doc["description"] = "\n".join(description)
             self._documentation[key] = doc
 
-    def get_directives(self) -> Dict[str, Directive]:
+    def get_directives(self) -> Dict[str, Type[Directive]]:
         """Return a dictionary of all known directives."""
 
         directives = {}
@@ -446,7 +451,7 @@ class Directives(LanguageFeature):
 
     def get_implementation(
         self, directive: str, domain: Optional[str]
-    ) -> Optional[Directive]:
+    ) -> Optional[Type[Directive]]:
         """Return the implementation of a directive given its name
 
         Parameters
@@ -483,7 +488,7 @@ class Directives(LanguageFeature):
 
     def suggest_directives(
         self, context: CompletionContext
-    ) -> Iterable[Tuple[str, Directive]]:
+    ) -> Iterable[Tuple[str, Type[Directive]]]:
         """Suggest directives that may be used, given a completion context.
 
         Parameters
@@ -580,56 +585,12 @@ class Directives(LanguageFeature):
         self.logger.debug("Completing directives")
 
         items = []
-        match = context.match
-        groups = match.groupdict()
-
-        # Calculate the range of text the CompletionItems should edit.
-        # If there is an existing argument to the directive, we should leave it untouched
-        # otherwise, edit the whole line to insert any required arguments.
-        start = match.span()[0] + match.group(0).find(".")
-        include_argument = context.snippet_support
-        end = match.span()[1]
-
-        if groups["argument"]:
-            include_argument = False
-            end = match.span()[0] + match.group(0).find("::") + 2
-
-        range_ = Range(
-            start=Position(line=context.position.line, character=start),
-            end=Position(line=context.position.line, character=end),
-        )
-
         for name, directive in self.suggest_directives(context):
+            item = render_directive_completion(context, name, directive)
+            if item is None:
+                continue
 
-            # TODO: Give better names to arguments based on what they represent.
-            if include_argument:
-                insert_format = InsertTextFormat.Snippet
-                args = " " + " ".join(
-                    "${{{0}:arg{0}}}".format(i)
-                    for i in range(1, directive.required_arguments + 1)
-                )
-            else:
-                args = ""
-                insert_format = InsertTextFormat.PlainText
-
-            try:
-                dotted_name = f"{directive.__module__}.{directive.__name__}"
-            except AttributeError:
-                dotted_name = f"{directive.__module__}.{directive.__class__.__name__}"
-
-            insert_text = f".. {name}::{args}"
-
-            items.append(
-                CompletionItem(
-                    label=name,
-                    kind=CompletionItemKind.Class,
-                    detail=dotted_name,
-                    filter_text=insert_text,
-                    text_edit=TextEdit(range=range_, new_text=insert_text),
-                    insert_text_format=insert_format,
-                    data={"completion_type": "directive"},
-                )
-            )
+            items.append(item)
 
         return items
 
@@ -663,35 +624,13 @@ class Directives(LanguageFeature):
             return []
 
         items = []
-        match = context.match
-        groups = match.groupdict()
-        impl_name = f"{impl.__module__}.{impl.__name__}"
-
-        option = groups["option"]
-        start = match.span()[0] + match.group(0).find(option)
-        end = start + len(option)
-
-        range_ = Range(
-            start=Position(line=context.position.line, character=start),
-            end=Position(line=context.position.line, character=end),
-        )
 
         for option in self.suggest_options(context, name, domain):
-            insert_text = f":{option}:"
+            item = render_directive_option_completion(context, option, name, impl)
+            if item is None:
+                continue
 
-            items.append(
-                CompletionItem(
-                    label=option,
-                    detail=f"{impl_name}:{option}",
-                    kind=CompletionItemKind.Field,
-                    filter_text=insert_text,
-                    text_edit=TextEdit(range=range_, new_text=insert_text),
-                    data={
-                        "completion_type": "directive_option",
-                        "for_directive": name,
-                    },
-                )
-            )
+            items.append(item)
 
         return items
 

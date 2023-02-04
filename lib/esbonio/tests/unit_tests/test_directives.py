@@ -7,9 +7,9 @@ from typing import Tuple
 
 import pytest
 from docutils.parsers.rst import Directive
-from pygls.lsp.types import Location
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
+from lsprotocol.types import Location
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 
 from esbonio.lsp import CompletionContext
 from esbonio.lsp import DefinitionContext
@@ -18,6 +18,7 @@ from esbonio.lsp.directives import DIRECTIVE_OPTION
 from esbonio.lsp.directives import DirectiveLanguageFeature
 from esbonio.lsp.directives import Directives
 from esbonio.lsp.rst import DocumentLinkContext
+from esbonio.lsp.rst.config import ServerCompletionConfig
 
 if sys.version_info.minor < 8:
     from mock import Mock
@@ -194,7 +195,12 @@ def test_suggest_directives(simple: Directives):
     """Ensure that we can correctly combine directives from multiple sources."""
 
     context = CompletionContext(
-        doc=Mock(), location="rst", match=Mock(), position=Mock(), capabilities=Mock()
+        doc=Mock(),
+        location="rst",
+        match=Mock(),
+        position=Mock(),
+        config=ServerCompletionConfig(),
+        capabilities=Mock(),
     )
     items = simple.suggest_directives(context)
 
@@ -209,7 +215,12 @@ def test_suggest_directives_error(broken: Directives):
     """Ensure that we can gracefully handle errors in directive language features."""
 
     context = CompletionContext(
-        doc=Mock(), location="rst", match=Mock(), position=Mock(), capabilities=Mock()
+        doc=Mock(),
+        location="rst",
+        match=Mock(),
+        position=Mock(),
+        config=ServerCompletionConfig(),
+        capabilities=Mock(),
     )
     items = broken.suggest_directives(context)
 
@@ -226,7 +237,12 @@ def test_suggest_options(simple: Directives):
     """Ensure that we can correctly combine directives from multiple sources."""
 
     context = CompletionContext(
-        doc=Mock(), location="rst", match=Mock(), position=Mock(), capabilities=Mock()
+        doc=Mock(),
+        location="rst",
+        match=Mock(),
+        position=Mock(),
+        config=ServerCompletionConfig(),
+        capabilities=Mock(),
     )
 
     items = simple.suggest_options(context, "four", None)
@@ -240,7 +256,12 @@ def test_suggest_options_error(broken: Directives):
     """Ensure that we can gracefully handle errors in directive language features."""
 
     context = CompletionContext(
-        doc=Mock(), location="rst", match=Mock(), position=Mock(), capabilities=Mock()
+        doc=Mock(),
+        location="rst",
+        match=Mock(),
+        position=Mock(),
+        config=ServerCompletionConfig(),
+        capabilities=Mock(),
     )
 
     items = broken.suggest_options(context, "four", None)

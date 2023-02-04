@@ -7,15 +7,16 @@ from typing import List
 from typing import Optional
 from typing import Set
 from typing import Tuple
+from typing import Type
 
 import pygls.uris as Uri
 from docutils import nodes
 from docutils.parsers.rst import Directive
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionItemKind
-from pygls.lsp.types import Location
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionItemKind
+from lsprotocol.types import Location
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 from pygls.workspace import Document
 from sphinx.domains import Domain
 
@@ -70,11 +71,11 @@ class DomainDirectives(DirectiveLanguageFeature, DomainHelpers):
     def __init__(self, rst: SphinxLanguageServer):
         self.rst = rst
 
-        self._directives: Optional[Dict[str, Directive]] = None
+        self._directives: Optional[Dict[str, Type[Directive]]] = None
         """Cache for known directives."""
 
     @property
-    def directives(self) -> Dict[str, Directive]:
+    def directives(self) -> Dict[str, Type[Directive]]:
 
         if self._directives is not None:
             return self._directives
@@ -89,7 +90,7 @@ class DomainDirectives(DirectiveLanguageFeature, DomainHelpers):
 
     def get_implementation(
         self, directive: str, domain: Optional[str]
-    ) -> Optional[Directive]:
+    ) -> Optional[Type[Directive]]:
 
         if domain is not None:
             return self.directives.get(f"{domain}:{directive}", None)
@@ -106,12 +107,12 @@ class DomainDirectives(DirectiveLanguageFeature, DomainHelpers):
         # Try the std domain
         return self.directives.get(f"std:{directive}", None)
 
-    def index_directives(self) -> Dict[str, Directive]:
+    def index_directives(self) -> Dict[str, Type[Directive]]:
         return self.directives
 
     def suggest_directives(
         self, context: CompletionContext
-    ) -> Iterable[Tuple[str, Directive]]:
+    ) -> Iterable[Tuple[str, Type[Directive]]]:
 
         # In addition to providing each directive fully qualified, we should provide a
         # suggestion for directives in the std and primary domains without the prefix.
@@ -137,7 +138,8 @@ class DomainDirectives(DirectiveLanguageFeature, DomainHelpers):
         if impl is None:
             return []
 
-        return impl.option_spec.keys()
+        option_spec = getattr(impl, "option_spec", {})
+        return option_spec.keys()
 
 
 class DomainRoles(RoleLanguageFeature, DomainHelpers):

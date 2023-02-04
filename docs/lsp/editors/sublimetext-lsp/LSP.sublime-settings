@@ -1,0 +1,15 @@
+// Settings in here override those in "LSP/LSP.sublime-settings"
+{
+    "clients": {
+        "esbonio": {
+            "enabled": true,
+            "command": ["esbonio"],
+            "selector": "text.restructuredtext",
+            "initializationOptions": {
+                "server": {
+                    "logLevel": "debug"
+                }
+            }
+        }
+    }
+}

@@ -1,11 +1,11 @@
 import pathlib
 from typing import Generator
 
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionItemKind
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pygls.lsp.types import TextEdit
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionItemKind
+from lsprotocol.types import Position
+from lsprotocol.types import Range
+from lsprotocol.types import TextEdit
 
 from esbonio.lsp.rst import CompletionContext
 

@@ -108,6 +108,17 @@ export interface SphinxInfo extends SphinxConfig {
 }
 
 /**
+ * Configuration options related to completions.
+ */
+export interface ServerCompletionConfig {
+
+  /**
+   * Indicates how the user would prefer completion items to behave
+   */
+  preferredInsertBehavior: string
+}
+
+/**
  * Represents configuration options that should be passed to the server.
  */
 export interface ServerConfig {
@@ -131,6 +142,11 @@ export interface ServerConfig {
    * A flag to enable showing deprecation warnings.
    */
   showDeprecationWarnings: boolean
+
+  /**
+   * Server completion settings
+   */
+  completion: ServerCompletionConfig
 }
 
 /**
@@ -183,7 +199,7 @@ export class EsbonioClient {
   private client: LanguageClient
   private allowRestarts = true
 
-  private clientStartCallbacks: Array<(params: void) => void> = []
+  private clientStartedCallbacks: Array<(params: void) => void> = []
   private clientErrorCallbacks: Array<(params: void) => void> = []
   private buildStartCallbacks: Array<(params: void) => void> = []
   private buildCompleteCallbacks: Array<(params: BuildCompleteResult) => void> = []
@@ -225,16 +241,15 @@ export class EsbonioClient {
 
     try {
       this.logger.info("Starting Language Server")
-      this.client.start()
-      this.clientStartCallbacks.forEach(fn => fn())
+      this.configureHandlers()
 
       if (DEBUG) {
         // Auto open the output window when debugging
         this.client.outputChannel.show()
       }
 
-      await this.client.onReady()
-      this.configureHandlers()
+      await this.client.start()
+      this.clientStartedCallbacks.forEach(fn => fn())
 
     } catch (err) {
       this.clientErrorCallbacks.forEach(fn => fn(err))
@@ -384,6 +399,10 @@ export class EsbonioClient {
     let command = await this.python.getCmd()
     let config = this.editor.getConfiguration("esbonio")
 
+    if (config.get<boolean>('server.enableDevTools')) {
+      command.push("-m", "lsp_devtools", "agent", "--", ...command)
+    }
+
     let startupModule = config.get<string>("server.startupModule")
 
     // Entry point can either be a script, or it can be a python module.
@@ -464,7 +483,10 @@ export class EsbonioClient {
         logLevel: config.get<string>('server.logLevel'),
         logFilter: config.get<string[]>('server.logFilter'),
         hideSphinxOutput: config.get<boolean>('server.hideSphinxOutput'),
-        showDeprecationWarnings: config.get<boolean>('server.showDeprecationWarnings')
+        showDeprecationWarnings: config.get<boolean>('server.showDeprecationWarnings'),
+        completion: {
+          preferredInsertBehavior: config.get<string>('server.completion.preferredInsertBehavior')
+        }
       }
     }
 
@@ -517,7 +539,7 @@ export class EsbonioClient {
   }
 
   onClientStart(callback: (_: void) => void) {
-    this.clientStartCallbacks.push(callback)
+    this.clientStartedCallbacks.push(callback)
   }
 
   onClientError(callback: (_: void) => void) {

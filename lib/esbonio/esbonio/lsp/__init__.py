@@ -11,45 +11,43 @@ from typing import List
 from typing import Optional
 from typing import Type
 
-from pygls.lsp.methods import CODE_ACTION
-from pygls.lsp.methods import COMPLETION
-from pygls.lsp.methods import COMPLETION_ITEM_RESOLVE
-from pygls.lsp.methods import DEFINITION
-from pygls.lsp.methods import DOCUMENT_LINK
-from pygls.lsp.methods import DOCUMENT_SYMBOL
-from pygls.lsp.methods import HOVER
-from pygls.lsp.methods import IMPLEMENTATION
-from pygls.lsp.methods import INITIALIZE
-from pygls.lsp.methods import INITIALIZED
-from pygls.lsp.methods import SHUTDOWN
-from pygls.lsp.methods import TEXT_DOCUMENT_DID_CHANGE
-from pygls.lsp.methods import TEXT_DOCUMENT_DID_OPEN
-from pygls.lsp.methods import TEXT_DOCUMENT_DID_SAVE
-from pygls.lsp.methods import WORKSPACE_DID_DELETE_FILES
-from pygls.lsp.types import CodeActionParams
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionList
-from pygls.lsp.types import CompletionOptions
-from pygls.lsp.types import CompletionParams
-from pygls.lsp.types import DefinitionParams
-from pygls.lsp.types import DeleteFilesParams
-from pygls.lsp.types import DidChangeTextDocumentParams
-from pygls.lsp.types import DidOpenTextDocumentParams
-from pygls.lsp.types import DidSaveTextDocumentParams
-from pygls.lsp.types import DocumentLinkParams
-from pygls.lsp.types import DocumentSymbolParams
-from pygls.lsp.types import FileOperationFilter
-from pygls.lsp.types import FileOperationPattern
-from pygls.lsp.types import FileOperationRegistrationOptions
-from pygls.lsp.types import Hover
-from pygls.lsp.types import HoverParams
-from pygls.lsp.types import ImplementationParams
-from pygls.lsp.types import InitializedParams
-from pygls.lsp.types import InitializeParams
-from pygls.lsp.types import MarkupContent
-from pygls.lsp.types import MarkupKind
-from pygls.lsp.types import ServerCapabilities
-from pygls.protocol import LanguageServerProtocol
+from lsprotocol.types import COMPLETION_ITEM_RESOLVE
+from lsprotocol.types import INITIALIZE
+from lsprotocol.types import INITIALIZED
+from lsprotocol.types import SHUTDOWN
+from lsprotocol.types import TEXT_DOCUMENT_CODE_ACTION
+from lsprotocol.types import TEXT_DOCUMENT_COMPLETION
+from lsprotocol.types import TEXT_DOCUMENT_DEFINITION
+from lsprotocol.types import TEXT_DOCUMENT_DID_CHANGE
+from lsprotocol.types import TEXT_DOCUMENT_DID_OPEN
+from lsprotocol.types import TEXT_DOCUMENT_DID_SAVE
+from lsprotocol.types import TEXT_DOCUMENT_DOCUMENT_LINK
+from lsprotocol.types import TEXT_DOCUMENT_DOCUMENT_SYMBOL
+from lsprotocol.types import TEXT_DOCUMENT_HOVER
+from lsprotocol.types import TEXT_DOCUMENT_IMPLEMENTATION
+from lsprotocol.types import WORKSPACE_DID_DELETE_FILES
+from lsprotocol.types import CodeActionParams
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionList
+from lsprotocol.types import CompletionOptions
+from lsprotocol.types import CompletionParams
+from lsprotocol.types import DefinitionParams
+from lsprotocol.types import DeleteFilesParams
+from lsprotocol.types import DidChangeTextDocumentParams
+from lsprotocol.types import DidOpenTextDocumentParams
+from lsprotocol.types import DidSaveTextDocumentParams
+from lsprotocol.types import DocumentLinkParams
+from lsprotocol.types import DocumentSymbolParams
+from lsprotocol.types import FileOperationFilter
+from lsprotocol.types import FileOperationPattern
+from lsprotocol.types import FileOperationRegistrationOptions
+from lsprotocol.types import Hover
+from lsprotocol.types import HoverParams
+from lsprotocol.types import ImplementationParams
+from lsprotocol.types import InitializedParams
+from lsprotocol.types import InitializeParams
+from lsprotocol.types import MarkupContent
+from lsprotocol.types import MarkupKind
 
 from .rst import CompletionContext
 from .rst import DefinitionContext
@@ -81,29 +79,6 @@ ESBONIO_SERVER_PREVIEW = "esbonio.server.preview"
 ESBONIO_SERVER_BUILD = "esbonio.server.build"
 
 
-class Patched(LanguageServerProtocol):
-    """Tweaked version of the protocol allowing us to tweak how the `ServerCapabilities`
-    are constructed."""
-
-    def __init__(self, *args, **kwargs):
-        self._server_capabilities = ServerCapabilities()
-        super().__init__(*args, **kwargs)
-
-    @property
-    def server_capabilities(self):
-        return self._server_capabilities
-
-    @server_capabilities.setter
-    def server_capabilities(self, value: ServerCapabilities):
-
-        if WORKSPACE_DID_DELETE_FILES in self.fm.features:
-            opts = self.fm.feature_options.get(WORKSPACE_DID_DELETE_FILES, None)
-            if opts:
-                value.workspace.file_operations.did_delete = opts  # type: ignore
-
-        self._server_capabilities = value
-
-
 def create_language_server(
     server_cls: Type[RstLanguageServer], modules: Iterable[str], *args, **kwargs
 ) -> RstLanguageServer:
@@ -123,14 +98,7 @@ def create_language_server(
     if "logger" not in kwargs:
         kwargs["logger"] = logger
 
-    try:
-        server = server_cls(*args, **kwargs, protocol_cls=Patched)
-    except TypeError:
-        # Work around older version of pygls on Python 3.6
-        kwargs.pop("name", None)
-        kwargs.pop("version", None)
-
-        server = server_cls(*args, **kwargs, protocol_cls=Patched)
+    server = server_cls(*args, **kwargs)
 
     for module in modules:
         _load_module(server, module)
@@ -162,11 +130,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
     def on_open(ls: RstLanguageServer, params: DidOpenTextDocumentParams):
-
-        # TODO: Delete me when we've dropped Python 3.6 and a pygls release that
-        # remembers the language id is available.
-        doc = ls.workspace.get_document(params.text_document.uri)
-        doc.language_id = params.text_document.language_id  # type: ignore
+        ...
 
     @server.feature(TEXT_DOCUMENT_DID_CHANGE)
     def on_change(ls: RstLanguageServer, params: DidChangeTextDocumentParams):
@@ -203,7 +167,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
         for feature in ls._features.values():
             feature.delete_files(params)
 
-    @server.feature(CODE_ACTION)
+    @server.feature(TEXT_DOCUMENT_CODE_ACTION)
     def on_code_action(ls: RstLanguageServer, params: CodeActionParams):
         actions = []
 
@@ -212,7 +176,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         return actions
 
-    @server.feature(HOVER)
+    @server.feature(TEXT_DOCUMENT_HOVER)
     def on_hover(ls: RstLanguageServer, params: HoverParams):
         uri = params.text_document.uri
         doc = ls.workspace.get_document(uri)
@@ -254,7 +218,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
     # <engine-example>
     @server.feature(
-        COMPLETION,
+        TEXT_DOCUMENT_COMPLETION,
         CompletionOptions(
             trigger_characters=[">", ".", ":", "`", "<", "/"], resolve_provider=True
         ),
@@ -284,12 +248,13 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
                             location=location,
                             match=match,
                             position=pos,
+                            config=ls.user_config.server.completion,
                             capabilities=ls.client_capabilities,
                         )
                         ls.logger.debug("Completion context: %s", context)
 
                         for item in feature.complete(context):
-                            item.data = {"source_feature": name, **(item.data or {})}
+                            item.data = {"source_feature": name, **(item.data or {})}  # type: ignore
                             items.append(item)
 
         return CompletionList(is_incomplete=False, items=items)
@@ -300,7 +265,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
     def on_completion_resolve(
         ls: RstLanguageServer, item: CompletionItem
     ) -> CompletionItem:
-        source = (item.data or {}).get("source_feature", "")
+        source = (item.data or {}).get("source_feature", "")  # type: ignore
         feature = ls.get_feature(source)
 
         if not feature:
@@ -311,7 +276,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         return feature.completion_resolve(item)
 
-    @server.feature(DEFINITION)
+    @server.feature(TEXT_DOCUMENT_DEFINITION)
     def on_definition(ls: RstLanguageServer, params: DefinitionParams):
         uri = params.text_document.uri
         pos = params.position
@@ -337,7 +302,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         return definitions
 
-    @server.feature(IMPLEMENTATION)
+    @server.feature(TEXT_DOCUMENT_IMPLEMENTATION)
     def on_implementation(ls: RstLanguageServer, params: ImplementationParams):
         uri = params.text_document.uri
         pos = params.position
@@ -364,7 +329,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         return implementations
 
-    @server.feature(DOCUMENT_LINK)
+    @server.feature(TEXT_DOCUMENT_DOCUMENT_LINK)
     def on_document_link(ls: RstLanguageServer, params: DocumentLinkParams):
         uri = params.text_document.uri
         doc = ls.workspace.get_document(uri)
@@ -376,12 +341,12 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
         return links
 
-    @server.feature(DOCUMENT_SYMBOL)
+    @server.feature(TEXT_DOCUMENT_DOCUMENT_SYMBOL)
     def on_document_symbol(ls: RstLanguageServer, params: DocumentSymbolParams):
 
         doctree = ls.get_initial_doctree(uri=params.text_document.uri)
         if doctree is None:
-            return []
+            return None
 
         visitor = SymbolVisitor(ls, doctree)
         doctree.walkabout(visitor)
@@ -406,7 +371,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
     @server.command(ESBONIO_SERVER_PREVIEW)
     def preview(ls: RstLanguageServer, *args) -> Dict[str, Any]:
         """Start/Generate a preview of the project"""
-        params = {} if not args[0] else args[0][0]._asdict()
+        params = {} if not args[0] else args[0][0]
         ls.logger.debug("%s: %s", ESBONIO_SERVER_PREVIEW, params)
 
         return ls.preview(params) or {}

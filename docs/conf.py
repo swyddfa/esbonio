@@ -15,10 +15,10 @@ from typing import List
 sys.path.insert(0, os.path.abspath("../lib/esbonio"))
 sys.path.insert(0, os.path.abspath("./ext"))
 
-import pygls.lsp.methods as M
 from docutils.parsers.rst import nodes
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import CompletionItemKind
+from lsprotocol.types import METHOD_TO_TYPES
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import CompletionItemKind
 from sphinx.application import Sphinx
 
 import esbonio.lsp
@@ -28,7 +28,7 @@ from esbonio.lsp.rst import CompletionContext
 
 # -- Project information -----------------------------------------------------
 project = "Esbonio"
-copyright = "2022"
+copyright = "2023"
 author = "the Esbonio project"
 release = esbonio.lsp.__version__
 
@@ -49,7 +49,6 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
-    "sphinxcontrib.autodoc_pydantic",
     "esbonio.relevant_to",
     "esbonio.tutorial",
     "cli_help",
@@ -83,7 +82,7 @@ html_theme = "furo"
 html_title = "Esbonio"
 html_logo = "../resources/io.github.swyddfa.Esbonio.svg"
 html_favicon = "favicon.svg"
-# html_static_path = ["_static"]
+html_static_path = ["_static"]
 html_theme_options = {
     "source_repository": "https://github.com/swyddfa/esbonio/",
     "source_branch": BRANCH,
@@ -107,12 +106,8 @@ class LspMethod(TargetCompletion):
     def _index_methods(self):
         self.items = []
 
-        for name, meth in M.__dict__.items():
-
-            if not isinstance(meth, str) or not name.isupper():
-                continue
-
-            item = CompletionItem(label=meth, kind=CompletionItemKind.Constant)
+        for method in METHOD_TO_TYPES.keys():
+            item = CompletionItem(label=method, kind=CompletionItemKind.Constant)
             self.items.append(item)
 
     def complete_targets(
@@ -136,7 +131,7 @@ def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
 
 def setup(app: Sphinx):
     app.add_role("lsp", lsp_role)
-
+    app.add_css_file("custom.css")
     app.add_object_type(
         "command", "command", objname="command", indextemplate="pair: %s; command"
     )

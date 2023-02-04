@@ -7,10 +7,10 @@ from typing import Optional
 from typing import Tuple
 
 import pytest
-from pygls.lsp.types import CompletionItem
-from pygls.lsp.types import Location
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
+from lsprotocol.types import CompletionItem
+from lsprotocol.types import Location
+from lsprotocol.types import Position
+from lsprotocol.types import Range
 
 from esbonio.lsp import CompletionContext
 from esbonio.lsp import DefinitionContext
@@ -19,6 +19,7 @@ from esbonio.lsp.roles import DEFAULT_ROLE
 from esbonio.lsp.roles import ROLE
 from esbonio.lsp.roles import RoleLanguageFeature
 from esbonio.lsp.roles import Roles
+from esbonio.lsp.rst.config import ServerCompletionConfig
 
 if sys.version_info.minor < 8:
     from mock import Mock
@@ -185,7 +186,12 @@ def test_suggest_roles(simple: Roles):
     """Ensure that we can correctly combine roles from multiple sources."""
 
     context = CompletionContext(
-        doc=Mock(), location="rst", match=Mock(), position=Mock(), capabilities=Mock()
+        doc=Mock(),
+        location="rst",
+        match=Mock(),
+        position=Mock(),
+        config=ServerCompletionConfig(),
+        capabilities=Mock(),
     )
 
     items = simple.suggest_roles(context)
@@ -200,7 +206,12 @@ def test_suggest_roles_error(broken: Roles):
     """Ensure that we can gracefully handle errors in role language features."""
 
     context = CompletionContext(
-        doc=Mock(), location="rst", match=Mock(), position=Mock(), capabilities=Mock()
+        doc=Mock(),
+        location="rst",
+        match=Mock(),
+        position=Mock(),
+        config=ServerCompletionConfig(),
+        capabilities=Mock(),
     )
 
     items = broken.suggest_roles(context)
@@ -279,7 +290,12 @@ def test_suggest_targets(simple: Roles):
     """Ensure that we can collect target completions from multiple sources."""
 
     context = CompletionContext(
-        doc=Mock(), location="rst", match=Mock(), position=Mock(), capabilities=Mock()
+        doc=Mock(),
+        location="rst",
+        match=Mock(),
+        position=Mock(),
+        config=ServerCompletionConfig(),
+        capabilities=Mock(),
     )
 
     items = simple.suggest_targets(context, "one", "")
@@ -296,7 +312,12 @@ def test_suggest_targets_error(broken: Roles):
     """Ensure that we can gracefully handle errors in role language features."""
 
     context = CompletionContext(
-        doc=Mock(), location="rst", match=Mock(), position=Mock(), capabilities=Mock()
+        doc=Mock(),
+        location="rst",
+        match=Mock(),
+        position=Mock(),
+        config=ServerCompletionConfig(),
+        capabilities=Mock(),
     )
 
     items = broken.suggest_targets(context, "four", "")

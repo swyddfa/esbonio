@@ -130,4 +130,5 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     # Export info that can be picked up in later steps.
     echo "VERSION=${VERSION}" >> $GITHUB_ENV
     echo "RELEASE_DATE=${DATE}" >> $GITHUB_ENV
+    echo "RELEASE_TAG=${TAG}" >> $GITHUB_ENV
 fi

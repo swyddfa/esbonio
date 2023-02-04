@@ -6,7 +6,7 @@ from typing import Optional
 
 import pkg_resources
 import pygls.uris as Uri
-from pygls.lsp.types import CompletionItem
+from lsprotocol.types import CompletionItem
 
 from esbonio.lsp.roles import Roles
 from esbonio.lsp.rst import CompletionContext

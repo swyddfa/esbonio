@@ -1,0 +1,8 @@
+span.guilabel {
+    margin: 0 0.3em;
+}
+
+kbd.compound {
+    display: inline-flex;
+    align-items: baseline;
+}

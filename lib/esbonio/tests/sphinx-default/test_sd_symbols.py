@@ -2,23 +2,11 @@ from typing import List
 from typing import Optional
 
 import pytest
-from pygls.lsp.types import DocumentSymbol
-from pygls.lsp.types import Position
-from pygls.lsp.types import Range
-from pygls.lsp.types import SymbolKind
-from pytest_lsp import Client
+from lsprotocol.types import DocumentSymbol
+from lsprotocol.types import SymbolKind
+from pytest_lsp import LanguageClient
 
-
-def from_str(spec: str):
-    """Create a range from the given string a:b-x:y"""
-    start, end = spec.split("-")
-    sl, sc = start.split(":")
-    el, ec = end.split(":")
-
-    return Range(
-        start=Position(line=int(sl), character=int(sc)),
-        end=Position(line=int(el), character=int(ec)),
-    )
+from esbonio.lsp.testing import range_from_str
 
 
 def check_symbols(actual: DocumentSymbol, expected: DocumentSymbol):
@@ -55,8 +43,8 @@ def symbol(
     return DocumentSymbol(
         name=name,
         kind=kind,
-        range=from_str(range),
-        selection_range=from_str(selection_range or range),
+        range=range_from_str(range),
+        selection_range=range_from_str(selection_range or range),
         children=children or [],
     )
 
@@ -160,7 +148,7 @@ def symbol(
     ],
 )
 async def test_document_symbols(
-    client: Client, filepath: str, expected: List[DocumentSymbol]
+    client: LanguageClient, filepath: str, expected: List[DocumentSymbol]
 ):
     """Ensure that we handle ``textDocument/documentSymbols`` requests correctly"""
 

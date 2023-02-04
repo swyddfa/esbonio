@@ -1,7 +1,7 @@
 import itertools
 
 import pytest
-from pytest_lsp import Client
+from pytest_lsp import LanguageClient
 from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
@@ -33,7 +33,7 @@ THEOREM_FILES = {"index.rst", "pythagoras.rst"}
         )
     ],
 )
-async def test_codeblock_completions(client: Client, text: str, setup):
+async def test_codeblock_completions(client: LanguageClient, text: str, setup):
     """Ensure that we can offer correct ``.. code-block::`` suggestions."""
 
     expected, unexpected = setup
@@ -88,7 +88,7 @@ async def test_codeblock_completions(client: Client, text: str, setup):
         ),
     ],
 )
-async def test_include_argument_completions(client: Client, text, setup):
+async def test_include_argument_completions(client: LanguageClient, text, setup):
     """Ensure that we can offer the correct filepath suggestions."""
 
     filepath, expected, unexpected = setup
