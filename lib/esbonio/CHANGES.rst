@@ -1,3 +1,50 @@
+v0.16.0 - 2023-02-04
+--------------------
+
+Features
+^^^^^^^^
+
+- Add new ``server.completion.preferredInsertBehavior`` option.
+  This allows the user to indicate to the server how they would prefer completions to behave when accepted.
+
+  The default value is ``replace`` and corresponds to the server's current behavior where completions replace existing text.
+  In this mode the server will set the ``textEdit`` field of a ``CompletionItem``.
+
+  This release also introduces a new mode ``insert``, where completions will append to existing text rather than replacing it.
+  This also means that only the completions that are compatible with any existing text will be returned.
+  In this mode the server will set the ``insertText`` field of a ``CompletionItem`` which should work better with editors that do no support ``textEdits``.
+
+  **Note:** This option is only a hint and the server will not ensure that it is followed, though it is planned for all first party completion suggestions to (eventually) respect this setting.
+  As of this release, all completion suggestions support ``replace``  and role, directive and directive option completions support ``insert``. (`#471 <https://github.com/swyddfa/esbonio/issues/471>`_)
+
+
+Documentation
+^^^^^^^^^^^^^
+
+- Add getting started guide for Sublime Text by @vkhitrin (`#522 <https://github.com/swyddfa/esbonio/issues/522>`_)
+
+
+API Changes
+^^^^^^^^^^^
+
+- ``CompletionContext`` objects now expose a ``config`` field that contains any user supplied configuration values affecting completions. (`#531 <https://github.com/swyddfa/esbonio/issues/531>`_)
+
+
+Misc
+^^^^
+
+- Drop Python 3.6 support (`#400 <https://github.com/swyddfa/esbonio/issues/400>`_)
+- Migrate to pygls ``v1.0``
+
+  There are some breaking changes, but only if you use Esbonio's extension APIs, if you simply use the language server in your favourite editor you *shouldn't* notice a difference.
+
+  The most notable change is the replacement of ``pydantic`` type definitions with ``attrs`` and ``cattrs`` via the new `lsprotocol <https://github.com/microsoft/lsprotocol>`__ package.
+  For more details see pygls' `migration guide <https://pygls.readthedocs.io/en/latest/pages/migrating-to-v1.html>`__. (`#484 <https://github.com/swyddfa/esbonio/issues/484>`_)
+- Drop support for Sphinx 3.x
+
+  Add support for Sphinx 6.x (`#523 <https://github.com/swyddfa/esbonio/issues/523>`_)
+
+
 v0.15.0 - 2022-12-03
 --------------------
 

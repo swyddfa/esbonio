@@ -1,3 +1,0 @@
-Drop support for Sphinx 3.x
-
-Add support for Sphinx 6.x

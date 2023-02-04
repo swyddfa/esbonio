@@ -1,1 +1,0 @@
-``CompletionContext`` objects now expose a ``config`` field that contains any user supplied configuration values affecting completions.
