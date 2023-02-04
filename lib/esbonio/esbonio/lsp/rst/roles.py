@@ -4,11 +4,11 @@ from typing import Dict
 from typing import Optional
 
 import docutils.parsers.rst.roles as docutils_roles
-import pkg_resources
 
 from esbonio.lsp.roles import RoleLanguageFeature
 from esbonio.lsp.roles import Roles
 from esbonio.lsp.rst import RstLanguageServer
+from esbonio.lsp.util import resources
 
 
 class Docutils(RoleLanguageFeature):
@@ -45,7 +45,7 @@ class Docutils(RoleLanguageFeature):
 
 
 def esbonio_setup(rst: RstLanguageServer, roles: Roles):
-    documentation = pkg_resources.resource_string("esbonio.lsp.rst", "roles.json")
+    documentation = resources.read_string("esbonio.lsp.rst", "roles.json")
 
-    roles.add_documentation(json.loads(documentation.decode("utf8")))
+    roles.add_documentation(json.loads(documentation))
     roles.add_feature(Docutils())
