@@ -1,5 +1,0 @@
-Add ``esbonio.server.enableDevTools`` option.
-
-This new flag indended for developers, when enabled, will wrap the language server in the `lsp-devtools <https://github.com/swyddfa/lsp-devtools>`__ agent, enabling the use of some extra tooling.
-
-It is on the developer to ensure the required dependencies are installed.

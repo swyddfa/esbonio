@@ -1,1 +1,0 @@
-Bump ``vscode-languageclient`` to 8.x

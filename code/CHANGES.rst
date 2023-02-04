@@ -1,3 +1,36 @@
+v0.10.6 - 2023-02-04
+--------------------
+
+Enhancements
+^^^^^^^^^^^^
+
+- Add ``esbonio.server.completion.preferredInsertBehavior`` option.
+  Controls how completions behave when accepted, the following values are supported.
+
+  - ``replace`` (default)
+
+     Accepted completions will replace existing text, allowing the server to rewrite the current line in place.
+     This allows the server to return all possible completions within the current context.
+     In this mode the server will set the ``textEdit`` field of a ``CompletionItem``.
+
+  - ``insert``
+
+     Accepted completions will append to existing text rather than replacing it.
+     Since rewriting is not possible, only the completions that are compatible with any existing text will be returned.
+     In this mode the server will set the ``insertText`` field of a ``CompletionItem`` which should work better with editors that do no support ``textEdits``. (`#471 <https://github.com/swyddfa/esbonio/issues/471>`_)
+- Add ``esbonio.server.enableDevTools`` option.
+
+  This new flag indended for developers, when enabled, will wrap the language server in the `lsp-devtools <https://github.com/swyddfa/lsp-devtools>`__ agent, enabling the use of some extra tooling.
+
+  It is on the developer to ensure the required dependencies are installed. (`#532 <https://github.com/swyddfa/esbonio/issues/532>`_)
+
+
+Misc
+^^^^
+
+- Bump ``vscode-languageclient`` to 8.x (`#485 <https://github.com/swyddfa/esbonio/issues/485>`_)
+
+
 v0.10.5 - 2022-11-05
 --------------------
 
