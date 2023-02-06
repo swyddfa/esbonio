@@ -28,7 +28,6 @@ class Images:
     def complete_arguments(
         self, context: CompletionContext, domain: str, name: str
     ) -> List[CompletionItem]:
-
         if domain or name not in {"figure", "image"}:
             return []
 
@@ -49,7 +48,6 @@ class Images:
         domain: Optional[str],
         argument: str,
     ) -> List[Location]:
-
         if domain or directive not in {"figure", "image"}:
             return []
 
@@ -74,7 +72,6 @@ class Images:
         domain: Optional[str],
         argument: str,
     ) -> Tuple[Optional[str], Optional[str]]:
-
         if domain or directive not in {"figure", "image"}:
             return None, None
 
@@ -84,7 +81,6 @@ class Images:
         return self.resolve_path(context.doc, argument), None
 
     def resolve_path(self, doc: Document, argument: str) -> Optional[str]:
-
         if argument.startswith("/"):
             if not self.rst.app:
                 return None

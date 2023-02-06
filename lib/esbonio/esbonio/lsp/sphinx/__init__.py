@@ -145,7 +145,6 @@ class SphinxLanguageServer(RstLanguageServer):
         self.build()
 
     def _initialize_sphinx(self):
-
         try:
             return self.create_sphinx_app(self.user_config)  # type: ignore
         except MissingConfigError:
@@ -173,9 +172,7 @@ class SphinxLanguageServer(RstLanguageServer):
             )
 
     def on_shutdown(self, *args):
-
         if self.preview_process:
-
             if not hasattr(self.preview_process, "kill"):
                 self.preview_process.terminate()
             else:
@@ -352,7 +349,6 @@ class SphinxLanguageServer(RstLanguageServer):
         status: IO,
         warning: IO,
     ):
-
         # Disable color escape codes in Sphinx's log messages
         console.nocolor()
 
@@ -407,7 +403,6 @@ class SphinxLanguageServer(RstLanguageServer):
         self.load_extension(name, setup)
 
     def preview(self, options: Dict[str, Any]) -> Dict[str, Any]:
-
         if not self.app or not self.app.builder:
             return {}
 
@@ -789,7 +784,6 @@ class SphinxLanguageServer(RstLanguageServer):
         inv = inv[project]
 
         for target_type in self.get_role_target_types(name, domain):
-
             explicit_domain = f"{domain}:{target_type}"
             if explicit_domain in inv:
                 targets[target_type] = inv[explicit_domain]

@@ -28,7 +28,6 @@ class Includes:
     def complete_arguments(
         self, context: CompletionContext, domain: str, name: str
     ) -> List[CompletionItem]:
-
         if domain or name not in {"include", "literalinclude"}:
             return []
 
@@ -49,7 +48,6 @@ class Includes:
         domain: Optional[str],
         argument: str,
     ) -> List[Location]:
-
         if domain or directive not in {"literalinclude", "include"}:
             return []
 
@@ -74,14 +72,12 @@ class Includes:
         domain: Optional[str],
         argument: str,
     ) -> Tuple[Optional[str], Optional[str]]:
-
         if domain or directive not in {"literalinclude", "include"}:
             return None, None
 
         return self.resolve_path(context.doc, argument), None
 
     def resolve_path(self, doc: Document, argument: str) -> Optional[str]:
-
         if argument.startswith("/"):
             if not self.rst.app:
                 return None

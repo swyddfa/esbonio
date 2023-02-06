@@ -15,7 +15,6 @@ class Docutils(RoleLanguageFeature):
     """Support for docutils' built-in roles."""
 
     def __init__(self) -> None:
-
         self._roles: Optional[Dict[str, Any]] = None
         """Cache for known roles."""
 

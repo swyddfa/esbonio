@@ -21,7 +21,6 @@ class CodeBlocks:
 
     @property
     def lexers(self) -> List[CompletionItem]:
-
         if len(self._lexers) == 0:
             self._index_lexers()
 
@@ -30,7 +29,6 @@ class CodeBlocks:
     def complete_arguments(
         self, context: CompletionContext, domain: str, name: str
     ) -> List[CompletionItem]:
-
         if name in {"code-block", "highlight"}:
             return self.lexers
 
@@ -39,7 +37,7 @@ class CodeBlocks:
     def _index_lexers(self):
         self._lexers = []
 
-        for (name, labels, files, mimes) in get_all_lexers():
+        for name, labels, files, mimes in get_all_lexers():
             for label in labels:
                 documentation = f"""\
                 ### {name}

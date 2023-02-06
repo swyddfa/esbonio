@@ -34,7 +34,6 @@ def path_to_completion_item(
         filter_text = None
         text_edit = None
     else:
-
         start += 1
         _, end = context.match.span()
         prefix = context.match.group(0)[start:]

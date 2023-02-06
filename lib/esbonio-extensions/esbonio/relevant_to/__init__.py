@@ -136,7 +136,7 @@ class RelevantTo(SphinxDirective):
         group["docname"] = pathlib.Path(self.env.docname).parts[-1]
         group["options"] = []
 
-        for (item, content) in sections.children:
+        for item, content in sections.children:
             assert isinstance(item, nodes.term), "Expected term."
             assert isinstance(content, nodes.definition), "Expected definition"
 
@@ -167,7 +167,6 @@ class RelevantTo(SphinxDirective):
 
 
 class CollectSections(Transform):
-
     default_priority = 500
 
     def apply(self):
@@ -196,7 +195,6 @@ class CollectSections(Transform):
 
 
 def setup(app: Sphinx):
-
     app.add_directive("relevant-to", RelevantTo)
     app.add_node(
         relevant_section, html=(visit_relevent_section, depart_relevant_section)

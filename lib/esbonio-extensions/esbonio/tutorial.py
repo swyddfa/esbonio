@@ -50,7 +50,6 @@ def depart_solution(self, node):
 
 
 class Solution(BaseAdmonition):
-
     has_content = True
     node_class = solution
 
@@ -382,7 +381,6 @@ class NotebookTranslator(nodes.NodeVisitor):
         self.append_text("`: ")
 
     def visit_Text(self, node):
-
         if self.current_cell.cell_type == "markdown":
             self.append_text(node.astext())
             return
@@ -449,7 +447,6 @@ class Tutorial(Builder):
         pass
 
     def write_doc(self, docname: str, doctree: nodes.document) -> None:
-
         # Only process docs that have been marked as tutorials.
         metadata = self.env.metadata.get(docname)
         if metadata is None or metadata.get("tutorial", "") != "notebook":
@@ -502,7 +499,6 @@ class Tutorial(Builder):
         basename = f"{docpath.stem}-soln"
 
         for idx, soln in enumerate(doctree.traverse(condition=solution)):
-
             name = f"{basename}-{idx+1:02d}.py"
             destination = pathlib.Path("resources", docpath.with_suffix(""), name)
             refuri = relative_uri(src, str(destination))
@@ -562,7 +558,6 @@ class Tutorial(Builder):
         docpath = pathlib.Path(src)
 
         for image in list(doctree.traverse(condition=nodes.image)):
-
             source = pathlib.Path(self.app.srcdir, image["uri"])
             destination = pathlib.Path(
                 "resources", docpath.with_suffix(""), source.name
@@ -612,7 +607,6 @@ class Tutorial(Builder):
 
 
 def setup(app: Sphinx):
-
     app.add_node(solution, html=(visit_solution, depart_solution))
 
     app.add_builder(Tutorial)

@@ -411,7 +411,6 @@ class Roles(LanguageFeature):
     implementation_triggers = [ROLE]
 
     def definition(self, context: DefinitionContext) -> List[Location]:
-
         domain = context.match.group("domain") or ""
         name = context.match.group("name")
         label = context.match.group("label")
@@ -425,7 +424,6 @@ class Roles(LanguageFeature):
     def find_target_definitions(
         self, context: DefinitionContext, name: str, domain: str, label: str
     ) -> List[Location]:
-
         definitions = []
 
         for feature_name, feature in self._features.items():
@@ -446,7 +444,6 @@ class Roles(LanguageFeature):
         return definitions
 
     def document_link(self, context: DocumentLinkContext) -> List[DocumentLink]:
-
         links = []
 
         for line, text in enumerate(context.doc.lines):
@@ -565,7 +562,6 @@ class Roles(LanguageFeature):
         return self.complete_roles(context)
 
     def completion_resolve(self, item: CompletionItem) -> CompletionItem:
-
         # We need extra info to know who to call
         if not item.data:
             return item
@@ -597,7 +593,6 @@ class Roles(LanguageFeature):
                 )
 
     def complete_roles(self, context: CompletionContext) -> List[CompletionItem]:
-
         items = []
 
         for name, role in self.suggest_roles(context):
@@ -610,7 +605,6 @@ class Roles(LanguageFeature):
         return items
 
     def completion_resolve_role(self, item: CompletionItem) -> CompletionItem:
-
         # We need the detail field set to the role implementation's fully qualified name
         if not item.detail:
             return item
@@ -629,7 +623,6 @@ class Roles(LanguageFeature):
     def suggest_targets(
         self, context: CompletionContext, name: str, domain: str
     ) -> List[CompletionItem]:
-
         targets = []
 
         for feature_name, feature in self._features.items():
@@ -687,7 +680,6 @@ class Roles(LanguageFeature):
         modifier = groups["modifier"] or ""
 
         for candidate in self.suggest_targets(context, name, domain):
-
             # Don't interfere with items that already carry a `text_edit`, allowing
             # some providers (like filepaths) to do something special.
             if not candidate.text_edit:
@@ -711,7 +703,6 @@ class Roles(LanguageFeature):
         return targets
 
     def hover(self, context: HoverContext) -> str:
-
         if context.location not in {"rst", "docstring"}:
             return ""
 
@@ -728,7 +719,6 @@ class Roles(LanguageFeature):
         return self.hover_role(context, name, domain)
 
     def hover_role(self, context: HoverContext, name: str, domain: str) -> str:
-
         label = f"{domain}:{name}" if domain else name
         role = self.get_implementation(name, domain)
         if not role:
@@ -801,7 +791,6 @@ class Roles(LanguageFeature):
         return None
 
     def implementation(self, context: ImplementationContext) -> List[Location]:
-
         region = context.match.group("role")
         name = context.match.group("name")
         domain = context.match.group("domain")
@@ -820,7 +809,6 @@ class Roles(LanguageFeature):
     def find_role_implementation(
         self, context: ImplementationContext, name: str, domain: str
     ) -> List[Location]:
-
         impl = self.get_implementation(name, domain)
         if impl is None:
             return []

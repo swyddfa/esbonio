@@ -23,7 +23,6 @@ class Downloads:
     def complete_targets(
         self, context: CompletionContext, name: str, domain: Optional[str]
     ) -> List[CompletionItem]:
-
         if domain or name != "download":
             return []
 

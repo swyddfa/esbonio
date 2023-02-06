@@ -80,7 +80,6 @@ ROLES_MAPPING = {
 
 
 class Directive(Writer):
-
     supported = ("markdown",)
     output = None
 
@@ -191,13 +190,11 @@ class MarkdownTranslator(NodeVisitor):
         self.current_text += "- "
 
     def visit_paragraph(self, node):
-
         ignored_nodes = (nodes.list_item, nodes.field_body)
         if not isinstance(node.parent, ignored_nodes):
             self.current_text += "\n"
 
     def depart_paragraph(self, node):
-
         if not isinstance(node.parent, nodes.field_body):
             self.current_text += "\n"
 
