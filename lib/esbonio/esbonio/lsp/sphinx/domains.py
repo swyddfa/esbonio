@@ -76,7 +76,6 @@ class DomainDirectives(DirectiveLanguageFeature, DomainHelpers):
 
     @property
     def directives(self) -> Dict[str, Type[Directive]]:
-
         if self._directives is not None:
             return self._directives
 
@@ -91,7 +90,6 @@ class DomainDirectives(DirectiveLanguageFeature, DomainHelpers):
     def get_implementation(
         self, directive: str, domain: Optional[str]
     ) -> Optional[Type[Directive]]:
-
         if domain is not None:
             return self.directives.get(f"{domain}:{directive}", None)
 
@@ -113,14 +111,12 @@ class DomainDirectives(DirectiveLanguageFeature, DomainHelpers):
     def suggest_directives(
         self, context: CompletionContext
     ) -> Iterable[Tuple[str, Type[Directive]]]:
-
         # In addition to providing each directive fully qualified, we should provide a
         # suggestion for directives in the std and primary domains without the prefix.
         items = self.directives.copy()
         primary_domain = self.get_default_domain(context.doc.uri)
 
         for key, directive in self.directives.items():
-
             if key.startswith("std:"):
                 items[key.replace("std:", "")] = directive
                 continue
@@ -133,7 +129,6 @@ class DomainDirectives(DirectiveLanguageFeature, DomainHelpers):
     def suggest_options(
         self, context: CompletionContext, directive: str, domain: Optional[str]
     ) -> Iterable[str]:
-
         impl = self.get_implementation(directive, domain)
         if impl is None:
             return []
@@ -156,7 +151,6 @@ class DomainRoles(RoleLanguageFeature, DomainHelpers):
 
     @property
     def roles(self) -> Dict[str, Any]:
-
         if self._roles is not None:
             return self._roles
 
@@ -170,7 +164,6 @@ class DomainRoles(RoleLanguageFeature, DomainHelpers):
 
     @property
     def role_target_types(self) -> Dict[str, List[str]]:
-
         if self._role_target_types is not None:
             return self._role_target_types
 
@@ -248,7 +241,6 @@ class DomainRoles(RoleLanguageFeature, DomainHelpers):
     def get_implementation(
         self, role: str, domain: Optional[str]
     ) -> Optional[Directive]:
-
         if domain is not None:
             return self.roles.get(f"{domain}:{role}", None)
 
@@ -268,14 +260,12 @@ class DomainRoles(RoleLanguageFeature, DomainHelpers):
         return self.roles
 
     def suggest_roles(self, context: CompletionContext) -> Iterable[Tuple[str, Any]]:
-
         # In addition to providing each role fully qulaified, we should provide a
         # suggestion for directives in the std and primary domains without the prefix.
         items = self.roles.copy()
         primary_domain = self.get_default_domain(context.doc.uri)
 
         for key, role in self.roles.items():
-
             if key.startswith("std:"):
                 items[key.replace("std:", "")] = role
                 continue
@@ -288,7 +278,6 @@ class DomainRoles(RoleLanguageFeature, DomainHelpers):
     def complete_targets(
         self, context: CompletionContext, name: str, domain: str
     ) -> List[CompletionItem]:
-
         label = context.match.group("label")
 
         # Intersphinx targets contain ':' characters.
@@ -319,7 +308,6 @@ class DomainRoles(RoleLanguageFeature, DomainHelpers):
     def find_target_definitions(
         self, context: DefinitionContext, name: str, domain: str, label: str
     ) -> List[Location]:
-
         if not domain and name == "ref":
             return self.ref_definition(label)
 
@@ -388,7 +376,6 @@ class DomainRoles(RoleLanguageFeature, DomainHelpers):
         line = None
 
         for node in doctree.traverse(condition=nodes.target):
-
             if "refid" not in node:
                 continue
 
@@ -451,7 +438,6 @@ class Intersphinx(RoleLanguageFeature):
     def complete_targets(
         self, context: CompletionContext, name: str, domain: str
     ) -> List[CompletionItem]:
-
         label = context.match.group("label")
 
         # Intersphinx targets contain ':' characters.
@@ -463,7 +449,6 @@ class Intersphinx(RoleLanguageFeature):
     def complete_intersphinx_projects(
         self, name: str, domain: str
     ) -> List[CompletionItem]:
-
         items = []
         for project in self.get_intersphinx_projects():
             if not self.has_intersphinx_targets(project, name, domain):
@@ -495,7 +480,6 @@ class Intersphinx(RoleLanguageFeature):
     def resolve_target_link(
         self, context: DocumentLinkContext, name: str, domain: Optional[str], label: str
     ) -> Tuple[Optional[str], Optional[str]]:
-
         if not self.rst.app:
             return None, None
 
@@ -574,7 +558,6 @@ class Intersphinx(RoleLanguageFeature):
         inv = inv[project]
 
         for target_type in self.domain._get_role_target_types(name, domain):
-
             explicit_domain = f"{domain}:{target_type}"
             if explicit_domain in inv:
                 targets[target_type] = inv[explicit_domain]
@@ -595,7 +578,6 @@ class Intersphinx(RoleLanguageFeature):
 def intersphinx_target_to_completion_item(
     project: str, label: str, target: tuple, type_: str
 ) -> CompletionItem:
-
     # _. _. url, _
     source, version, _, display = target
 
@@ -614,7 +596,6 @@ def intersphinx_target_to_completion_item(
 
 
 def object_to_completion_item(object_: tuple) -> CompletionItem:
-
     # _, _, _, docname, anchor, priority
     name, display_name, type_, _, _, _ = object_
     insert_text = name

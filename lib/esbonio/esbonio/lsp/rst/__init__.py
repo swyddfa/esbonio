@@ -74,7 +74,6 @@ class CompletionContext:
         config: ServerCompletionConfig,
         capabilities: ClientCapabilities,
     ):
-
         self.doc: Document = doc
         """The document within which the completion request was made."""
 
@@ -174,7 +173,6 @@ class DocumentLinkContext:
     """Captures the context within which a document link request has been made."""
 
     def __init__(self, *, doc: Document, capabilities: ClientCapabilities):
-
         self.doc = doc
         """The document within which the document link request was made."""
 
@@ -197,7 +195,6 @@ class DefinitionContext:
     def __init__(
         self, *, doc: Document, location: str, match: "re.Match", position: Position
     ):
-
         self.doc = doc
         """The document within which the definition request was made."""
 
@@ -225,7 +222,6 @@ class ImplementationContext:
     def __init__(
         self, *, doc: Document, location: str, match: "re.Match", position: Position
     ):
-
         self.doc = doc
         """The document within which the implementation request was made."""
 
@@ -256,7 +252,6 @@ class HoverContext:
         position: Position,
         capabilities: ClientCapabilities,
     ):
-
         self.doc = doc
         self.location = location
         self.match = match
@@ -384,7 +379,6 @@ class DiagnosticList(collections.UserList):
     """
 
     def append(self, item: Diagnostic):
-
         if not isinstance(item, Diagnostic):
             raise TypeError("Expected Diagnostic")
 
@@ -763,7 +757,6 @@ class RstLanguageServer(LanguageServer):
             return "rst"
 
         if loctype in {".py", "py", "python"}:
-
             # Let's count how many pairs of triple quotes are above us in the file
             # even => we're outside a docstring
             # odd  => we're within a docstring
@@ -829,7 +822,6 @@ class RstLanguageServer(LanguageServer):
 
 
 def normalise_uri(uri: str) -> str:
-
     uri = Uri.from_fs_path(Uri.to_fs_path(uri))
 
     # Paths on windows are case insensitive.
@@ -853,7 +845,6 @@ def _get_setup_arguments(
 
     args = {}
     for name, type_ in parameters.items():
-
         if issubclass(server.__class__, type_):
             args[name] = server
             continue

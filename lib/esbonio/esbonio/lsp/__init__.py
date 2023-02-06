@@ -145,7 +145,6 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
     @server.feature(TEXT_DOCUMENT_DID_SAVE)
     def on_save(ls: RstLanguageServer, params: DidSaveTextDocumentParams):
-
         ls.save(params)
 
         for feature in ls._features.values():
@@ -343,7 +342,6 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
 
     @server.feature(TEXT_DOCUMENT_DOCUMENT_SYMBOL)
     def on_document_symbol(ls: RstLanguageServer, params: DocumentSymbolParams):
-
         doctree = ls.get_initial_doctree(uri=params.text_document.uri)
         if doctree is None:
             return None
@@ -407,7 +405,6 @@ def dump(obj) -> str:
 
         fields = {}
         for k, v in o.__dict__.items():
-
             if v is None:
                 continue
 

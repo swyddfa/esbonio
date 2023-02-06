@@ -534,7 +534,6 @@ class Directives(LanguageFeature):
     implementation_triggers = [DIRECTIVE]
 
     def completion_resolve(self, item: CompletionItem) -> CompletionItem:
-
         # We need extra info to know who to call.
         if not item.data:
             return item
@@ -551,7 +550,6 @@ class Directives(LanguageFeature):
         return item
 
     def complete(self, context: CompletionContext) -> List[CompletionItem]:
-
         # Do not suggest completions within the middle of Python code.
         if context.location == "py":
             return []
@@ -595,7 +593,6 @@ class Directives(LanguageFeature):
         return items
 
     def completion_resolve_directive(self, item: CompletionItem) -> CompletionItem:
-
         # We need the detail field set to the implementation's fully qualified name.
         if not item.detail:
             return item
@@ -612,7 +609,6 @@ class Directives(LanguageFeature):
         return item
 
     def complete_options(self, context: CompletionContext) -> List[CompletionItem]:
-
         surrounding_directive = self._get_surrounding_directive(context)
         if not surrounding_directive:
             return []
@@ -635,7 +631,6 @@ class Directives(LanguageFeature):
         return items
 
     def completion_resolve_option(self, item: CompletionItem) -> CompletionItem:
-
         # We need the detail field set to the implementation's fully qualified name.
         if not item.detail or not item.data:
             return item
@@ -668,7 +663,6 @@ class Directives(LanguageFeature):
         return item
 
     def definition(self, context: DefinitionContext) -> List[Location]:
-
         directive = context.match.group("name")
         domain = context.match.group("domain")
         argument = context.match.group("argument")
@@ -691,7 +685,6 @@ class Directives(LanguageFeature):
         domain: Optional[str],
         argument: str,
     ) -> List[Location]:
-
         definitions = []
 
         for feature_name, feature in self._features.items():
@@ -717,7 +710,6 @@ class Directives(LanguageFeature):
     def resolve_argument_link(
         self, context: DocumentLinkContext, name: str, domain: str, argument: str
     ) -> Tuple[Optional[str], Optional[str]]:
-
         for feature_name, feature in self._features.items():
             try:
                 target, tooltip = feature.resolve_argument_link(
@@ -743,7 +735,6 @@ class Directives(LanguageFeature):
 
         for line, text in enumerate(context.doc.lines):
             for match in DIRECTIVE.finditer(text):
-
                 argument = match.group("argument")
                 if not argument:
                     continue
@@ -775,7 +766,6 @@ class Directives(LanguageFeature):
         return links
 
     def hover(self, context: HoverContext) -> str:
-
         if context.location not in {"rst", "docstring"}:
             return ""
 
@@ -796,7 +786,6 @@ class Directives(LanguageFeature):
     def hover_directive(
         self, context: HoverContext, name: str, domain: Optional[str]
     ) -> str:
-
         label = f"{domain}:{name}" if domain else name
         self.logger.debug("Calculating hover for directive '%s'", label)
 
@@ -816,7 +805,6 @@ class Directives(LanguageFeature):
         return documentation.get("description", "")
 
     def implementation(self, context: ImplementationContext) -> List[Location]:
-
         region = context.match.group("directive")
         name = context.match.group("name")
         domain = context.match.group("domain")
@@ -832,7 +820,6 @@ class Directives(LanguageFeature):
     def find_directive_implementation(
         self, context: ImplementationContext, name: str, domain: Optional[str]
     ) -> List[Location]:
-
         impl = self.get_implementation(name, domain)
         if impl is None:
             return []

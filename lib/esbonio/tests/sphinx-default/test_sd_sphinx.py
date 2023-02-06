@@ -1115,7 +1115,6 @@ image file not readable: notfound.png""",
         assert len(test.client.diagnostics[test_uri]) == 0
 
     finally:
-
         if test_path.exists():
             test_path.unlink()
 
@@ -1283,7 +1282,6 @@ async def test_preview_wrong_builder(builder):
 
 
 def resolve_path(value: str, root_path: pathlib.Path) -> str:
-
     if value.startswith("$"):
         return value
 

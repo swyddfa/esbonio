@@ -18,7 +18,6 @@ class Docutils(DirectiveLanguageFeature):
     """Support for docutils' built-in directives."""
 
     def __init__(self) -> None:
-
         self._directives: Optional[Dict[str, Type[Directive]]] = None
         """Cache for known directives."""
 

@@ -74,5 +74,4 @@ class Wrapped:
 
 
 def setup(app):
-
     app.add_directive("not-a-true-directive", Wrapped(CodeBlock))

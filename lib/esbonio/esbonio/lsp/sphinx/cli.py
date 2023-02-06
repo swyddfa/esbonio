@@ -9,7 +9,6 @@ from esbonio.lsp.sphinx import SphinxConfig
 
 
 def config_cmd(args, extra):
-
     if args.to_cli:
         config_to_cli(args.to_cli)
         return 0
@@ -60,7 +59,6 @@ mode.add_argument(
 
 
 def main():
-
     try:
         idx = sys.argv.index("--")
         args, extra = sys.argv[1:idx], sys.argv[idx + 1 :]
