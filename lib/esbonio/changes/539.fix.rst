@@ -1,0 +1,1 @@
+With live previews enabled, ``esbonio`` should no longer conflict with Sphinx extensions that register their own ``source-read`` handlers.
