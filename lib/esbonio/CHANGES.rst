@@ -1,3 +1,12 @@
+v0.16.1 - 2023-02-18
+--------------------
+
+Fixes
+^^^^^
+
+- With live previews enabled, ``esbonio`` should no longer conflict with Sphinx extensions that register their own ``source-read`` handlers. (`#539 <https://github.com/swyddfa/esbonio/issues/539>`_)
+
+
 v0.16.0 - 2023-02-04
 --------------------
 

@@ -336,7 +336,7 @@ class SphinxLanguageServer(RstLanguageServer):
         app.connect("env-before-read-docs", self.cb_env_before_read_docs)
 
         if self.user_config.server.enable_live_preview:  # type: ignore
-            app.connect("source-read", self.cb_source_read)
+            app.connect("source-read", self.cb_source_read, priority=0)
             app.connect("build-finished", self.cb_build_finished)
 
         return app
