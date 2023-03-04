@@ -1,4 +1,4 @@
-importScripts("https://cdn.jsdelivr.net/pyodide/v0.20.0/full/pyodide.js")
+importScripts("https://cdn.jsdelivr.net/pyodide/v0.22.1/full/pyodide.js")
 
 /* @ts-ignore */
 import * as languageServer from "./server.py"
@@ -18,7 +18,7 @@ async function initPyodide() {
 
   /* @ts-ignore */
   let pyodide = await loadPyodide({
-    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.20.0/full/"
+    indexURL: "https://cdn.jsdelivr.net/pyodide/v0.22.1/full/"
   })
 
   console.debug("Installing dependencies.")
@@ -52,9 +52,8 @@ onmessage = async (event) => {
   await pyodide.runPythonAsync(`
     import json
     from js import client_message
-    from pygls.protocol import deserialize_message
 
-    message = json.loads(client_message, object_hook=deserialize_message)
+    message = json.loads(client_message, object_hook=server.lsp._deserialize_message)
     server.lsp._procedure_handler(message)
   `)
 }
