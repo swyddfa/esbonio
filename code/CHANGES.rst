@@ -1,3 +1,16 @@
+v0.11.0 - 2023-03-06
+--------------------
+
+Features
+^^^^^^^^
+
+- It should now be possible to run the Sphinx based language server in https://vscode.dev!
+
+  Note, that this functionality, is still **experimental**.
+  To try it out, you will need to explicity set the ``esbonio.sphinx.confDir`` option to ``/<github-user>/<github-repo>/<path>/``.
+  For example, this project would need it to be set to `/swyddfa/esbonio/docs/`. (`#548 <https://github.com/swyddfa/esbonio/issues/548>`_)
+
+
 v0.10.6 - 2023-02-04
 --------------------
 
