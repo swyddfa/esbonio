@@ -45,6 +45,21 @@
             }
         },
         {
+            "name": "VSCode Web Extension",
+            "type": "extensionHost",
+            "debugWebWorkerHost": true,
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceRoot}/code",
+                "--extensionDevelopmentKind=web",
+                "--folder-uri=${workspaceRoot}/${input:workspace}"
+            ],
+            "outFiles": [
+                "${workspaceRoot}/code/dist/browser/**/*.js"
+            ],
+            "preLaunchTask": "${defaultBuildTask}",
+        },
+        {
             "name": "Language Server",
             "type": "python",
             "request": "launch",
