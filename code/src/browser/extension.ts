@@ -1,62 +1,39 @@
 import * as vscode from "vscode";
-import { LanguageClientOptions } from "vscode-languageclient";
-import { LanguageClient } from "vscode-languageclient/browser";
+import { EsbonioClient } from "./lsp/client";
+import { Logger } from "./core/log";
 
-let client: LanguageClient
+let esbonio: EsbonioClient
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
 
-  let outputChannel = vscode.window.createOutputChannel('Esbonio')
-  outputChannel.appendLine('Extension activated')
+  let outputChannel = vscode.window.createOutputChannel('Esbonio', 'esbonio-log-output')
+  let logger = new OutputChannelLogger(outputChannel)
+  let logLevel = vscode.workspace.getConfiguration('esbonio').get<string>('server.logLevel')
+  logger.setLevel(logLevel)
+  logger.debug('Extension activated')
 
-  let config = vscode.workspace.getConfiguration('esbonio')
-
-  let statusItem = vscode.languages.createLanguageStatusItem('docutils', { language: 'restructuredtext' })
-  context.subscriptions.push(statusItem)
-  statusItem.text = "Starting..."
-  statusItem.busy = true
-
-  let documentSelector = [
-    { scheme: 'vscode-vfs', language: 'restructuredtext' }
-  ]
-
-  if (config.get<boolean>('server.enabledInPyFiles')) {
-    documentSelector.push(
-      { scheme: 'vscode-vfs', language: 'python' }
-    )
+  const serverUri = vscode.Uri.joinPath(context.extensionUri, "dist/browser/worker.js")
+  esbonio = new EsbonioClient(serverUri, logger, outputChannel)
+  try {
+    await esbonio.start()
+  } catch (err) {
+    console.error(err)
   }
-
-  const clientOptions: LanguageClientOptions = {
-    documentSelector: documentSelector,
-    initializationOptions: {
-      server: {
-        logLevel: config.get<string>('server.logLevel'),
-        logFilter: config.get<string[]>('server.logFilter'),
-      }
-    },
-    outputChannel: outputChannel
-  }
-
-  const path = vscode.Uri.joinPath(context.extensionUri, "dist/browser/worker.js")
-  const worker = new Worker(path.toString())
-
-  client = new LanguageClient("esbonio", "Esbonio", clientOptions, worker)
-
-  client.start().then(() => {
-    outputChannel.appendLine(`Server ready.`)
-
-    client.onNotification("esbonio/buildComplete", (params) => {
-      console.log(params)
-      statusItem.text = `Docutils v${params.docutils.version}`
-      statusItem.busy = false
-    })
-  })
-
 }
 
 export function deactivate(): Thenable<void> | undefined {
-  if (!client) {
+  if (!esbonio) {
     return undefined
   }
-  return client.stop()
+  return esbonio.stop()
+}
+
+class OutputChannelLogger extends Logger {
+  constructor(private channel: vscode.OutputChannel) {
+    super()
+  }
+
+  log(message: string): void {
+    this.channel.appendLine(`[client] ${message}`)
+  }
 }

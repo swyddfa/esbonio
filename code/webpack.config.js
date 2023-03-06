@@ -97,6 +97,9 @@ const lspWorkerConfig = {
   resolve: {
     extensions: ['.ts', '.js'],
     mainFields: ['module', 'main'],
+    fallback: {
+      path: require.resolve('path-browserify')
+    }
   },
   module: {
     rules: [
