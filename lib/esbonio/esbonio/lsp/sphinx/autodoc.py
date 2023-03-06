@@ -14,7 +14,6 @@ class AutoDoc(DirectiveLanguageFeature):
     def suggest_options(
         self, context: CompletionContext, directive: str, domain: Optional[str]
     ) -> Iterable[str]:
-
         if self.rst.app is None or not directive.startswith("auto"):
             return []
 

@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 
 
 class MdWriter(Writer):
-
     supported = ("markdown",)
     output = None
 
@@ -131,13 +130,11 @@ class MarkdownTranslator(NodeVisitor):
         self.current_text += "- "
 
     def visit_paragraph(self, node):
-
         ignored_nodes = (nodes.list_item, nodes.field_body)
         if not isinstance(node.parent, ignored_nodes):
             self.current_text += "\n"
 
     def depart_paragraph(self, node):
-
         if not isinstance(node.parent, nodes.field_body):
             self.current_text += "\n"
 
@@ -255,7 +252,6 @@ def make_xref_role(objects_inv, *types):
 
 
 def get_impl_name(original):
-
     if isinstance(original, tuple):
         return f"docutils.parsers.rst.directives.{original[0]}", original[1]
 

@@ -23,7 +23,6 @@ class SymbolVisitor(NodeVisitor):
 
     @property
     def current_symbol(self) -> Optional[DocumentSymbol]:
-
         if len(self.symbol_stack) == 0:
             return None
 
@@ -66,7 +65,6 @@ class SymbolVisitor(NodeVisitor):
         self.pop_symbol()
 
     def visit_title(self, node: nodes.Node) -> None:
-
         symbol = self.current_symbol
         has_parent = True
 

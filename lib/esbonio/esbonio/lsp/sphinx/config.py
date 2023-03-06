@@ -260,7 +260,6 @@ class SphinxConfig:
             args += ["-" + ("v" * self.verbosity)]
 
         for key, value in self.config_overrides.items():
-
             if key == "nitpicky":
                 args += ["-n"]
                 continue
@@ -578,7 +577,6 @@ class SphinxLogHandler(LspHandler):
         self.diagnostics: Dict[str, List[Diagnostic]] = {}
 
     def get_location(self, location: str) -> Tuple[str, Optional[int]]:
-
         if not location:
             conf = pathlib.Path(self.app.confdir, "conf.py")
             return (Uri.from_fs_path(str(conf)), None)
@@ -620,7 +618,6 @@ class SphinxLogHandler(LspHandler):
         return path, parts
 
     def get_docstring_location(self, target: str, offset: str) -> Optional[int]:
-
         # The containing module will be the longest substring we can find in target
         candidates = [m for m in sys.modules.keys() if target.startswith(m)] + [""]
         module = sys.modules.get(sorted(candidates, key=len, reverse=True)[0], None)
@@ -649,7 +646,6 @@ class SphinxLogHandler(LspHandler):
             return None
 
     def emit(self, record: logging.LogRecord) -> None:
-
         conditions = [
             "sphinx" not in record.name,
             record.levelno not in {logging.WARNING, logging.ERROR},

@@ -19,7 +19,6 @@ class ItemList(Widget):
         self.selected = -1
 
     def render(self) -> Panel:
-
         content = []
         for idx, item in enumerate(self.items):
             name = item[: item.index("(")]

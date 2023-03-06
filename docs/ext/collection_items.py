@@ -166,7 +166,6 @@ class Collection(Directive):
     has_content = True
 
     def run(self):
-
         coll = collection()
         coll["id"] = str(uuid.uuid4())
         coll["name"] = self.arguments[0]
@@ -184,7 +183,6 @@ class CollectionItem(Directive):
     has_content = True
 
     def run(self):
-
         item = collection_item()
 
         text = self.arguments[0]
@@ -197,7 +195,6 @@ class CollectionItem(Directive):
 
 
 def setup(app: Sphinx):
-
     app.add_node(collection, html=(visit_collection, depart_collection))
     app.add_node(collection_item, html=(visit_collection_item, depart_collection_item))
 

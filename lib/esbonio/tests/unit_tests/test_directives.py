@@ -50,7 +50,6 @@ class Simple(DirectiveLanguageFeature):
         domain: Optional[str],
         argument: str,
     ) -> List[Location]:
-
         if directive not in self.directives:
             return []
 
@@ -71,7 +70,6 @@ class Simple(DirectiveLanguageFeature):
         domain: Optional[str],
         argument: str,
     ) -> Tuple[Optional[str], Optional[str]]:
-
         if directive not in self.directives:
             return None, None
 

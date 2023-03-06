@@ -51,7 +51,6 @@ class Simple(RoleLanguageFeature):
     def find_target_definitions(
         self, context: DefinitionContext, name: str, domain: str, label: str
     ) -> List[Location]:
-
         if name not in self.roles:
             return []
 
@@ -68,7 +67,6 @@ class Simple(RoleLanguageFeature):
     def resolve_target_link(
         self, context: DocumentLinkContext, name: str, domain: Optional[str], label: str
     ) -> Tuple[Optional[str], Optional[str]]:
-
         if name not in self.roles:
             return None, None
 

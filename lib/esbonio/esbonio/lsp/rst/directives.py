@@ -6,19 +6,18 @@ from typing import Tuple
 from typing import Type
 from typing import Union
 
-import pkg_resources
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives as docutils_directives
 
 from esbonio.lsp.directives import DirectiveLanguageFeature
 from esbonio.lsp.directives import Directives
+from esbonio.lsp.util import resources
 
 
 class Docutils(DirectiveLanguageFeature):
     """Support for docutils' built-in directives."""
 
     def __init__(self) -> None:
-
         self._directives: Optional[Dict[str, Type[Directive]]] = None
         """Cache for known directives."""
 
@@ -71,7 +70,7 @@ def resolve_directive(
 
 
 def esbonio_setup(directives: Directives):
-    documentation = pkg_resources.resource_string("esbonio.lsp.rst", "directives.json")
+    documentation = resources.read_string("esbonio.lsp.rst", "directives.json")
 
-    directives.add_documentation(json.loads(documentation.decode("utf8")))
+    directives.add_documentation(json.loads(documentation))
     directives.add_feature(Docutils())

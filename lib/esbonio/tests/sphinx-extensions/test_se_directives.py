@@ -59,7 +59,6 @@ async def test_directive_completions(
     expected: Optional[Set[str]],
     unexpected: Optional[Set[str]],
 ):
-
     test_uri = client.root_uri + "/test.rst"
     results = await completion_request(client, test_uri, text)
 
@@ -200,7 +199,6 @@ async def test_directive_option_completions(
     expected: Optional[Set[str]],
     unexpected: Optional[Set[str]],
 ):
-
     test_uri = client.root_uri + "/test.rst"
     results = await completion_request(client, test_uri, text)
 
