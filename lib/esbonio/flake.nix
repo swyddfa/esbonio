@@ -18,13 +18,16 @@
         builtins.listToAttrs (builtins.map (version: {name = "py${version}"; value = f version; }) versions);
     in {
 
-    overlays.default = esbonio-overlay;
+      overlays.default = self: super: nixpkgs.lib.composeManyExtensions [
+        pytest-lsp-overlay
+        esbonio-overlay
+      ] self super;
 
     devShells = utils.lib.eachDefaultSystemMap (system:
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [ pytest-lsp-overlay esbonio-overlay ];
+          overlays = [ self.overlays.default ];
         };
       in
         eachPythonVersion [ "38" "39" "310" "311" ] (pyVersion:

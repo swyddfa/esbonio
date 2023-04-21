@@ -1,0 +1,117 @@
+{
+  "nodes": {
+    "esbonio": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "pytest-lsp": "pytest-lsp",
+        "utils": "utils_2"
+      },
+      "locked": {
+        "lastModified": 1,
+        "narHash": "sha256-QgSDxOPSrtsaqjeStalef07+bUE3qkzz7pJC4y43ltw=",
+        "path": "lib/esbonio",
+        "type": "path"
+      },
+      "original": {
+        "path": "lib/esbonio",
+        "type": "path"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1680819799,
+        "narHash": "sha256-zuHl2LNr1Bll64zfr7805Yvvu23S1e//5Up0oqvjknY=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "144133c526040a5140e89366ff72ac2d387e9bbb",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "pytest-lsp": {
+      "inputs": {
+        "nixpkgs": [
+          "esbonio",
+          "nixpkgs"
+        ],
+        "utils": "utils"
+      },
+      "locked": {
+        "dir": "lib/pytest-lsp",
+        "lastModified": 1680461504,
+        "narHash": "sha256-yinReEwXWeCstM0+zY0A1JE2N59sdMnBsepEBgtZ9xM=",
+        "owner": "swyddfa",
+        "repo": "lsp-devtools",
+        "rev": "6ae80a24b55d2b6943b9d30805cf02440ebbaf5c",
+        "type": "github"
+      },
+      "original": {
+        "dir": "lib/pytest-lsp",
+        "owner": "swyddfa",
+        "repo": "lsp-devtools",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "esbonio": "esbonio",
+        "nixpkgs": "nixpkgs",
+        "utils": "utils_3"
+      }
+    },
+    "utils": {
+      "locked": {
+        "lastModified": 1678901627,
+        "narHash": "sha256-U02riOqrKKzwjsxc/400XnElV+UtPUQWpANPlyazjH0=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "93a2b84fc4b70d9e089d029deacc3583435c2ed6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "utils_2": {
+      "locked": {
+        "lastModified": 1667395993,
+        "narHash": "sha256-nuEHfE/LcWyuSWnS8t12N1wc105Qtau+/OdUAjtQ0rA=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "5aed5285a952e0b949eb3ba02c12fa4fcfef535f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "utils_3": {
+      "locked": {
+        "lastModified": 1680776469,
+        "narHash": "sha256-3CXUDK/3q/kieWtdsYpDOBJw3Gw4Af6x+2EiSnIkNQw=",
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "rev": "411e8764155aa9354dbcd6d5faaeb97e9e3dce24",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "flake-utils",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
