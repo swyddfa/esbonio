@@ -10,9 +10,18 @@ import pygls.uris as Uri
 from lsprotocol.types import ClientCapabilities
 from lsprotocol.types import CompletionItem
 from lsprotocol.types import CompletionList
+from lsprotocol.types import CompletionParams
+from lsprotocol.types import DidChangeTextDocumentParams
+from lsprotocol.types import DidCloseTextDocumentParams
+from lsprotocol.types import DidOpenTextDocumentParams
 from lsprotocol.types import Hover
+from lsprotocol.types import HoverParams
 from lsprotocol.types import Position
 from lsprotocol.types import Range
+from lsprotocol.types import TextDocumentContentChangeEvent_Type1
+from lsprotocol.types import TextDocumentIdentifier
+from lsprotocol.types import TextDocumentItem
+from lsprotocol.types import VersionedTextDocumentIdentifier
 from pygls.workspace import Document
 from pytest_lsp import LanguageClient
 from pytest_lsp import make_test_client
@@ -316,18 +325,54 @@ async def completion_request(
     ext = pathlib.Path(Uri.to_fs_path(test_uri)).suffix
     lang_id = "python" if ext == ".py" else "rst"
 
-    client.notify_did_open(test_uri, lang_id, contents)
+    client.text_document_did_open(
+        DidOpenTextDocumentParams(
+            text_document=TextDocumentItem(
+                uri=test_uri, language_id=lang_id, version=1, text=contents
+            )
+        )
+    )
 
     lines = contents.split("\n")
     line = len(lines) - 1
     insertion_point = len(lines[-1])
 
-    client.notify_did_change(test_uri, text, line, insertion_point),
+    new_lines = text.split("\n")
+    num_new_lines = len(new_lines) - 1
+    num_new_chars = len(new_lines[-1])
+
+    if num_new_lines > 0:
+        end_char = num_new_chars
+    else:
+        end_char = insertion_point + num_new_chars
+
+    client.text_document_did_change(
+        DidChangeTextDocumentParams(
+            text_document=VersionedTextDocumentIdentifier(uri=test_uri, version=2),
+            content_changes=[
+                TextDocumentContentChangeEvent_Type1(
+                    text=text,
+                    range=Range(
+                        start=Position(line=line, character=insertion_point),
+                        end=Position(line=line + num_new_lines, character=end_char),
+                    ),
+                )
+            ],
+        )
+    ),
 
     character = character or insertion_point + len(text)
-    response = await client.completion_request(test_uri, line, character)
+    response = await client.text_document_completion_async(
+        CompletionParams(
+            text_document=TextDocumentIdentifier(uri=test_uri),
+            position=Position(line=line, character=character),
+        )
+    )
 
-    client.notify_did_close(test_uri)
+    client.text_document_did_close(
+        DidCloseTextDocumentParams(text_document=TextDocumentIdentifier(uri=test_uri))
+    )
+
     return response
 
 
@@ -361,8 +406,23 @@ async def hover_request(
     ext = pathlib.Path(Uri.to_fs_path(test_uri)).suffix
     lang_id = "python" if ext == ".py" else "rst"
 
-    client.notify_did_open(test_uri, lang_id, text)
-    response = await client.hover_request(test_uri, line, character)
+    client.text_document_did_open(
+        DidOpenTextDocumentParams(
+            text_document=TextDocumentItem(
+                uri=test_uri, language_id=lang_id, version=1, text=text
+            )
+        )
+    )
 
-    client.notify_did_close(test_uri)
+    response = await client.text_document_hover_async(
+        HoverParams(
+            text_document=TextDocumentIdentifier(uri=test_uri),
+            position=Position(line=line, character=character),
+        )
+    )
+
+    client.text_document_did_close(
+        DidCloseTextDocumentParams(text_document=TextDocumentIdentifier(uri=test_uri))
+    )
+
     return response

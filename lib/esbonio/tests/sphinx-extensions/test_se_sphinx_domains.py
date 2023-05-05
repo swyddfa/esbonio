@@ -2,7 +2,6 @@ import itertools
 
 import pytest
 from pytest_lsp import LanguageClient
-from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import intersphinx_target_patterns
@@ -241,5 +240,3 @@ async def test_role_target_completions(client: LanguageClient, text: str, setup)
 
     assert expected == items & expected
     assert set() == items & unexpected
-
-    check.completion_items(client, results.items)

@@ -5,7 +5,6 @@ from typing import Tuple
 
 import pytest
 from pytest_lsp import LanguageClient
-from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import role_patterns
@@ -84,5 +83,3 @@ async def test_role_completions(
 
     assert expected == items & expected
     assert set() == items & unexpected
-
-    check.completion_items(client, results.items)

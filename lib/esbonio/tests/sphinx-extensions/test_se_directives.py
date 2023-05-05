@@ -5,7 +5,6 @@ import pytest
 from lsprotocol.types import MarkupContent
 from lsprotocol.types import MarkupKind
 from pytest_lsp import LanguageClient
-from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 
@@ -72,8 +71,6 @@ async def test_directive_completions(
 
     assert set() == items & unexpected
 
-    check.completion_items(client, results.items)
-
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
@@ -133,7 +130,7 @@ async def test_directive_completion_resolve(
     # Server should not be filling out docs by default
     assert item.documentation is None, "Unexpected documentation text."
 
-    item = await client.completion_item_resolve_request(item)
+    item = await client.completion_item_resolve_async(item)
 
     assert isinstance(item.documentation, MarkupContent)
     assert item.documentation.kind == MarkupKind.Markdown
@@ -208,5 +205,3 @@ async def test_directive_option_completions(
 
     assert expected == items & expected
     assert set() == items & unexpected
-
-    check.completion_items(client, results.items)
