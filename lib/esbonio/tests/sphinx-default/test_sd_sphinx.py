@@ -6,16 +6,29 @@ from typing import List
 import appdirs
 import pygls.uris as uri
 import pytest
+from lsprotocol.types import ClientCapabilities
+from lsprotocol.types import DeleteFilesParams
 from lsprotocol.types import Diagnostic
 from lsprotocol.types import DiagnosticSeverity
+from lsprotocol.types import DidChangeTextDocumentParams
+from lsprotocol.types import DidCloseTextDocumentParams
+from lsprotocol.types import DidOpenTextDocumentParams
+from lsprotocol.types import DidSaveTextDocumentParams
 from lsprotocol.types import DocumentLink
+from lsprotocol.types import DocumentLinkParams
+from lsprotocol.types import ExecuteCommandParams
+from lsprotocol.types import FileDelete
+from lsprotocol.types import InitializeParams
 from lsprotocol.types import MessageType
 from lsprotocol.types import Position
 from lsprotocol.types import Range
+from lsprotocol.types import TextDocumentContentChangeEvent_Type2
+from lsprotocol.types import TextDocumentIdentifier
+from lsprotocol.types import TextDocumentItem
+from lsprotocol.types import VersionedTextDocumentIdentifier
 from pygls import IS_WIN
 from pytest_lsp import ClientServerConfig
 from pytest_lsp import LanguageClient
-from pytest_lsp import check
 from pytest_lsp import make_client_server
 from pytest_lsp import make_test_client
 
@@ -87,7 +100,9 @@ async def test_document_links(
     """Ensure that we handle ``textDocument/documentLink`` requests correctly."""
 
     test_uri = client.root_uri + uri
-    links = await client.document_link_request(test_uri)
+    links = await client.text_document_document_link_async(
+        DocumentLinkParams(text_document=TextDocumentIdentifier(uri=test_uri))
+    )
 
     assert len(links) == len(expected)
 
@@ -97,8 +112,6 @@ async def test_document_links(
         target = expected.target.replace("${ROOT}", client.root_uri)
         assert target == actual.target
         assert expected.tooltip == actual.tooltip
-
-    check.document_links(client, links)
 
 
 @pytest.mark.asyncio
@@ -260,19 +273,24 @@ async def test_initialization(
             setattr(options, to_snake_case(key), str(path))
 
     config = ClientServerConfig(
-        server_command=command,
-        root_uri=root_uri,
-        initialization_options=InitializationOptions(sphinx=options),
         client_factory=make_esbonio_client,
+        server_command=command,
     )
 
     test = make_client_server(config)
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(sphinx=options),
+            )
+        )
         await test.client.wait_for_notification("esbonio/buildComplete")
 
-        configuration = await test.client.execute_command_request(
-            ESBONIO_SERVER_CONFIGURATION
+        configuration = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
         )
 
         # Test some default behaviours.
@@ -304,6 +322,7 @@ async def test_initialization(
             assert actual.src_dir == resolve_path(expected.src_dir, root_path)
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -317,21 +336,26 @@ async def test_initialization_build_dir(converter):
 
     with tempfile.TemporaryDirectory() as build_dir:
         config = ClientServerConfig(
-            server_command=[sys.executable, "-m", "esbonio"],
-            root_uri=root_uri,
-            initialization_options=InitializationOptions(
-                sphinx=SphinxConfig(build_dir=build_dir)
-            ),
             client_factory=make_esbonio_client,
+            server_command=[sys.executable, "-m", "esbonio"],
         )
 
         test = make_client_server(config)
         try:
-            await test.start()
+            test.start()
+            await test.client.initialize_session(
+                InitializeParams(
+                    capabilities=ClientCapabilities(),
+                    root_uri=root_uri,
+                    initialization_options=InitializationOptions(
+                        sphinx=SphinxConfig(build_dir=build_dir)
+                    ),
+                )
+            )
             await test.client.wait_for_notification("esbonio/buildComplete")
 
-            configuration = await test.client.execute_command_request(
-                ESBONIO_SERVER_CONFIGURATION,
+            configuration = await test.client.workspace_execute_command_async(
+                ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
             )
 
             assert len(test.client.messages) == 0
@@ -356,6 +380,7 @@ async def test_initialization_build_dir(converter):
                 assert actual.build_dir == str(pathlib.Path(build_dir, "html"))
 
         finally:
+            await test.client.shutdown_session()
             await test.stop()
 
 
@@ -368,21 +393,26 @@ async def test_initialization_build_dir_workspace_var(converter):
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
-        initialization_options=InitializationOptions(
-            sphinx=SphinxConfig(build_dir="${workspaceRoot}/_build")
-        ),
         client_factory=make_esbonio_client,
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
 
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    sphinx=SphinxConfig(build_dir="${workspaceRoot}/_build")
+                ),
+            )
+        )
 
-        configuration = await test.client.execute_command_request(
-            ESBONIO_SERVER_CONFIGURATION,
+        configuration = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
         )
 
         assert len(test.client.messages) == 0
@@ -407,6 +437,7 @@ async def test_initialization_build_dir_workspace_var(converter):
             assert actual.build_dir == str(pathlib.Path(root_path, "_build", "html"))
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -419,21 +450,26 @@ async def test_initialization_build_dir_workspace_folder(converter):
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
-        initialization_options=InitializationOptions(
-            sphinx=SphinxConfig(build_dir="${workspaceFolder}/_build")
-        ),
         client_factory=make_esbonio_client,
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
 
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    sphinx=SphinxConfig(build_dir="${workspaceFolder}/_build")
+                ),
+            )
+        )
 
-        configuration = await test.client.execute_command_request(
-            ESBONIO_SERVER_CONFIGURATION,
+        configuration = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
         )
 
         assert len(test.client.messages) == 0
@@ -458,6 +494,7 @@ async def test_initialization_build_dir_workspace_folder(converter):
             assert actual.build_dir == str(pathlib.Path(root_path, "_build", "html"))
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -470,21 +507,26 @@ async def test_initialization_build_dir_confdir(converter):
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
-        initialization_options=InitializationOptions(
-            sphinx=SphinxConfig(build_dir="${confDir}/../_build")
-        ),
         client_factory=make_esbonio_client,
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
 
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    sphinx=SphinxConfig(build_dir="${confDir}/../_build")
+                ),
+            )
+        )
 
-        configuration = await test.client.execute_command_request(
-            ESBONIO_SERVER_CONFIGURATION,
+        configuration = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
         )
 
         assert len(test.client.messages) == 0
@@ -506,6 +548,7 @@ async def test_initialization_build_dir_confdir(converter):
             assert actual.src_dir == str(root_path)
             assert actual.build_dir == str(expected_dir)
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -518,20 +561,25 @@ async def test_initialization_sphinx_error():
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
         client_factory=make_esbonio_client,
-        initialization_options=InitializationOptions(
-            server=SphinxServerConfig(log_level="debug")
-        ),
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    server=SphinxServerConfig(log_level="debug")
+                ),
+            )
+        )
 
-        configuration = await test.client.execute_command_request(
-            ESBONIO_SERVER_CONFIGURATION,
+        configuration = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
         )
 
         assert "sphinx" in configuration
@@ -552,6 +600,7 @@ async def test_initialization_sphinx_error():
         )
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -570,20 +619,25 @@ async def test_initialization_build_error():
         index_rst.unlink()
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
         client_factory=make_esbonio_client,
-        initialization_options=InitializationOptions(
-            server=SphinxServerConfig(log_level="debug")
-        ),
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    server=SphinxServerConfig(log_level="debug")
+                ),
+            )
+        )
 
-        configuration = await test.client.execute_command_request(
-            ESBONIO_SERVER_CONFIGURATION,
+        configuration = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
         )
 
         assert "sphinx" in configuration
@@ -595,6 +649,7 @@ async def test_initialization_build_error():
         assert diagnostic.severity == DiagnosticSeverity.Error
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -607,21 +662,26 @@ async def test_initialization_missing_conf():
         root_uri = uri.from_fs_path(root_dir)
 
         config = ClientServerConfig(
-            server_command=[sys.executable, "-m", "esbonio"],
-            root_uri=root_uri,
             client_factory=make_esbonio_client,
-            initialization_options=InitializationOptions(
-                server=SphinxServerConfig(log_level="debug")
-            ),
+            server_command=[sys.executable, "-m", "esbonio"],
         )
 
         test = make_client_server(config)
 
         try:
-            await test.start()
+            test.start()
+            await test.client.initialize_session(
+                InitializeParams(
+                    capabilities=ClientCapabilities(),
+                    root_uri=root_uri,
+                    initialization_options=InitializationOptions(
+                        server=SphinxServerConfig(log_level="debug")
+                    ),
+                )
+            )
 
-            configuration = await test.client.execute_command_request(
-                ESBONIO_SERVER_CONFIGURATION,
+            configuration = await test.client.workspace_execute_command_async(
+                ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
             )
 
             assert "sphinx" in configuration
@@ -633,6 +693,7 @@ async def test_initialization_missing_conf():
             assert message.message.startswith("Unable to find your 'conf.py'")
 
         finally:
+            await test.client.shutdown_session()
             await test.stop()
 
 
@@ -645,19 +706,26 @@ async def test_initialization_verbosity(converter):
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
-        initialization_options=InitializationOptions(sphinx=SphinxConfig(verbosity=2)),
         client_factory=make_esbonio_client,
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
 
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    sphinx=SphinxConfig(verbosity=2)
+                ),
+            )
+        )
 
-        configuration = await test.client.execute_command_request(
-            ESBONIO_SERVER_CONFIGURATION,
+        configuration = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
         )
 
         assert len(test.client.messages) == 0
@@ -672,6 +740,7 @@ async def test_initialization_verbosity(converter):
         )
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -684,21 +753,26 @@ async def test_initialization_hide_sphinx_output(converter):
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
-        initialization_options=InitializationOptions(
-            server=SphinxServerConfig(hide_sphinx_output=True)
-        ),
         client_factory=make_esbonio_client,
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
 
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    server=SphinxServerConfig(hide_sphinx_output=True)
+                ),
+            )
+        )
 
-        configuration = await test.client.execute_command_request(
-            ESBONIO_SERVER_CONFIGURATION,
+        configuration = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
         )
 
         assert len(test.client.messages) == 0
@@ -710,6 +784,7 @@ async def test_initialization_hide_sphinx_output(converter):
         assert len(test.client.log_messages) == 0
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -722,19 +797,26 @@ async def test_initialization_silent(converter):
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
-        initialization_options=InitializationOptions(sphinx=SphinxConfig(silent=True)),
         client_factory=make_esbonio_client,
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
 
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    sphinx=SphinxConfig(silent=True)
+                ),
+            )
+        )
 
-        configuration = await test.client.execute_command_request(
-            ESBONIO_SERVER_CONFIGURATION,
+        configuration = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
         )
 
         assert len(test.client.messages) == 0
@@ -746,6 +828,7 @@ async def test_initialization_silent(converter):
         assert len(test.client.log_messages) == 0
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -758,19 +841,26 @@ async def test_initialization_quiet(converter):
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
-        initialization_options=InitializationOptions(sphinx=SphinxConfig(quiet=True)),
         client_factory=make_esbonio_client,
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
 
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    sphinx=SphinxConfig(quiet=True)
+                ),
+            )
+        )
 
-        configuration = await test.client.execute_command_request(
-            ESBONIO_SERVER_CONFIGURATION,
+        configuration = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_CONFIGURATION)
         )
 
         assert len(test.client.messages) == 0
@@ -787,6 +877,7 @@ async def test_initialization_quiet(converter):
         )
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -864,21 +955,33 @@ async def test_diagnostics(good, bad, expected):
         f.write(good)
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=uri.from_fs_path(str(workspace_root)),
         client_factory=make_esbonio_client,
-        initialization_options=InitializationOptions(
-            server=SphinxServerConfig(log_level="debug")
-        ),
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
 
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=uri.from_fs_path(str(workspace_root)),
+                initialization_options=InitializationOptions(
+                    server=SphinxServerConfig(log_level="debug")
+                ),
+            )
+        )
+
         await test.client.wait_for_notification("esbonio/buildComplete")
 
-        test.client.notify_did_open(test_uri, "rst", good)
+        test.client.text_document_did_open(
+            DidOpenTextDocumentParams(
+                text_document=TextDocumentItem(
+                    uri=test_uri, language_id="rst", version=1, text=good
+                )
+            )
+        )
 
         # Change the file so that it's in the "bad" state, we should see a diagnostic
         # reporting the issue.
@@ -886,8 +989,18 @@ async def test_diagnostics(good, bad, expected):
         with test_path.open("w") as f:
             f.write(bad)
 
-        test.client.notify_did_change(test_uri, bad)
-        test.client.notify_did_save(test_uri, bad)
+        test.client.text_document_did_change(
+            DidChangeTextDocumentParams(
+                text_document=VersionedTextDocumentIdentifier(uri=test_uri, version=2),
+                content_changes=[TextDocumentContentChangeEvent_Type2(text=bad)],
+            )
+        )
+
+        test.client.text_document_did_save(
+            DidSaveTextDocumentParams(
+                text_document=TextDocumentIdentifier(uri=test_uri), text=bad
+            )
+        )
 
         await test.client.lsp.wait_for_notification_async("esbonio/buildComplete")
         actual = test.client.diagnostics[test_uri][0]
@@ -901,18 +1014,34 @@ async def test_diagnostics(good, bad, expected):
             f.write(good)
 
         # Undo the changes, we should see the diagnostic removed.
-        test.client.notify_did_change(test_uri, good)
-        test.client.notify_did_save(test_uri, good)
+        test.client.text_document_did_change(
+            DidChangeTextDocumentParams(
+                text_document=VersionedTextDocumentIdentifier(uri=test_uri, version=3),
+                content_changes=[TextDocumentContentChangeEvent_Type2(text=good)],
+            )
+        )
+
+        test.client.text_document_did_save(
+            DidSaveTextDocumentParams(
+                text_document=TextDocumentIdentifier(uri=test_uri), text=good
+            )
+        )
 
         # Ensure that we remove any resolved diagnostics.
         await test.client.lsp.wait_for_notification_async("esbonio/buildComplete")
         assert len(test.client.diagnostics[test_uri]) == 0
 
-        test.client.notify_did_close(test_uri)
+        test.client.text_document_did_close(
+            DidCloseTextDocumentParams(
+                text_document=TextDocumentIdentifier(uri=test_uri)
+            )
+        )
 
     # Cleanup
     finally:
         test_path.unlink()
+
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -973,28 +1102,47 @@ async def test_live_build_clears_diagnostics(good, bad, expected):
         f.write(good)
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=uri.from_fs_path(str(workspace_root)),
         client_factory=make_esbonio_client,
-        initialization_options=InitializationOptions(
-            server=SphinxServerConfig(enable_live_preview=True)
-        ),
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
 
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=uri.from_fs_path(str(workspace_root)),
+                initialization_options=InitializationOptions(
+                    server=SphinxServerConfig(enable_live_preview=True)
+                ),
+            )
+        )
         await test.client.wait_for_notification("esbonio/buildComplete")
 
-        test.client.notify_did_open(test_uri, "rst", good)
+        test.client.text_document_did_open(
+            DidOpenTextDocumentParams(
+                text_document=TextDocumentItem(
+                    uri=test_uri, language_id="rst", version=1, text=good
+                )
+            )
+        )
 
         # Change the file so that it's in the bad state, we should see a diagnostic
         # reporting the issue.
         # Note: We don't have to update the file on disk since in live preview mode the
         # server should be injecting the latest content into the build.
-        test.client.notify_did_change(test_uri, bad)
-        await test.client.execute_command_request(ESBONIO_SERVER_BUILD)
+        test.client.text_document_did_change(
+            DidChangeTextDocumentParams(
+                text_document=VersionedTextDocumentIdentifier(uri=test_uri, version=2),
+                content_changes=[TextDocumentContentChangeEvent_Type2(text=bad)],
+            )
+        )
+
+        await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_BUILD)
+        )
 
         actual = test.client.diagnostics[test_uri][0]
 
@@ -1004,14 +1152,29 @@ async def test_live_build_clears_diagnostics(good, bad, expected):
         assert actual.source == expected.source
 
         # Undo the changes, we should see the diagnostic removed.
-        test.client.notify_did_change(test_uri, good)
-        await test.client.execute_command_request(ESBONIO_SERVER_BUILD)
+        test.client.text_document_did_change(
+            DidChangeTextDocumentParams(
+                text_document=VersionedTextDocumentIdentifier(uri=test_uri, version=3),
+                content_changes=[TextDocumentContentChangeEvent_Type2(text=good)],
+            )
+        )
+
+        await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_BUILD)
+        )
+
         assert len(test.client.diagnostics[test_uri]) == 0
 
-        test.client.notify_did_close(test_uri)
+        test.client.text_document_did_close(
+            DidCloseTextDocumentParams(
+                text_document=TextDocumentIdentifier(uri=test_uri)
+            )
+        )
 
     finally:
         test_path.unlink()
+
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -1078,26 +1241,51 @@ image file not readable: notfound.png""",
         test_uri = test_uri.lower()
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=uri.from_fs_path(str(workspace_root)),
         client_factory=make_esbonio_client,
-        initialization_options=InitializationOptions(
-            server=SphinxServerConfig(log_level="debug")
-        ),
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=uri.from_fs_path(str(workspace_root)),
+                initialization_options=InitializationOptions(
+                    server=SphinxServerConfig(log_level="debug")
+                ),
+            )
+        )
         await test.client.wait_for_notification("esbonio/buildComplete")
 
-        test.client.notify_did_open(test_uri, "rst", good)
-        test.client.notify_did_change(test_uri, bad)
+        test.client.text_document_did_open(
+            DidOpenTextDocumentParams(
+                text_document=TextDocumentItem(
+                    uri=test_uri, language_id="rst", version=1, text=good
+                )
+            )
+        )
+
+        # Change the file so that it's in the bad state, we should see a diagnostic
+        # reporting the issue.
+        # Note: We don't have to update the file on disk since in live preview mode the
+        # server should be injecting the latest content into the build.
+        test.client.text_document_did_change(
+            DidChangeTextDocumentParams(
+                text_document=VersionedTextDocumentIdentifier(uri=test_uri, version=2),
+                content_changes=[TextDocumentContentChangeEvent_Type2(text=bad)],
+            )
+        )
 
         with test_path.open("w") as f:
             f.write(bad)
 
-        test.client.notify_did_save(test_uri, text=bad)
+        test.client.text_document_did_save(
+            DidSaveTextDocumentParams(
+                text_document=TextDocumentIdentifier(uri=test_uri), text=bad
+            )
+        )
 
         await test.client.lsp.wait_for_notification_async("esbonio/buildComplete")
         actual = test.client.diagnostics[test_uri][0]
@@ -1109,7 +1297,9 @@ image file not readable: notfound.png""",
 
         # Delete the file, we should see a rebuild and the diagnostic be removed.
         test_path.unlink()
-        await test.client.notify_did_delete_files(test_uri)
+        test.client.workspace_did_delete_files(
+            DeleteFilesParams(files=[FileDelete(uri=test_uri)])
+        )
 
         await test.client.lsp.wait_for_notification_async("esbonio/buildComplete")
         assert len(test.client.diagnostics[test_uri]) == 0
@@ -1119,6 +1309,8 @@ image file not readable: notfound.png""",
             test_path.unlink()
 
         index_path.unlink()
+
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -1132,20 +1324,27 @@ async def test_preview_default():
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
         client_factory=make_esbonio_client,
-        initialization_options=InitializationOptions(
-            server=SphinxServerConfig(log_level="debug")
-        ),
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
 
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    server=SphinxServerConfig(log_level="debug")
+                ),
+            )
+        )
 
-        result = await test.client.execute_command_request(ESBONIO_SERVER_PREVIEW)
+        result = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_PREVIEW)
+        )
 
         assert "port" in result
         port = result["port"]
@@ -1158,6 +1357,7 @@ async def test_preview_default():
         assert params.external, "Expected 'external' flag to be set"
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -1171,20 +1371,27 @@ async def test_preview_no_show():
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
         client_factory=make_esbonio_client,
-        initialization_options=InitializationOptions(
-            server=SphinxServerConfig(log_level="debug")
-        ),
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    server=SphinxServerConfig(log_level="debug")
+                ),
+            )
+        )
 
-        result = await test.client.execute_command_request(
-            ESBONIO_SERVER_PREVIEW, {"show": False}
+        result = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(
+                command=ESBONIO_SERVER_PREVIEW, arguments=[{"show": False}]
+            )
         )
 
         assert "port" in result
@@ -1194,6 +1401,7 @@ async def test_preview_no_show():
         assert len(test.client.shown_documents) == 0
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -1207,20 +1415,27 @@ async def test_preview_multiple_calls():
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
         client_factory=make_esbonio_client,
-        initialization_options=InitializationOptions(
-            server=SphinxServerConfig(log_level="debug")
-        ),
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    server=SphinxServerConfig(log_level="debug")
+                ),
+            )
+        )
 
-        result = await test.client.execute_command_request(
-            ESBONIO_SERVER_PREVIEW, {"show": False}
+        result = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(
+                command=ESBONIO_SERVER_PREVIEW, arguments=[{"show": False}]
+            )
         )
 
         assert "port" in result
@@ -1230,8 +1445,10 @@ async def test_preview_multiple_calls():
         assert len(test.client.messages) == 0
         assert len(test.client.shown_documents) == 0
 
-        result = await test.client.execute_command_request(
-            ESBONIO_SERVER_PREVIEW, {"show": False}
+        result = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(
+                command=ESBONIO_SERVER_PREVIEW, arguments=[{"show": False}]
+            )
         )
 
         assert "port" in result
@@ -1241,6 +1458,7 @@ async def test_preview_multiple_calls():
         assert len(test.client.shown_documents) == 0
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 
@@ -1254,19 +1472,26 @@ async def test_preview_wrong_builder(builder):
     root_uri = uri.from_fs_path(str(root_path))
 
     config = ClientServerConfig(
-        server_command=[sys.executable, "-m", "esbonio"],
-        root_uri=root_uri,
         client_factory=make_esbonio_client,
-        initialization_options=InitializationOptions(
-            sphinx=SphinxConfig(builder_name=builder)
-        ),
+        server_command=[sys.executable, "-m", "esbonio"],
     )
 
     test = make_client_server(config)
     try:
-        await test.start()
+        test.start()
+        await test.client.initialize_session(
+            InitializeParams(
+                capabilities=ClientCapabilities(),
+                root_uri=root_uri,
+                initialization_options=InitializationOptions(
+                    sphinx=SphinxConfig(builder_name=builder)
+                ),
+            )
+        )
 
-        result = await test.client.execute_command_request(ESBONIO_SERVER_PREVIEW)
+        result = await test.client.workspace_execute_command_async(
+            ExecuteCommandParams(command=ESBONIO_SERVER_PREVIEW)
+        )
 
         assert result == {}
         assert len(test.client.messages) == 1
@@ -1278,6 +1503,7 @@ async def test_preview_wrong_builder(builder):
         )
 
     finally:
+        await test.client.shutdown_session()
         await test.stop()
 
 

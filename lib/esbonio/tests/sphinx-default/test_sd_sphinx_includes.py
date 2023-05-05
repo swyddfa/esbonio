@@ -1,11 +1,12 @@
 import itertools
 
 import pytest
+from lsprotocol.types import DefinitionParams
 from lsprotocol.types import Location
 from lsprotocol.types import Position
 from lsprotocol.types import Range
+from lsprotocol.types import TextDocumentIdentifier
 from pytest_lsp import LanguageClient
-from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import directive_argument_patterns
@@ -113,7 +114,12 @@ async def test_include_definitions(
     ``include::`` directive arguments."""
 
     test_uri = client.root_uri + f"/{path}"
-    results = await client.definition_request(test_uri, line, character)
+    results = await client.text_document_definition_async(
+        DefinitionParams(
+            text_document=TextDocumentIdentifier(uri=test_uri),
+            position=Position(line=line, character=character),
+        )
+    )
 
     if expected is None:
         assert len(results) == 0
@@ -179,5 +185,3 @@ async def test_include_argument_completions(client: LanguageClient, text, setup)
 
     assert expected == items & expected
     assert set() == items & unexpected
-
-    check.completion_items(client, results.items)

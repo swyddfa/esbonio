@@ -6,10 +6,11 @@ from typing import Set
 from typing import Tuple
 
 import pytest
+from lsprotocol.types import ImplementationParams
 from lsprotocol.types import Position
 from lsprotocol.types import Range
+from lsprotocol.types import TextDocumentIdentifier
 from pytest_lsp import LanguageClient
-from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import hover_request
@@ -93,8 +94,6 @@ async def test_role_completions(
 
     assert expected == items & expected
     assert set() == items & unexpected
-
-    check.completion_items(client, results.items)
 
 
 @pytest.mark.asyncio
@@ -469,7 +468,12 @@ async def test_roles_implementation(
 
     test_uri = client.root_uri + f"/{uri}"
 
-    results = await client.implementation_request(test_uri, line, character)
+    results = await client.text_document_implementation_async(
+        ImplementationParams(
+            text_document=TextDocumentIdentifier(uri=test_uri),
+            position=Position(line=line, character=character),
+        )
+    )
 
     if expected is None:
         assert len(results) == 0

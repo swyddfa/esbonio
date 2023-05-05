@@ -3,7 +3,9 @@ from typing import Optional
 
 import pytest
 from lsprotocol.types import DocumentSymbol
+from lsprotocol.types import DocumentSymbolParams
 from lsprotocol.types import SymbolKind
+from lsprotocol.types import TextDocumentIdentifier
 from pytest_lsp import LanguageClient
 
 from esbonio.lsp.testing import range_from_str
@@ -153,7 +155,9 @@ async def test_document_symbols(
     """Ensure that we handle ``textDocument/documentSymbols`` requests correctly"""
 
     test_uri = client.root_uri + f"/{filepath}"
-    actual = await client.document_symbols_request(test_uri)
+    actual = await client.text_document_document_symbol_async(
+        DocumentSymbolParams(text_document=TextDocumentIdentifier(uri=test_uri))
+    )
 
     if expected is None:
         assert actual is None

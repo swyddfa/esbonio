@@ -5,10 +5,11 @@ import pygls.uris as uri
 import pytest
 from lsprotocol.types import DiagnosticSeverity
 from lsprotocol.types import DocumentLink
+from lsprotocol.types import DocumentLinkParams
 from lsprotocol.types import Position
 from lsprotocol.types import Range
+from lsprotocol.types import TextDocumentIdentifier
 from pytest_lsp import LanguageClient
-from pytest_lsp import check
 
 
 @pytest.mark.asyncio
@@ -56,7 +57,9 @@ async def test_document_links(
     """Ensure that we handle ``textDocument/documentLink`` requests correctly."""
 
     test_uri = client.root_uri + uri
-    links = await client.document_link_request(test_uri)
+    links = await client.text_document_document_link_async(
+        DocumentLinkParams(text_document=TextDocumentIdentifier(uri=test_uri))
+    )
 
     expected_links = {link.target: link for link in expected}
     actual_links = {link.target: link for link in links}
@@ -68,8 +71,6 @@ async def test_document_links(
         assert expected_links[target].range == actual.range
 
     assert len(actual_links) == 0, f"Unexpected links {', '.join(actual_links.keys())}"
-
-    check.document_links(client, links)
 
 
 @pytest.mark.asyncio

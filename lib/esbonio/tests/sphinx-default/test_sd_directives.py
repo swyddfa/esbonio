@@ -4,12 +4,13 @@ from typing import Optional
 from typing import Set
 
 import pytest
+from lsprotocol.types import ImplementationParams
 from lsprotocol.types import MarkupContent
 from lsprotocol.types import MarkupKind
 from lsprotocol.types import Position
 from lsprotocol.types import Range
+from lsprotocol.types import TextDocumentIdentifier
 from pytest_lsp import LanguageClient
-from pytest_lsp import check
 
 from esbonio.lsp.testing import completion_request
 from esbonio.lsp.testing import hover_request
@@ -91,8 +92,6 @@ async def test_directive_completions(
         assert expected == items & expected
 
     assert set() == items & unexpected
-
-    check.completion_items(client, results.items)
 
 
 @pytest.mark.asyncio
@@ -176,7 +175,7 @@ async def test_directive_completion_resolve(
     # Server should not be filling out docs by default
     assert item.documentation is None, "Unexpected documentation text."
 
-    item = await client.completion_item_resolve_request(item)
+    item = await client.completion_item_resolve_async(item)
 
     assert isinstance(item.documentation, MarkupContent)
     assert item.documentation.kind == MarkupKind.Markdown
@@ -252,8 +251,6 @@ async def test_directive_option_completions(
 
     assert expected == items & expected
     assert set() == items & unexpected
-
-    check.completion_items(client, results.items)
 
 
 @pytest.mark.asyncio
@@ -514,7 +511,12 @@ async def test_directive_implementation(
 
     test_uri = client.root_uri + f"/{uri}"
 
-    results = await client.implementation_request(test_uri, line, character)
+    results = await client.text_document_implementation_async(
+        ImplementationParams(
+            text_document=TextDocumentIdentifier(uri=test_uri),
+            position=Position(line=line, character=character),
+        )
+    )
 
     if expected is None:
         assert len(results) == 0

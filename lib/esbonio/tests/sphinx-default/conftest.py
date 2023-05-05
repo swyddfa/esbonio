@@ -6,9 +6,11 @@ import sys
 import pygls.uris as uri
 import pytest
 import pytest_lsp
+from lsprotocol.types import InitializeParams
 from pygls.protocol import default_converter
 from pytest_lsp import ClientServerConfig
 from pytest_lsp import LanguageClient
+from pytest_lsp import client_capabilities
 
 from esbonio.lsp.sphinx import InitializationOptions
 from esbonio.lsp.sphinx import SphinxServerConfig
@@ -49,27 +51,30 @@ def converter():
 
 @pytest_lsp.fixture(
     scope="session",
-    config=[
-        ClientServerConfig(
-            client="visual_studio_code",
-            client_factory=make_esbonio_client,
-            server_command=[sys.executable, *SERVER_CMD],
-            initialization_options=InitializationOptions(
-                server=SphinxServerConfig(log_level=LOG_LEVEL)
-            ),
-            root_uri=uri.from_fs_path(str(root_path)),
-        ),
-        ClientServerConfig(
-            client="neovim",
-            client_factory=make_esbonio_client,
-            server_command=[sys.executable, *SERVER_CMD],
-            initialization_options=InitializationOptions(
-                server=SphinxServerConfig(log_level=LOG_LEVEL)
-            ),
-            root_uri=uri.from_fs_path(str(root_path)),
-        ),
-    ],
+    params=["visual_studio_code", "neovim"],
+    config=ClientServerConfig(
+        client_factory=make_esbonio_client,
+        server_command=[sys.executable, *SERVER_CMD],
+    ),
 )
-async def client(client_: LanguageClient):
+async def client(request, lsp_client: LanguageClient):
+    # Existing test cases depend on this being set.
+    lsp_client.root_uri = uri.from_fs_path(str(root_path))
+
+    await lsp_client.initialize_session(
+        InitializeParams(
+            capabilities=client_capabilities(request.param),
+            initialization_options=InitializationOptions(
+                server=SphinxServerConfig(log_level=LOG_LEVEL)
+            ),
+            root_uri=lsp_client.root_uri,
+        )
+    )
+
     # Wait for the server to initialize.
-    await client_.wait_for_notification("esbonio/buildComplete")
+    await lsp_client.wait_for_notification("esbonio/buildComplete")
+
+    yield
+
+    # Teardown
+    await lsp_client.shutdown_session()
