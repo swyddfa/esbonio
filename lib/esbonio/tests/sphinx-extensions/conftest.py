@@ -1,10 +1,8 @@
-import asyncio
 import os
 import pathlib
 import sys
 
 import pygls.uris as uri
-import pytest
 import pytest_lsp
 from lsprotocol.types import InitializeParams
 from pytest_lsp import ClientServerConfig
@@ -31,18 +29,6 @@ if "USE_DEBUGPY" in os.environ:
 
 
 LOG_LEVEL = os.environ.get("SERVER_LOG_LEVEL", "error")
-
-
-@pytest.fixture(scope="session")
-def event_loop():
-    # We need to redefine the event_loop fixture to match the scope of our
-    # client_server fixture.
-    #
-    # https://github.com/pytest-dev/pytest-asyncio/issues/68#issuecomment-334083751
-
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
 
 
 @pytest_lsp.fixture(
