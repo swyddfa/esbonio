@@ -1,6 +1,64 @@
 [build-system]
-requires = ["setuptools >= 35.0.2", "wheel >= 0.29.0"]
+requires = ["setuptools >= 61.0.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "esbonio"
+version = "0.16.1"
+description = "A language server for sphinx/docutils based documentation projects."
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "MIT" }
+authors = [{ name = "Alex Carney", email = "alcarneyme@gmail.com" }]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Documentation",
+    "Topic :: Documentation :: Sphinx",
+]
+dependencies = [
+    "appdirs",
+    "sphinx",
+    "pygls>=1.0.0",
+    "typing-extensions; python_version<\"3.8\"",
+]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/swyddfa/esbonio/issues"
+"Documentation" = "https://swyddfa.github.io/esbonio/"
+"Source Code" = "https://github.com/swyddfa/esbonio"
+
+[project.scripts]
+esbonio = "esbonio.__main__:main"
+esbonio-sphinx = "esbonio.lsp.sphinx.cli:main"
+
+[project.optional-dependencies]
+test = [
+    "mock; python_version<\"3.8\"",
+    "pytest",
+    "pytest-lsp>=0.3",
+    "pytest-cov",
+    "pytest-timeout",
+]
+typecheck = [
+    "mypy",
+    "pytest-lsp>=0.3",
+    "types-appdirs",
+    "types-docutils",
+    "types-pygments",
+]
+dev = ["black", "flake8", "pre-commit", "tox"]
+
+[tool.setuptools.packages.find]
+exclude = ["tests*"]
 
 [tool.isort]
 force_single_line = true
