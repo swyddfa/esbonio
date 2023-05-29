@@ -8,7 +8,7 @@
     "author": "Swyddfa Developers",
     "publisher": "swyddfa",
     "license": "MIT",
-    "version": "0.11.0",
+    "version": "0.91.0",
     "keywords": [
         "sphinx",
         "documentation"
@@ -17,15 +17,8 @@
         "Programming Languages"
     ],
     "scripts": {
-        "compile": "webpack --mode development",
-        "compile-test": "tsc -p ./src/test",
-        "serve": "npx serve --cors -l 5000",
-        "tunnel": "npx localtunnel -p 5000",
-        "watch": "webpack --mode development --watch",
-        "test": "npm run compile-test && node ./dist/test/runUnitTests.js",
-        "clean": "rm -r dist",
-        "deploy": "vsce publish -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
-        "package": "vsce package --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
+        "deploy": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/beta/code/",
+        "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/beta/code/",
         "vscode:prepublish": "webpack --mode production"
     },
     "main": "dist/node/extension",
@@ -66,60 +59,7 @@
         "workspaceContains:**/conf.py"
     ],
     "contributes": {
-        "commands": [
-            {
-                "command": "esbonio.preview.open",
-                "title": "Open Preview",
-                "icon": "$(preview)",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.preview.openSide",
-                "title": "Open Preview to the Side",
-                "icon": "$(open-preview)",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.server.install",
-                "title": "Install Language Server",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.server.update",
-                "title": "Update Language Server",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.server.restart",
-                "title": "Restart Language Server",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.sphinx.copyBuildCommand",
-                "title": "Copy Sphinx Build Command",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.sphinx.setBuildCommand",
-                "title": "Set Sphinx Build Command",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.sphinx.selectConfDir",
-                "title": "Select Conf Dir",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.sphinx.selectSrcDir",
-                "title": "Select Src Dir",
-                "category": "Esbonio"
-            },
-            {
-                "command": "esbonio.sphinx.selectBuildDir",
-                "title": "Select Build Dir",
-                "category": "Esbonio"
-            }
-        ],
+        "commands": [],
         "configuration": [
             {
                 "title": "Server",
@@ -185,63 +125,6 @@
                         "type": "string",
                         "default": "",
                         "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
-                    },
-                    "esbonio.server.hideSphinxOutput": {
-                        "scope": "window",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Hide Sphinx build output from the Language Server log.",
-                        "deprecationMessage": "This option will be removed when the language server reaches v1.0. The esbonio.sphinx.quiet and esbonio.sphinx.silent options should be used instead."
-                    },
-                    "esbonio.server.installBehavior": {
-                        "scope": "window",
-                        "type": "string",
-                        "default": "prompt",
-                        "enum": [
-                            "nothing",
-                            "prompt",
-                            "automatic"
-                        ],
-                        "enumDescriptions": [
-                            "Don't attempt to install the Language Server if it's missing",
-                            "Ask for confirmation before installing the Language Server",
-                            "Never ask for confirmation, the Language Server will be installed automatically in new environments"
-                        ],
-                        "description": "When the Language Server is missing from an environment, how should the extension handle it"
-                    },
-                    "esbonio.server.updateBehavior": {
-                        "scope": "window",
-                        "type": "string",
-                        "default": "promptMajor",
-                        "enum": [
-                            "promptAlways",
-                            "promptMajor",
-                            "automatic"
-                        ],
-                        "enumDescriptions": [
-                            "Always ask for confirmation when applying updates.",
-                            "Only ask for confirmation on major updates, minor versions will be installed automatically",
-                            "Never ask for confirmation, updates will always be installed automatically"
-                        ],
-                        "description": "When an update to the Language Server is detected, how should the extension handle it"
-                    },
-                    "esbonio.server.updateFrequency": {
-                        "scope": "window",
-                        "type": "string",
-                        "default": "never",
-                        "enum": [
-                            "never",
-                            "monthly",
-                            "weekly",
-                            "daily"
-                        ],
-                        "enumDescriptions": [
-                            "Never check for updates. Updates can still be triggered manually through the command palette.",
-                            "Check for updates monthly",
-                            "Check for updates weekly",
-                            "Check for updates daily"
-                        ],
-                        "description": "How often should the extension check for updates to the Language Server"
                     }
                 }
             },
@@ -249,94 +132,94 @@
                 "title": "Sphinx",
                 "properties": {
                     "esbonio.sphinx.buildDir": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "string",
                         "default": null,
                         "description": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local _build/ directory.",
                         "markdownDescription": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local `_build/` directory."
                     },
                     "esbonio.sphinx.builderName": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "string",
                         "default": "html",
                         "description": "The builder to use when building the documentation.",
                         "markdownDescription": "The builder to use when building the documentation. **Note:** While many builders will work fine, many features (such as previews) will only work with the `html` builder."
                     },
                     "esbonio.sphinx.confDir": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "string",
                         "default": null,
                         "description": "The Language Server should be able to automatically find the folder containing your project's 'conf.py' file. However this setting can be used to force the Language Server to use a particular directory if required."
                     },
                     "esbonio.sphinx.configOverrides": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "object",
                         "default": {},
                         "description": "Any conf.py options to override."
                     },
                     "esbonio.sphinx.doctreeDir": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "string",
                         "default": null,
                         "description": "The directory in which to store Sphinx's doctree cache."
                     },
                     "esbonio.sphinx.forceFullBuild": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "boolean",
                         "default": false,
                         "description": "Force a full build of the documentation project on server startup."
                     },
                     "esbonio.sphinx.keepGoing": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "boolean",
                         "default": false,
                         "description": "Continue building when errors generated from warnings are encountered"
                     },
                     "esbonio.sphinx.makeMode": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "boolean",
                         "default": true,
                         "description": "Flag indicating if the language server should be have like a sphinx-build -M ... command"
                     },
                     "esbonio.sphinx.numJobs": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "integer",
                         "default": 1,
                         "markdownDescription": "The number of parallel jobs to use during a Sphinx build.\n\n- A value of `0` is equivalent to passing `-j auto` to a `sphinx-build` command.\n- A value of `1` will disable parallel processing."
                     },
                     "esbonio.sphinx.quiet": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "boolean",
                         "default": false,
                         "description": "Hide standard Sphinx output messages"
                     },
                     "esbonio.sphinx.silent": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "boolean",
                         "default": false,
                         "description": "Hide all Sphinx output"
                     },
                     "esbonio.sphinx.srcDir": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "string",
                         "default": null,
                         "description": "The directory containing your rst source files. By default the Language Server will assume this is the same as `esbonio.sphinx.confDir` but this option can override this if necessary.",
                         "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.confDir#` but this option can override this if necessary."
                     },
                     "esbonio.sphinx.tags": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "array",
                         "default": [],
                         "description": "Tags to enable during a build."
                     },
                     "esbonio.sphinx.verbosity": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "integer",
                         "default": 0,
                         "description": "The verbosity of Sphinx's output"
                     },
                     "esbonio.sphinx.warningIsError": {
-                        "scope": "window",
+                        "scope": "resource",
                         "type": "boolean",
                         "default": false,
                         "description": "Treat any warnings as errors."
@@ -380,18 +263,7 @@
                 }
             }
         ],
-        "keybindings": [
-            {
-                "command": "esbonio.preview.open",
-                "key": "ctrl+shift+v",
-                "when": "editorTextFocus && editorLangId == restructuredtext"
-            },
-            {
-                "command": "esbonio.preview.openSide",
-                "key": "ctrl+k v",
-                "when": "editorTextFocus && editorLangId == restructuredtext"
-            }
-        ],
+        "keybindings": [],
         "languages": [
             {
                 "id": "restructuredtext",
@@ -423,15 +295,6 @@
                 "path": "./syntaxes/esbonio-log-output.tmLanguage.json"
             }
         ],
-        "menus": {
-            "editor/title": [
-                {
-                    "command": "esbonio.preview.openSide",
-                    "alt": "esbonio.preview.open",
-                    "group": "navigation",
-                    "when": "resourceLangId == restructuredtext"
-                }
-            ]
-        }
+        "menus": {}
     }
 }
