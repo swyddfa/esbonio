@@ -6,41 +6,41 @@ issue_format = "`#{issue} <https://github.com/swyddfa/esbonio/issues/{issue}>`_"
 underlines = ["-", "^", "\""]
 
 [[tool.towncrier.type]]
-     directory = "feature"
-     name = "Features"
-     showcontent = true
+directory = "feature"
+name = "Features"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "fix"
-     name = "Fixes"
-     showcontent = true
+directory = "fix"
+name = "Fixes"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "doc"
-     name = "Docs"
-     showcontent = true
+directory = "doc"
+name = "Docs"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "enhancement"
-     name = "Enhancements"
-     showcontent = true
+directory = "enhancement"
+name = "Enhancements"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "breaking"
-     name = "Breaking Changes"
-     showcontent = true
+directory = "breaking"
+name = "Breaking Changes"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "deprecated"
-     name = "Deprecated"
-     showcontent = true
+directory = "deprecated"
+name = "Deprecated"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "misc"
-     name = "Misc"
-     showcontent = true
+directory = "misc"
+name = "Misc"
+showcontent = true
 
 [[tool.towncrier.type]]
-     directory = "removed"
-     name = "Removed"
-     showcontent = true
+directory = "removed"
+name = "Removed"
+showcontent = true
