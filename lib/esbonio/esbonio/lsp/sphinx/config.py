@@ -11,6 +11,7 @@ from types import ModuleType
 from typing import Any
 from typing import Dict
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -32,12 +33,6 @@ from sphinx.util.logging import WarningLogRecordTranslator
 from esbonio.lsp.log import LOG_NAMESPACE
 from esbonio.lsp.log import LspHandler
 from esbonio.lsp.rst.config import ServerConfig
-
-try:
-    from typing import Literal
-except ImportError:
-    from typing_extensions import Literal  # type: ignore[assignment]
-
 
 PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")
 logger = logging.getLogger(LOG_NAMESPACE)
