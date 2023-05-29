@@ -6,6 +6,7 @@ from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Protocol
 from typing import Tuple
 
 from lsprotocol.types import CompletionItem
@@ -31,11 +32,6 @@ from esbonio.lsp.util.patterns import DIRECTIVE
 from esbonio.lsp.util.patterns import ROLE
 
 from .completions import render_role_completion
-
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore[assignment]
 
 
 class RoleLanguageFeature:
