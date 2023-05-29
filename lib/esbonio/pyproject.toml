@@ -118,15 +118,15 @@ legacy_tox_ini = """
 [tox]
 isolated_build = True
 skip_missing_interpreters = true
-envlist = py{38,39,310,311}-sphinx{4,5,6}
+envlist = py{38,39,310,311}-sphinx{5,6,7}
 
 [testenv]
 deps =
-    sphinx4: sphinx>=4,<5
-
     sphinx5: sphinx>=5,<6
 
     sphinx6: sphinx>=6,<7
+
+    sphinx7: sphinx>=7,<8
 extras = test
 commands =
     python ../../scripts/check-sphinx-version.py
