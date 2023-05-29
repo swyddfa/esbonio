@@ -359,7 +359,7 @@ async def completion_request(
                 )
             ],
         )
-    ),
+    )
 
     character = character or insertion_point + len(text)
     response = await client.text_document_completion_async(

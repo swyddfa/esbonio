@@ -33,7 +33,7 @@ repos:
     args: [--config,lib/esbonio/pyproject.toml]
     additional_dependencies:
     - pygls
-    - pytest_lsp
+    - pytest_lsp>=0.3
     - sphinx
     - types-appdirs
     - types-docutils
