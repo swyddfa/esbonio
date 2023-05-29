@@ -1,0 +1,1 @@
+Drop Sphinx 4.x support
