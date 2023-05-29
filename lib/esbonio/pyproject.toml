@@ -7,7 +7,7 @@ name = "esbonio"
 version = "0.16.2"
 description = "A language server for sphinx/docutils based documentation projects."
 readme = "README.md"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = { text = "MIT" }
 authors = [{ name = "Alex Carney", email = "alcarneyme@gmail.com" }]
 classifiers = [
@@ -16,7 +16,6 @@ classifiers = [
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -24,12 +23,7 @@ classifiers = [
     "Topic :: Documentation",
     "Topic :: Documentation :: Sphinx",
 ]
-dependencies = [
-    "appdirs",
-    "sphinx",
-    "pygls>=1.1.0",
-    "typing-extensions; python_version<\"3.8\"",
-]
+dependencies = ["appdirs", "sphinx", "pygls>=1.1.0"]
 
 [project.urls]
 "Bug Tracker" = "https://github.com/swyddfa/esbonio/issues"
@@ -41,13 +35,7 @@ esbonio = "esbonio.__main__:main"
 esbonio-sphinx = "esbonio.lsp.sphinx.cli:main"
 
 [project.optional-dependencies]
-test = [
-    "mock; python_version<\"3.8\"",
-    "pytest",
-    "pytest-lsp>=0.3.1",
-    "pytest-cov",
-    "pytest-timeout",
-]
+test = ["pytest", "pytest-lsp>=0.3.1", "pytest-cov", "pytest-timeout"]
 typecheck = [
     "mypy",
     "pytest-lsp>=0.3.1",
@@ -130,7 +118,7 @@ legacy_tox_ini = """
 [tox]
 isolated_build = True
 skip_missing_interpreters = true
-envlist = py37-sphinx{4,5}, py{38,39,310,311}-sphinx{4,5,6}
+envlist = py{38,39,310,311}-sphinx{4,5,6}
 
 [testenv]
 deps =

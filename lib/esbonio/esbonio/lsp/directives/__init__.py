@@ -7,6 +7,7 @@ from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Optional
+from typing import Protocol
 from typing import Tuple
 from typing import Type
 
@@ -33,11 +34,6 @@ from esbonio.lsp.util.patterns import DIRECTIVE_OPTION
 
 from .completions import render_directive_completion
 from .completions import render_directive_option_completion
-
-try:
-    from typing import Protocol
-except ImportError:
-    from typing_extensions import Protocol  # type: ignore[assignment]
 
 
 class DirectiveLanguageFeature:
