@@ -1,0 +1,1 @@
+The server will no longer fail to handle the ``initialize`` request when clients set ``initializationOptions`` to ``null``
