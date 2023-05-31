@@ -429,7 +429,7 @@ class RstLanguageServer(LanguageServer):
 
     def initialize(self, params: InitializeParams):
         self.user_config = converter.structure(
-            params.initialization_options, InitializationOptions
+            params.initialization_options or {}, InitializationOptions
         )
         setup_logging(self, self.user_config.server)
 

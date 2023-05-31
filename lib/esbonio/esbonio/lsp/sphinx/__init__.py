@@ -137,7 +137,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def initialize(self, params: InitializeParams):
         super().initialize(params)
         self.user_config = self.converter.structure(
-            params.initialization_options, InitializationOptions
+            params.initialization_options or {}, InitializationOptions
         )
 
     def initialized(self, params: InitializedParams):
