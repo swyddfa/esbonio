@@ -74,6 +74,9 @@ class EsbonioLanguageServer(LanguageServer):
         self.initialization_options: Optional[LSPAny] = None
         """The received initializaion options (if any)"""
 
+    def __iter__(self):
+        return iter(self._features.items())
+
     def initialize(self, params: InitializeParams):
         self.initialization_options = params.initialization_options
 
