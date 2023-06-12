@@ -1,12 +1,21 @@
 from __future__ import annotations
 
 import importlib
+import inspect
 import json
 import typing
 from typing import Iterable
 from typing import Type
 
 from lsprotocol.types import INITIALIZE
+from lsprotocol.types import TEXT_DOCUMENT_DID_CHANGE
+from lsprotocol.types import TEXT_DOCUMENT_DID_CLOSE
+from lsprotocol.types import TEXT_DOCUMENT_DID_OPEN
+from lsprotocol.types import TEXT_DOCUMENT_DID_SAVE
+from lsprotocol.types import DidChangeTextDocumentParams
+from lsprotocol.types import DidCloseTextDocumentParams
+from lsprotocol.types import DidOpenTextDocumentParams
+from lsprotocol.types import DidSaveTextDocumentParams
 from lsprotocol.types import InitializeParams
 
 if typing.TYPE_CHECKING:
@@ -28,7 +37,6 @@ def create_language_server(
        Any additional arguments that should be passed to the language server's
        constructor.
     """
-
     server = server_cls(*args, **kwargs)
 
     for module in modules:
@@ -41,7 +49,7 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
     """Configure method handlers for the portions of the LSP spec we support."""
 
     @server.feature(INITIALIZE)
-    def on_initialize(ls: EsbonioLanguageServer, params: InitializeParams):
+    async def on_initialize(ls: EsbonioLanguageServer, params: InitializeParams):
         client = params.client_info
         client_capabilities = ls.converter.unstructure(params.capabilities)
 
@@ -54,7 +62,47 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
 
         ls.initialize(params)
 
+    @server.feature(TEXT_DOCUMENT_DID_CHANGE)
+    async def on_document_change(
+        ls: EsbonioLanguageServer, params: DidChangeTextDocumentParams
+    ):
+        await call_features(ls, "document_change", params)
+
+    @server.feature(TEXT_DOCUMENT_DID_CLOSE)
+    async def on_document_close(
+        ls: EsbonioLanguageServer, params: DidCloseTextDocumentParams
+    ):
+        await call_features(ls, "document_close", params)
+
+    @server.feature(TEXT_DOCUMENT_DID_OPEN)
+    async def on_document_open(
+        ls: EsbonioLanguageServer, params: DidOpenTextDocumentParams
+    ):
+        await call_features(ls, "document_open", params)
+
+    @server.feature(TEXT_DOCUMENT_DID_SAVE)
+    async def on_document_save(
+        ls: EsbonioLanguageServer, params: DidSaveTextDocumentParams
+    ):
+        await call_features(ls, "document_save", params)
+
     return server
+
+
+async def call_features(ls: EsbonioLanguageServer, method: str, *args, **kwargs):
+    """Call all features."""
+
+    for cls, feature in ls:
+        try:
+            impl = getattr(feature, method)
+
+            result = impl(*args, **kwargs)
+            if inspect.isawaitable(result):
+                await result
+
+        except Exception:
+            name = f"{cls.__module__}.{cls.__name__}"
+            ls.logger.error("Error in '%s.%s' handler", name, method, exc_info=True)
 
 
 def _load_module(server: EsbonioLanguageServer, modname: str):
