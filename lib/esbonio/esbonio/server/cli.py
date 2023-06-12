@@ -67,7 +67,7 @@ def main(argv: Optional[Sequence[str]] = None):
     cli = build_parser()
     args = cli.parse_args(argv)
 
-    modules = list()
+    modules = ["esbonio.server.features.sphinx_manager"]
 
     for mod in args.included_modules:
         modules.append(mod)
@@ -94,7 +94,10 @@ def main(argv: Optional[Sequence[str]] = None):
     warnlog.addHandler(handler)
 
     server = create_language_server(
-        EsbonioLanguageServer, modules, converter_factory=default_converter
+        EsbonioLanguageServer,
+        modules,
+        logger=logger,
+        converter_factory=default_converter,
     )
 
     if args.port:
