@@ -16,6 +16,7 @@ class LanguageFeature:
 
     def __init__(self, server: EsbonioLanguageServer):
         self.server = server
+        self.converter = server.converter
         self.logger = server.logger.getChild(self.__class__.__name__)
 
     def document_change(self, params: DidChangeTextDocumentParams):

@@ -95,6 +95,9 @@ class SphinxConfig:
            options derived from the sphinx build command.
         """
 
+        if args[0] == "sphinx-build":
+            args = args[1:]
+
         # The easiest way to handle this is to just call sphinx-build but with
         # the Sphinx app object patched out - then we just use all the args it
         # was given!
