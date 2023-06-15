@@ -78,7 +78,7 @@
                     "esbonio.server.startupModule": {
                         "scope": "window",
                         "type": "string",
-                        "default": "esbonio",
+                        "default": "esbonio.server",
                         "description": "The module (or script) to use to launch the server."
                     },
                     "esbonio.server.excludedModules": {
@@ -130,98 +130,20 @@
             {
                 "title": "Sphinx",
                 "properties": {
-                    "esbonio.sphinx.buildDir": {
-                        "scope": "resource",
-                        "type": "string",
-                        "default": null,
-                        "description": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local _build/ directory.",
-                        "markdownDescription": "The directory in which to store Sphinx's build output.\n\nBy default the Language Server will store any build files in a storage area provided by VSCode, this option allows you to override this to be a directory of your choosing e.g. your local `_build/` directory."
-                    },
-                    "esbonio.sphinx.builderName": {
-                        "scope": "resource",
-                        "type": "string",
-                        "default": "html",
-                        "description": "The builder to use when building the documentation.",
-                        "markdownDescription": "The builder to use when building the documentation. **Note:** While many builders will work fine, many features (such as previews) will only work with the `html` builder."
-                    },
-                    "esbonio.sphinx.confDir": {
-                        "scope": "resource",
-                        "type": "string",
-                        "default": null,
-                        "description": "The Language Server should be able to automatically find the folder containing your project's 'conf.py' file. However this setting can be used to force the Language Server to use a particular directory if required."
-                    },
-                    "esbonio.sphinx.configOverrides": {
-                        "scope": "resource",
-                        "type": "object",
-                        "default": {},
-                        "description": "Any conf.py options to override."
-                    },
-                    "esbonio.sphinx.doctreeDir": {
-                        "scope": "resource",
-                        "type": "string",
-                        "default": null,
-                        "description": "The directory in which to store Sphinx's doctree cache."
-                    },
-                    "esbonio.sphinx.forceFullBuild": {
-                        "scope": "resource",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Force a full build of the documentation project on server startup."
-                    },
-                    "esbonio.sphinx.keepGoing": {
-                        "scope": "resource",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Continue building when errors generated from warnings are encountered"
-                    },
-                    "esbonio.sphinx.makeMode": {
-                        "scope": "resource",
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Flag indicating if the language server should be have like a sphinx-build -M ... command"
-                    },
-                    "esbonio.sphinx.numJobs": {
-                        "scope": "resource",
-                        "type": "integer",
-                        "default": 1,
-                        "markdownDescription": "The number of parallel jobs to use during a Sphinx build.\n\n- A value of `0` is equivalent to passing `-j auto` to a `sphinx-build` command.\n- A value of `1` will disable parallel processing."
-                    },
-                    "esbonio.sphinx.quiet": {
-                        "scope": "resource",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Hide standard Sphinx output messages"
-                    },
-                    "esbonio.sphinx.silent": {
-                        "scope": "resource",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Hide all Sphinx output"
-                    },
-                    "esbonio.sphinx.srcDir": {
-                        "scope": "resource",
-                        "type": "string",
-                        "default": null,
-                        "description": "The directory containing your rst source files. By default the Language Server will assume this is the same as `esbonio.sphinx.confDir` but this option can override this if necessary.",
-                        "markdownDescription": "The directory containing your rst source files. By default the Language Server will assume this is the same as `#esbonio.sphinx.confDir#` but this option can override this if necessary."
-                    },
-                    "esbonio.sphinx.tags": {
+                    "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
                         "type": "array",
                         "default": [],
-                        "description": "Tags to enable during a build."
+                        "description": "The command to use when launching the Python interpreter."
                     },
-                    "esbonio.sphinx.verbosity": {
+                    "esbonio.sphinx.buildCommand": {
                         "scope": "resource",
-                        "type": "integer",
-                        "default": 0,
-                        "description": "The verbosity of Sphinx's output"
-                    },
-                    "esbonio.sphinx.warningIsError": {
-                        "scope": "resource",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Treat any warnings as errors."
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": [],
+                        "description": "The sphinx-build command to use."
                     }
                 }
             },
