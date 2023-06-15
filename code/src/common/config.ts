@@ -107,11 +107,6 @@ export interface ServerConfig {
   logFilter?: string[]
 
   /**
-   * A flag to indicate if Sphinx build output should be omitted from the log.
-   */
-  hideSphinxOutput?: boolean
-
-  /**
    * A flag to enable showing deprecation warnings.
    */
   showDeprecationWarnings?: boolean
@@ -132,8 +127,4 @@ export interface InitOptions {
    */
   server: ServerConfig
 
-  /**
-   * Sphinx specific options
-   */
-  sphinx: SphinxConfig
 }
