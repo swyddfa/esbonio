@@ -101,7 +101,7 @@ async def call_features(ls: EsbonioLanguageServer, method: str, *args, **kwargs)
                 await result
 
         except Exception:
-            name = f"{cls.__module__}.{cls.__name__}"
+            name = f"{cls.__name__}"
             ls.logger.error("Error in '%s.%s' handler", name, method, exc_info=True)
 
 

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import logging
 import pathlib
@@ -7,6 +8,7 @@ import typing
 from typing import List
 from typing import Optional
 
+import appdirs
 import attrs
 import lsprotocol.types as lsp
 import pygls.uris as Uri
@@ -68,7 +70,7 @@ class SphinxConfig:
 
         build_command = self.build_command
         if len(build_command) == 0:
-            build_command = ["-M", "dirhtml", ".", "./_build"]
+            build_command = self._guess_build_command(uri, logger)
 
         return SphinxConfig(
             cwd=cwd,
@@ -91,6 +93,32 @@ class SphinxConfig:
 
         logger.debug("Cwd: %s", cwd)
         return cwd
+
+    def _guess_build_command(self, uri: str, logger: logging.Logger) -> List[str]:
+        """Try and guess something a sensible build command given the uri."""
+
+        path = Uri.to_fs_path(uri)
+        if path is None:
+            return []
+
+        # Search upwards from the given uri to see if we find something that looks like
+        # a sphinx conf.py file.
+        previous = None
+        current = pathlib.Path(path)
+
+        while previous != current:
+            previous = current
+            current = previous.parent
+
+            conf_py = current / "conf.py"
+            logger.debug("Trying path: %s", current)
+            if conf_py.exists():
+                cache = appdirs.user_cache_dir("esbonio", "swyddfa")
+                project = hashlib.md5(str(current).encode()).hexdigest()
+                build_dir = str(pathlib.Path(cache, project))
+                return ["sphinx-build", "-M", "dirhtml", str(current), str(build_dir)]
+
+        return []
 
 
 class SphinxManager(LanguageFeature):
@@ -135,6 +163,10 @@ class SphinxManager(LanguageFeature):
 
         resolved = config.resolve(uri, self.server.workspace, self.logger)
         if resolved is None:
+            return None
+
+        if len(resolved.build_command) == 0:
+            self.logger.error("Unable to start Sphinx: missing build command")
             return None
 
         command = [*resolved.python_command, "-m", "sphinx_agent"]
