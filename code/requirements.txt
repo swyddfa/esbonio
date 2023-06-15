@@ -14,10 +14,14 @@ attrs==23.1.0 \
     # via
     #   cattrs
     #   lsprotocol
-cattrs==23.1.1 \
-    --hash=sha256:6558a4ed415bffb202993cdc8ce0ba5b919c6eab19b996251a61a3329f900d62 \
-    --hash=sha256:7d7372fe0156f2868c6b8852e069a0cfa2b493b77850fc7353f45057ac5f5d2d
+cattrs==23.1.2 \
+    --hash=sha256:b2bb14311ac17bed0d58785e5a60f022e5431aca3932e3fc5cc8ed8639de50a4 \
+    --hash=sha256:db1c821b8c537382b2c7c66678c3790091ca0275ac486c76f3c8f3920e83c657
     # via lsprotocol
+docutils==0.20.1 \
+    --hash=sha256:96f387a2c5562db4476f09f13bbab2192e764cac08ebbf3a34a95d9b1e4a59d6 \
+    --hash=sha256:f08a4e276c3a1583a86dce3e34aba3fe04d02bba2dd51ed16106244e8a923e3b
+    # via esbonio
 # WARNING: pip install will require the following package to be hashed.
 # Consider using a hashable URL like https://github.com/jazzband/pip-tools/archive/SOMECOMMIT.zip
     # via -r ./requirements.in
@@ -42,9 +46,9 @@ typeguard==3.0.2 \
     --hash=sha256:bbe993854385284ab42fd5bd3bee6f6556577ce8b50696d6cb956d704f286c8e \
     --hash=sha256:fee5297fdb28f8e9efcb8142b5ee219e02375509cd77ea9d270b5af826358d5a
     # via pygls
-typing-extensions==4.6.2 \
-    --hash=sha256:06006244c70ac8ee83fa8282cb188f697b8db25bc8b4df07be1873c43897060c \
-    --hash=sha256:3a8b36f13dd5fdc5d1b16fe317f5668545de77fa0b8e02006381fd49d731ab98
+typing-extensions==4.6.3 \
+    --hash=sha256:88a4153d8505aabbb4e13aacb7c486c2b4a33ca3b3f807914a9b4c844c471c26 \
+    --hash=sha256:d91d5919357fe7f681a9f2b5b4cb2a5f1ef0a1e9f59c4d8ff0d3491e05c0ffd5
     # via
     #   cattrs
     #   typeguard
