@@ -1,8 +1,16 @@
 import * as vscode from 'vscode';
 import { join } from "path";
-import { LanguageClient, LanguageClientOptions, ServerOptions, ExecutableOptions } from "vscode-languageclient/node";
+import {
+  ConfigurationParams,
+  CancellationToken,
+  LanguageClient,
+  LanguageClientOptions,
+  ServerOptions,
+  ExecutableOptions,
+  ResponseError
+} from "vscode-languageclient/node";
 
-import { SphinxConfig, InitOptions } from "../common/config";
+import { InitOptions } from "../common/config";
 import { OutputChannelLogger } from "../common/log";
 import { PythonManager } from "./python";
 
@@ -56,7 +64,7 @@ export class EsbonioClient {
     //   command.push("-m", "lsp_devtools", "agent", "--", ...command)
     // }
 
-    let startupModule = config.get<string>("server.startupModule") || "esbonio"
+    let startupModule = config.get<string>("server.startupModule") || "esbonio.server"
     // let includedModules = config.get<string[]>('server.includedModules') || []
     // let excludedModules = config.get<string[]>('server.excludedModules') || []
 
@@ -101,11 +109,9 @@ export class EsbonioClient {
   private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
 
     let initOptions: InitOptions = {
-      sphinx: this.getSphinxOptions(config),
       server: {
         logLevel: config.get<string>('server.logLevel'),
         logFilter: config.get<string[]>('server.logFilter'),
-        hideSphinxOutput: config.get<boolean>('server.hideSphinxOutput'),
         showDeprecationWarnings: config.get<boolean>('server.showDeprecationWarnings'),
         completion: {
           preferredInsertBehavior: config.get<string>('server.completion.preferredInsertBehavior')
@@ -126,39 +132,52 @@ export class EsbonioClient {
     let clientOptions: LanguageClientOptions = {
       documentSelector: documentSelector,
       initializationOptions: initOptions,
-      outputChannel: this.channel
+      outputChannel: this.channel,
+      middleware: {
+        workspace: {
+          configuration: async (params: ConfigurationParams, token: CancellationToken, next) => {
+            this.logger.debug(`workspace/configuration: ${JSON.stringify(params, undefined, 2)}`)
+
+            let index = -1
+            params.items.forEach((item, i) => {
+              if (item.section === "esbonio.sphinx") {
+                index = i
+              }
+            })
+
+            let result = await next(params, token);
+            if (result instanceof ResponseError) {
+              return result
+            }
+
+            if (index < 0) {
+              return result
+            }
+
+            let item = result[index]
+            if (item.pythonCommand.length > 0) {
+              return result
+            }
+
+            // User has not explictly configured a Python command, try and inject the
+            // Python interpreter they have configured for this resource.
+            let scopeUri: vscode.Uri | undefined = undefined
+            let scope = params.items[index].scopeUri
+            if (scope) {
+              scopeUri = vscode.Uri.parse(scope)
+            }
+            let python = await this.python.getCmd(scopeUri)
+            if (python) {
+              item.pythonCommand = python
+            }
+
+            return result
+          }
+        }
+      },
     }
     this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions, null, 2)}`)
     return clientOptions
-  }
-
-  private getSphinxOptions(config: vscode.WorkspaceConfiguration): SphinxConfig {
-
-    let buildDir = config.get<string>('sphinx.buildDir')
-    let numJobs = config.get<number>('sphinx.numJobs')
-
-    if (!buildDir && this.context.storageUri) {
-      let cache = this.context.storageUri.path
-      buildDir = join(cache, 'sphinx')
-    }
-
-    return {
-      buildDir: buildDir,
-      builderName: config.get<string>('sphinx.builderName'),
-      confDir: config.get<string>('sphinx.confDir'),
-      configOverrides: config.get<object>('sphinx.configOverrides'),
-      doctreeDir: config.get<string>('sphinx.doctreeDir'),
-      forceFullBuild: config.get<boolean>('sphinx.forceFullBuild'),
-      keepGoing: config.get<boolean>('sphinx.keepGoing'),
-      makeMode: config.get<boolean>('sphinx.makeMode'),
-      numJobs: numJobs === 0 ? 'auto' : numJobs,
-      quiet: config.get<boolean>('sphinx.quiet'),
-      silent: config.get<boolean>('sphinx.silent'),
-      srcDir: config.get<string>("sphinx.srcDir"),
-      tags: config.get<string[]>('sphinx.tags'),
-      verbosity: config.get<number>('sphinx.verbosity'),
-      warningIsError: config.get<boolean>('sphinx.warningIsError')
-    };
   }
 
   async stop() {

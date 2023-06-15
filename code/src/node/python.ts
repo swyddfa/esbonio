@@ -10,7 +10,7 @@ const PYTHON_EXTENSION = "ms-python.python"
 export class PythonManager {
   constructor(private logger: OutputChannelLogger) { }
 
-  async getCmd(): Promise<string[] | undefined> {
+  async getCmd(scopeUri?: vscode.Uri): Promise<string[] | undefined> {
     let userPython = vscode.workspace.getConfiguration("esbonio").get<string>("server.pythonPath")
     if (userPython) {
 
@@ -36,7 +36,7 @@ export class PythonManager {
       return
     }
 
-    let activeEnvPath = python.environments.getActiveEnvironmentPath()
+    let activeEnvPath = python.environments.getActiveEnvironmentPath(scopeUri)
     this.logger.debug(`Using environment ${activeEnvPath.id}: ${activeEnvPath.path}`)
 
     let activeEnv = await python.environments.resolveEnvironment(activeEnvPath)
