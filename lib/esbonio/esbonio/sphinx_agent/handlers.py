@@ -14,6 +14,7 @@ from sphinx.util.logging import VERBOSITY_MAP
 from . import types
 from .config import SphinxConfig
 from .log import SphinxLogHandler
+from .util import send_error
 from .util import send_message
 
 HANDLERS = {}
@@ -33,6 +34,7 @@ def handler(t: Type):
 
 @handler(types.CreateApplicationRequest)
 def create_sphinx_app(request: types.CreateApplicationRequest):
+    """Create a new sphinx application instance."""
     sphinx_config = SphinxConfig.fromcli(request.params.command)
     if sphinx_config is None:
         raise ValueError("Invalid build command")
@@ -41,6 +43,7 @@ def create_sphinx_app(request: types.CreateApplicationRequest):
 
     # Override Sphinx's logging setup with our own.
     sphinx_logging_module.setup = partial(logging_setup, sphinx_config)
+    global sphinx_app
     sphinx_app = Sphinx(**sphinx_args)
 
     response = types.CreateApplicationResponse(
@@ -55,6 +58,26 @@ def create_sphinx_app(request: types.CreateApplicationRequest):
         jsonrpc=request.jsonrpc,
     )
     send_message(response)
+
+
+@handler(types.BuildRequest)
+def build_sphinx_app(request: types.BuildRequest):
+    """Trigger a Sphinx build."""
+
+    if sphinx_app is None:
+        send_error(id=request.id, code=-32803, message="Sphinx app not initialzied")
+        return
+
+    try:
+        sphinx_app.build()
+        response = types.BuildResponse(
+            id=request.id,
+            result=types.BuildResult(),
+            jsonrpc=request.jsonrpc,
+        )
+        send_message(response)
+    except Exception:
+        send_error(id=request.id, code=-32602, message="Sphinx build failed.")
 
 
 def logging_setup(config: SphinxConfig, app: Sphinx, status: IO, warning: IO):
