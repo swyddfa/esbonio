@@ -25,6 +25,32 @@ class CreateApplicationRequest:
 
 
 @dataclasses.dataclass
+class SphinxInfo:
+    """Represents information about an instance of the Sphinx application."""
+
+    version: str
+
+    conf_dir: str
+
+    build_dir: str
+
+    builder_name: str
+
+    src_dir: str
+
+
+@dataclasses.dataclass
+class CreateApplicationResponse:
+    """A ``sphinx/createApp`` response."""
+
+    id: Union[int, str]
+
+    result: SphinxInfo
+
+    jsonrpc: str = dataclasses.field(default="2.0")
+
+
+@dataclasses.dataclass
 class LogMessageParams:
     """Parameters of a ``window/logMessage`` notification."""
 
