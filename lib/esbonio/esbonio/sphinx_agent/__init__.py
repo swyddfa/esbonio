@@ -22,12 +22,14 @@ import logging
 import re
 import sys
 import threading
+import traceback
 from concurrent.futures import ThreadPoolExecutor
 from typing import Dict
 from typing import Type
 from typing import TypeVar
 
 from .handlers import HANDLERS
+from .util import send_error
 
 logger = logging.getLogger(__name__)
 
@@ -62,7 +64,17 @@ def handle_message(data: bytes):
         raise TypeError(f"Unknown method: '{method}'")
 
     obj = parse_message(message, type_)
-    handler(obj)
+    try:
+        handler(obj)
+    except Exception as e:
+        msg_id = message.get("id", None)
+        if msg_id is not None:
+            send_error(
+                id=msg_id,
+                code=-32602,
+                message=f"{e}",
+                data=dict(traceback=traceback.format_exc()),
+            )
 
 
 async def main_loop(loop, executor, stop_event, rfile, proxy):
