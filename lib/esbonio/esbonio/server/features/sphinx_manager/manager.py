@@ -5,6 +5,7 @@ import importlib.util
 import logging
 import pathlib
 import typing
+from typing import Dict
 from typing import List
 from typing import Optional
 
@@ -127,7 +128,7 @@ class SphinxManager(LanguageFeature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.client = None
+        self.clients: Dict[str, SphinxClient] = {}
 
     def document_change(self, params: lsp.DidChangeTextDocumentParams):
         self.logger.debug("Changed document '%s'", params.text_document.uri)
@@ -144,10 +145,11 @@ class SphinxManager(LanguageFeature):
 
     async def get_client(self, uri: str) -> Optional[SphinxClient]:
         """Given a uri, return the relevant sphinx client instance for it."""
-        if self.client is not None:
-            return self.client
 
-        self.logger.debug("Creating new Sphinx instance.")
+        for srcdir, client in self.clients.items():
+            if uri.startswith(srcdir):
+                return client
+
         params = lsp.ConfigurationParams(
             items=[lsp.ConfigurationItem(section="esbonio.sphinx", scope_uri=uri)]
         )
@@ -172,15 +174,25 @@ class SphinxManager(LanguageFeature):
         command = [*resolved.python_command, "-m", "sphinx_agent"]
         self.logger.debug("Starting sphinx agent: %s", " ".join(command))
 
-        self.client = make_sphinx_client(self)
-        await self.client.start_io(
+        client = make_sphinx_client(self)
+        await client.start_io(
             *command, env={"PYTHONPATH": resolved.python_path}, cwd=resolved.cwd
         )
 
-        if not self.client.stopped:
-            self.logger.debug("Starting sphinx: %s", " ".join(resolved.build_command))
-            await self.client.protocol.send_request_async(
-                "sphinx/createApp", {"command": resolved.build_command}
-            )
+        if client.stopped:
+            return None
 
-        return self.client
+        self.logger.debug("Starting sphinx: %s", " ".join(resolved.build_command))
+        response = await client.protocol.send_request_async(
+            "sphinx/createApp", {"command": resolved.build_command}
+        )
+        self.logger.debug("Sphinx started: %s", response)
+
+        src_uri = Uri.from_fs_path(response.src_dir)
+        if src_uri is None:
+            self.logger.error("Invalid srcdir '%s'", response.src_dir)
+            await client.stop()
+            return None
+
+        self.clients[src_uri] = client
+        return client
