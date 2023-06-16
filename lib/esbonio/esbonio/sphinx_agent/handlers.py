@@ -4,15 +4,17 @@ from typing import IO
 from typing import Optional
 from typing import Type
 
+from sphinx import __version__ as __sphinx_version__
 from sphinx.application import Sphinx
 from sphinx.util import console
 from sphinx.util import logging as sphinx_logging_module
 from sphinx.util.logging import NAMESPACE as SPHINX_LOG_NAMESPACE
 from sphinx.util.logging import VERBOSITY_MAP
 
+from . import types
 from .config import SphinxConfig
 from .log import SphinxLogHandler
-from .types import CreateApplicationRequest
+from .util import send_message
 
 HANDLERS = {}
 
@@ -29,8 +31,8 @@ def handler(t: Type):
     return wrapper
 
 
-@handler(CreateApplicationRequest)
-def create_sphinx_app(request: CreateApplicationRequest):
+@handler(types.CreateApplicationRequest)
+def create_sphinx_app(request: types.CreateApplicationRequest):
     sphinx_config = SphinxConfig.fromcli(request.params.command)
     if sphinx_config is None:
         raise ValueError("Invalid build command")
@@ -39,9 +41,20 @@ def create_sphinx_app(request: CreateApplicationRequest):
 
     # Override Sphinx's logging setup with our own.
     sphinx_logging_module.setup = partial(logging_setup, sphinx_config)
+    sphinx_app = Sphinx(**sphinx_args)
 
-    app = Sphinx(**sphinx_args)
-    app.build()
+    response = types.CreateApplicationResponse(
+        id=request.id,
+        result=types.SphinxInfo(
+            version=__sphinx_version__,
+            conf_dir=sphinx_app.confdir,
+            build_dir=sphinx_app.outdir,
+            builder_name=sphinx_app.builder.name,
+            src_dir=sphinx_app.srcdir,
+        ),
+        jsonrpc=request.jsonrpc,
+    )
+    send_message(response)
 
 
 def logging_setup(config: SphinxConfig, app: Sphinx, status: IO, warning: IO):
