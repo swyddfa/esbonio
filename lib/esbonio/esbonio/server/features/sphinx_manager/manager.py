@@ -129,6 +129,7 @@ class SphinxManager(LanguageFeature):
         super().__init__(*args, **kwargs)
 
         self.clients: Dict[str, SphinxClient] = {}
+        self.jobs = set()
 
     def document_change(self, params: lsp.DidChangeTextDocumentParams):
         self.logger.debug("Changed document '%s'", params.text_document.uri)
@@ -140,8 +141,15 @@ class SphinxManager(LanguageFeature):
         self.logger.debug("Opened document '%s'", params.text_document.uri)
         await self.get_client(params.text_document.uri)
 
-    def document_save(self, params: lsp.DidSaveTextDocumentParams):
+    async def document_save(self, params: lsp.DidSaveTextDocumentParams):
         self.logger.debug("Saved document '%s'", params.text_document.uri)
+
+        client = await self.get_client(params.text_document.uri)
+        if client is None:
+            return
+
+        result = await client.protocol.send_request_async("sphinx/build", {})
+        self.logger.debug("Build result: %s", result)
 
     async def get_client(self, uri: str) -> Optional[SphinxClient]:
         """Given a uri, return the relevant sphinx client instance for it."""
@@ -195,4 +203,10 @@ class SphinxManager(LanguageFeature):
             return None
 
         self.clients[src_uri] = client
+
+        # Do an initial build in the background so that we're free to do other things.
+        build_task = client.protocol.send_request_async("sphinx/build", {})
+        self.jobs.add(build_task)
+        build_task.add_done_callback(self.jobs.discard)
+
         return client
