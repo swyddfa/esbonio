@@ -1,7 +1,6 @@
 import dataclasses
 import inspect
 import pathlib
-import re
 from typing import Any
 from typing import Dict
 from typing import List
@@ -12,8 +11,6 @@ from unittest import mock
 
 from sphinx.application import Sphinx
 from sphinx.cmd.build import main as sphinx_build
-
-PATH_VAR_PATTERN = re.compile(r"^\${(\w+)}/?.*")
 
 
 @dataclasses.dataclass
@@ -141,108 +138,24 @@ class SphinxConfig:
             warning_is_error=sphinx_args.get("warningiserror", False),
         )
 
-    def to_cli_args(self) -> List[str]:
-        """Convert this into the equivalent ``sphinx-build`` cli arguments."""
-
-        if self.make_mode:
-            return self._build_make_cli_args()
-
-        return self._build_cli_args()
-
-    def _build_make_cli_args(self) -> List[str]:
-        args = ["-M", self.builder_name]
-        conf_dir = self.conf_dir or "${workspaceRoot}"
-        src_dir = self.src_dir or conf_dir
-
-        if self.build_dir is None:
-            build_dir = pathlib.Path(src_dir, "_build")
-        else:
-            build_dir = pathlib.Path(self.build_dir)
-
-        args += [src_dir, str(build_dir)]
-
-        args += self._build_standard_args()
-        default_dtree_dir = str(pathlib.Path(build_dir, "doctrees"))
-        if self.doctree_dir is not None and self.doctree_dir != default_dtree_dir:
-            args += ["-d", self.doctree_dir]
-
-        return args
-
-    def _build_cli_args(self) -> List[str]:
-        args = ["-b", self.builder_name]
-
-        conf_dir = self.conf_dir or "${workspaceRoot}"
-        src_dir = self.src_dir or conf_dir
-
-        build_dir = self.build_dir or pathlib.Path(src_dir, "_build")
-        default_dtree_dir = str(pathlib.Path(build_dir, ".doctrees"))
-
-        if self.doctree_dir is not None and self.doctree_dir != default_dtree_dir:
-            args += ["-d", self.doctree_dir]
-
-        args += self._build_standard_args()
-        args += [src_dir, str(build_dir)]
-        return args
-
-    def _build_standard_args(self) -> List[str]:
-        args: List[str] = []
-
-        conf_dir = self.conf_dir or "${workspaceRoot}"
-        src_dir = self.src_dir or self.conf_dir
-
-        if conf_dir != src_dir:
-            args += ["-c", conf_dir]
-
-        if self.force_full_build:
-            args += ["-E"]
-
-        if self.parallel > 1:
-            args += ["-j", str(self.num_jobs)]
-
-        if self.silent:
-            args += ["-Q"]
-
-        if self.quiet and not self.silent:
-            args += ["-q"]
-
-        if self.warning_is_error:
-            args += ["-W"]
-
-        if self.keep_going:
-            args += ["--keep-going"]
-
-        if self.verbosity > 0:
-            args += ["-" + ("v" * self.verbosity)]
-
-        for key, value in self.config_overrides.items():
-            if key == "nitpicky":
-                args += ["-n"]
-                continue
-
-            if key.startswith("html_context."):
-                char = "A"
-                key = key.replace("html_context.", "")
-            else:
-                char = "D"
-
-            args += [f"-{char}{key}={value}"]
-
-        for tag in self.tags:
-            args += ["-t", tag]
-
-        return args
-
     def to_application_args(self) -> Dict[str, Any]:
         """Convert this into the equivalent Sphinx application arguments."""
+
+        if self.make_mode:
+            outdir = str(pathlib.Path(self.build_dir, self.builder_name))
+            doctree_dir = str(pathlib.Path(self.build_dir, "doctrees"))
+        else:
+            outdir = self.build_dir
+            doctree_dir = self.doctree_dir
 
         return {
             "buildername": self.builder_name,
             "confdir": self.conf_dir,
             "confoverrides": self.config_overrides,
-            "doctreedir": self.doctree_dir,
+            "doctreedir": doctree_dir,
             "freshenv": self.force_full_build,
             "keep_going": self.keep_going,
-            "outdir": self.build_dir,
+            "outdir": outdir,
             "parallel": self.parallel,
             "srcdir": self.src_dir,
             "status": None,
