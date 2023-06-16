@@ -3,6 +3,7 @@ import json
 import logging
 import sys
 from typing import Any
+from typing import Union
 
 logger = logging.getLogger("esbonio.sphinx_agent")
 
@@ -15,6 +16,16 @@ def format_message(data: Any) -> str:
     content_length = len(content)
 
     return f"Content-Length: {content_length}\r\n\r\n{content}"
+
+
+def send_error(id: Union[str, int], code: int, message: str, data=None):
+    send_message(
+        dict(
+            id=id,
+            jsonrpc="2.0",
+            error=dict(code=code, message=message, data=data),
+        )
+    )
 
 
 def send_message(data: Any):
