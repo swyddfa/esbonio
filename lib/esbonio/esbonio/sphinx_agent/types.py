@@ -1,5 +1,11 @@
+"""Type definitions for the sphinx agent.
+
+This is the *only* file shared between the agent itself and the parent language server.
+For this reason this file *cannot* import anything from Sphinx.
+"""
 import dataclasses
 from typing import List
+from typing import Optional
 from typing import Union
 
 
@@ -20,6 +26,46 @@ class CreateApplicationRequest:
     params: CreateApplicationParams
 
     method: str = "sphinx/createApp"
+
+    jsonrpc: str = dataclasses.field(default="2.0")
+
+
+@dataclasses.dataclass
+class BuildParams:
+    """Parameters of a ``sphinx/build`` request."""
+
+    filenames: Optional[List[str]] = dataclasses.field(default_factory=list)
+
+    force_all: bool = False
+
+
+@dataclasses.dataclass
+class BuildResult:
+    """Results from a ``sphinx/build`` request."""
+
+    placeholder: str = "TODO: Real results"
+
+
+@dataclasses.dataclass
+class BuildRequest:
+    """A ``sphinx/build`` request."""
+
+    id: Union[int, str]
+
+    params: BuildParams
+
+    method: str = "sphinx/build"
+
+    jsonrpc: str = dataclasses.field(default="2.0")
+
+
+@dataclasses.dataclass
+class BuildResponse:
+    """A ``sphinx/build`` response."""
+
+    id: Union[int, str]
+
+    result: BuildResult
 
     jsonrpc: str = dataclasses.field(default="2.0")
 
