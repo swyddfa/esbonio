@@ -67,7 +67,11 @@ def main(argv: Optional[Sequence[str]] = None):
     cli = build_parser()
     args = cli.parse_args(argv)
 
-    modules = ["esbonio.server.features.sphinx_manager"]
+    # Order matters!
+    modules = [
+        "esbonio.server.features.sphinx_manager",
+        "esbonio.server.features.preview_manager",
+    ]
 
     for mod in args.included_modules:
         modules.append(mod)
