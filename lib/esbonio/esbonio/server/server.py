@@ -287,6 +287,8 @@ def _get_setup_arguments(
             args[name] = server
             continue
 
+        from .feature import LanguageFeature
+
         if issubclass(type_, LanguageFeature):
             # Try and obtain an instance of the requested language feature.
             feature = server.get_feature(type_)
