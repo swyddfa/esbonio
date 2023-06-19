@@ -3,6 +3,7 @@ import * as vscode from 'vscode'
 
 import { OutputChannelLogger } from '../common/log'
 import { PythonManager } from './python'
+import { PreviewManager } from "./preview";
 import { EsbonioClient } from './client'
 
 let esbonio: EsbonioClient
@@ -16,6 +17,8 @@ export async function activate(context: vscode.ExtensionContext) {
 
   let python = new PythonManager(logger)
   esbonio = new EsbonioClient(logger, python, context, channel)
+
+  let previewManager = new PreviewManager(logger, context, esbonio)
 
   let config = vscode.workspace.getConfiguration("esbonio.server")
   if (config.get("enabled")) {
