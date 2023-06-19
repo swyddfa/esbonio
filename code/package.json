@@ -58,7 +58,20 @@
         "workspaceContains:*.rst"
     ],
     "contributes": {
-        "commands": [],
+        "commands": [
+            {
+                "command": "esbonio.preview.open",
+                "title": "Open Preview",
+                "icon": "$(preview)",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.preview.openSide",
+                "title": "Open Preview to the Side",
+                "icon": "$(open-preview)",
+                "category": "Esbonio"
+            }
+        ],
         "configuration": [
             {
                 "title": "Server",
@@ -216,6 +229,15 @@
                 "path": "./syntaxes/esbonio-log-output.tmLanguage.json"
             }
         ],
-        "menus": {}
+        "menus": {
+            "editor/title": [
+                {
+                    "command": "esbonio.preview.openSide",
+                    "alt": "esbonio.preview.open",
+                    "group": "navigation",
+                    "when": "resourceLangId == restructuredtext"
+                }
+            ]
+        }
     }
 }
