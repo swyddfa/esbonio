@@ -34,14 +34,15 @@
             "runtimeExecutable": "${execPath}",
             "args": [
                 "--extensionDevelopmentPath=${workspaceRoot}/code",
-                "--folder-uri=${workspaceRoot}/${input:workspace}"
+                "--folder-uri=${workspaceRoot}/docs",
+                "--folder-uri=${workspaceRoot}/lib/esbonio/tests/sphinx-default/workspace"
             ],
             "outFiles": [
                 "${workspaceRoot}/code/dist/node/**/*.js"
             ],
-            "preLaunchTask": "${defaultBuildTask}",
+            // "preLaunchTask": "${defaultBuildTask}",
             "env": {
-                "VSCODE_LSP_DEBUG": "true"
+                // "VSCODE_LSP_DEBUG": "true"
             }
         },
         {
