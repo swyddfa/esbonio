@@ -11,8 +11,8 @@ import pygls.uris as Uri
 from pygls.workspace import Workspace
 
 
-def get_python_path() -> Optional[pathlib.Path]:
-    spec = importlib.util.find_spec("esbonio.sphinx_agent")
+def get_python_path(module: str) -> Optional[pathlib.Path]:
+    spec = importlib.util.find_spec(module)
     if spec is None:
         return None
 
@@ -28,6 +28,9 @@ def get_python_path() -> Optional[pathlib.Path]:
 class SphinxConfig:
     """Configuration for the sphinx application instance."""
 
+    enable_dev_tools: bool = attrs.field(default=False)
+    """Flag to enable dev tools."""
+
     python_command: List[str] = attrs.field(factory=list)
     """The command to use when launching the python interpreter."""
 
@@ -37,7 +40,7 @@ class SphinxConfig:
     cwd: str = attrs.field(default="")
     """The working directory to use."""
 
-    python_path: Optional[pathlib.Path] = attrs.field(default=get_python_path())
+    python_path: List[pathlib.Path] = attrs.field(factory=list)
     """The value of ``PYTHONPATH`` to use when injecting the sphinx agent into the
     target environment"""
 
@@ -49,9 +52,11 @@ class SphinxConfig:
     ) -> "Optional[SphinxConfig]":
         """Resolve the configuration based on user provided values."""
 
-        if self.python_path is None:
-            logger.error("Unable to locate the sphinx agent")
-            return None
+        if len(self.python_path) == 0:
+            if (python_path := self._resolve_python_path(logger)) is None:
+                return None
+
+            self.python_path = python_path
 
         cwd = self._resolve_cwd(uri, workspace, logger)
         if cwd is None:
@@ -62,6 +67,7 @@ class SphinxConfig:
             build_command = self._guess_build_command(uri, logger)
 
         return SphinxConfig(
+            enable_dev_tools=self.enable_dev_tools,
             cwd=cwd,
             python_command=self.python_command,
             build_command=build_command,
@@ -82,6 +88,25 @@ class SphinxConfig:
 
         logger.debug("Cwd: %s", cwd)
         return cwd
+
+    def _resolve_python_path(
+        self, logger: logging.Logger
+    ) -> Optional[List[pathlib.Path]]:
+        if (sphinx_agent := get_python_path("esbonio.sphinx_agent")) is None:
+            logger.error("Unable to locate the sphinx agent")
+            return None
+
+        python_path = [sphinx_agent]
+        if self.enable_dev_tools:
+            if (lsp_devtools := get_python_path("lsp_devtools")) is None:
+                logger.warning(
+                    "Unable to locate module 'lsp_devtools', dev tools will not "
+                    "be availble."
+                )
+            else:
+                python_path.append(lsp_devtools)
+
+        return python_path
 
     def _guess_build_command(self, uri: str, logger: logging.Logger) -> List[str]:
         """Try and guess something a sensible build command given the uri."""
