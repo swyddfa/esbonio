@@ -58,8 +58,10 @@ export class EsbonioClient {
       return
     }
 
-    let config = vscode.workspace.getConfiguration("esbonio")
+    // Isolate the Python interpreter from the user's environment - we brought our own.
+    command.push("-S")
 
+    let config = vscode.workspace.getConfiguration("esbonio")
     // if (config.get<boolean>('server.enableDevTools')) {
     //   command.push("-m", "lsp_devtools", "agent", "--", ...command)
     // }
