@@ -1,6 +1,6 @@
-.PHONY: update-pip-lock install-pip
+.PHONY: update-lock bundle-deps
 
-install-pip: requirements.txt
+bundle-deps: requirements.txt
 	sed -i /@/d requirements.txt
 	python -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements.txt
 	#python -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade git+https://github.com/openlawlibrary/pygls.git#egg=pygls
@@ -10,4 +10,4 @@ install-pip: requirements.txt
 requirements.txt: requirements.in
 	pip-compile --resolver=backtracking --generate-hashes --upgrade ./requirements.in
 
-update-pip-lock: requirements.txt
+update-lock: requirements.txt
