@@ -62,9 +62,9 @@ export class EsbonioClient {
     command.push("-S")
 
     let config = vscode.workspace.getConfiguration("esbonio")
-    // if (config.get<boolean>('server.enableDevTools')) {
-    //   command.push("-m", "lsp_devtools", "agent", "--", ...command)
-    // }
+    if (config.get<boolean>('server.enableDevTools')) {
+      command.push("-m", "lsp_devtools", "agent", "--", ...command)
+    }
 
     let startupModule = config.get<string>("server.startupModule") || "esbonio.server"
     // let includedModules = config.get<string[]>('server.includedModules') || []
