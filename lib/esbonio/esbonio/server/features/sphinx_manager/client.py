@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import asyncio
+import json
+import sys
 import typing
 from typing import Optional
 
@@ -77,12 +79,17 @@ class SphinxClient(Client):
 
     async def start(self, config: SphinxConfig):
         """Start the sphinx agent."""
-        command = [*config.python_command, "-m", "sphinx_agent"]
+        command = []
+        if config.enable_dev_tools:
+            command.extend([sys.executable, "-m", "lsp_devtools", "agent", "--"])
+
+        command.extend([*config.python_command, "-m", "sphinx_agent"])
+        env = {"PYTHONPATH": ":".join([str(p) for p in config.python_path])}
+
+        self.logger.debug("Sphinx agent env: %s", json.dumps(env, indent=2))
         self.logger.debug("Starting sphinx agent: %s", " ".join(command))
 
-        await self.start_io(
-            *command, env={"PYTHONPATH": config.python_path}, cwd=config.cwd
-        )
+        await self.start_io(*command, env=env, cwd=config.cwd)
 
     async def server_exit(self, server: asyncio.subprocess.Process):
         """Called when the sphinx agent process exits."""
