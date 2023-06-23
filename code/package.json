@@ -144,12 +144,6 @@
             {
                 "title": "Sphinx",
                 "properties": {
-                    "esbonio.sphinx.enableDevTools": {
-                        "scope": "resource",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Flag to enable support for additional developer tooling"
-                    },
                     "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
                         "type": "array",
@@ -200,6 +194,12 @@
                         "type": "boolean",
                         "default": false,
                         "description": "Developer flag to enable deprecation warnings."
+                    },
+                    "esbonio.sphinx.enableDevTools": {
+                        "scope": "resource",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Flag to enable support for additional developer tooling for sphinx agent instances."
                     }
                 }
             }
