@@ -17,6 +17,7 @@
         "Programming Languages"
     ],
     "scripts": {
+        "watch": "tsc -p . --watch",
         "deploy": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/beta/code/",
         "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/beta/code/",
         "vscode:prepublish": "webpack --mode production"
@@ -143,6 +144,12 @@
             {
                 "title": "Sphinx",
                 "properties": {
+                    "esbonio.sphinx.enableDevTools": {
+                        "scope": "resource",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Flag to enable support for additional developer tooling"
+                    },
                     "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
                         "type": "array",
