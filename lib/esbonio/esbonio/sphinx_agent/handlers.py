@@ -16,6 +16,7 @@ from sphinx.util.logging import VERBOSITY_MAP
 from . import types
 from .config import SphinxConfig
 from .log import SphinxLogHandler
+from .transforms import LineNumberTransform
 from .util import send_error
 from .util import send_message
 
@@ -56,6 +57,9 @@ def create_sphinx_app(request: types.CreateApplicationRequest):
         sphinx_app.config.html_static_path.append(reldir)
 
         sphinx_app.add_js_file("webview.js")
+
+        # Inject source line numbers into build output
+        sphinx_app.add_transform(LineNumberTransform)
 
     response = types.CreateApplicationResponse(
         id=request.id,
