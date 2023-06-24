@@ -103,7 +103,7 @@ class PreviewManager(LanguageFeature):
             return self._ws_server
 
         logger = self.server.logger.getChild("WebviewServer")
-        self._ws_server = make_ws_server(logger)
+        self._ws_server = make_ws_server(self.server, logger)
         self._ws_task = asyncio.create_task(self._ws_server.start_ws("localhost", 0))
 
         # HACK: we need to yield control to the event loop to give the ws_server time to
