@@ -1,4 +1,6 @@
 import logging
+import os.path
+import pathlib
 from functools import partial
 from typing import IO
 from typing import Optional
@@ -18,6 +20,7 @@ from .util import send_error
 from .util import send_message
 
 HANDLERS = {}
+STATIC_DIR = (pathlib.Path(__file__).parent / "static").resolve()
 
 # Global state.... for now
 sphinx_app: Optional[Sphinx] = None
@@ -45,6 +48,14 @@ def create_sphinx_app(request: types.CreateApplicationRequest):
     sphinx_logging_module.setup = partial(logging_setup, sphinx_config)
     global sphinx_app
     sphinx_app = Sphinx(**sphinx_args)
+
+    if request.params.enable_sync_scrolling:
+        # Push our folder of static assets into the user's project.
+        # Path needs to be relative to their project's confdir.
+        reldir = os.path.relpath(str(STATIC_DIR), start=sphinx_app.confdir)
+        sphinx_app.config.html_static_path.append(reldir)
+
+        sphinx_app.add_js_file("webview.js")
 
     response = types.CreateApplicationResponse(
         id=request.id,
