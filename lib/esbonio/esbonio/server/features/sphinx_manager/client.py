@@ -9,6 +9,8 @@ from typing import Optional
 import pygls.uris as Uri
 from pygls.client import Client
 
+import esbonio.sphinx_agent.types as types
+
 from .config import SphinxConfig
 
 if typing.TYPE_CHECKING:
@@ -105,11 +107,20 @@ class SphinxClient(Client):
         if self.stopped:
             raise RuntimeError("Client is stopped.")
 
+        params = types.CreateApplicationParams(
+            command=config.build_command,
+            enable_sync_scrolling=config.enable_sync_scrolling,
+        )
+
         self.logger.debug("Starting sphinx: %s", " ".join(config.build_command))
         self.sphinx_info = await self.protocol.send_request_async(
-            "sphinx/createApp", {"command": config.build_command}
+            "sphinx/createApp", params
         )
         return self.sphinx_info
+
+    async def build(self):
+        """Trigger a Sphinx build."""
+        return await self.protocol.send_request_async("sphinx/build", {})
 
 
 def make_sphinx_client(manager: SphinxManager):
