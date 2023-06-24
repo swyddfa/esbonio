@@ -11,6 +11,8 @@ from pygls.server import Server
 from pygls.server import WebSocketTransportAdapter
 from websockets.server import serve
 
+from esbonio.server import EsbonioLanguageServer
+
 
 class WebviewServer(Server):
     """The webview server controlls the webpage hosting the preview.
@@ -48,7 +50,7 @@ class WebviewServer(Server):
             connection,
             host,
             port,
-            logger=self.logger.getChild("rpc"),
+            # logger=self.logger.getChild("rpc"),
             family=socket.AF_INET,  # Use IPv4 only.
         ) as ws_server:
             sock = ws_server.sockets[0]
@@ -56,12 +58,11 @@ class WebviewServer(Server):
             await asyncio.Future()  # run forever
 
 
-def make_ws_server(logger: logging.Logger):
+def make_ws_server(esbonio: EsbonioLanguageServer, logger: logging.Logger):
     server = WebviewServer(logger)
+
+    @server.feature("editor/scroll")
+    def on_scroll(ls: WebviewServer, params):
+        esbonio.lsp.notify("editor/scroll", dict(line=params.line))
+
     return server
-
-
-if __name__ == "__main__":
-    logger = logging.getLogger("webview")
-    server = make_ws_server(logger)
-    asyncio.run(server.start_ws("localhost", 9876))
