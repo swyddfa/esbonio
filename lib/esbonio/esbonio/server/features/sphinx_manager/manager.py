@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import inspect
 import typing
 from typing import Dict
 from typing import Optional
@@ -23,7 +24,16 @@ class SphinxManager(LanguageFeature):
         super().__init__(*args, **kwargs)
 
         self.clients: Dict[str, SphinxClient] = {}
+        """Holds currently active Sphinx clients."""
+
         self.jobs = set()
+        """Used to hold temporary references to background jobs."""
+
+        self.handlers: Dict[str, set] = {}
+        """Collection of handlers for various events."""
+
+    def add_listener(self, event: str, handler):
+        self.handlers.setdefault(event, set()).add(handler)
 
     def document_change(self, params: lsp.DidChangeTextDocumentParams):
         self.logger.debug("Changed document '%s'", params.text_document.uri)
@@ -37,13 +47,27 @@ class SphinxManager(LanguageFeature):
 
     async def document_save(self, params: lsp.DidSaveTextDocumentParams):
         self.logger.debug("Saved document '%s'", params.text_document.uri)
+        await self.trigger_build(params.text_document.uri)
 
-        client = await self.get_client(params.text_document.uri)
+    async def trigger_build(self, uri: str):
+        """Trigger a build for the relevant Sphinx application for the given uri."""
+        client = await self.get_client(uri)
         if client is None:
             return
 
-        result = await client.protocol.send_request_async("sphinx/build", {})
+        result = await client.build()
         self.logger.debug("Build result: %s", result)
+
+        # Notify listeners.
+        for listener in self.handlers.get("build", set()):
+            try:
+                # TODO: Concurrent awaiting?
+                res = listener(client.src_uri, result)
+                if inspect.isawaitable(res):
+                    await res
+            except Exception:
+                name = f"{listener}"
+                self.logger.error("Error in build handler '%s'", name, exc_info=True)
 
     async def get_client(self, uri: str) -> Optional[SphinxClient]:
         """Given a uri, return the relevant sphinx client instance for it."""
@@ -91,8 +115,8 @@ class SphinxManager(LanguageFeature):
         self.clients[src_uri] = client
 
         # Do an initial build in the background so that we're free to do other things.
-        build_task = client.protocol.send_request_async("sphinx/build", {})
-        self.jobs.add(build_task)
-        build_task.add_done_callback(self.jobs.discard)
+        # build_task = client.protocol.send_request_async("sphinx/build", {})
+        # self.jobs.add(build_task)
+        # build_task.add_done_callback(self.jobs.discard)
 
         return client
