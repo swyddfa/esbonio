@@ -56,9 +56,9 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
         if client is not None:
             ls.logger.info("Language client: %s %s", client.name, client.version)
 
-        ls.logger.debug(
-            "Client capabilities:\n%s", json.dumps(client_capabilities, indent=2)
-        )
+        # ls.logger.debug(
+        #     "Client capabilities:\n%s", json.dumps(client_capabilities, indent=2)
+        # )
 
         ls.initialize(params)
 
