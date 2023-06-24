@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import typing
 from http.server import HTTPServer
 from http.server import SimpleHTTPRequestHandler
 from typing import Any
@@ -10,6 +11,9 @@ from esbonio.server import EsbonioLanguageServer
 from esbonio.server.feature import LanguageFeature
 from esbonio.server.features.sphinx_manager import SphinxManager
 
+from .webview import WebviewServer
+from .webview import make_ws_server
+
 
 class RequestHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, logger: logging.Logger, directory: str, **kwargs) -> None:
@@ -18,7 +22,7 @@ class RequestHandler(SimpleHTTPRequestHandler):
 
     def translate_path(self, path: str) -> str:
         result = super().translate_path(path)
-        self.logger.debug("Translate: '%s' -> '%s'", path, result)
+        # self.logger.debug("Translate: '%s' -> '%s'", path, result)
         return result
 
     def log_message(self, format: str, *args: Any) -> None:
@@ -49,13 +53,36 @@ class PreviewManager(LanguageFeature):
     def __init__(self, server: EsbonioLanguageServer, sphinx: SphinxManager):
         super().__init__(server)
         self.sphinx = sphinx
+        self.sphinx.add_listener("build", self.on_build)
 
         logger = server.logger.getChild("PreviewServer")
         self._request_handler_factory = RequestHandlerFactory(logger, "")
         self._http_server = None
         self._http_future = None
 
-    def get_http_server(self):
+        self._ws_server = None
+        self._ws_task = None
+
+    @property
+    def preview_active(self) -> bool:
+        """Return true if the preview is active.
+
+        i.e. there is a HTTP server hosting the build result."""
+        return self._http_server is not None
+
+    @property
+    def preview_controllable(self) -> bool:
+        """Return true if the preview is controllable.
+
+        i.e. there is a web socket server available to control the webview.
+        """
+        return self._ws_server is not None
+
+    def get_http_server(self) -> HTTPServer:
+        """Return the http server instance hosting the previews.
+
+        This will also handle the creation of the server the first time it is called.
+        """
         if self._http_server is not None:
             return self._http_server
 
@@ -68,6 +95,37 @@ class PreviewManager(LanguageFeature):
         )
 
         return self._http_server
+
+    async def get_webview_server(self) -> WebviewServer:
+        """Return the websocket server used to communicate with the webview."""
+
+        if self._ws_server is not None:
+            return self._ws_server
+
+        logger = self.server.logger.getChild("WebviewServer")
+        self._ws_server = make_ws_server(logger)
+        self._ws_task = asyncio.create_task(self._ws_server.start_ws("localhost", 0))
+
+        # HACK: we need to yield control to the event loop to give the ws_server time to
+        #       spin up and allocate a port number.
+        await asyncio.sleep(1)
+
+        return self._ws_server
+
+    async def on_build(self, src_uri: str, result):
+        """Called whenever a sphinx build completes."""
+        self.logger.debug("Build finished: '%s'", src_uri)
+
+        client = await self.sphinx.get_client(src_uri)
+        if client is None:
+            return
+
+        # Only refresh the view if the project we are previewing was built.
+        if client.build_dir != self._request_handler_factory.build_dir:
+            return
+
+        webview = await self.get_webview_server()
+        webview.reload()
 
     async def preview_file(self, params):
         src_uri = params["uri"]
@@ -89,7 +147,12 @@ class PreviewManager(LanguageFeature):
         self._request_handler_factory.build_dir = client.build_dir
         self.logger.debug("Preview running on port: %s", server.server_port)
 
-        return {"uri": f"http://localhost:{server.server_port}{html_path}"}
+        webview = await self.get_webview_server()
+        self.logger.debug("Websockets running on port: %s", webview.port)
+
+        return {
+            "uri": f"http://localhost:{server.server_port}{html_path}?ws={webview.port}"
+        }
 
 
 def esbonio_setup(server: EsbonioLanguageServer, sphinx: SphinxManager):
