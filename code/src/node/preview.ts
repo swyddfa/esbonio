@@ -3,6 +3,8 @@ import { OutputChannelLogger } from '../common/log'
 import { EsbonioClient } from './client'
 import { Commands } from '../common/constants'
 
+const COOLDOWN = 1000 // ms
+
 interface PreviewFileParams {
   uri: string
   show?: boolean
@@ -15,7 +17,12 @@ interface PreviewFileResult {
 export class PreviewManager {
 
   private panel?: vscode.WebviewPanel
+
+  // The uri of the document currently shown in the preview pane
   private currentUri?: vscode.Uri
+
+  // If set, indicates that the preview pane is currently in control of the editor.
+  private viewInControl?: NodeJS.Timeout
 
   // Used to break the cache in iframes.
   private count: number = 0
@@ -32,6 +39,9 @@ export class PreviewManager {
     context.subscriptions.push(
       vscode.commands.registerTextEditorCommand(Commands.OPEN_PREVIEW_TO_SIDE, this.openPreviewToSide, this)
     )
+    context.subscriptions.push(
+      vscode.window.onDidChangeTextEditorVisibleRanges(params => this.scrollView(params))
+    )
 
     client.addHandler("editor/scroll", (params: { line: number }) => { this.scrollEditor(params) })
   }
@@ -47,16 +57,43 @@ export class PreviewManager {
   private scrollEditor(params: { line: number }) {
     for (let editor of vscode.window.visibleTextEditors) {
       if (editor.document.uri === this.currentUri) {
-        this.logger.debug(`Scrolling: ${JSON.stringify(params)}`)
+        // this.logger.debug(`Scrolling: ${JSON.stringify(params)}`)
 
         let target = new vscode.Range(
           new vscode.Position(params.line - 2, 0),
           new vscode.Position(params.line + 2, 0)
         )
+
+        // Don't send `view/scroll` messages for a while to prevent the view and
+        // editor from fighting each other for control.
+        if (this.viewInControl) {
+          clearTimeout(this.viewInControl)
+        }
+        this.viewInControl = setTimeout(() => {
+          this.viewInControl = undefined
+          this.logger.debug("viewInControl cooldown ended.")
+        }, COOLDOWN)
+
         editor.revealRange(target, vscode.TextEditorRevealType.AtTop)
         break
       }
     }
+  }
+
+  private scrollView(event: vscode.TextEditorVisibleRangesChangeEvent) {
+    let editor = event.textEditor
+    if (editor.document.uri !== this.currentUri) {
+      return
+    }
+
+    if (this.viewInControl) {
+      return
+    }
+
+    // More than one range here implies that some regions of code have been folded.
+    // Though I doubt it matters too much for this use case?..
+    let range = event.visibleRanges[0]
+    this.client.scrollView(range.start.line)
   }
 
   private async previewEditor(editor: vscode.TextEditor, placement: vscode.ViewColumn) {
