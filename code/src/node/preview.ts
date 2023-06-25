@@ -13,10 +13,13 @@ interface PreviewFileResult {
 }
 
 export class PreviewManager {
+
   private panel?: vscode.WebviewPanel
+  private currentUri?: vscode.Uri
 
   // Used to break the cache in iframes.
   private count: number = 0
+
 
   constructor(
     private logger: OutputChannelLogger,
@@ -29,6 +32,8 @@ export class PreviewManager {
     context.subscriptions.push(
       vscode.commands.registerTextEditorCommand(Commands.OPEN_PREVIEW_TO_SIDE, this.openPreviewToSide, this)
     )
+
+    client.addHandler("editor/scroll", (params: { line: number }) => { this.scrollEditor(params) })
   }
 
   async openPreview(editor: vscode.TextEditor) {
@@ -39,12 +44,27 @@ export class PreviewManager {
     return await this.previewEditor(editor, vscode.ViewColumn.Beside)
   }
 
+  private scrollEditor(params: { line: number }) {
+    for (let editor of vscode.window.visibleTextEditors) {
+      if (editor.document.uri === this.currentUri) {
+        this.logger.debug(`Scrolling: ${JSON.stringify(params)}`)
+
+        let target = new vscode.Range(
+          new vscode.Position(params.line - 2, 0),
+          new vscode.Position(params.line + 2, 0)
+        )
+        editor.revealRange(target, vscode.TextEditorRevealType.AtTop)
+        break
+      }
+    }
+  }
+
   private async previewEditor(editor: vscode.TextEditor, placement: vscode.ViewColumn) {
-    let srcUri = editor.document.uri
-    this.logger.debug(`Previewing: ${srcUri}`)
+    this.currentUri = editor.document.uri
+    this.logger.debug(`Previewing: ${this.currentUri}`)
 
     let params: PreviewFileParams = {
-      uri: `${srcUri}`,
+      uri: `${this.currentUri}`,
       show: false
     }
 
