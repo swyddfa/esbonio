@@ -20,7 +20,7 @@
         "watch": "tsc -p . --watch",
         "deploy": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/beta/code/",
         "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/beta/code/",
-        "vscode:prepublish": "webpack --mode production"
+        "vscode:prepublish": "tsc -p ."
     },
     "main": "dist/node/extension",
     "dependencies": {
@@ -30,7 +30,7 @@
     "devDependencies": {
         "@types/glob": "^8.1.0",
         "@types/mocha": "^10.0.1",
-        "@types/node": "^14.17.15",
+        "@types/node": "^16.18.36",
         "@types/vscode": "1.66.0",
         "@vscode/vsce": "^2.19.0",
         "mocha": "^10.2.0",
