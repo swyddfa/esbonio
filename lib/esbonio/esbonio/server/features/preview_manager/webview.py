@@ -33,11 +33,13 @@ class WebviewServer(Server):
 
     def reload(self):
         """Reload the current view."""
-        self.lsp.notify("view/reload", {})
+        if self.lsp.transport:
+            self.lsp.notify("view/reload", {})
 
     def scroll(self, line: int):
         """Scroll the current view."""
-        self.lsp.notify("view/scroll", {"line": line})
+        if self.lsp.transport:
+            self.lsp.notify("view/scroll", {"line": line})
 
     async def start_ws(self, host: str, port: int) -> None:
         async def connection(websocket):
