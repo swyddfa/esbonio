@@ -41,5 +41,5 @@ if [ -z "$changes" ]; then
     echo "There is nothing to do."
 else
     echo "Changes detected, doing build!"
-    echo "::set-output name=build::true"
+    echo "build=true" >> $GITHUB_OUTPUT
 fi
