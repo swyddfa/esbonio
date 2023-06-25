@@ -19,12 +19,24 @@ export class EsbonioClient {
 
   private client?: LanguageClient
 
+  private handlers: Map<string, any[]>
+
   constructor(
     private logger: OutputChannelLogger,
     private python: PythonManager,
     private context: vscode.ExtensionContext,
     private channel: vscode.OutputChannel,
-  ) { }
+  ) {
+    this.handlers = new Map()
+  }
+
+  public addHandler(event: string, handler: any) {
+    if (this.handlers.has(event)) {
+      this.handlers.get(event)?.push(handler)
+    } else {
+      this.handlers.set(event, [handler])
+    }
+  }
 
   /**
     * Start the language client.
@@ -96,12 +108,26 @@ export class EsbonioClient {
       command: command[0], args: command.slice(1), options: serverEnv
     }
 
-    return new LanguageClient(
+    let client = new LanguageClient(
       'esbonio',
       'Esbonio Language Server',
       server,
       this.getLanguageClientOptions(config)
     )
+    this.registerHandlers(client)
+    return client
+  }
+
+
+  /**
+   * Register any additional method handlers on the language client.
+   */
+  private registerHandlers(client: LanguageClient) {
+    client.onNotification("editor/scroll", (params) => {
+      this.handlers.get("editor/scroll")?.forEach(handler => {
+        handler(params)
+      })
+    })
   }
 
   /**
