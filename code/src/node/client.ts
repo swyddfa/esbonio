@@ -119,6 +119,11 @@ export class EsbonioClient {
   }
 
 
+  public scrollView(line: number) {
+    this.client?.sendNotification("view/scroll", { line: line })
+  }
+
+
   /**
    * Register any additional method handlers on the language client.
    */
