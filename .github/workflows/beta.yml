@@ -1,0 +1,93 @@
+name: Beta
+
+on:
+  push:
+    branches:
+    - beta
+
+jobs:
+  # Simple job the checks to see which parts we actually have to build.
+  trigger:
+    name: Trigger
+    runs-on: ubuntu-latest
+    outputs:
+      vscode: ${{steps.check-vscode.outputs.build}}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - run: |
+        if [ -z "${BASE_REF}" ]; then
+          echo "BASE=HEAD^" >> $GITHUB_ENV
+        else
+          echo "BASE=origin/${BASE_REF}" >> $GITHUB_ENV
+        fi
+      name: Determine base
+      env:
+        BASE_REF: ${{ github.base_ref }}
+
+    - run: |
+        set -e
+        echo ${BASE}
+        ./scripts/should-build.sh vscode
+      id: check-vscode
+      name: "Build VSCode?"
+
+  vscode:
+    name: VSCode Extension
+    needs: [trigger]
+    if: needs.trigger.outputs.vscode
+    runs-on: ubuntu-latest
+    steps:
+      - uses: 'actions/checkout@v3'
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          cache: 'npm'
+          cache-dependency-path: 'code/package-lock.json'
+
+      # This must be set to the minimum Python version we support
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.8
+
+      - name: Pip cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-vscode-pip-deps-${{ hashFiles('code/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-vscode-pip-deps
+
+      - run: |
+          python --version
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade bump2version towncrier docutils
+        name: Install Build Tools
+
+      - run: |
+          set -e
+          ./scripts/make-release.sh vscode
+        id: info
+        name: Set Version
+
+      - run: |
+          cd code
+          npm ci --prefer-offline
+          make bundle-deps
+        name: Install Dependencies
+
+      - run: |
+          cd code
+          npm run package
+        name: Package Extension
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: 'vsix'
+          path: code/*.vsix
+          if-no-files-found: error
+          retention-days: 7
