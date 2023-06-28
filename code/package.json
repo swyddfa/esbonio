@@ -37,7 +37,7 @@
         "path-browserify": "^1.0.1",
         "ts-loader": "^9.4.3",
         "typescript": "^5.1.5",
-        "webpack": "^5.87.0",
+        "webpack": "^5.88.1",
         "webpack-cli": "^5.1.4"
     },
     "engines": {
