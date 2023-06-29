@@ -43,8 +43,8 @@ export class EsbonioClient {
   }
 
   /**
-    * Start the language client.
-    */
+   * Start the language server.
+   */
   async start(): Promise<void> {
 
     this.client = await this.getStdioClient()
@@ -56,7 +56,7 @@ export class EsbonioClient {
     try {
       this.logger.info("Starting Language Server")
       await this.client.start()
-
+      this.callHandlers(Events.SERVER_START, undefined)
     } catch (err) {
       this.logger.error(`${err}`)
     }
@@ -74,13 +74,24 @@ export class EsbonioClient {
       await this.start()
     }
   }
+
   /**
-  * Return a LanguageClient configured to communicate with the server over stdio.
-  * Typically used in production.
-  */
+   * Stop the language server.
+   */
+  async stop() {
+
+    if (this.client) {
+      this.callHandlers(Events.SERVER_STOP, undefined)
+      await this.client.stop()
+    }
+
+    return
+  }
+
+  /**
+   * Return a LanguageClient configured to communicate with the server over stdio.
+   */
   private async getStdioClient(): Promise<LanguageClient | undefined> {
-
-
     let command = await this.python.getCmd()
     if (!command) {
       return
@@ -136,7 +147,7 @@ export class EsbonioClient {
 
 
   public scrollView(line: number) {
-    this.client?.sendNotification("view/scroll", { line: line })
+    this.client?.sendNotification(Notifications.VIEW_SCROLL, { line: line })
   }
 
 
@@ -144,11 +155,17 @@ export class EsbonioClient {
    * Register any additional method handlers on the language client.
    */
   private registerHandlers(client: LanguageClient) {
-    client.onNotification("editor/scroll", (params) => {
-      this.handlers.get("editor/scroll")?.forEach(handler => {
-        handler(params)
+
+    let methods = [
+      Notifications.SCROLL_EDITOR,
+      Notifications.SPHINX_APP_CREATED,
+    ]
+
+    for (let method of methods) {
+      client.onNotification(method, (params) => {
+        this.callHandlers(method, params)
       })
-    })
+    }
   }
 
   /**
@@ -229,12 +246,13 @@ export class EsbonioClient {
     return clientOptions
   }
 
-  async stop() {
-
-    if (this.client) {
-      await this.client.stop()
-    }
-
-    return
+  private callHandlers(method: string, params: any) {
+    this.handlers.get(method)?.forEach(handler => {
+      try {
+        handler(params)
+      } catch (err) {
+        this.logger.error(`Error in '${method}' notification handler: ${err}`)
+      }
+    })
   }
 }
