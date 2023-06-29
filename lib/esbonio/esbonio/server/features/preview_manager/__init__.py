@@ -138,7 +138,10 @@ class PreviewManager(LanguageFeature):
         self.logger.debug("Preview file called %s", src_uri)
 
         client = await self.sphinx.get_client(src_uri)
-        if client is None or client.src_dir is None or client.build_dir is None:
+        if client is None:
+            return None
+
+        if client.src_dir is None or client.build_dir is None or client.builder is None:
             return None
 
         src_path = Uri.to_fs_path(src_uri)
@@ -146,7 +149,17 @@ class PreviewManager(LanguageFeature):
             return None
 
         rst_path = src_path.replace(client.src_dir, "")
-        html_path = rst_path.replace(".rst", ".html")
+        if client.builder == "html":
+            html_path = rst_path.replace(".rst", ".html")
+        elif client.builder == "dirhtml":
+            html_path = rst_path.replace("index.rst", "").replace(".rst", "/")
+        else:
+            self.logger.error(
+                "Previews for the '%s' builder are not currently supported",
+                client.builder,
+            )
+            return None
+
         self.logger.debug("'%s' -> '%s' -> '%s'", src_path, rst_path, html_path)
 
         server = self.get_http_server()
