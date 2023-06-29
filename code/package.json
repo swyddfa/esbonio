@@ -245,6 +245,38 @@
                     "when": "resourceLangId == restructuredtext"
                 }
             ]
-        }
+        },
+        "walkthroughs": [
+            {
+                "id": "getting-started",
+                "title": "Getting Started",
+                "description": "Getting started with the Esbonio extension",
+                "steps": [
+                    {
+                        "id": "pickenv",
+                        "title": "Select Environment",
+                        "description": "Choose the Python environment that you want to use with Esbonio.\n[Select Environment](command:python.setInterpreter)\n[Set Python Command](command:getting-started-sample.runCommand2)",
+                        "media": {
+                            "markdown": "guides/bring-your-own-sphinx.md"
+                        },
+                        "completionEvents": [
+                            "onCommand:python.setInterpreter",
+                            "onSettingChanged:esbonio.sphinx.pythonCommand"
+                        ]
+                    },
+                    {
+                        "id": "setbuildcommand",
+                        "title": "Set your `sphinx-build` command",
+                        "media": {
+                            "markdown": "guides/example-commands.md"
+                        },
+                        "description": "Provide the `sphinx-build` command that you use to build your documentation\n[Change Setting](command:getting-started-sample.changeSetting)",
+                        "completionEvents": [
+                            "onSettingChanged:getting-started-sample.sampleSetting"
+                        ]
+                    }
+                ]
+            }
+        ]
     }
 }
