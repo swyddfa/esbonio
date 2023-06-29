@@ -4,10 +4,13 @@ import asyncio
 import json
 import sys
 import typing
+from typing import Any
 from typing import Optional
+from typing import Type
 
 import pygls.uris as Uri
 from pygls.client import Client
+from pygls.protocol import JsonRPCProtocol
 
 import esbonio.sphinx_agent.types as types
 
@@ -17,16 +20,34 @@ if typing.TYPE_CHECKING:
     from .manager import SphinxManager
 
 
+class SphinxAgentProtocol(JsonRPCProtocol):
+    """Describes the protocol spoken between the client below and the sphinx agent."""
+
+    def get_message_type(self, method: str) -> Any | None:
+        return types.METHOD_TO_MESSAGE_TYPE.get(method, None)
+
+    def get_result_type(self, method: str) -> Any | None:
+        return types.METHOD_TO_RESPONSE_TYPE.get(method, None)
+
+
 class SphinxClient(Client):
     """JSON-RPC client used to drive a Sphinx application instance hosted in
     a separate subprocess."""
 
     def __init__(self, manager: SphinxManager, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, protocol_cls=SphinxAgentProtocol, **kwargs)
         self.manager = manager
         self.logger = manager.logger
 
-        self.sphinx_info = None
+        self.sphinx_info: Optional[types.SphinxInfo] = None
+
+    @property
+    def builder(self) -> Optional[str]:
+        """The sphinx application's builder name"""
+        if self.sphinx_info is None:
+            return None
+
+        return self.sphinx_info.builder_name
 
     @property
     def src_dir(self) -> Optional[str]:

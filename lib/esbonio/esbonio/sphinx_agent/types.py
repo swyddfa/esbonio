@@ -34,6 +34,34 @@ class CreateApplicationRequest:
 
 
 @dataclasses.dataclass
+class SphinxInfo:
+    """Represents information about an instance of the Sphinx application."""
+
+    id: str
+
+    version: str
+
+    conf_dir: str
+
+    build_dir: str
+
+    builder_name: str
+
+    src_dir: str
+
+
+@dataclasses.dataclass
+class CreateApplicationResponse:
+    """A ``sphinx/createApp`` response."""
+
+    id: Union[int, str]
+
+    result: SphinxInfo
+
+    jsonrpc: str = dataclasses.field(default="2.0")
+
+
+@dataclasses.dataclass
 class BuildParams:
     """Parameters of a ``sphinx/build`` request."""
 
@@ -74,32 +102,6 @@ class BuildResponse:
 
 
 @dataclasses.dataclass
-class SphinxInfo:
-    """Represents information about an instance of the Sphinx application."""
-
-    version: str
-
-    conf_dir: str
-
-    build_dir: str
-
-    builder_name: str
-
-    src_dir: str
-
-
-@dataclasses.dataclass
-class CreateApplicationResponse:
-    """A ``sphinx/createApp`` response."""
-
-    id: Union[int, str]
-
-    result: SphinxInfo
-
-    jsonrpc: str = dataclasses.field(default="2.0")
-
-
-@dataclasses.dataclass
 class LogMessageParams:
     """Parameters of a ``window/logMessage`` notification."""
 
@@ -117,3 +119,7 @@ class LogMessage:
     method: str = "window/logMessage"
 
     jsonrpc: str = dataclasses.field(default="2.0")
+
+
+METHOD_TO_MESSAGE_TYPE = {"sphinx/createApp": CreateApplicationRequest}
+METHOD_TO_RESPONSE_TYPE = {"sphinx/createApp": CreateApplicationResponse}
