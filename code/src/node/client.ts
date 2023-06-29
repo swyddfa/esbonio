@@ -28,6 +28,10 @@ export class EsbonioClient {
     private channel: vscode.OutputChannel,
   ) {
     this.handlers = new Map()
+
+    context.subscriptions.push(
+      vscode.commands.registerCommand(Commands.RESTART_SERVER, async () => await this.restartServer())
+    )
   }
 
   public addHandler(event: string, handler: any) {
@@ -58,6 +62,18 @@ export class EsbonioClient {
     }
   }
 
+
+  /**
+   * Restart the language server
+   */
+  async restartServer() {
+    let config = vscode.workspace.getConfiguration("esbonio.server")
+    if (config.get("enabled")) {
+      this.logger.info("Restarting server...")
+      await this.stop()
+      await this.start()
+    }
+  }
   /**
   * Return a LanguageClient configured to communicate with the server over stdio.
   * Typically used in production.
