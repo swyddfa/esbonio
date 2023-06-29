@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { OutputChannelLogger } from '../common/log'
 import { EsbonioClient } from './client'
-import { Commands } from '../common/constants'
+import { Commands, Notifications } from '../common/constants'
 
 const COOLDOWN = 1000 // ms
 
@@ -43,7 +43,10 @@ export class PreviewManager {
       vscode.window.onDidChangeTextEditorVisibleRanges(params => this.scrollView(params))
     )
 
-    client.addHandler("editor/scroll", (params: { line: number }) => { this.scrollEditor(params) })
+    client.addHandler(
+      Notifications.SCROLL_EDITOR,
+      (params: { line: number }) => { this.scrollEditor(params) }
+    )
   }
 
   async openPreview(editor: vscode.TextEditor) {
