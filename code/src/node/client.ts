@@ -13,6 +13,43 @@ import {
 import { InitOptions } from "../common/config";
 import { OutputChannelLogger } from "../common/log";
 import { PythonManager } from "./python";
+import { Commands, Events, Notifications } from '../common/constants';
+
+
+export interface SphinxInfo {
+
+  /**
+   * A unique id used to refer to this Sphinx application instance.
+   */
+  id: string
+
+  /**
+   * Sphinx's version number
+   */
+  version: string
+
+  /**
+   * The Sphinx application object's confdir
+   */
+  conf_dir: string
+
+
+  /**
+   * The Sphinx application object's outdir
+   */
+  build_dir: string
+
+
+  /**
+   * The current builder's name
+   */
+  builder_name: string
+
+  /**
+   * The Sphinx application object's srcdir
+   */
+  src_dir: string
+}
 
 
 export class EsbonioClient {
