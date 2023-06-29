@@ -30,9 +30,9 @@ def parse_message(obj: Dict, cls: Type[T]) -> T:
         for key, value in obj.items():
             kwargs[key] = parse_message(value, fields[key].type)
 
-        return cls(**kwargs)
+        return cls(**kwargs)  # type: ignore[return-value]
 
-    return obj
+    return obj  # type: ignore[return-value]
 
 
 def handle_message(data: bytes):

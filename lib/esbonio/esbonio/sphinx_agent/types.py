@@ -5,7 +5,6 @@ For this reason this file *cannot* import anything from Sphinx.
 """
 import dataclasses
 from typing import List
-from typing import Optional
 from typing import Union
 
 
@@ -65,7 +64,7 @@ class CreateApplicationResponse:
 class BuildParams:
     """Parameters of a ``sphinx/build`` request."""
 
-    filenames: Optional[List[str]] = dataclasses.field(default_factory=list)
+    filenames: List[str] = dataclasses.field(default_factory=list)
 
     force_all: bool = False
 

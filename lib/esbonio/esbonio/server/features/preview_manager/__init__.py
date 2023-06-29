@@ -1,9 +1,9 @@
 import asyncio
 import logging
-import typing
 from http.server import HTTPServer
 from http.server import SimpleHTTPRequestHandler
 from typing import Any
+from typing import Optional
 
 import pygls.uris as Uri
 
@@ -57,11 +57,11 @@ class PreviewManager(LanguageFeature):
 
         logger = server.logger.getChild("PreviewServer")
         self._request_handler_factory = RequestHandlerFactory(logger, "")
-        self._http_server = None
-        self._http_future = None
+        self._http_server: Optional[HTTPServer] = None
+        self._http_future: Optional[asyncio.Future] = None
 
-        self._ws_server = None
-        self._ws_task = None
+        self._ws_server: Optional[WebviewServer] = None
+        self._ws_task: Optional[asyncio.Task] = None
 
     @property
     def preview_active(self) -> bool:
