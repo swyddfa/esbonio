@@ -5,6 +5,7 @@ from functools import partial
 from typing import IO
 from typing import Optional
 from typing import Type
+from uuid import uuid4
 
 from sphinx import __version__ as __sphinx_version__
 from sphinx.application import Sphinx
@@ -64,6 +65,7 @@ def create_sphinx_app(request: types.CreateApplicationRequest):
     response = types.CreateApplicationResponse(
         id=request.id,
         result=types.SphinxInfo(
+            id=str(uuid4()),
             version=__sphinx_version__,
             conf_dir=sphinx_app.confdir,
             build_dir=sphinx_app.outdir,

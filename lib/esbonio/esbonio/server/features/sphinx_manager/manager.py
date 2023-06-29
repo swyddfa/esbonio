@@ -112,11 +112,6 @@ class SphinxManager(LanguageFeature):
             await client.stop()
             return None
 
+        self.server.lsp.notify("sphinx/appCreated", sphinx_info)
         self.clients[src_uri] = client
-
-        # Do an initial build in the background so that we're free to do other things.
-        # build_task = client.protocol.send_request_async("sphinx/build", {})
-        # self.jobs.add(build_task)
-        # build_task.add_done_callback(self.jobs.discard)
-
         return client
