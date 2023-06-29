@@ -5,7 +5,7 @@
     "repository": {
         "url": "https://github.com/swyddfa/esbonio"
     },
-    "author": "Swyddfa Developers",
+    "author": "Esbonio Developers",
     "publisher": "swyddfa",
     "license": "MIT",
     "version": "0.90.0",
@@ -70,6 +70,11 @@
                 "command": "esbonio.preview.openSide",
                 "title": "Open Preview to the Side",
                 "icon": "$(open-preview)",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.server.restart",
+                "title": "Restart Language Server",
                 "category": "Esbonio"
             }
         ],
