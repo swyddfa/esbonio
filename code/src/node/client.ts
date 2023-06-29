@@ -143,8 +143,8 @@ export class EsbonioClient {
     }
 
     let startupModule = config.get<string>("server.startupModule") || "esbonio.server"
-    // let includedModules = config.get<string[]>('server.includedModules') || []
-    // let excludedModules = config.get<string[]>('server.excludedModules') || []
+    let includedModules = config.get<string[]>('server.includedModules') || []
+    let excludedModules = config.get<string[]>('server.excludedModules') || []
 
     // Entry point can either be a script, or it can be a python module.
     if (startupModule.endsWith(".py") || startupModule.includes("/") || startupModule.includes("\\")) {
@@ -153,13 +153,13 @@ export class EsbonioClient {
       command.push("-m", startupModule)
     }
 
-    // includedModules.forEach(mod => {
-    //   command?.push('--include', mod)
-    // })
+    includedModules.forEach(mod => {
+      command?.push('--include', mod)
+    })
 
-    // excludedModules.forEach(mod => {
-    //   command?.push('--exclude', mod)
-    // })
+    excludedModules.forEach(mod => {
+      command?.push('--exclude', mod)
+    })
 
     this.logger.debug(`Server start command: ${command.join(" ")}`)
     let serverEnv: ExecutableOptions = {
