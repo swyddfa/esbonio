@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import importlib
 import inspect
-import json
 import typing
 from typing import Iterable
 from typing import Type
@@ -50,15 +49,8 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
 
     @server.feature(INITIALIZE)
     async def on_initialize(ls: EsbonioLanguageServer, params: InitializeParams):
-        client = params.client_info
-        client_capabilities = ls.converter.unstructure(params.capabilities)
-
-        if client is not None:
+        if (client := params.client_info) is not None:
             ls.logger.info("Language client: %s %s", client.name, client.version)
-
-        # ls.logger.debug(
-        #     "Client capabilities:\n%s", json.dumps(client_capabilities, indent=2)
-        # )
 
         ls.initialize(params)
 

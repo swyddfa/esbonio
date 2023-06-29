@@ -6,7 +6,6 @@ import sys
 import typing
 from typing import Any
 from typing import Optional
-from typing import Type
 
 import pygls.uris as Uri
 from pygls.client import Client
@@ -34,8 +33,10 @@ class SphinxClient(Client):
     """JSON-RPC client used to drive a Sphinx application instance hosted in
     a separate subprocess."""
 
-    def __init__(self, manager: SphinxManager, *args, **kwargs):
-        super().__init__(*args, protocol_cls=SphinxAgentProtocol, **kwargs)
+    def __init__(
+        self, manager: SphinxManager, protocol_cls=SphinxAgentProtocol, *args, **kwargs
+    ):
+        super().__init__(protocol_cls=protocol_cls, *args, **kwargs)  # type: ignore[misc]
         self.manager = manager
         self.logger = manager.logger
 
@@ -118,7 +119,7 @@ class SphinxClient(Client):
         """Called when the sphinx agent process exits."""
         self.logger.debug(f"Process exited with code: {server.returncode}")
 
-        if server.returncode != 0:
+        if server.returncode != 0 and server.stderr is not None:
             stderr = await server.stderr.read()
             self.logger.debug("Stderr:\n%s", stderr.decode("utf8"))
 

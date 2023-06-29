@@ -6,7 +6,6 @@ from typing import Dict
 from typing import Optional
 
 import lsprotocol.types as lsp
-import pygls.uris as Uri
 
 from esbonio.server import LanguageFeature
 

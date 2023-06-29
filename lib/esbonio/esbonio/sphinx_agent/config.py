@@ -17,20 +17,23 @@ from sphinx.cmd.build import main as sphinx_build
 class SphinxConfig:
     """Configuration values to pass to the Sphinx application instance."""
 
-    build_dir: Optional[str] = dataclasses.field(default=None)
+    src_dir: str
+    """The directory containing the project's source."""
+
+    conf_dir: str
+    """The directory containing the project's ``conf.py``."""
+
+    build_dir: str
     """The directory to write build outputs into."""
 
-    builder_name: str = dataclasses.field(default="html")
+    builder_name: str
     """The currently used builder name."""
 
-    conf_dir: Optional[str] = dataclasses.field(default=None)
-    """The directory containing the project's ``conf.py``."""
+    doctree_dir: str
+    """The directory to write doctrees into."""
 
     config_overrides: Dict[str, Any] = dataclasses.field(default_factory=dict)
     """Any overrides to configuration values."""
-
-    doctree_dir: Optional[str] = dataclasses.field(default=None)
-    """The directory to write doctrees into."""
 
     force_full_build: bool = dataclasses.field(default=False)
     """Force a full build on startup."""
@@ -49,9 +52,6 @@ class SphinxConfig:
 
     silent: bool = dataclasses.field(default=False)
     """Hide all Sphinx output."""
-
-    src_dir: Optional[str] = dataclasses.field(default=None)
-    """The directory containing the project's source."""
 
     tags: List[str] = dataclasses.field(default_factory=list)
     """Tags to enable during a build."""
@@ -121,18 +121,18 @@ class SphinxConfig:
             return None
 
         return cls(
-            conf_dir=sphinx_args.get("confdir", None),
+            src_dir=sphinx_args["srcdir"],
+            conf_dir=sphinx_args["confdir"],
+            build_dir=sphinx_args["outdir"],
+            builder_name=sphinx_args["buildername"],
+            doctree_dir=sphinx_args["doctreedir"],
             config_overrides=sphinx_args.get("confoverrides", {}),
-            build_dir=sphinx_args.get("outdir", None),
-            builder_name=sphinx_args.get("buildername", "html"),
-            doctree_dir=sphinx_args.get("doctreedir", None),
             force_full_build=sphinx_args.get("freshenv", False),
             keep_going=sphinx_args.get("keep_going", False),
             make_mode=make_mode,
             num_jobs=sphinx_args.get("parallel", 1),
             quiet=sphinx_args.get("status", 1) is None,
             silent=sphinx_args.get("warning", 1) is None,
-            src_dir=sphinx_args.get("srcdir", None),
             tags=sphinx_args.get("tags", []),
             verbosity=sphinx_args.get("verbosity", 0),
             warning_is_error=sphinx_args.get("warningiserror", False),

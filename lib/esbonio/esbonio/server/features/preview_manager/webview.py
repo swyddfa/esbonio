@@ -41,11 +41,11 @@ class WebviewServer(Server):
         if self.lsp.transport:
             self.lsp.notify("view/scroll", {"line": line})
 
-    async def start_ws(self, host: str, port: int) -> None:
+    async def start_ws(self, host: str, port: int) -> None:  # type: ignore[override]
         async def connection(websocket):
             loop = asyncio.get_running_loop()
             transport = WebSocketTransportAdapter(websocket, loop)
-            self.lsp.connection_made(transport)
+            self.lsp.connection_made(transport)  # type: ignore[arg-type]
 
             async for message in websocket:
                 self.lsp._procedure_handler(
@@ -56,15 +56,17 @@ class WebviewServer(Server):
             connection,
             host,
             port,
-            # logger=self.logger.getChild("rpc"),
+            # logger=self.logger.getChild("ws"),
             family=socket.AF_INET,  # Use IPv4 only.
         ) as ws_server:
-            sock = ws_server.sockets[0]
+            sock = list(ws_server.sockets)[0]
             self.port = sock.getsockname()[1]
             await asyncio.Future()  # run forever
 
 
-def make_ws_server(esbonio: EsbonioLanguageServer, logger: logging.Logger):
+def make_ws_server(
+    esbonio: EsbonioLanguageServer, logger: logging.Logger
+) -> WebviewServer:
     server = WebviewServer(logger)
 
     @server.feature("editor/scroll")
