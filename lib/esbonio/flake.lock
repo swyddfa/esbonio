@@ -1,12 +1,30 @@
 {
   "nodes": {
+    "lsp-devtools": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "utils": "utils"
+      },
+      "locked": {
+        "lastModified": 1688660438,
+        "narHash": "sha256-OFSait1ipxw6I1qTX00sVE44WVzIvCM6P3PBrFTh4k4=",
+        "path": "/var/home/alex/Projects/lsp-devtools",
+        "type": "path"
+      },
+      "original": {
+        "path": "/var/home/alex/Projects/lsp-devtools",
+        "type": "path"
+      }
+    },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1675698036,
-        "narHash": "sha256-BgsQkQewdlQi8gapJN4phpxkI/FCE/2sORBaFcYbp/A=",
+        "lastModified": 1688556768,
+        "narHash": "sha256-mhd6g0iJGjEfOr3+6mZZOclUveeNr64OwxdbNtLc8mY=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "1046c7b92e908a1202c0f1ba3fc21d19e1cf1b62",
+        "rev": "27bd67e55fe09f9d68c77ff151c3e44c4f81f7de",
         "type": "github"
       },
       "original": {
@@ -16,43 +34,38 @@
         "type": "github"
       }
     },
-    "pytest-lsp": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs"
-        ],
-        "utils": "utils"
-      },
-      "locked": {
-        "dir": "lib/pytest-lsp",
-        "lastModified": 1680461504,
-        "narHash": "sha256-yinReEwXWeCstM0+zY0A1JE2N59sdMnBsepEBgtZ9xM=",
-        "owner": "swyddfa",
-        "repo": "lsp-devtools",
-        "rev": "6ae80a24b55d2b6943b9d30805cf02440ebbaf5c",
-        "type": "github"
-      },
-      "original": {
-        "dir": "lib/pytest-lsp",
-        "owner": "swyddfa",
-        "repo": "lsp-devtools",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
+        "lsp-devtools": "lsp-devtools",
         "nixpkgs": "nixpkgs",
-        "pytest-lsp": "pytest-lsp",
         "utils": "utils_2"
       }
     },
-    "utils": {
+    "systems": {
       "locked": {
-        "lastModified": 1678901627,
-        "narHash": "sha256-U02riOqrKKzwjsxc/400XnElV+UtPUQWpANPlyazjH0=",
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-systems",
+        "repo": "default",
+        "type": "github"
+      }
+    },
+    "utils": {
+      "inputs": {
+        "systems": "systems"
+      },
+      "locked": {
+        "lastModified": 1687709756,
+        "narHash": "sha256-Y5wKlQSkgEK2weWdOu4J3riRd+kV/VCgHsqLNTTWQ/0=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "93a2b84fc4b70d9e089d029deacc3583435c2ed6",
+        "rev": "dbabf0ca0c0c4bce6ea5eaf65af5cb694d2082c7",
         "type": "github"
       },
       "original": {
