@@ -8,11 +8,10 @@ final: prev: {
         src = ./..;
 
         propagatedBuildInputs = with python-prev; [
+          docutils
           platformdirs
           pygls
-          pyspellchecker
-          sphinx
-          # typing-extensions; only required for Python 3.7
+          websockets
         ];
 
         doCheck = true;
@@ -24,7 +23,7 @@ final: prev: {
           pytestCheckHook
         ];
 
-        pythonImportsCheck = [ "esbonio.lsp" ];
+        pythonImportsCheck = [ "esbonio.server" ];
       };
     }
   )];
