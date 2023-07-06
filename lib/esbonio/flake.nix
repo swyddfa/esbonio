@@ -3,51 +3,75 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    pytest-lsp.url = "github:swyddfa/lsp-devtools?dir=lib/pytest-lsp";
-    pytest-lsp.inputs.nixpkgs.follows = "nixpkgs";
+    # pytest-lsp.url = "github:swyddfa/lsp-devtools?dir=lib/pytest-lsp";
+    lsp-devtools.url = "path:/var/home/alex/Projects/lsp-devtools";
+    lsp-devtools.inputs.nixpkgs.follows = "nixpkgs";
     utils.url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, pytest-lsp, utils }:
+  outputs = { self, nixpkgs, lsp-devtools, utils }:
 
     let
       esbonio-overlay = import ./nix/esbonio-overlay.nix;
-      pytest-lsp-overlay = pytest-lsp.overlays.default;
 
-      eachPythonVersion = versions: f:
-        builtins.listToAttrs (builtins.map (version: {name = "py${version}"; value = f version; }) versions);
+      buildMatrix = {
+        py = [ "38" "39" "310" "311" ];
+      };
+
+      applyMatrix = matrix: f:
+        builtins.foldl' (x: y: x // y) {}
+          (builtins.map f (nixpkgs.lib.cartesianProductOfSets matrix));
     in {
 
-      overlays.default = self: super: nixpkgs.lib.composeManyExtensions [
-        pytest-lsp-overlay
-        esbonio-overlay
-      ] self super;
+      overlays.default = self: super:
+        nixpkgs.lib.composeManyExtensions [ lsp-devtools.overlays.default esbonio-overlay ] self super;
 
-    devShells = utils.lib.eachDefaultSystemMap (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ self.overlays.default ];
-        };
-      in
-        eachPythonVersion [ "38" "39" "310" "311" ] (pyVersion:
+      devShells = utils.lib.eachDefaultSystemMap (system:
+        let
+          pkgs = import nixpkgs { inherit system; overlays = [ self.overlays.default ]; };
+        in
+          applyMatrix buildMatrix ({ py, ...}: {
 
-          let
-            esbonio = pkgs."python${pyVersion}Packages".esbonio.overridePythonAttrs (_: { doCheck = false; });
-          in
+            "py${py}-esbonio" = pkgs.mkShell {
+                name = "py${py}-esbonio";
 
-          pkgs.mkShell {
-            name = "py${pyVersion}";
+                shellHook = ''
+                  export PYTHONPATH="./:$PYTHONPATH"
+                '';
 
-            packages = with pkgs."python${pyVersion}Packages"; [
-              esbonio
+                packages = with pkgs."python${py}Packages"; [
+                  # Runtime deps
+                  appdirs
+                  docutils
+                  pygls
+                  websockets
 
-              mock
-              pkgs."python${pyVersion}Packages".pytest-lsp
-              pytest-timeout
-            ];
-          }
-      )
+                  # Test deps
+                  pytest-lsp
+                  pytest-timeout
+                ];
+            };
+
+            "py${py}-sphinx" = pkgs.mkShell {
+              name = "py${py}-sphinx";
+
+              shellHook = ''
+                export PYTHONPATH="./:$PYTHONPATH"
+              '';
+
+              packages = with pkgs."python${py}Packages"; [
+                # Runtime deps
+                appdirs
+                pygls
+                sphinx
+
+                # Test deps
+                pytest-lsp
+                pytest-timeout
+              ];
+
+            };
+          })
     );
   };
 }
