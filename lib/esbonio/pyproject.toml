@@ -31,7 +31,7 @@ dependencies = ["appdirs", "docutils", "pygls>=1.1.0", "websockets"]
 "Source Code" = "https://github.com/swyddfa/esbonio"
 
 [project.scripts]
-esbonio = "esbonio.__main__:main"
+esbonio = "esbonio.server:main"
 esbonio-sphinx = "esbonio.lsp.sphinx.cli:main"
 
 [project.optional-dependencies]
@@ -130,7 +130,7 @@ deps =
 extras = test
 commands =
     python ../../scripts/check-sphinx-version.py
-    pytest {posargs}
+    pytest tests/sphinx-agent {posargs}
 
 [testenv:pkg]
 deps =
