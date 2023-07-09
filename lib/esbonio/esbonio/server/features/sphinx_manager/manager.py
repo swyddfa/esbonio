@@ -35,17 +35,15 @@ class SphinxManager(LanguageFeature):
         self.handlers.setdefault(event, set()).add(handler)
 
     def document_change(self, params: lsp.DidChangeTextDocumentParams):
-        self.logger.debug("Changed document '%s'", params.text_document.uri)
+        ...
 
     def document_close(self, params: lsp.DidCloseTextDocumentParams):
-        self.logger.debug("Closed document '%s'", params.text_document.uri)
+        ...
 
     async def document_open(self, params: lsp.DidOpenTextDocumentParams):
-        self.logger.debug("Opened document '%s'", params.text_document.uri)
         await self.get_client(params.text_document.uri)
 
     async def document_save(self, params: lsp.DidSaveTextDocumentParams):
-        self.logger.debug("Saved document '%s'", params.text_document.uri)
         await self.trigger_build(params.text_document.uri)
 
     async def trigger_build(self, uri: str):
@@ -75,25 +73,12 @@ class SphinxManager(LanguageFeature):
             if uri.startswith(srcdir):
                 return client
 
-        params = lsp.ConfigurationParams(
-            items=[lsp.ConfigurationItem(section="esbonio.sphinx", scope_uri=uri)]
-        )
-        result = await self.server.get_configuration_async(params)
-        try:
-            config = self.converter.structure(result[0], SphinxConfig)
-            self.logger.debug("User config: %s", config)
-        except Exception:
-            self.logger.error(
-                "Unable to parse sphinx configuration options", exc_info=True
-            )
+        config = await self._get_user_config(uri)
+        if config is None:
             return None
 
         resolved = config.resolve(uri, self.server.workspace, self.logger)
         if resolved is None:
-            return None
-
-        if len(resolved.build_command) == 0:
-            self.logger.error("Unable to start Sphinx: missing build command")
             return None
 
         client = make_sphinx_client(self)
@@ -114,3 +99,31 @@ class SphinxManager(LanguageFeature):
         self.server.lsp.notify("sphinx/appCreated", sphinx_info)
         self.clients[src_uri] = client
         return client
+
+    async def _get_user_config(self, uri: str) -> Optional[SphinxConfig]:
+        """Return the user's Sphinx configuration for the given uri.
+
+        Parameter
+        ---------
+        uri
+           The uri to get the configuration for.
+
+        Returns
+        -------
+        SphinxConfig | None
+           The user's configuration.
+           If ``None``, the config was not available.
+        """
+        params = lsp.ConfigurationParams(
+            items=[lsp.ConfigurationItem(section="esbonio.sphinx", scope_uri=uri)]
+        )
+        result = await self.server.get_configuration_async(params)
+        try:
+            config = self.converter.structure(result[0], SphinxConfig)
+            self.logger.debug("User config: %s", result[0])
+            return config
+        except Exception:
+            self.logger.error(
+                "Unable to parse sphinx configuration options", exc_info=True
+            )
+            return None
