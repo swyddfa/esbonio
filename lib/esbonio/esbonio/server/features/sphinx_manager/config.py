@@ -11,7 +11,20 @@ import pygls.uris as Uri
 from pygls.workspace import Workspace
 
 
-def get_python_path(module: str) -> Optional[pathlib.Path]:
+def get_module_path(module: str) -> Optional[pathlib.Path]:
+    """Return the path to the directory containing the given module name.
+
+    Parameters
+    ----------
+    module
+       A valid Python module name e.g. ``esbonio.sphinx_agent``
+
+    Returns
+    -------
+    pathlib.Path | None
+       The path to the directory containing the given module.
+       If ``None``, the module could not be found.
+    """
     spec = importlib.util.find_spec(module)
     if spec is None:
         return None
@@ -26,7 +39,7 @@ def get_python_path(module: str) -> Optional[pathlib.Path]:
 
 @attrs.define
 class SphinxConfig:
-    """Configuration for the sphinx application instance."""
+    """Configuration for the sphinx agent subprocess."""
 
     enable_dev_tools: bool = attrs.field(default=False)
     """Flag to enable dev tools."""
@@ -53,21 +66,42 @@ class SphinxConfig:
         workspace: Workspace,
         logger: logging.Logger,
     ) -> "Optional[SphinxConfig]":
-        """Resolve the configuration based on user provided values."""
+        """Resolve the configuration based on user provided values.
 
-        if len(self.python_path) == 0:
-            if (python_path := self._resolve_python_path(logger)) is None:
-                return None
+        Parameters
+        ----------
+        uri
+           The uri of the file we are creating the sphinx agent instace for
 
-            self.python_path = python_path
+        workspace
+           The user's workspace
+
+        logger
+           The logger instance to use.
+
+        Returns
+        -------
+        SphinxConfig | None
+           The fully resolved config object to use.
+           If ``None``, a valid configuration could not be created.
+        """
+        logger.debug("Resolving sphinx agent configuration")
+
+        python_path = self._resolve_python_path(logger)
+        if len(python_path) == 0:
+            return None
 
         cwd = self._resolve_cwd(uri, workspace, logger)
         if cwd is None:
             return None
 
-        build_command = self.build_command
+        build_command = self._resolve_build_command(uri, logger)
         if len(build_command) == 0:
-            build_command = self._guess_build_command(uri, logger)
+            return None
+
+        logger.debug("Cwd: %s", cwd)
+        logger.debug("Build command: %s", build_command)
+        logger.debug("PYTHONPATH: %s", python_path)
 
         return SphinxConfig(
             enable_dev_tools=self.enable_dev_tools,
@@ -75,10 +109,36 @@ class SphinxConfig:
             cwd=cwd,
             python_command=self.python_command,
             build_command=build_command,
-            python_path=self.python_path,
+            python_path=python_path,
         )
 
-    def _resolve_cwd(self, uri: str, workspace: Workspace, logger: logging.Logger):
+    def _resolve_cwd(
+        self, uri: str, workspace: Workspace, logger: logging.Logger
+    ) -> Optional[str]:
+        """If no working directory is given, try to determine the appropriate working
+        directory based on the workspace.
+
+        Parameters
+        ----------
+        uri
+           The uri of the file we are creating an agent instance for
+
+        workspace
+           The user's workspace.
+
+        logger
+           The logger instance to use.
+
+        Returns
+        -------
+        str | None
+           The working directory to launch the sphinx agent in.
+           If ``None``, the working directory could not be determined.
+        """
+
+        if self.cwd:
+            return self.cwd
+
         for folder_uri in workspace.folders.keys():
             if uri.startswith(folder_uri):
                 break
@@ -90,19 +150,39 @@ class SphinxConfig:
             logger.error("Unable to determine working directory from '%s'", folder_uri)
             return None
 
-        logger.debug("Cwd: %s", cwd)
         return cwd
 
-    def _resolve_python_path(
-        self, logger: logging.Logger
-    ) -> Optional[List[pathlib.Path]]:
-        if (sphinx_agent := get_python_path("esbonio.sphinx_agent")) is None:
+    def _resolve_python_path(self, logger: logging.Logger) -> List[pathlib.Path]:
+        """Return the list of paths to put on the sphinx agent's ``PYTHONPATH``
+
+        Using the ``PYTHONPATH`` environment variable, we can inject additional Python
+        packages into the user's Python environment. This method will locate the
+        installation path of the sphinx agent and return it.
+
+        Additionally if the ``enable_dev_tools`` flag is set, this will attempt to
+        locate the ``lsp_devtools`` package
+
+        Parameters
+        ----------
+        logger
+           The logger instance to use
+
+        Returns
+        -------
+        List[pathlib.Path]
+           The list of paths to Python packages to inject into the sphinx agent's target
+           environment. If empty, the ``esbonio.sphinx_agent`` package was not found.
+        """
+        if len(self.python_path) > 0:
+            return self.python_path
+
+        if (sphinx_agent := get_module_path("esbonio.sphinx_agent")) is None:
             logger.error("Unable to locate the sphinx agent")
-            return None
+            return []
 
         python_path = [sphinx_agent]
         if self.enable_dev_tools:
-            if (lsp_devtools := get_python_path("lsp_devtools")) is None:
+            if (lsp_devtools := get_module_path("lsp_devtools")) is None:
                 logger.warning(
                     "Unable to locate module 'lsp_devtools', dev tools will not "
                     "be availble."
@@ -112,8 +192,29 @@ class SphinxConfig:
 
         return python_path
 
-    def _guess_build_command(self, uri: str, logger: logging.Logger) -> List[str]:
-        """Try and guess something a sensible build command given the uri."""
+    def _resolve_build_command(self, uri: str, logger: logging.Logger) -> List[str]:
+        """Return the ``sphinx-build`` command to use.
+
+        If no command is configured, this will attempt to guess the command to use based
+        on the user's workspace.
+
+        Parameters
+        ----------
+        uri
+           The uri of the file we are creating the sphinx agent for.
+
+        logger
+           The logger instance to use.
+
+        Returns
+        -------
+        List[str]
+           The ``sphinx-build`` command to use.
+           If empty, no build command could be determined.
+        """
+
+        if len(self.build_command) > 0:
+            return self.build_command
 
         path = Uri.to_fs_path(uri)
         if path is None:
