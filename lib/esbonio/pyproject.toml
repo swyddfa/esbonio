@@ -127,6 +127,8 @@ deps =
     sphinx6: sphinx>=6,<7
 
     sphinx7: sphinx>=7,<8
+
+    git+https://github.com/openlawlibrary/pygls.git#egg=pygls
 extras = test
 commands =
     python ../../scripts/check-sphinx-version.py
