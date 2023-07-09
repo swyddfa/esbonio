@@ -1,6 +1,27 @@
 import asyncio
+import pathlib
 
+import pygls.uris as Uri
 import pytest
+
+TEST_DIR = pathlib.Path(__file__).parent
+
+
+@pytest.fixture(scope="session")
+def uri_for():
+    """Helper function for returning the uri for a given file in the ``tests/``
+    directory."""
+
+    def fn(*args):
+        path = (TEST_DIR / pathlib.Path(*args)).resolve()
+        assert path.exists()
+
+        uri = Uri.from_fs_path(str(path))
+        assert uri is not None
+
+        return uri
+
+    return fn
 
 
 @pytest.fixture(scope="session")
