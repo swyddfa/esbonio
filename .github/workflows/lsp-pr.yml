@@ -2,8 +2,7 @@ name: Language Server PR
 on:
   pull_request:
     branches:
-    - develop
-    - release
+    - beta
     paths:
     - 'lib/esbonio/**'
 
@@ -14,7 +13,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10", "3.11"]
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v3
@@ -44,19 +43,8 @@ jobs:
 
         version=$(echo ${{ matrix.python-version }} | tr -d .)
         python -m tox -e `tox -l | grep $version | tr '\n' ','`
-      name: Run Tests (when not on Windows)
-      if: matrix.os != 'windows-latest'
-
-    - run: |
-        cd lib/esbonio
-
-        $version=$(echo "${{ matrix.python-version }}" | tr -d ".")
-        $envs=$(tox -l | grep $version)
-
-        echo $($envs -join ",")
-        python -m tox -e $($envs -join ",")
-      name: Run Tests (when on Windows)
-      if: matrix.os == 'windows-latest'
+      shell: bash
+      name: Run Tests
 
     - name: Package
       run: |
