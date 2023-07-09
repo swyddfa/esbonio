@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import sys
 import typing
 from typing import Any
@@ -34,11 +35,14 @@ class SphinxClient(Client):
     a separate subprocess."""
 
     def __init__(
-        self, manager: SphinxManager, protocol_cls=SphinxAgentProtocol, *args, **kwargs
+        self,
+        logger: Optional[logging.Logger] = None,
+        protocol_cls=SphinxAgentProtocol,
+        *args,
+        **kwargs,
     ):
         super().__init__(protocol_cls=protocol_cls, *args, **kwargs)  # type: ignore[misc]
-        self.manager = manager
-        self.logger = manager.logger
+        self.logger = logger or logging.getLogger(__name__)
 
         self.sphinx_info: Optional[types.SphinxInfo] = None
 
@@ -123,7 +127,7 @@ class SphinxClient(Client):
             stderr = await server.stderr.read()
             self.logger.debug("Stderr:\n%s", stderr.decode("utf8"))
 
-    async def create_application(self, config: SphinxConfig):
+    async def create_application(self, config: SphinxConfig) -> types.SphinxInfo:
         """Create a sphinx application object."""
 
         if self.stopped:
@@ -146,10 +150,10 @@ class SphinxClient(Client):
 
 
 def make_sphinx_client(manager: SphinxManager):
-    client = SphinxClient(manager=manager)
+    client = SphinxClient(logger=manager.logger)
 
     @client.feature("window/logMessage")
     def on_msg(ls: SphinxClient, params):
-        ls.manager.server.show_message_log(params.message)
+        manager.server.show_message_log(params.message)
 
     return client
