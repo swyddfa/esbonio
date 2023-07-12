@@ -57,4 +57,5 @@ async def test_create_application(sphinx_client, uri_for):
         assert info.conf_dir == Uri.to_fs_path(sd_workspace)
         assert "cache" in info.build_dir.lower()
     finally:
-        await sphinx_client.stop()
+        if not sphinx_client.stopped:
+            await sphinx_client.stop()
