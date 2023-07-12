@@ -121,6 +121,8 @@ skip_missing_interpreters = true
 envlist = py{38,39,310,311}-sphinx{5,6,7}
 
 [testenv]
+package = wheel
+wheel_build_env = .pkg
 deps =
     sphinx5: sphinx>=5,<6
 
@@ -137,7 +139,7 @@ commands =
 [testenv:pkg]
 deps =
     build
-usedevelop = True
+skip_install = True
 commands =
     python -m build
 """
