@@ -127,6 +127,14 @@ class SphinxClient(Client):
             stderr = await server.stderr.read()
             self.logger.debug("Stderr:\n%s", stderr.decode("utf8"))
 
+        # TODO: Should the upstream base client be doing this?
+        # Cancel any pending futures.
+        for id_, fut in self.protocol._request_futures.items():
+            message = "Cancelled" if fut.cancel() else "Unable to cancel"
+            self.logger.debug(
+                "%s future '%s' for pending request '%s'", message, fut, id_
+            )
+
     async def create_application(self, config: SphinxConfig) -> types.SphinxInfo:
         """Create a sphinx application object."""
 
@@ -157,3 +165,19 @@ def make_sphinx_client(manager: SphinxManager):
         manager.server.show_message_log(params.message)
 
     return client
+
+
+def get_sphinx_env(config: SphinxConfig) -> Dict[str, str]:
+    """Return the set of environment variables to use with the Sphinx process."""
+    env = {"PYTHONPATH": ":".join([str(p) for p in config.python_path])}
+
+    passthrough = set(config.env_passthrough)
+    if IS_WIN and "SYSTEMROOT" not in passthrough:
+        passthrough.add("SYSTEMROOT")
+
+    for envname in passthrough:
+        value = os.environ.get(envname, None)
+        if value is not None:
+            env[envname] = value
+
+    return env
