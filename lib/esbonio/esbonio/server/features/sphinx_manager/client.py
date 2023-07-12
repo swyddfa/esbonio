@@ -3,12 +3,15 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import os
 import sys
 import typing
 from typing import Any
+from typing import Dict
 from typing import Optional
 
 import pygls.uris as Uri
+from pygls import IS_WIN
 from pygls.client import Client
 from pygls.protocol import JsonRPCProtocol
 
@@ -112,7 +115,7 @@ class SphinxClient(Client):
             command.extend([sys.executable, "-m", "lsp_devtools", "agent", "--"])
 
         command.extend([*config.python_command, "-m", "sphinx_agent"])
-        env = {"PYTHONPATH": ":".join([str(p) for p in config.python_path])}
+        env = get_sphinx_env(config)
 
         self.logger.debug("Sphinx agent env: %s", json.dumps(env, indent=2))
         self.logger.debug("Starting sphinx agent: %s", " ".join(command))
