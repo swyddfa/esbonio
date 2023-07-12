@@ -53,6 +53,9 @@ class SphinxConfig:
     build_command: List[str] = attrs.field(factory=list)
     """The sphinx-build command to use."""
 
+    env_passthrough: List[str] = attrs.field(factory=list)
+    """List of environment variables to pass through to the Sphinx subprocess"""
+
     cwd: str = attrs.field(default="")
     """The working directory to use."""
 
