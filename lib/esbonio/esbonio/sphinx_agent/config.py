@@ -1,6 +1,5 @@
 import dataclasses
 import inspect
-import pathlib
 from typing import Any
 from typing import Dict
 from typing import List
@@ -40,9 +39,6 @@ class SphinxConfig:
 
     keep_going: bool = dataclasses.field(default=False)
     """Continue building when errors (from warnings) are encountered."""
-
-    make_mode: bool = dataclasses.field(default=True)
-    """Flag indicating if the server should align to "make mode" behavior."""
 
     num_jobs: Union[Literal["auto"], int] = dataclasses.field(default=1)
     """The number of jobs to use for parallel builds."""
@@ -110,13 +106,6 @@ class SphinxConfig:
         values = m_Sphinx.call_args[0]
         sphinx_args = {k: v for k, v in zip(keys, values)}
 
-        # `-M` has to be the first argument passed to `sphinx-build`
-        # https://github.com/sphinx-doc/sphinx/blob/1222bed88eb29cde43a81dd208448dc903c53de2/sphinx/cmd/build.py#L287
-        make_mode = args[0] == "-M"
-        if make_mode and sphinx_args["outdir"].endswith(sphinx_args["buildername"]):
-            build_dir = pathlib.Path(sphinx_args["outdir"]).parts[:-1]
-            sphinx_args["outdir"] = str(pathlib.Path(*build_dir))
-
         if sphinx_args is None:
             return None
 
@@ -129,7 +118,6 @@ class SphinxConfig:
             config_overrides=sphinx_args.get("confoverrides", {}),
             force_full_build=sphinx_args.get("freshenv", False),
             keep_going=sphinx_args.get("keep_going", False),
-            make_mode=make_mode,
             num_jobs=sphinx_args.get("parallel", 1),
             quiet=sphinx_args.get("status", 1) is None,
             silent=sphinx_args.get("warning", 1) is None,
@@ -140,22 +128,14 @@ class SphinxConfig:
 
     def to_application_args(self) -> Dict[str, Any]:
         """Convert this into the equivalent Sphinx application arguments."""
-
-        if self.make_mode:
-            outdir = str(pathlib.Path(self.build_dir, self.builder_name))
-            doctree_dir = str(pathlib.Path(self.build_dir, "doctrees"))
-        else:
-            outdir = self.build_dir
-            doctree_dir = self.doctree_dir
-
         return {
             "buildername": self.builder_name,
             "confdir": self.conf_dir,
             "confoverrides": self.config_overrides,
-            "doctreedir": doctree_dir,
+            "doctreedir": self.doctree_dir,
             "freshenv": self.force_full_build,
             "keep_going": self.keep_going,
-            "outdir": outdir,
+            "outdir": self.build_dir,
             "parallel": self.parallel,
             "srcdir": self.src_dir,
             "status": None,
