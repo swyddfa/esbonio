@@ -1,5 +1,11 @@
 name: Language Server PR
 on:
+  push:
+    branches:
+    - beta
+    paths:
+    - 'lib/esbonio/**'
+
   pull_request:
     branches:
     - beta
