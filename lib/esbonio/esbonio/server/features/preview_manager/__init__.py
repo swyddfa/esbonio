@@ -168,7 +168,7 @@ class PreviewManager(LanguageFeature):
         self.logger.debug("Websockets running on port: %s", webview.port)
 
         uri = Uri.create(
-            scheme="http", 
+            scheme="http",
             authority=f"localhost:{server.server_port}",
             path=html_path,
             query=f"ws={webview.port}",
