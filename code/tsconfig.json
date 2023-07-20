@@ -2,6 +2,12 @@
     "compilerOptions": {
         "module": "commonjs",
         "target": "ES2020",
+        "baseUrl": ".",
+        "paths": {
+            "vscode": [
+                "node_modules/@types/vscode"
+            ]
+        },
         "lib": [
             "ES2020"
         ],
@@ -12,5 +18,8 @@
         "noImplicitReturns": true,
         "noFallthroughCasesInSwitch": true,
         "noUnusedParameters": true
-    }
+    },
+    "exclude": [
+        "node_modules/",
+    ]
 }
