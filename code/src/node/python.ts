@@ -1,10 +1,7 @@
 import * as vscode from 'vscode'
+import { PythonExtension } from '@vscode/python-extension';
 
 import { OutputChannelLogger } from "../common/log";
-import { IExtensionApi } from './python-ext-api';
-
-
-const PYTHON_EXTENSION = "ms-python.python"
 
 
 export class PythonManager {
@@ -57,21 +54,13 @@ export class PythonManager {
   /**
    * Ensures that if the Python extension is available
    */
-  private async getPythonExtension(): Promise<IExtensionApi | undefined> {
-
-    let extension = vscode.extensions.getExtension(PYTHON_EXTENSION)
-    if (!extension) {
-      return
+  private async getPythonExtension(): Promise<PythonExtension | undefined> {
+    try {
+      return await PythonExtension.api()
+    } catch (err) {
+      this.logger.error(`Unable to load python extension: ${err}`)
+      return undefined
     }
-
-    this.logger.debug("Python extension is available")
-
-    if (extension.isActive) {
-      this.logger.debug("Python extension is active")
-      return extension.exports
-    }
-
-    this.logger.debug("Activating python extension")
-    return await extension.activate()
   }
+
 }
