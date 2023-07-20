@@ -8,6 +8,7 @@ from typing import Optional
 import lsprotocol.types as lsp
 
 from esbonio.server import LanguageFeature
+from esbonio.server import Uri
 
 from .client import make_sphinx_client
 from .config import SphinxConfig
@@ -41,12 +42,14 @@ class SphinxManager(LanguageFeature):
         ...
 
     async def document_open(self, params: lsp.DidOpenTextDocumentParams):
-        await self.get_client(params.text_document.uri)
+        if (uri := Uri.parse(params.text_document.uri)) is not None:
+            await self.get_client(uri)
 
     async def document_save(self, params: lsp.DidSaveTextDocumentParams):
-        await self.trigger_build(params.text_document.uri)
+        if (uri := Uri.parse(params.text_document.uri)) is not None:
+            await self.trigger_build(uri)
 
-    async def trigger_build(self, uri: str):
+    async def trigger_build(self, uri: Uri):
         """Trigger a build for the relevant Sphinx application for the given uri."""
         client = await self.get_client(uri)
         if client is None:
@@ -66,11 +69,11 @@ class SphinxManager(LanguageFeature):
                 name = f"{listener}"
                 self.logger.error("Error in build handler '%s'", name, exc_info=True)
 
-    async def get_client(self, uri: str) -> Optional[SphinxClient]:
+    async def get_client(self, uri: Uri) -> Optional[SphinxClient]:
         """Given a uri, return the relevant sphinx client instance for it."""
 
-        for srcdir, client in self.clients.items():
-            if uri.startswith(srcdir):
+        for src_uri, client in self.clients.items():
+            if str(uri).startswith(str(src_uri)):
                 return client
 
         config = await self._get_user_config(uri)
@@ -90,8 +93,7 @@ class SphinxManager(LanguageFeature):
             await client.stop()
             return None
 
-        src_uri = client.src_uri
-        if src_uri is None:
+        if (src_uri := client.src_uri) is None:
             self.logger.error("No src uri!")
             await client.stop()
             return None
@@ -100,7 +102,7 @@ class SphinxManager(LanguageFeature):
         self.clients[src_uri] = client
         return client
 
-    async def _get_user_config(self, uri: str) -> Optional[SphinxConfig]:
+    async def _get_user_config(self, uri: Uri) -> Optional[SphinxConfig]:
         """Return the user's Sphinx configuration for the given uri.
 
         Parameter
@@ -115,7 +117,7 @@ class SphinxManager(LanguageFeature):
            If ``None``, the config was not available.
         """
         params = lsp.ConfigurationParams(
-            items=[lsp.ConfigurationItem(section="esbonio.sphinx", scope_uri=uri)]
+            items=[lsp.ConfigurationItem(section="esbonio.sphinx", scope_uri=str(uri))]
         )
         result = await self.server.get_configuration_async(params)
         try:

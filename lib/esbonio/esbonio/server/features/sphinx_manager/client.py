@@ -10,12 +10,12 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 
-import pygls.uris as Uri
 from pygls import IS_WIN
 from pygls.client import Client
 from pygls.protocol import JsonRPCProtocol
 
 import esbonio.sphinx_agent.types as types
+from esbonio.server import Uri
 
 from .config import SphinxConfig
 
@@ -66,13 +66,13 @@ class SphinxClient(Client):
         return self.sphinx_info.src_dir
 
     @property
-    def src_uri(self) -> Optional[str]:
+    def src_uri(self) -> Optional[Uri]:
         """The src uri of the Sphinx application."""
         src_dir = self.src_dir
         if src_dir is None:
             return None
 
-        return Uri.from_fs_path(src_dir)
+        return Uri.for_file(src_dir)
 
     @property
     def conf_dir(self) -> Optional[str]:
@@ -83,13 +83,13 @@ class SphinxClient(Client):
         return self.sphinx_info.conf_dir
 
     @property
-    def conf_uri(self) -> Optional[str]:
+    def conf_uri(self) -> Optional[Uri]:
         """The conf uri of the Sphinx application."""
         conf_dir = self.conf_dir
         if conf_dir is None:
             return None
 
-        return Uri.from_fs_path(conf_dir)
+        return Uri.for_file(conf_dir)
 
     @property
     def build_dir(self) -> Optional[str]:
@@ -100,13 +100,13 @@ class SphinxClient(Client):
         return self.sphinx_info.build_dir
 
     @property
-    def build_uri(self) -> Optional[str]:
+    def build_uri(self) -> Optional[Uri]:
         """The build uri of the Sphinx application."""
         build_dir = self.build_dir
         if build_dir is None:
             return None
 
-        return Uri.from_fs_path(build_dir)
+        return Uri.for_file(build_dir)
 
     async def start(self, config: SphinxConfig):
         """Start the sphinx agent."""

@@ -7,8 +7,9 @@ from typing import Optional
 
 import appdirs
 import attrs
-import pygls.uris as Uri
 from pygls.workspace import Workspace
+
+from esbonio.server import Uri
 
 
 def get_module_path(module: str) -> Optional[pathlib.Path]:
@@ -65,7 +66,7 @@ class SphinxConfig:
 
     def resolve(
         self,
-        uri: str,
+        uri: Uri,
         workspace: Workspace,
         logger: logging.Logger,
     ) -> "Optional[SphinxConfig]":
@@ -104,7 +105,6 @@ class SphinxConfig:
 
         logger.debug("Cwd: %s", cwd)
         logger.debug("Build command: %s", build_command)
-        logger.debug("PYTHONPATH: %s", python_path)
 
         return SphinxConfig(
             enable_dev_tools=self.enable_dev_tools,
@@ -116,7 +116,7 @@ class SphinxConfig:
         )
 
     def _resolve_cwd(
-        self, uri: str, workspace: Workspace, logger: logging.Logger
+        self, uri: Uri, workspace: Workspace, logger: logging.Logger
     ) -> Optional[str]:
         """If no working directory is given, try to determine the appropriate working
         directory based on the workspace.
@@ -143,13 +143,13 @@ class SphinxConfig:
             return self.cwd
 
         for folder_uri in workspace.folders.keys():
-            if uri.startswith(folder_uri):
+            folder_uri = Uri.parse(folder_uri)
+            if folder_uri and str(uri).startswith(str(folder_uri)):
                 break
         else:
-            folder_uri = workspace.root_uri
+            folder_uri = Uri.parse(workspace.root_uri)
 
-        cwd = Uri.to_fs_path(folder_uri)
-        if cwd is None:
+        if folder_uri is None or (cwd := folder_uri.fs_path) is None:
             logger.error("Unable to determine working directory from '%s'", folder_uri)
             return None
 
@@ -195,7 +195,7 @@ class SphinxConfig:
 
         return python_path
 
-    def _resolve_build_command(self, uri: str, logger: logging.Logger) -> List[str]:
+    def _resolve_build_command(self, uri: Uri, logger: logging.Logger) -> List[str]:
         """Return the ``sphinx-build`` command to use.
 
         If no command is configured, this will attempt to guess the command to use based
@@ -219,8 +219,7 @@ class SphinxConfig:
         if len(self.build_command) > 0:
             return self.build_command
 
-        path = Uri.to_fs_path(uri)
-        if path is None:
+        if (path := uri.fs_path) is None:
             return []
 
         # Search upwards from the given uri to see if we find something that looks like

@@ -8,6 +8,7 @@ from typing import Optional
 import pygls.uris as Uri
 
 from esbonio.server import EsbonioLanguageServer
+from esbonio.server import Uri
 from esbonio.server.feature import LanguageFeature
 from esbonio.server.features.sphinx_manager import SphinxManager
 
@@ -112,7 +113,7 @@ class PreviewManager(LanguageFeature):
 
         return self._ws_server
 
-    async def on_build(self, src_uri: str, result):
+    async def on_build(self, src_uri: Uri, result):
         """Called whenever a sphinx build completes."""
         self.logger.debug("Build finished: '%s'", src_uri)
 
@@ -134,21 +135,18 @@ class PreviewManager(LanguageFeature):
         webview.scroll(line)
 
     async def preview_file(self, params):
-        src_uri = params["uri"]
+        src_uri = Uri.parse(params["uri"])
         self.logger.debug("Preview file called %s", src_uri)
 
         client = await self.sphinx.get_client(src_uri)
         if client is None:
             return None
 
-        if client.src_dir is None or client.build_dir is None or client.builder is None:
+        if client.src_uri is None or client.build_dir is None or client.builder is None:
             return None
 
-        src_path = Uri.to_fs_path(src_uri)
-        if src_path is None:
-            return None
-
-        rst_path = src_path.replace(client.src_dir, "")
+        # TODO: Have the sphinx client provide a mapping from src -> html
+        rst_path = src_uri.path.replace(client.src_uri.path, "")
         if client.builder == "html":
             html_path = rst_path.replace(".rst", ".html")
         elif client.builder == "dirhtml":
@@ -160,7 +158,7 @@ class PreviewManager(LanguageFeature):
             )
             return None
 
-        self.logger.debug("'%s' -> '%s' -> '%s'", src_path, rst_path, html_path)
+        self.logger.debug("'%s' -> '%s' -> '%s'", src_uri.path, rst_path, html_path)
 
         server = self.get_http_server()
         self._request_handler_factory.build_dir = client.build_dir
@@ -169,9 +167,13 @@ class PreviewManager(LanguageFeature):
         webview = await self.get_webview_server()
         self.logger.debug("Websockets running on port: %s", webview.port)
 
-        return {
-            "uri": f"http://localhost:{server.server_port}{html_path}?ws={webview.port}"
-        }
+        uri = Uri.create(
+            scheme="http", 
+            authority=f"localhost:{server.server_port}",
+            path=html_path,
+            query=f"ws={webview.port}",
+        )
+        return {"uri": uri.as_string(encode=False)}
 
 
 def esbonio_setup(server: EsbonioLanguageServer, sphinx: SphinxManager):
