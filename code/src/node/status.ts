@@ -54,7 +54,7 @@ export class StatusManager {
     selector.push({ language: 'restructuredtext', pattern: srcPattern })
 
     let itemId = `${workspaceFolder.uri}`
-    let buildUri = vscode.Uri.file(info.build_dir) 
+    let buildUri = vscode.Uri.file(info.build_dir)
     this.setStatusItem(itemId, "sphinx", `Sphinx v${info.version}`, { selector: selector })
     this.setStatusItem(itemId, "builder", `Builder - ${info.builder_name}`, { selector: selector })
     this.setStatusItem(itemId, "srcdir", `Source - ${renderPath(workspaceFolder, srcUri)}`, { selector: selector })
