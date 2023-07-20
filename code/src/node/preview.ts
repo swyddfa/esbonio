@@ -40,6 +40,9 @@ export class PreviewManager {
       vscode.commands.registerTextEditorCommand(Commands.OPEN_PREVIEW_TO_SIDE, this.openPreviewToSide, this)
     )
     context.subscriptions.push(
+      vscode.window.onDidChangeActiveTextEditor(this.onDidChangeEditor, this)
+    )
+    context.subscriptions.push(
       vscode.window.onDidChangeTextEditorVisibleRanges(params => this.scrollView(params))
     )
 
@@ -99,7 +102,20 @@ export class PreviewManager {
     this.client.scrollView(range.start.line)
   }
 
-  private async previewEditor(editor: vscode.TextEditor, placement: vscode.ViewColumn) {
+  private async onDidChangeEditor(editor?: vscode.TextEditor) {
+    if (!editor || !this.panel) {
+      return
+    }
+
+    let uri = editor.document.uri
+    if (["output"].includes(uri.scheme)) {
+      return
+    }
+
+    await this.previewEditor(editor)
+  }
+
+  private async previewEditor(editor: vscode.TextEditor, placement?: vscode.ViewColumn) {
     this.currentUri = editor.document.uri
     this.logger.debug(`Previewing: ${this.currentUri}`)
 
@@ -114,7 +130,7 @@ export class PreviewManager {
       return
     }
 
-    await this.reloadPreview(result.uri, placement)
+    await this.reloadPreview(result.uri, placement || vscode.ViewColumn.Beside)
   }
 
   private async reloadPreview(uri: string, placement: vscode.ViewColumn) {
