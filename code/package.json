@@ -23,15 +23,19 @@
         "vscode:prepublish": "webpack --mode production --devtool hidden-source-map"
     },
     "main": "dist/node/extension",
+    "extensionDependencies": [
+        "ms-python.python"
+    ],
     "dependencies": {
         "semver": "^7.5.4",
+        "@vscode/python-extension": "^1.0.1",
         "vscode-languageclient": "^8.1.0"
     },
     "devDependencies": {
         "@types/glob": "^8.1.0",
         "@types/mocha": "^10.0.1",
         "@types/node": "^16.18.36",
-        "@types/vscode": "1.66.0",
+        "@types/vscode": "1.78.0",
         "@vscode/vsce": "^2.19.0",
         "mocha": "^10.2.0",
         "path-browserify": "^1.0.1",
@@ -41,7 +45,7 @@
         "webpack-cli": "^5.1.4"
     },
     "engines": {
-        "vscode": "^1.66.0"
+        "vscode": "^1.78.0"
     },
     "capabilities": {
         "virtualWorkspaces": {
