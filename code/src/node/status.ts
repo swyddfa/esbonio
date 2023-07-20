@@ -37,7 +37,7 @@ export class StatusManager {
 
   private createApp(info: SphinxInfo) {
 
-    let confUri = vscode.Uri.from({ scheme: 'file', path: info.conf_dir })
+    let confUri = vscode.Uri.file(info.conf_dir)
     let workspaceFolder = vscode.workspace.getWorkspaceFolder(confUri)
     if (!workspaceFolder) {
       this.logger.error(`Unable to find workspace containing: ${info.conf_dir}`)
@@ -49,12 +49,12 @@ export class StatusManager {
     let confPattern = uriToPattern(confUri)
     selector.push({ language: "python", pattern: confPattern })
 
-    let srcUri = vscode.Uri.from({ scheme: 'file', path: info.src_dir })
+    let srcUri = vscode.Uri.file(info.src_dir)
     let srcPattern = uriToPattern(srcUri);
     selector.push({ language: 'restructuredtext', pattern: srcPattern })
 
     let itemId = `${workspaceFolder.uri}`
-    let buildUri = vscode.Uri.from({ scheme: 'file', path: info.build_dir })
+    let buildUri = vscode.Uri.file(info.build_dir) 
     this.setStatusItem(itemId, "sphinx", `Sphinx v${info.version}`, { selector: selector })
     this.setStatusItem(itemId, "builder", `Builder - ${info.builder_name}`, { selector: selector })
     this.setStatusItem(itemId, "srcdir", `Source - ${renderPath(workspaceFolder, srcUri)}`, { selector: selector })
@@ -127,7 +127,5 @@ function renderPath(workspace: vscode.WorkspaceFolder, uri: vscode.Uri): string 
 }
 
 function uriToPattern(uri: vscode.Uri) {
-  // Have VSCode normalize the path to how it expects it to look
-  let pattern = path.join(uri.fsPath, "**", "*").replace(/\\/g, '/');
-  return pattern;
+  return path.join(uri.fsPath, "**", "*").replace(/\\/g, '/');
 }
