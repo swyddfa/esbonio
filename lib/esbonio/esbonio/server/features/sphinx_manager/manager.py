@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import typing
+from typing import Callable
 from typing import Dict
 from typing import Optional
 
@@ -10,24 +11,26 @@ import lsprotocol.types as lsp
 from esbonio.server import LanguageFeature
 from esbonio.server import Uri
 
-from .client import make_sphinx_client
 from .config import SphinxConfig
 
 if typing.TYPE_CHECKING:
     from .client import SphinxClient
 
 
+SphinxClientFactory = Callable[["SphinxManager"], "SphinxClient"]
+
+
 class SphinxManager(LanguageFeature):
     """Responsible for managing Sphinx application instances."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, client_factory: SphinxClientFactory, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.clients: Dict[str, SphinxClient] = {}
-        """Holds currently active Sphinx clients."""
+        self.client_factory = client_factory
+        """Used to create new Sphinx client instances."""
 
-        self.jobs = set()
-        """Used to hold temporary references to background jobs."""
+        self.clients: Dict[Uri, SphinxClient] = {}
+        """Holds currently active Sphinx clients."""
 
         self.handlers: Dict[str, set] = {}
         """Collection of handlers for various events."""
@@ -36,9 +39,6 @@ class SphinxManager(LanguageFeature):
         self.handlers.setdefault(event, set()).add(handler)
 
     def document_change(self, params: lsp.DidChangeTextDocumentParams):
-        ...
-
-    def document_close(self, params: lsp.DidCloseTextDocumentParams):
         ...
 
     async def document_open(self, params: lsp.DidOpenTextDocumentParams):
@@ -84,22 +84,20 @@ class SphinxManager(LanguageFeature):
         if resolved is None:
             return None
 
-        client = make_sphinx_client(self)
-        await client.start(resolved)
-
+        client = self.client_factory(self)
         sphinx_info = await client.create_application(resolved)
         if sphinx_info is None:
             self.logger.error("No application object!")
             await client.stop()
             return None
 
-        if (src_uri := client.src_uri) is None:
+        if client.src_uri is None:
             self.logger.error("No src uri!")
             await client.stop()
             return None
 
         self.server.lsp.notify("sphinx/appCreated", sphinx_info)
-        self.clients[src_uri] = client
+        self.clients[client.src_uri] = client
         return client
 
     async def _get_user_config(self, uri: Uri) -> Optional[SphinxConfig]:
