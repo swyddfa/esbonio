@@ -13,6 +13,7 @@ import pytest
 from lsprotocol.types import WorkspaceFolder
 from pygls.workspace import Workspace
 
+from esbonio.server import Uri
 from esbonio.server.features.sphinx_manager.config import (
     SphinxConfig as SphinxAgentConfig,
 )
@@ -504,7 +505,7 @@ def test_resolve_sphinx_config(
 ):
     """Ensure that we can resolve the client side config for the SphinxAgent
     correctly."""
-    assert expected == config.resolve(uri, workspace, logger)
+    assert expected == config.resolve(Uri.parse(uri), workspace, logger)
 
 
 ROOT = pathlib.Path(__file__).parent.parent / "sphinx-extensions" / "workspace"
