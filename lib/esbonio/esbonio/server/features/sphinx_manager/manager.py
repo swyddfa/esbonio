@@ -76,7 +76,9 @@ class SphinxManager(LanguageFeature):
             if str(uri).startswith(str(src_uri)):
                 return client
 
-        config = await self._get_user_config(uri)
+        config = await self.server.get_user_config(
+            "esbonio.sphinx", SphinxConfig, scope=uri
+        )
         if config is None:
             return None
 
@@ -95,31 +97,3 @@ class SphinxManager(LanguageFeature):
         self.server.lsp.notify("sphinx/appCreated", sphinx_info)
         self.clients[client.src_uri] = client
         return client
-
-    async def _get_user_config(self, uri: Uri) -> Optional[SphinxConfig]:
-        """Return the user's Sphinx configuration for the given uri.
-
-        Parameter
-        ---------
-        uri
-           The uri to get the configuration for.
-
-        Returns
-        -------
-        SphinxConfig | None
-           The user's configuration.
-           If ``None``, the config was not available.
-        """
-        params = lsp.ConfigurationParams(
-            items=[lsp.ConfigurationItem(section="esbonio.sphinx", scope_uri=str(uri))]
-        )
-        result = await self.server.get_configuration_async(params)
-        try:
-            config = self.converter.structure(result[0], SphinxConfig)
-            self.logger.debug("User config: %s", result[0])
-            return config
-        except Exception:
-            self.logger.error(
-                "Unable to parse sphinx configuration options", exc_info=True
-            )
-            return None

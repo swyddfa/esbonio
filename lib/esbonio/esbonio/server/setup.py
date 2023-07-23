@@ -40,9 +40,6 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
 
     @server.feature(types.INITIALIZE)
     async def on_initialize(ls: EsbonioLanguageServer, params: types.InitializeParams):
-        if (client := params.client_info) is not None:
-            ls.logger.info("Language client: %s %s", client.name, client.version)
-
         ls.initialize(params)
 
     @server.feature(types.TEXT_DOCUMENT_DID_CHANGE)

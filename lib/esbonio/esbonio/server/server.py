@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import collections
 import inspect
+import json
 import logging
 import typing
 from typing import Any
@@ -14,19 +15,17 @@ from typing import Type
 from typing import TypeVar
 
 import attrs
-import pygls.uris as Uri
-from lsprotocol.types import Diagnostic
-from lsprotocol.types import InitializeParams
-from lsprotocol.types import LSPAny
-from pygls import IS_WIN
+from lsprotocol import types
 from pygls.server import LanguageServer
 
+from ._uri import Uri
 from .log import setup_logging
 
 if typing.TYPE_CHECKING:
     from .feature import LanguageFeature
 
 __version__ = "0.16.1"
+T = TypeVar("T")
 LF = TypeVar("LF", bound="LanguageFeature")
 
 
@@ -56,7 +55,7 @@ class EsbonioLanguageServer(LanguageServer):
 
         super().__init__(*args, **kwargs)
 
-        self._diagnostics: Dict[Tuple[str, str], List[Diagnostic]] = {}
+        self._diagnostics: Dict[Tuple[str, Uri], List[types.Diagnostic]] = {}
         """Where we store and manage diagnostics."""
 
         self._loaded_extensions: Dict[str, Any] = {}
@@ -71,15 +70,20 @@ class EsbonioLanguageServer(LanguageServer):
         self.converter = self.lsp._converter
         """The cattrs converter instance we should use."""
 
-        self.initialization_options: Optional[LSPAny] = None
+        self.initialization_options: Optional[types.LSPAny] = None
         """The received initializaion options (if any)"""
 
     def __iter__(self):
         return iter(self._features.items())
 
-    def initialize(self, params: InitializeParams):
+    def initialize(self, params: types.InitializeParams):
+        self.logger.info("Initialising esbonio v%s", __version__)
+        if (client := params.client_info) is not None:
+            self.logger.info("Language client: %s %s", client.name, client.version)
+
         self.initialization_options = params.initialization_options
 
+        # TODO: Merge this with self.get_user_config somehow...
         server_config = ServerConfig()
         if self.initialization_options is not None:
             try:
@@ -162,7 +166,58 @@ class EsbonioLanguageServer(LanguageServer):
         """
         return self._features.get(feature_cls, None)  # type: ignore
 
-    def clear_diagnostics(self, source: str, uri: Optional[str] = None) -> None:
+    async def get_user_config(
+        self, section: str, spec: Type[T], scope: Optional[Uri]
+    ) -> Optional[T]:
+        """Return the user's configuration for the given ``section``.
+
+        Using a ``workspace/configuration`` request, ask the client for the user's
+        configuration for the given ``section``.
+
+        ``spec`` should be a class definition representing the expected "shape" of the
+        result.
+
+        Parameters
+        ----------
+        section
+           The name of the configuration section to retrieve
+
+        spec
+           The class definition representing the expected result.
+
+        scope
+           An optional URI, useful in a multi-root context to select which root the
+           configuration should be retrieved from.
+
+        Returns
+        -------
+        T | None
+           The user's configuration, parsed as an instance of ``T``.
+           If ``None``, the config was not available / there was an error.
+        """
+        params = types.ConfigurationParams(
+            items=[
+                types.ConfigurationItem(
+                    section=section, scope_uri=str(scope) if scope else None
+                )
+            ]
+        )
+        self.logger.debug(
+            "workspace/configuration: %s",
+            json.dumps(self.converter.unstructure(params), indent=2),
+        )
+        result = await self.get_configuration_async(params)
+
+        try:
+            self.logger.debug("configuration: %s", json.dumps(result[0], indent=2))
+            return self.converter.structure(result[0], spec)
+        except Exception:
+            self.logger.error(
+                "Unable to parse configuration as '%s'", spec.__name__, exc_info=True
+            )
+            return None
+
+    def clear_diagnostics(self, source: str, uri: Optional[Uri] = None) -> None:
         """Clear diagnostics from the given source.
 
         Parameters
@@ -174,9 +229,6 @@ class EsbonioLanguageServer(LanguageServer):
            diagnostics from the given source are cleared.
         """
 
-        if uri:
-            uri = normalise_uri(uri)
-
         for key in self._diagnostics.keys():
             clear_source = source == key[0]
             clear_uri = uri == key[1] or uri is None
@@ -184,7 +236,7 @@ class EsbonioLanguageServer(LanguageServer):
             if clear_source and clear_uri:
                 self._diagnostics[key] = []
 
-    def add_diagnostics(self, source: str, uri, diagnostic: Diagnostic):
+    def add_diagnostics(self, source: str, uri: Uri, diagnostic: types.Diagnostic):
         """Add a diagnostic to the given source and uri.
 
         Parameters
@@ -196,11 +248,11 @@ class EsbonioLanguageServer(LanguageServer):
         diagnostic
            The diagnostic to add
         """
-        key = (source, normalise_uri(uri))
+        key = (source, uri)
         self._diagnostics.setdefault(key, []).append(diagnostic)
 
     def set_diagnostics(
-        self, source: str, uri: str, diagnostics: List[Diagnostic]
+        self, source: str, uri: Uri, diagnostics: List[types.Diagnostic]
     ) -> None:
         """Set the diagnostics for the given source and uri.
 
@@ -213,7 +265,6 @@ class EsbonioLanguageServer(LanguageServer):
         diagnostics:
            The diagnostics themselves
         """
-        uri = normalise_uri(uri)
         self._diagnostics[(source, uri)] = diagnostics
 
     def sync_diagnostics(self) -> None:
@@ -229,7 +280,7 @@ class EsbonioLanguageServer(LanguageServer):
 
         for uri, diag_list in diagnostics.items():
             self.logger.debug("Publishing %d diagnostics for: %s", len(diag_list), uri)
-            self.publish_diagnostics(uri, diag_list.data)
+            self.publish_diagnostics(str(uri), diag_list.data)
 
 
 class DiagnosticList(collections.UserList):
@@ -239,8 +290,8 @@ class DiagnosticList(collections.UserList):
     reported.
     """
 
-    def append(self, item: Diagnostic):
-        if not isinstance(item, Diagnostic):
+    def append(self, item: types.Diagnostic):
+        if not isinstance(item, types.Diagnostic):
             raise TypeError("Expected Diagnostic")
 
         for existing in self.data:
@@ -257,16 +308,6 @@ class DiagnosticList(collections.UserList):
                 return
 
         self.data.append(item)
-
-
-def normalise_uri(uri: str) -> str:
-    uri = Uri.from_fs_path(Uri.to_fs_path(uri))
-
-    # Paths on windows are case insensitive.
-    if IS_WIN:
-        uri = uri.lower()
-
-    return uri
 
 
 def _get_setup_arguments(
