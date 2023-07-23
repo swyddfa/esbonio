@@ -71,6 +71,7 @@ def main(argv: Optional[Sequence[str]] = None):
     modules = [
         "esbonio.server.features.sphinx_manager",
         "esbonio.server.features.preview_manager",
+        "esbonio.server.features.symbols",
     ]
 
     for mod in args.included_modules:

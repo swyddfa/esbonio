@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import typing
+from typing import List
+from typing import Optional
 
-from lsprotocol.types import DidChangeTextDocumentParams
-from lsprotocol.types import DidCloseTextDocumentParams
-from lsprotocol.types import DidOpenTextDocumentParams
-from lsprotocol.types import DidSaveTextDocumentParams
+from lsprotocol import types
 
 if typing.TYPE_CHECKING:
     from .server import EsbonioLanguageServer
@@ -19,14 +18,20 @@ class LanguageFeature:
         self.converter = server.converter
         self.logger = server.logger.getChild(self.__class__.__name__)
 
-    def document_change(self, params: DidChangeTextDocumentParams):
+    def document_change(self, params: types.DidChangeTextDocumentParams):
         """Called when a text document is changed."""
 
-    def document_close(self, params: DidCloseTextDocumentParams):
+    def document_close(self, params: types.DidCloseTextDocumentParams):
         """Called when a text document is closed."""
 
-    def document_open(self, params: DidOpenTextDocumentParams):
+    def document_open(self, params: types.DidOpenTextDocumentParams):
         """Called when a text document is opened."""
 
-    def document_save(self, params: DidSaveTextDocumentParams):
+    def document_save(self, params: types.DidSaveTextDocumentParams):
         """Called when a text document is saved."""
+
+    def document_symbol(
+        self, params: types.DocumentSymbolParams
+    ) -> Optional[List[types.DocumentSymbol]]:
+        """Called when a document symbols request it received."""
+        ...
