@@ -86,10 +86,6 @@ class SphinxManager(LanguageFeature):
 
         client = self.client_factory(self)
         sphinx_info = await client.create_application(resolved)
-        if sphinx_info is None:
-            self.logger.error("No application object!")
-            await client.stop()
-            return None
 
         if client.src_uri is None:
             self.logger.error("No src uri!")

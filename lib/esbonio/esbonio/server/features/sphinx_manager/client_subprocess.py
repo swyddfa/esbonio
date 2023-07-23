@@ -122,9 +122,7 @@ class SubprocessSphinxClient(Client):
             enable_sync_scrolling=config.enable_sync_scrolling,
         )
 
-        self.logger.debug("Starting sphinx: %s", " ".join(config.build_command))
         sphinx_info = await self.protocol.send_request_async("sphinx/createApp", params)
-
         self.sphinx_info = sphinx_info
         return sphinx_info
 
