@@ -5,7 +5,7 @@ from http.server import SimpleHTTPRequestHandler
 from typing import Any
 from typing import Optional
 
-import pygls.uris as Uri
+import attrs
 
 from esbonio.server import EsbonioLanguageServer
 from esbonio.server import Uri
@@ -38,14 +38,36 @@ class RequestHandlerFactory:
     produce a request handler based on the current situation.
     """
 
-    def __init__(self, logger: logging.Logger, build_dir: str):
+    def __init__(self, logger: logging.Logger, build_uri: Optional[Uri] = None):
         self.logger = logger
-        self.build_dir = build_dir
+        self.build_uri = build_uri
 
     def __call__(self, *args, **kwargs):
-        return RequestHandler(
-            *args, logger=self.logger, directory=self.build_dir, **kwargs
-        )
+        if self.build_uri is None:
+            raise ValueError("No build directory set")
+
+        if (build_dir := self.build_uri.fs_path) is None:
+            raise ValueError(
+                "Unable to determine build dir from uri: '%s'", self.build_uri
+            )
+
+        return RequestHandler(*args, logger=self.logger, directory=build_dir, **kwargs)
+
+
+@attrs.define
+class PreviewConfig:
+    """Configuration settings for previews."""
+
+    bind: str = attrs.field(default="localhost")
+    """The network interface to bind to, defaults to ``localhost``"""
+
+    http_port: int = attrs.field(default=0)
+    """The port to host the HTTP server on. If ``0`` a random port number will be
+    chosen"""
+
+    ws_port: int = attrs.field(default=0)
+    """The port to host the WebSocket server on. If ``0`` a random port number will be
+    chosen"""
 
 
 class PreviewManager(LanguageFeature):
@@ -57,7 +79,7 @@ class PreviewManager(LanguageFeature):
         self.sphinx.add_listener("build", self.on_build)
 
         logger = server.logger.getChild("PreviewServer")
-        self._request_handler_factory = RequestHandlerFactory(logger, "")
+        self._request_handler_factory = RequestHandlerFactory(logger)
         self._http_server: Optional[HTTPServer] = None
         self._http_future: Optional[asyncio.Future] = None
 
@@ -79,15 +101,18 @@ class PreviewManager(LanguageFeature):
         """
         return self._ws_server is not None
 
-    def get_http_server(self) -> HTTPServer:
+    def get_http_server(self, config: PreviewConfig) -> HTTPServer:
         """Return the http server instance hosting the previews.
 
         This will also handle the creation of the server the first time it is called.
         """
+        # TODO: Recreate the server if the configuration changes?
         if self._http_server is not None:
             return self._http_server
 
-        self._http_server = HTTPServer(("localhost", 0), self._request_handler_factory)
+        self._http_server = HTTPServer(
+            (config.bind, config.http_port), self._request_handler_factory
+        )
 
         loop = asyncio.get_running_loop()
         self._http_future = loop.run_in_executor(
@@ -97,15 +122,18 @@ class PreviewManager(LanguageFeature):
 
         return self._http_server
 
-    async def get_webview_server(self) -> WebviewServer:
+    async def get_webview_server(self, config: PreviewConfig) -> WebviewServer:
         """Return the websocket server used to communicate with the webview."""
 
+        # TODO: Recreate the server if the configuration changes?
         if self._ws_server is not None:
             return self._ws_server
 
         logger = self.server.logger.getChild("WebviewServer")
         self._ws_server = make_ws_server(self.server, logger)
-        self._ws_task = asyncio.create_task(self._ws_server.start_ws("localhost", 0))
+        self._ws_task = asyncio.create_task(
+            self._ws_server.start_ws(config.bind, config.ws_port)
+        )
 
         # HACK: we need to yield control to the event loop to give the ws_server time to
         #       spin up and allocate a port number.
@@ -115,34 +143,37 @@ class PreviewManager(LanguageFeature):
 
     async def on_build(self, src_uri: Uri, result):
         """Called whenever a sphinx build completes."""
-        self.logger.debug("Build finished: '%s'", src_uri)
 
-        client = await self.sphinx.get_client(src_uri)
-        if client is None:
+        if self._ws_server is None:
+            return
+
+        if (client := await self.sphinx.get_client(src_uri)) is None:
             return
 
         # Only refresh the view if the project we are previewing was built.
-        if client.build_dir != self._request_handler_factory.build_dir:
+        if client.build_uri != self._request_handler_factory.build_uri:
             return
 
-        webview = await self.get_webview_server()
-        webview.reload()
+        self.logger.debug("Refreshing preview")
+        self._ws_server.reload()
 
     async def scroll_view(self, line: int):
         """Scroll the webview to the given line number."""
 
-        webview = await self.get_webview_server()
-        webview.scroll(line)
+        if self._ws_server is None:
+            return
+
+        self._ws_server.scroll(line)
 
     async def preview_file(self, params):
         src_uri = Uri.parse(params["uri"])
-        self.logger.debug("Preview file called %s", src_uri)
+        self.logger.debug("Previewing file: '%s'", src_uri)
 
         client = await self.sphinx.get_client(src_uri)
         if client is None:
             return None
 
-        if client.src_uri is None or client.build_dir is None or client.builder is None:
+        if client.src_uri is None or client.builder is None:
             return None
 
         # TODO: Have the sphinx client provide a mapping from src -> html
@@ -160,19 +191,26 @@ class PreviewManager(LanguageFeature):
 
         self.logger.debug("'%s' -> '%s' -> '%s'", src_uri.path, rst_path, html_path)
 
-        server = self.get_http_server()
-        self._request_handler_factory.build_dir = client.build_dir
-        self.logger.debug("Preview running on port: %s", server.server_port)
+        config = await self.server.get_user_config("esbonio.preview", PreviewConfig)
+        if config is None:
+            self.logger.info(
+                "Unable to obtain preview configuration, proceeding with defaults"
+            )
+            config = PreviewConfig()
 
-        webview = await self.get_webview_server()
-        self.logger.debug("Websockets running on port: %s", webview.port)
+        server = self.get_http_server(config)
+        webview = await self.get_webview_server(config)
+
+        self._request_handler_factory.build_uri = client.build_uri
 
         uri = Uri.create(
-            scheme="http", 
+            scheme="http",
             authority=f"localhost:{server.server_port}",
             path=html_path,
             query=f"ws={webview.port}",
         )
+
+        self.logger.debug("Preview available at: %s", uri.as_string(encode=False))
         return {"uri": uri.as_string(encode=False)}
 
 

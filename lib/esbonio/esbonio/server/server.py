@@ -167,7 +167,10 @@ class EsbonioLanguageServer(LanguageServer):
         return self._features.get(feature_cls, None)  # type: ignore
 
     async def get_user_config(
-        self, section: str, spec: Type[T], scope: Optional[Uri]
+        self,
+        section: str,
+        spec: Type[T],
+        scope: Optional[Uri] = None,
     ) -> Optional[T]:
         """Return the user's configuration for the given ``section``.
 

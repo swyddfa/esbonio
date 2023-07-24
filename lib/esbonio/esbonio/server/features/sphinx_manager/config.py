@@ -89,8 +89,6 @@ class SphinxConfig:
            The fully resolved config object to use.
            If ``None``, a valid configuration could not be created.
         """
-        logger.debug("Resolving sphinx agent configuration")
-
         python_path = self._resolve_python_path(logger)
         if len(python_path) == 0:
             return None
