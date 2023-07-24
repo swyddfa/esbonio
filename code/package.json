@@ -8,7 +8,7 @@
     "author": "Esbonio Developers",
     "publisher": "swyddfa",
     "license": "MIT",
-    "version": "0.90.0",
+    "version": "0.90.1",
     "keywords": [
         "sphinx",
         "documentation"
@@ -140,7 +140,7 @@
                         "items": {
                             "type": "string"
                         },
-                        "description": "A list of logger names to limit output from"
+                        "description": "If set, only messages from the named loggers will be shown"
                     },
                     "esbonio.server.pythonPath": {
                         "scope": "window",
@@ -153,12 +153,6 @@
             {
                 "title": "Sphinx",
                 "properties": {
-                    "esbonio.sphinx.pythonCommand": {
-                        "scope": "resource",
-                        "type": "array",
-                        "default": [],
-                        "description": "The command to use when launching the Python interpreter."
-                    },
                     "esbonio.sphinx.buildCommand": {
                         "scope": "resource",
                         "type": "array",
@@ -167,6 +161,56 @@
                         },
                         "default": [],
                         "description": "The sphinx-build command to use."
+                    },
+                    "esbonio.sphinx.pythonCommand": {
+                        "scope": "resource",
+                        "type": "array",
+                        "default": [],
+                        "description": "The command to use when launching the Python interpreter for the process hosting the Sphinx application."
+                    },
+                    "esbonio.sphinx.cwd": {
+                        "scope": "resource",
+                        "type": "string",
+                        "default": "",
+                        "description": "The working directory from which to launch the Sphinx process. If not set, this will default to the root of the workspace folder containing the project."
+                    },
+                    "esbonio.sphinx.envPassthrough": {
+                        "scope": "resource",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": [],
+                        "description": "A list of environment variables to pass through to the Sphinx process."
+                    }
+                }
+            },
+            {
+                "title": "Previews",
+                "properties": {
+                    "esbonio.sphinx.enableSyncScrolling": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": true,
+                        "description": "Enable syncronsied scrolling between the editor and preview pane"
+                    },
+                    "esbonio.preview.bind": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "localhost",
+                        "description": "The network interface to bind the preview server to."
+                    },
+                    "esbonio.preview.httpPort": {
+                        "scope": "window",
+                        "type": "integer",
+                        "default": 0,
+                        "description": "The port number to bind the HTTP server to.\nIf 0, a random port number will be chosen"
+                    },
+                    "esbonio.preview.wsPort": {
+                        "scope": "window",
+                        "type": "integer",
+                        "default": 0,
+                        "description": "The port number to bind the WebSocket server to.\nIf 0, a random port number will be chosen"
                     }
                 }
             },
@@ -209,6 +253,15 @@
                         "type": "boolean",
                         "default": false,
                         "description": "Flag to enable support for additional developer tooling for sphinx agent instances."
+                    },
+                    "esbonio.sphinx.pythonPath": {
+                        "scope": "resource",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": [],
+                        "description": "List of paths to use when constructing the value of PYTHONPATH. Used to inject the sphinx agent into the target environment."
                     }
                 }
             }
