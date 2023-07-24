@@ -6,6 +6,11 @@ issue_format = "`#{issue} <https://github.com/swyddfa/esbonio/issues/{issue}>`_"
 underlines = ["-", "^", "\""]
 
 [[tool.towncrier.type]]
+directory = "breaking"
+name = "Breaking Changes"
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "feature"
 name = "Features"
 showcontent = true
@@ -23,11 +28,6 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "enhancement"
 name = "Enhancements"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "breaking"
-name = "Breaking Changes"
 showcontent = true
 
 [[tool.towncrier.type]]

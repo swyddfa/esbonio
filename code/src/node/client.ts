@@ -239,7 +239,7 @@ export class EsbonioClient {
       middleware: {
         workspace: {
           configuration: async (params: ConfigurationParams, token: CancellationToken, next) => {
-            this.logger.debug(`workspace/configuration: ${JSON.stringify(params, undefined, 2)}`)
+            // this.logger.debug(`workspace/configuration: ${JSON.stringify(params, undefined, 2)}`)
 
             let index = -1
             params.items.forEach((item, i) => {
