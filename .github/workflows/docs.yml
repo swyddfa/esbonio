@@ -3,6 +3,7 @@ on:
   pull_request:
     branches:
     - release
+    - beta
     - develop
     paths:
     - 'docs/**'
@@ -11,6 +12,7 @@ on:
   push:
     branches:
     - release
+    - beta
     - develop
     paths:
     - 'docs/**'
@@ -58,4 +60,4 @@ jobs:
         folder: docs/_build/${{ steps.build.outputs.version }}
         target-folder: docs/${{ steps.build.outputs.version }}
         clean: true
-      if: success() && ( startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/develop') )
+      if: success() && ( startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/develop') || startsWith(github.ref, 'refs/heads/beta') )
