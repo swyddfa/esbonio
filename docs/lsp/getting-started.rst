@@ -173,7 +173,7 @@ The following options control the creation of the Sphinx application object mana
 
 .. confval:: sphinx.buildDir (string)
 
-   By default the language server will choose a cache directory (as determined by `appdirs <https://pypi.org/project/appdirs>`_) to place Sphinx's build output.
+   By default the language server will choose a cache directory (as determined by `platformdirs <https://pypi.org/project/platformdirs>`_) to place Sphinx's build output.
    This option can be used to force the language server to use a location of your choosing, currently accepted values include:
 
    - ``/path/to/src/`` - An absolute path

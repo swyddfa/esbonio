@@ -32,10 +32,10 @@ repos:
     name: mypy (esbonio)
     args: [--config,lib/esbonio/pyproject.toml]
     additional_dependencies:
+    - platformdirs
     - pygls
     - pytest_lsp>=0.3
     - sphinx
-    - types-appdirs
     - types-docutils
     - types-pygments
     files: 'lib/esbonio/esbonio/.*\.py'
