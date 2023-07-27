@@ -8,8 +8,8 @@ final: prev: {
         src = ./..;
 
         propagatedBuildInputs = with python-prev; [
-          appdirs
           docutils
+          platformdirs
           pygls
           websockets
         ];

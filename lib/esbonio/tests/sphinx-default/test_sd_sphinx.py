@@ -3,7 +3,7 @@ import sys
 import tempfile
 from typing import List
 
-import appdirs
+import platformdirs
 import pygls.uris as uri
 import pytest
 from lsprotocol.types import ClientCapabilities
@@ -126,7 +126,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT",
                 src_dir="ROOT",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -137,7 +137,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT",
                 src_dir="ROOT",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -148,7 +148,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT/workspace",
                 src_dir="ROOT/workspace",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -159,7 +159,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT/workspace",
                 src_dir="ROOT/workspace",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -170,7 +170,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT/workspace",
                 src_dir="ROOT/workspace",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -181,7 +181,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT",
                 src_dir="ROOT",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -192,7 +192,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT",
                 src_dir="ROOT",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -203,7 +203,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT",
                 src_dir="ROOT/../workspace",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -217,7 +217,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT/workspace-src",
                 src_dir="ROOT/workspace",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -231,7 +231,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT/workspace-src",
                 src_dir="ROOT/workspace",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -242,7 +242,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT",
                 src_dir="ROOT",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
@@ -253,7 +253,7 @@ async def test_document_links(
             SphinxConfig(
                 conf_dir="ROOT",
                 src_dir="ROOT/../workspace",
-                build_dir=appdirs.user_cache_dir("esbonio", "swyddfa"),
+                build_dir=platformdirs.user_cache_dir("esbonio", "swyddfa"),
                 builder_name="html",
             ),
         ),
