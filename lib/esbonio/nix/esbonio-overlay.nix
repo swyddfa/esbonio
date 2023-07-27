@@ -8,7 +8,7 @@ final: prev: {
         src = ./..;
 
         propagatedBuildInputs = with python-prev; [
-          appdirs
+          platformdirs
           pygls
           pyspellchecker
           sphinx
