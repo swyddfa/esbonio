@@ -622,7 +622,7 @@ if __name__ == "__main__":
     import subprocess
     import sys
 
-    import appdirs
+    import platformdirs
     import pkg_resources
 
     cli = argparse.ArgumentParser(description="Launch the demo tutorial.")
@@ -638,7 +638,7 @@ if __name__ == "__main__":
 
     source = pathlib.Path(demo)
     destination = pathlib.Path(
-        appdirs.user_data_dir(appname="esbonio-tutorial", appauthor="swyddfa")
+        platformdirs.user_data_dir(appname="esbonio-tutorial", appauthor="swyddfa")
     )
 
     if args.reset and destination.exists():

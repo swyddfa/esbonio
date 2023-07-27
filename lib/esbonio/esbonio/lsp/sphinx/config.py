@@ -17,8 +17,8 @@ from typing import Tuple
 from typing import Union
 from unittest import mock
 
-import appdirs
 import attrs
+import platformdirs
 import pygls.uris as Uri
 from lsprotocol.types import Diagnostic
 from lsprotocol.types import DiagnosticSeverity
@@ -327,7 +327,7 @@ class SphinxConfig:
 
         If nothing is specified in the given ``config``, this will choose a location
         within the user's cache dir (as determined by
-        `appdirs <https://pypi.org/project/appdirs>`). The directory name will be a hash
+        `platformdirs <https://pypi.org/project/platformdirs>`). The directory name will be a hash
         derived from the given ``conf_dir`` for the project.
 
         Alternatively the user (or least language client) can override this by setting
@@ -352,7 +352,7 @@ class SphinxConfig:
 
         if not self.build_dir:
             # Try to pick a sensible dir based on the project's location
-            cache = appdirs.user_cache_dir("esbonio", "swyddfa")
+            cache = platformdirs.user_cache_dir("esbonio", "swyddfa")
             project = hashlib.md5(str(actual_conf_dir).encode()).hexdigest()
 
             return pathlib.Path(cache) / project
