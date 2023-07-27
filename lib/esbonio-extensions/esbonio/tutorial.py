@@ -622,8 +622,8 @@ if __name__ == "__main__":
     import subprocess
     import sys
 
-    import platformdirs
     import pkg_resources
+    import platformdirs
 
     cli = argparse.ArgumentParser(description="Launch the demo tutorial.")
     cli.add_argument(
