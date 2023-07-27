@@ -41,8 +41,8 @@
 
                 packages = with pkgs."python${py}Packages"; [
                   # Runtime deps
-                  appdirs
                   docutils
+                  platformdirs
                   pygls
                   websockets
 
@@ -61,7 +61,7 @@
 
               packages = with pkgs."python${py}Packages"; [
                 # Runtime deps
-                appdirs
+                platformdirs
                 pygls
                 sphinx
 
