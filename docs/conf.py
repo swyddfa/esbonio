@@ -49,6 +49,7 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
+    "sphinx_design",
     "esbonio.relevant_to",
     "esbonio.tutorial",
     "cli_help",
