@@ -6,8 +6,8 @@
 
 To try one of these configurations out.
 
-#. Download :download:`lsp-mode-minimal.el <./editors/emacs-lsp-mode/lsp-mode-minimal.el>`
-   or :download:`lsp-mode-extended.el <./editors/emacs-lsp-mode/lsp-mode-extended.el>`
+#. Download :download:`lsp-mode-minimal.el <./emacs-lsp-mode/lsp-mode-minimal.el>`
+   or :download:`lsp-mode-extended.el <./emacs-lsp-mode/lsp-mode-extended.el>`
    to a folder of your choosing (not your ``.emacs.d/``).
 
 #. Activate the virtual environment you installed the language server into::

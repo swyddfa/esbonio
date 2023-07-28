@@ -6,8 +6,8 @@
 
 To try one of these configurations out.
 
-#. Download :download:`eglot-minimal.el <./editors/emacs-eglot/eglot-minimal.el>`
-   or :download:`eglot-extended.el <./editors/emacs-eglot/eglot-extended.el>`
+#. Download :download:`eglot-minimal.el <./emacs-eglot/eglot-minimal.el>`
+   or :download:`eglot-extended.el <./emacs-eglot/eglot-extended.el>`
    to a folder of your choosing (not your ``.emacs.d/``).
 
 #. Activate the virtual environment you installed the language server into::

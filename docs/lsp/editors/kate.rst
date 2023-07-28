@@ -1,3 +1,15 @@
+Kate
+====
+
+.. figure:: /images/kate-screenshot.png
+   :align: center
+   :target: /_images/kate-screenshot.png
+
+   Using the esbonio language server from within Kate
+
+
+Installation
+------------
 
 .. note::
 
@@ -50,16 +62,40 @@
 
       Kate's :guilabel:`LSP Client` settings with an example Esbonio config.
 
-.. note::
+Configuration
+-------------
 
-   **Python Environments**
+The settings that go in the :guilabel:`User Server Settings` tab of the LSP Client configuration section will apply globally to all your projects.
+Settings that you want to only apply to a specific project can go in your project's ``.kateproject`` file.
 
-   In order for the language server to function correctly it needs to be installed into and
-   run from the same Python environment as the one used to build your documentation. In order
-   for Kate to correctly determine the right Python environment to use, you can either
+As an example, the following ``.kateproject`` file sets a custom start command to use a specific Python environment along with specifying the sphinx build dir.
 
-   - Modify the ``command`` array in your LSP Config to use the full path to the
-     correct Python, or
-   - Start Kate from the terminal with the correct Python environment activated::
+.. code-block:: json
 
-      (.env) $ kate
+   {
+     "name": "Esbonio",
+     "files": [
+       {
+         "git": 1
+       }
+     ],
+     "lspclient": {
+       "servers": {
+         "rst": {
+           "command": ["/path/to/venv/bin/python", "-m", "esbonio"],
+           "initializationOptions": {
+             "sphinx": {
+               "buildDir": "${confDir}/_build"
+             },
+             "server": {
+               "logLevel": "debug"
+             }
+           }
+         }
+       }
+     }
+   }
+
+The values in the ``lspclient`` section will be merged with the values specified in :guilabel:`User Server Settings`.
+
+See below for a list of all available configuration options.
