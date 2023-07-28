@@ -88,11 +88,11 @@ class SubprocessSphinxClient(Client):
 
     async def server_exit(self, server: asyncio.subprocess.Process):
         """Called when the sphinx agent process exits."""
-        self.logger.debug(f"Process exited with code: {server.returncode}")
+        self.logger.error(f"sphinx-agent process exited with code: {server.returncode}")
 
         if server.returncode != 0 and server.stderr is not None:
             stderr = await server.stderr.read()
-            self.logger.debug("Stderr:\n%s", stderr.decode("utf8"))
+            self.logger.error("Stderr:\n%s", stderr.decode("utf8"))
 
         # TODO: Should the upstream base client be doing this?
         # Cancel any pending futures.
