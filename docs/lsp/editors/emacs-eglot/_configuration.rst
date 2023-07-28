@@ -3,7 +3,7 @@ options which are passed as ``initialization-options`` during startup. They are 
 by subclassing ``eglot-lsp-server`` and implementing the ``eglot-initialization-options``
 method to return them.
 
-.. literalinclude:: ./editors/emacs-eglot/eglot-extended.el
+.. literalinclude:: ./emacs-eglot/eglot-extended.el
    :dedent: 2
    :language: elisp
    :start-at: (defclass eglot-esbonio (eglot-lsp-server) ()
@@ -12,7 +12,7 @@ method to return them.
 Then when it comes to adding the entry to ``eglot-server-programs`` the ``eglot-esbonio``
 class needs to be prepended to the list specifying the server start command.
 
-.. literalinclude:: ./editors/emacs-eglot/eglot-extended.el
+.. literalinclude:: ./emacs-eglot/eglot-extended.el
    :dedent: 2
    :language: elisp
    :start-at: (add-to-list 'eglot-server-programs

@@ -1,6 +1,6 @@
 To try the example configuration on your machine.
 
-#. Download :download:`init.vim <editors/nvim-lspconfig/init.vim>` to a folder
+#. Download :download:`init.vim <nvim-lspconfig/init.vim>` to a folder
    of your choosing.
 #. Ensure you have vim-plug's ``plug.vim`` file installed in your autoload
    directory. See
