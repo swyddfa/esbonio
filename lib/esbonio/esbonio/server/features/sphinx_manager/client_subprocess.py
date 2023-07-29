@@ -53,6 +53,7 @@ class SubprocessSphinxClient(Client):
         self.logger = logger or logging.getLogger(__name__)
 
         self.sphinx_info: Optional[types.SphinxInfo] = None
+        self._build_file_map: Dict[Uri, str] = {}
 
     @property
     def builder(self) -> Optional[str]:
@@ -77,6 +78,10 @@ class SubprocessSphinxClient(Client):
             return None
 
         return Uri.for_file(self.sphinx_info.conf_dir)
+
+    @property
+    def build_file_map(self) -> Dict[Uri, str]:
+        return self._build_file_map
 
     @property
     def build_uri(self) -> Optional[Uri]:
@@ -126,9 +131,14 @@ class SubprocessSphinxClient(Client):
         self.sphinx_info = sphinx_info
         return sphinx_info
 
-    async def build(self):
+    async def build(self) -> types.BuildResult:
         """Trigger a Sphinx build."""
-        return await self.protocol.send_request_async("sphinx/build", {})
+        result = await self.protocol.send_request_async("sphinx/build", {})
+        self._build_file_map = {
+            Uri.for_file(src): out for src, out in result.build_file_map.items()
+        }
+
+        return result
 
 
 def make_subprocess_sphinx_client(manager: SphinxManager) -> SphinxClient:

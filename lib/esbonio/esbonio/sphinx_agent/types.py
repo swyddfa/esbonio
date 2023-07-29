@@ -4,6 +4,7 @@ This is the *only* file shared between the agent itself and the parent language 
 For this reason this file *cannot* import anything from Sphinx.
 """
 import dataclasses
+from typing import Dict
 from typing import List
 from typing import Union
 
@@ -37,16 +38,22 @@ class SphinxInfo:
     """Represents information about an instance of the Sphinx application."""
 
     id: str
+    """A unique id representing a particular Sphinx application instance."""
 
     version: str
+    """The version of Sphinx being used."""
 
     conf_dir: str
+    """The folder containing the project's conf.py"""
 
     build_dir: str
+    """The folder containing the Sphinx application's build output"""
 
     builder_name: str
+    """The name of the builder in use"""
 
     src_dir: str
+    """The folder containing the source files for the project"""
 
 
 @dataclasses.dataclass
@@ -73,7 +80,8 @@ class BuildParams:
 class BuildResult:
     """Results from a ``sphinx/build`` request."""
 
-    placeholder: str = "TODO: Real results"
+    build_file_map: Dict[str, str] = dataclasses.field(default_factory=dict)
+    """A mapping of source files to the output files they contributed to."""
 
 
 @dataclasses.dataclass
@@ -120,5 +128,11 @@ class LogMessage:
     jsonrpc: str = dataclasses.field(default="2.0")
 
 
-METHOD_TO_MESSAGE_TYPE = {"sphinx/createApp": CreateApplicationRequest}
-METHOD_TO_RESPONSE_TYPE = {"sphinx/createApp": CreateApplicationResponse}
+METHOD_TO_MESSAGE_TYPE = {
+    BuildRequest.method: BuildRequest,
+    CreateApplicationRequest.method: CreateApplicationRequest,
+}
+METHOD_TO_RESPONSE_TYPE = {
+    BuildRequest.method: BuildResponse,
+    CreateApplicationRequest.method: CreateApplicationResponse,
+}

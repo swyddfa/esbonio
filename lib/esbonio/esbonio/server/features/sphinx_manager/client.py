@@ -1,3 +1,4 @@
+from typing import Dict
 from typing import Optional
 from typing import Protocol
 
@@ -17,7 +18,21 @@ class SphinxClient(Protocol):
 
     @property
     def build_uri(self) -> Optional[Uri]:
-        """The URI to the Sphinx applicaiton's build dir."""
+        """The URI to the Sphinx application's build dir."""
+
+    @property
+    def build_file_map(self) -> Dict[Uri, str]:
+        """A mapping of source file uris to the corresponding build path that contains
+        their content.
+
+        Example
+        -------
+        >>> client.build_file_map
+        {
+           Uri(scheme='file', path='/path/to/index.rst'): "index.html",
+        }
+        """
+        ...
 
     @property
     def conf_uri(self) -> Optional[Uri]:
@@ -31,8 +46,9 @@ class SphinxClient(Protocol):
         """Create a new Sphinx application instance."""
         ...
 
-    async def build(self):
+    async def build(self) -> types.BuildResult:
         """Trigger a Sphinx build."""
+        ...
 
     async def stop(self):
         """Stop the client."""

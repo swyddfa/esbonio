@@ -3,6 +3,7 @@ import os.path
 import pathlib
 from functools import partial
 from typing import IO
+from typing import Dict
 from typing import Optional
 from typing import Type
 from uuid import uuid4
@@ -82,19 +83,36 @@ def build_sphinx_app(request: types.BuildRequest):
     """Trigger a Sphinx build."""
 
     if sphinx_app is None:
-        send_error(id=request.id, code=-32803, message="Sphinx app not initialzied")
+        send_error(id=request.id, code=-32803, message="Sphinx app not initialized")
         return
 
     try:
         sphinx_app.build()
         response = types.BuildResponse(
             id=request.id,
-            result=types.BuildResult(),
+            result=types.BuildResult(build_file_map=_build_file_mapping(sphinx_app)),
             jsonrpc=request.jsonrpc,
         )
         send_message(response)
     except Exception:
         send_error(id=request.id, code=-32602, message="Sphinx build failed.")
+
+
+def _build_file_mapping(app: Sphinx) -> Dict[str, str]:
+    """Given a Sphinx application, return a mapping of all known source files to their
+    corresponding output files."""
+
+    env = app.env
+    builder = app.builder
+    mapping = {env.doc2path(doc): builder.get_target_uri(doc) for doc in env.found_docs}
+
+    # Don't forget any included files.
+    # TODO: How best to handle files included in multiple documents?
+    for parent_doc, included_docs in env.included.items():
+        for doc in included_docs:
+            mapping[env.doc2path(doc)] = mapping[env.doc2path(parent_doc)]
+
+    return mapping
 
 
 def logging_setup(config: SphinxConfig, app: Sphinx, status: IO, warning: IO):
