@@ -41,7 +41,10 @@ async def test_create_application(sphinx_client, uri_for):
             WorkspaceFolder(uri=str(sd_workspace), name="sphinx-default"),
         ],
     )
-    config = SphinxConfig(python_command=[sys.executable])
+    config = SphinxConfig(
+        python_command=[sys.executable],
+        env_passthrough=["PYTHONPATH"],
+    )
     resolved = config.resolve(test_uri, workspace, sphinx_client.logger)
     assert resolved is not None
 
