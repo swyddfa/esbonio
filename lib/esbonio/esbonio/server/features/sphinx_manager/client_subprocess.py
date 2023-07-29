@@ -164,6 +164,9 @@ def get_sphinx_env(config: SphinxConfig) -> Dict[str, str]:
     for envname in passthrough:
         value = os.environ.get(envname, None)
         if value is not None:
-            env[envname] = value
+            if envname == "PYTHONPATH":
+                env["PYTHONPATH"] = f"{env['PYTHONPATH']}:{value}"
+            else:
+                env[envname] = value
 
     return env

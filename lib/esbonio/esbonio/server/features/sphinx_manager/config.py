@@ -108,6 +108,7 @@ class SphinxConfig:
             enable_dev_tools=self.enable_dev_tools,
             enable_sync_scrolling=self.enable_sync_scrolling,
             cwd=cwd,
+            env_passthrough=self.env_passthrough,
             python_command=self.python_command,
             build_command=build_command,
             python_path=python_path,
