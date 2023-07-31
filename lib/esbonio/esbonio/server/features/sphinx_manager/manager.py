@@ -56,7 +56,7 @@ class SphinxManager(LanguageFeature):
             return
 
         result = await client.build()
-        self.logger.debug("Build result: %s", result)
+        # self.logger.debug("Build result: %s", result)
 
         # Notify listeners.
         for listener in self.handlers.get("build", set()):

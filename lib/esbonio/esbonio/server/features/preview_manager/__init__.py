@@ -193,33 +193,22 @@ class PreviewManager(LanguageFeature):
         if client is None:
             return None
 
-        if client.src_uri is None or client.builder is None:
-            return None
-
-        # TODO: Have the sphinx client provide a mapping from src -> html
-        rst_path = src_uri.path.replace(client.src_uri.path, "")
-        if client.builder == "html":
-            html_path = rst_path.replace(".rst", ".html")
-        elif client.builder == "dirhtml":
-            html_path = rst_path.replace("index.rst", "").replace(".rst", "/")
-        else:
+        if client.builder not in {"html", "dirhtml"}:
             self.logger.error(
                 "Previews for the '%s' builder are not currently supported",
                 client.builder,
             )
             return None
 
-        self.logger.debug("'%s' -> '%s' -> '%s'", src_uri.path, rst_path, html_path)
+        if (build_path := client.build_file_map.get(src_uri, None)) is None:
+            # Has the project been built yet?
+            if len(client.build_file_map) == 0:
+                # If not, trigger a build and try again
+                await client.build()
+                return await self.preview_file(params)
 
-        config = await self.server.get_user_config("esbonio.preview", PreviewConfig)
-        if config is None:
-            self.logger.info(
-                "Unable to obtain preview configuration, proceeding with defaults"
-            )
-            config = PreviewConfig()
+            return None
 
-        server = self.get_http_server(config)
-        webview = await self.get_webview_server(config)
         server = await self.get_http_server()
         webview = await self.get_webview_server()
 
@@ -228,11 +217,11 @@ class PreviewManager(LanguageFeature):
         uri = Uri.create(
             scheme="http",
             authority=f"localhost:{server.server_port}",
-            path=html_path,
+            path=build_path,
             query=f"ws={webview.port}",
         )
 
-        self.logger.debug("Preview available at: %s", uri.as_string(encode=False))
+        self.logger.info("Preview available at: %s", uri.as_string(encode=False))
         return {"uri": uri.as_string(encode=False)}
 
 
