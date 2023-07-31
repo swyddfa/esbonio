@@ -78,6 +78,8 @@ class PreviewManager(LanguageFeature):
         self.sphinx = sphinx
         self.sphinx.add_listener("build", self.on_build)
 
+        self._preview_config: Optional[PreviewConfig] = None
+
         logger = server.logger.getChild("PreviewServer")
         self._request_handler_factory = RequestHandlerFactory(logger)
         self._http_server: Optional[HTTPServer] = None
@@ -101,7 +103,22 @@ class PreviewManager(LanguageFeature):
         """
         return self._ws_server is not None
 
-    def get_http_server(self, config: PreviewConfig) -> HTTPServer:
+    async def get_preview_config(self) -> PreviewConfig:
+        """Return the user's preview server configuration."""
+        if self._preview_config is not None:
+            return self._preview_config
+
+        config = await self.server.get_user_config("esbonio.preview", PreviewConfig)
+        if config is None:
+            self.logger.info(
+                "Unable to obtain preview configuration, proceeding with defaults"
+            )
+            config = PreviewConfig()
+
+        self._preview_config = config
+        return self._preview_config
+
+    async def get_http_server(self) -> HTTPServer:
         """Return the http server instance hosting the previews.
 
         This will also handle the creation of the server the first time it is called.
@@ -110,6 +127,7 @@ class PreviewManager(LanguageFeature):
         if self._http_server is not None:
             return self._http_server
 
+        config = await self.get_preview_config()
         self._http_server = HTTPServer(
             (config.bind, config.http_port), self._request_handler_factory
         )
@@ -122,12 +140,14 @@ class PreviewManager(LanguageFeature):
 
         return self._http_server
 
-    async def get_webview_server(self, config: PreviewConfig) -> WebviewServer:
+    async def get_webview_server(self) -> WebviewServer:
         """Return the websocket server used to communicate with the webview."""
 
         # TODO: Recreate the server if the configuration changes?
         if self._ws_server is not None:
             return self._ws_server
+
+        config = await self.get_preview_config()
 
         logger = self.server.logger.getChild("WebviewServer")
         self._ws_server = make_ws_server(self.server, logger)
@@ -200,6 +220,8 @@ class PreviewManager(LanguageFeature):
 
         server = self.get_http_server(config)
         webview = await self.get_webview_server(config)
+        server = await self.get_http_server()
+        webview = await self.get_webview_server()
 
         self._request_handler_factory.build_uri = client.build_uri
 
