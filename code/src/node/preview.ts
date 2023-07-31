@@ -24,10 +24,6 @@ export class PreviewManager {
   // If set, indicates that the preview pane is currently in control of the editor.
   private viewInControl?: NodeJS.Timeout
 
-  // Used to break the cache in iframes.
-  private count: number = 0
-
-
   constructor(
     private logger: OutputChannelLogger,
     private context: vscode.ExtensionContext,
@@ -116,11 +112,14 @@ export class PreviewManager {
   }
 
   private async previewEditor(editor: vscode.TextEditor, placement?: vscode.ViewColumn) {
-    this.currentUri = editor.document.uri
-    this.logger.debug(`Previewing: ${this.currentUri}`)
+    if (this.currentUri === editor.document.uri) {
+      // There is nothing to do.
+      return
+    }
 
+    let panel = this.getPanel(placement || vscode.ViewColumn.Beside)
     let params: PreviewFileParams = {
-      uri: `${this.currentUri}`,
+      uri: `${editor.document.uri}`,
       show: false
     }
 
@@ -130,47 +129,8 @@ export class PreviewManager {
       return
     }
 
-    await this.reloadPreview(result.uri, placement || vscode.ViewColumn.Beside)
-  }
-
-  private async reloadPreview(uri: string, placement: vscode.ViewColumn) {
-    let panel = this.getPanel(placement)
-
-    let scriptNonce = getNonce()
-    let cssNonce = getNonce()
-
-    this.count += 1
-
-    panel.webview.html = `
-<!DOCTYPE html>
-<html>
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src 'nonce-${cssNonce}'; script-src 'nonce-${scriptNonce}'; frame-src ${uri}" />
-
-  <style nonce="${cssNonce}">
-    body {
-      height: 100vh;
-      padding: 0;
-      margin: 0;
-    }
-
-    iframe {
-      height: 100%;
-      width: 100%;
-    }
-  </style>
-</head>
-
-<body>
-  <iframe id="viewer" src=${uri}?r=${this.count}></iframe>
-</body>
-
-</html>
-`
+    this.currentUri = editor.document.uri
+    panel.webview.postMessage({ 'show': result.uri })
   }
 
   private getPanel(placement: vscode.ViewColumn): vscode.WebviewPanel {
@@ -181,19 +141,108 @@ export class PreviewManager {
     this.panel = vscode.window.createWebviewPanel(
       'esbonioPreview',
       'Esbonio Preview',
-      placement,
+      { preserveFocus: true, viewColumn: placement },
       { enableScripts: true }
     )
 
+    let scriptNonce = getNonce()
+    let cssNonce = getNonce()
+
+    this.panel.webview.html = `
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none'; style-src 'nonce-${cssNonce}'; script-src 'nonce-${scriptNonce}'; frame-src http://localhost:*/" />
+
+  <style nonce="${cssNonce}">
+    * { box-sizing: border-box; }
+
+    body {
+      height: 100vh;
+      padding: 0;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    iframe {
+      height: 100%;
+      width: 100%;
+    }
+
+    #status {
+      width: 100%;
+      position: fixed;
+      bottom: 0;
+      background: var(--vscode-editor-background);
+
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.5rem;
+    }
+
+    #progress-bar {
+      flex-grow: 1;
+    }
+
+    progress {
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="status">
+    <p>Loading...</p>
+    <div id="progress-bar">
+      <progress aria-label="Content loading…"></progress>
+    </div>
+  </div>
+  <iframe id="viewer"></iframe>
+</body>
+
+<script nonce="${scriptNonce}">
+    let viewer = document.getElementById("viewer")
+    let status = document.getElementById("status")
+
+    console.log(window.location)
+    window.addEventListener("message", (event) => {
+      console.log("[preview]: ", event.origin, event.data)
+      let message = event.data
+
+      // Control messages coming from the webview hosting this page
+      if (event.origin.startsWith("vscode-webview://")) {
+        if (message.show) {
+          status.style.display = "flex"
+          viewer.src = message.show
+        }
+      }
+
+      // Control messages coming from the webpage being shown.
+      if (event.origin.startsWith("http://localhost:")) {
+        if (message.ready) {
+          status.style.display = "none"
+        }
+      }
+
+    })
+</script>
+
+</html>
+`
+
     this.panel.onDidDispose(() => {
       this.panel = undefined
+      this.currentUri = undefined
     })
 
     return this.panel
   }
 }
-
-
 
 // Taken from
 // https://github.com/microsoft/vscode-extension-samples/blob/eed9581e43a19424baa81010d072f3473eda4ccb/webview-sample/src/extension.ts
