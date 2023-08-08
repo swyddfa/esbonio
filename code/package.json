@@ -36,7 +36,7 @@
         "@types/mocha": "^10.0.1",
         "@types/node": "^16.18.36",
         "@types/vscode": "1.78.0",
-        "@vscode/vsce": "^2.20.0",
+        "@vscode/vsce": "^2.20.1",
         "mocha": "^10.2.0",
         "path-browserify": "^1.0.1",
         "ts-loader": "^9.4.4",
