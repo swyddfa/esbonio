@@ -47,6 +47,15 @@ dev = ["black", "flake8", "pre-commit", "tox"]
 [tool.setuptools.packages.find]
 exclude = ["tests*"]
 
+[tool.coverage.run]
+parallel = true
+source_pkgs = ["esbonio"]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+sort = "Cover"
+
 [tool.isort]
 force_single_line = true
 known_first_party = ["esbonio"]
@@ -111,37 +120,3 @@ showcontent = true
 directory = "misc"
 name = "Misc"
 showcontent = true
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-isolated_build = True
-skip_missing_interpreters = true
-envlist = py{38,39,310,311}, py{38,39,310,311}-sphinx{5,6,7}
-
-[testenv]
-package = wheel
-wheel_build_env = .pkg
-deps =
-    git+https://github.com/openlawlibrary/pygls.git#egg=pygls
-extras = test
-commands =
-    pytest tests/server {posargs}
-
-[testenv:py{38,39,310,311}-sphinx{5,6,7}]
-deps =
-    sphinx5: sphinx>=5,<6
-    sphinx6: sphinx>=6,<7
-    sphinx7: sphinx>=7,<8
-    git+https://github.com/openlawlibrary/pygls.git#egg=pygls
-commands =
-    python ../../scripts/check-sphinx-version.py
-    pytest tests/sphinx-agent {posargs}
-
-[testenv:pkg]
-deps =
-    build
-skip_install = True
-commands =
-    python -m build
-"""
