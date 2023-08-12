@@ -185,7 +185,7 @@ class InitialDoctreeReader(Reader):
 
 
 def read_initial_doctree(
-    document: Document, logger: logging.Logger
+    document: Document, logger: Optional[logging.Logger] = None
 ) -> Optional[nodes.document]:
     """Parse the given reStructuredText document into its "initial" doctree.
 
@@ -200,22 +200,27 @@ def read_initial_doctree(
        The document containing the reStructuredText source.
 
     logger
-       Logger to log debug info to.
+       The logger instance to use
     """
 
-    parser = Parser()
+    logger = logger or logging.getLogger(__name__)
+
     with disable_roles_and_directives():
         publisher = Publisher(
             reader=InitialDoctreeReader(logger),
-            parser=parser,
+            parser=Parser(),
             writer=DummyWriter(),
             source_class=StringInput,
             destination=NullOutput(),
         )
-        publisher.process_programmatic_settings(None, {}, None)
+        # TODO: Make this configurable
+        settings = {
+            "doctitle_xform": False,
+            "sectsubtitle_xform": False,
+        }
+        publisher.process_programmatic_settings(None, settings, None)
         publisher.set_source(
             source=document.source, source_path=uri.to_fs_path(document.uri)
         )
         publisher.publish()
-
         return publisher.document
