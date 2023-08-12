@@ -2,6 +2,7 @@ import os.path
 import re
 from typing import Callable
 from typing import Optional
+from typing import Union
 from urllib import parse
 
 import attrs
@@ -97,19 +98,20 @@ class Uri:
         )
 
     @classmethod
-    def for_file(cls, filepath: str) -> "Uri":
+    def for_file(cls, filepath: os.PathLike[str]) -> "Uri":
         """Create a uri based on the given filepath."""
 
+        fpath = os.fspath(filepath)
         if IS_WIN:
-            filepath = filepath.replace("\\", "/")
+            fpath = fpath.replace("\\", "/")
 
-        if filepath.startswith("//"):
-            authority, *path = filepath[2:].split("/")
-            filepath = "/".join(path)
+        if fpath.startswith("//"):
+            authority, *path = fpath[2:].split("/")
+            fpath = "/".join(path)
         else:
             authority = ""
 
-        return Uri.create(scheme="file", authority=authority, path=filepath)
+        return cls.create(scheme="file", authority=authority, path=fpath)
 
     @property
     def fs_path(self) -> Optional[str]:
