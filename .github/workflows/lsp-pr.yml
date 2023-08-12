@@ -55,7 +55,7 @@ jobs:
         cd lib/esbonio
 
         version=$(echo ${{ matrix.python-version }} | tr -d .)
-        python -m tox run-parallel --parallel-no-spinner -e `tox -l | grep $version | tr '\n' ','`
+        python -m tox run -e `tox -l | grep $version | tr '\n' ','`
       shell: bash
       name: Run Tests
 
