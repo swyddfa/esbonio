@@ -4,18 +4,20 @@ import enum
 import json
 import logging
 import pathlib
+import re
 import textwrap
 import traceback
 import typing
 from typing import List
 from typing import Tuple
 
-import pygls.uris as uri
 from lsprotocol.types import Diagnostic
 from lsprotocol.types import DiagnosticSeverity
 from lsprotocol.types import DiagnosticTag
 from lsprotocol.types import Position
 from lsprotocol.types import Range
+
+from ._uri import Uri
 
 if typing.TYPE_CHECKING:
     from .server import EsbonioLanguageServer
@@ -27,6 +29,26 @@ LOG_LEVELS = {
     "debug": logging.DEBUG,
     "error": logging.ERROR,
     "info": logging.INFO,
+}
+
+
+# e.g. /.../filename.rst:54: (ERROR/3) Unexpected indentation.
+DOCUTILS_ERROR = re.compile(
+    r"""
+    ^\s*(?P<filepath>[^:]+?):
+    (?P<linum>\d+):
+    \s*\((?P<levelname>\w+)/(?P<levelnum>\d)\)
+    (?P<message>.*)$
+    """,
+    re.VERBOSE,
+)
+
+DOCUTILS_SEVERITY = {
+    0: DiagnosticSeverity.Hint,
+    1: DiagnosticSeverity.Information,
+    2: DiagnosticSeverity.Warning,
+    3: DiagnosticSeverity.Error,
+    4: DiagnosticSeverity.Error,
 }
 
 
@@ -121,8 +143,26 @@ class LspHandler(logging.Handler):
             tags=tags,
         )
 
-        self.server.add_diagnostics("esbonio", uri.from_fs_path(path), diagnostic)
+        self.server.add_diagnostics("esbonio", Uri.for_file(path), diagnostic)
         self.server.sync_diagnostics()
+
+    def handle_diagnostic(self, record: logging.LogRecord):
+        """Look for any diagnostics to report in the log message."""
+
+        if (match := DOCUTILS_ERROR.match(record.msg)) is not None:
+            uri = Uri.for_file(match.group("filepath"))
+            line = int(match.group("linum"))
+            severity = int(match.group("levelnum"))
+
+            diagnostic = Diagnostic(
+                message=match.group("message").strip(),
+                severity=DOCUTILS_SEVERITY.get(severity),
+                range=Range(
+                    start=Position(line=line - 1, character=0),
+                    end=Position(line=line, character=0),
+                ),
+            )
+            self.server.add_diagnostics("docutils", uri, diagnostic)
 
     def emit(self, record: logging.LogRecord) -> None:
         """Sends the record to the client."""
@@ -137,6 +177,8 @@ class LspHandler(logging.Handler):
                 return
 
             self.handle_warning(record)
+        else:
+            self.handle_diagnostic(record)
 
         log = self.format(record).strip()
         self.server.show_message_log(log)
