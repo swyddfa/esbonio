@@ -98,7 +98,7 @@ class Uri:
         )
 
     @classmethod
-    def for_file(cls, filepath: os.PathLike[str]) -> "Uri":
+    def for_file(cls, filepath: Union[str, "os.PathLike[str]"]) -> "Uri":
         """Create a uri based on the given filepath."""
 
         fpath = os.fspath(filepath)
