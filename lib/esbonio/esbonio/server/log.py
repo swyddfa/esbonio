@@ -33,9 +33,10 @@ LOG_LEVELS = {
 
 
 # e.g. /.../filename.rst:54: (ERROR/3) Unexpected indentation.
+#      c:\...\filename.rst:54: (ERROR/3) Unexpected indentation.
 DOCUTILS_ERROR = re.compile(
     r"""
-    ^\s*(?P<filepath>[^:]+?):
+    ^\s*(?P<filepath>.+?):
     (?P<linum>\d+):
     \s*\((?P<levelname>\w+)/(?P<levelnum>\d)\)
     (?P<message>.*)$
