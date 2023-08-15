@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import socket
+from typing import Optional
 
 from pygls.protocol import JsonRPCProtocol
 from pygls.protocol import default_converter
@@ -29,6 +30,9 @@ class WebviewServer(Server):
         self.port = None
 
         self._connected = False
+        self._editor_in_control: Optional[asyncio.Task] = None
+        self._view_in_control: Optional[asyncio.Task] = None
+
     @property
     def connected(self) -> bool:
         """Indicates when we have an active connection to the client."""
@@ -43,9 +47,24 @@ class WebviewServer(Server):
             self.lsp.notify("view/reload", {})
 
     def scroll(self, line: int):
-        """Scroll the current view."""
-        if self.lsp.transport:
-            self.lsp.notify("view/scroll", {"line": line})
+        """Called by the editor to scroll the current webview."""
+        if not self.connected or self._view_in_control:
+            return
+
+        # If the editor is already in control, reset the cooldown
+        if self._editor_in_control:
+            self._editor_in_control.cancel()
+
+        self._editor_in_control = asyncio.create_task(self.cooldown("editor"))
+        self.lsp.notify("view/scroll", {"line": line})
+
+    async def cooldown(self, name: str):
+        """Create a cooldown."""
+        await asyncio.sleep(1)
+
+        # Unset the cooldown
+        self.logger.debug("%s cooldown ended", name)
+        setattr(self, f"_{name}_in_control", None)
 
     async def start_ws(self, host: str, port: int) -> None:  # type: ignore[override]
         """Start the server."""
@@ -85,6 +104,15 @@ def make_ws_server(
 
     @server.feature("editor/scroll")
     def on_scroll(ls: WebviewServer, params):
+        """Called by the webview to scroll the editor."""
+        if not server.connected or server._editor_in_control:
+            return
+
+        # If the view is already in control, reset the cooldown.
+        if server._view_in_control:
+            server._view_in_control.cancel()
+
+        server._view_in_control = asyncio.create_task(server.cooldown("view"))
         esbonio.lsp.notify("editor/scroll", dict(line=params.line))
 
     return server
