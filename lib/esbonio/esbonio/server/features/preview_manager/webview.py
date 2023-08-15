@@ -28,12 +28,18 @@ class WebviewServer(Server):
         self.lsp._send_only_body = True
         self.port = None
 
+        self._connected = False
+    @property
+    def connected(self) -> bool:
+        """Indicates when we have an active connection to the client."""
+        return self._connected
+
     def feature(self, feature_name: str, options=None):
         return self.lsp.fm.feature(feature_name, options)
 
     def reload(self):
         """Reload the current view."""
-        if self.lsp.transport:
+        if self.connected:
             self.lsp.notify("view/reload", {})
 
     def scroll(self, line: int):
@@ -42,15 +48,23 @@ class WebviewServer(Server):
             self.lsp.notify("view/scroll", {"line": line})
 
     async def start_ws(self, host: str, port: int) -> None:  # type: ignore[override]
+        """Start the server."""
+
         async def connection(websocket):
             loop = asyncio.get_running_loop()
             transport = WebSocketTransportAdapter(websocket, loop)
+
             self.lsp.connection_made(transport)  # type: ignore[arg-type]
+            self._connected = True
+            self.logger.debug("Connected")
 
             async for message in websocket:
                 self.lsp._procedure_handler(
                     json.loads(message, object_hook=self.lsp._deserialize_message)
                 )
+
+            self.logger.debug("Connection lost")
+            self._connected = False
 
         async with serve(
             connection,
