@@ -187,12 +187,21 @@ export class PreviewManager {
 </body>
 
 <script nonce="${scriptNonce}">
-    let viewer = document.getElementById("viewer")
-    let status = document.getElementById("status")
+    const vscode = acquireVsCodeApi()
 
-    console.log(window.location)
+    const viewer = document.getElementById("viewer")
+    const status = document.getElementById("status")
+
+    console.debug(window.location)
+
+    // Restore previous page?
+    const previousState = vscode.getState()
+    if (previousState && previousState.url) {
+      viewer.src = previousState.url
+    }
+
     window.addEventListener("message", (event) => {
-      console.log("[preview]: ", event.origin, event.data)
+      console.debug("[preview]: ", event.origin, event.data)
       let message = event.data
 
       // Control messages coming from the webview hosting this page
@@ -200,6 +209,9 @@ export class PreviewManager {
         if (message.show) {
           status.style.display = "flex"
           viewer.src = message.show
+
+          // Persist the url so we can recover if the webview gets hidden.
+          vscode.setState({ url: message.show })
         }
       }
 
