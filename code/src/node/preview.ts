@@ -3,8 +3,6 @@ import { OutputChannelLogger } from '../common/log'
 import { EsbonioClient } from './client'
 import { Commands, Notifications } from '../common/constants'
 
-const COOLDOWN = 1000 // ms
-
 interface PreviewFileParams {
   uri: string
   show?: boolean
@@ -20,9 +18,6 @@ export class PreviewManager {
 
   // The uri of the document currently shown in the preview pane
   private currentUri?: vscode.Uri
-
-  // If set, indicates that the preview pane is currently in control of the editor.
-  private viewInControl?: NodeJS.Timeout
 
   constructor(
     private logger: OutputChannelLogger,
@@ -66,16 +61,6 @@ export class PreviewManager {
           new vscode.Position(params.line + 2, 0)
         )
 
-        // Don't send `view/scroll` messages for a while to prevent the view and
-        // editor from fighting each other for control.
-        if (this.viewInControl) {
-          clearTimeout(this.viewInControl)
-        }
-        this.viewInControl = setTimeout(() => {
-          this.viewInControl = undefined
-          this.logger.debug("viewInControl cooldown ended.")
-        }, COOLDOWN)
-
         editor.revealRange(target, vscode.TextEditorRevealType.AtTop)
         break
       }
@@ -85,10 +70,6 @@ export class PreviewManager {
   private scrollView(event: vscode.TextEditorVisibleRangesChangeEvent) {
     let editor = event.textEditor
     if (editor.document.uri !== this.currentUri) {
-      return
-    }
-
-    if (this.viewInControl) {
       return
     }
 
