@@ -57,7 +57,7 @@ export class PreviewManager {
         // this.logger.debug(`Scrolling: ${JSON.stringify(params)}`)
 
         let target = new vscode.Range(
-          new vscode.Position(params.line - 2, 0),
+          new vscode.Position(Math.max(0, params.line - 2), 0),
           new vscode.Position(params.line + 2, 0)
         )
 
