@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { OutputChannelLogger } from '../common/log'
 import { EsbonioClient } from './client'
-import { Commands, Notifications } from '../common/constants'
+import { Commands, Events, Notifications, Server } from '../common/constants'
 
 interface PreviewFileParams {
   uri: string
@@ -37,9 +37,32 @@ export class PreviewManager {
       vscode.window.onDidChangeTextEditorVisibleRanges(params => this.scrollView(params.textEditor))
     )
 
+    // View -> editor sync scrolling implementation
     client.addHandler(
       Notifications.SCROLL_EDITOR,
       (params: { line: number }) => { this.scrollEditor(params) }
+    )
+
+    client.addHandler(
+      Events.SERVER_START,
+      async (_: any) => {
+        // Did we previously have a preview open?
+        let editor = findEditorFor(this.currentUri)
+        if (editor) {
+          await this.openPreviewToSide(editor)
+        }
+      }
+    )
+
+    // Destroy the preview pane if the server goes away
+    client.addHandler(
+      Events.SERVER_STOP,
+      (_: any) => {
+        // Closing the preview pane will unset this.currentUri
+        let uri = this.currentUri
+        this.panel?.dispose()
+        this.currentUri = uri
+      }
     )
   }
 
@@ -91,7 +114,7 @@ export class PreviewManager {
   }
 
   private async previewEditor(editor: vscode.TextEditor, placement?: vscode.ViewColumn) {
-    if (this.currentUri === editor.document.uri) {
+    if (this.currentUri === editor.document.uri && this.panel) {
       // There is nothing to do.
       return
     }
