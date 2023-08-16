@@ -34,7 +34,7 @@ export class PreviewManager {
       vscode.window.onDidChangeActiveTextEditor(this.onDidChangeEditor, this)
     )
     context.subscriptions.push(
-      vscode.window.onDidChangeTextEditorVisibleRanges(params => this.scrollView(params))
+      vscode.window.onDidChangeTextEditorVisibleRanges(params => this.scrollView(params.textEditor))
     )
 
     client.addHandler(
@@ -52,31 +52,29 @@ export class PreviewManager {
   }
 
   private scrollEditor(params: { line: number }) {
-    for (let editor of vscode.window.visibleTextEditors) {
-      if (editor.document.uri === this.currentUri) {
-        // this.logger.debug(`Scrolling: ${JSON.stringify(params)}`)
-
-        let target = new vscode.Range(
-          new vscode.Position(Math.max(0, params.line - 2), 0),
-          new vscode.Position(params.line + 2, 0)
-        )
-
-        editor.revealRange(target, vscode.TextEditorRevealType.AtTop)
-        break
-      }
+    let editor = findEditorFor(this.currentUri)
+    if (!editor) {
+      return
     }
+    // this.logger.debug(`Scrolling: ${JSON.stringify(params)}`)
+
+    let target = new vscode.Range(
+      new vscode.Position(Math.max(0, params.line - 2), 0),
+      new vscode.Position(params.line + 2, 0)
+    )
+
+    editor.revealRange(target, vscode.TextEditorRevealType.AtTop)
   }
 
-  private scrollView(event: vscode.TextEditorVisibleRangesChangeEvent) {
-    let editor = event.textEditor
+  private scrollView(editor: vscode.TextEditor) {
     if (editor.document.uri !== this.currentUri) {
       return
     }
 
     // More than one range here implies that some regions of code have been folded.
     // Though I doubt it matters too much for this use case?..
-    let range = event.visibleRanges[0]
-    this.client.scrollView(range.start.line)
+    let range = editor.visibleRanges[0]
+    this.client.scrollView(range.start.line + 1)
   }
 
   private async onDidChangeEditor(editor?: vscode.TextEditor) {
@@ -219,6 +217,7 @@ export class PreviewManager {
       if (event.origin.startsWith("http://localhost:")) {
         if (message.ready) {
           status.style.display = "none"
+          vscode.postMessage({ ready: true })
         }
       }
 
@@ -228,6 +227,20 @@ export class PreviewManager {
 </html>
 `
 
+    // The webview will notify us when the page has finished loading.
+    // Which should also mean the websocket connection is up and running.
+    // Try and sync up the view to the editor.
+    this.panel.webview.onDidReceiveMessage(message => {
+      if (!message.ready) {
+        return
+      }
+
+      let editor = findEditorFor(this.currentUri)
+      if (editor) {
+        this.scrollView(editor)
+      }
+    })
+
     this.panel.onDidDispose(() => {
       this.panel = undefined
       this.currentUri = undefined
@@ -235,6 +248,26 @@ export class PreviewManager {
 
     return this.panel
   }
+}
+
+
+/**
+ * Return the text editor showing the given uri.
+ * @param uri The uri of the document in the editor
+ */
+function findEditorFor(uri?: vscode.Uri): vscode.TextEditor | undefined {
+
+  if (!uri) {
+    return
+  }
+
+  for (let editor of vscode.window.visibleTextEditors) {
+    if (editor.document.uri === uri) {
+      return editor
+    }
+  }
+
+  return
 }
 
 // Taken from
