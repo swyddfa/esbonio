@@ -240,19 +240,19 @@
                         "scope": "window",
                         "type": "boolean",
                         "default": false,
-                        "description": "Enable lsp-devtools."
+                        "description": "Enable lsp-devtools integration for the language server"
                     },
                     "esbonio.server.showDeprecationWarnings": {
                         "scope": "window",
                         "type": "boolean",
                         "default": false,
-                        "description": "Developer flag to enable deprecation warnings."
+                        "description": "Show deprecation warnings as diagnostics."
                     },
                     "esbonio.sphinx.enableDevTools": {
                         "scope": "resource",
                         "type": "boolean",
                         "default": false,
-                        "description": "Flag to enable support for additional developer tooling for sphinx agent instances."
+                        "description": "Enable lsp-devtools integration for sphinx agent instances."
                     },
                     "esbonio.sphinx.pythonPath": {
                         "scope": "resource",
@@ -262,6 +262,12 @@
                         },
                         "default": [],
                         "description": "List of paths to use when constructing the value of PYTHONPATH. Used to inject the sphinx agent into the target environment."
+                    },
+                    "esbonio.preview.showLineMarkers": {
+                        "scope": "resource",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Render the source line number markers in the preview pane."
                     }
                 }
             }
