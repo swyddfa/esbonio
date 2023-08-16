@@ -4,6 +4,7 @@ from http.server import HTTPServer
 from http.server import SimpleHTTPRequestHandler
 from typing import Any
 from typing import Optional
+from urllib.parse import urlencode
 
 import attrs
 
@@ -69,6 +70,9 @@ class PreviewConfig:
     """The port to host the WebSocket server on. If ``0`` a random port number will be
     chosen"""
 
+    show_line_markers: bool = attrs.field(default=False)
+    """If set, render the source line markers in the preview"""
+
 
 class PreviewManager(LanguageFeature):
     """Language feature for managing previews."""
@@ -77,8 +81,6 @@ class PreviewManager(LanguageFeature):
         super().__init__(server)
         self.sphinx = sphinx
         self.sphinx.add_listener("build", self.on_build)
-
-        self._preview_config: Optional[PreviewConfig] = None
 
         logger = server.logger.getChild("PreviewServer")
         self._request_handler_factory = RequestHandlerFactory(logger)
@@ -105,9 +107,6 @@ class PreviewManager(LanguageFeature):
 
     async def get_preview_config(self) -> PreviewConfig:
         """Return the user's preview server configuration."""
-        if self._preview_config is not None:
-            return self._preview_config
-
         config = await self.server.get_user_config("esbonio.preview", PreviewConfig)
         if config is None:
             self.logger.info(
@@ -115,10 +114,9 @@ class PreviewManager(LanguageFeature):
             )
             config = PreviewConfig()
 
-        self._preview_config = config
-        return self._preview_config
+        return config
 
-    async def get_http_server(self) -> HTTPServer:
+    async def get_http_server(self, config: PreviewConfig) -> HTTPServer:
         """Return the http server instance hosting the previews.
 
         This will also handle the creation of the server the first time it is called.
@@ -127,7 +125,6 @@ class PreviewManager(LanguageFeature):
         if self._http_server is not None:
             return self._http_server
 
-        config = await self.get_preview_config()
         self._http_server = HTTPServer(
             (config.bind, config.http_port), self._request_handler_factory
         )
@@ -140,14 +137,12 @@ class PreviewManager(LanguageFeature):
 
         return self._http_server
 
-    async def get_webview_server(self) -> WebviewServer:
+    async def get_webview_server(self, config: PreviewConfig) -> WebviewServer:
         """Return the websocket server used to communicate with the webview."""
 
         # TODO: Recreate the server if the configuration changes?
         if self._ws_server is not None:
             return self._ws_server
-
-        config = await self.get_preview_config()
 
         logger = self.server.logger.getChild("WebviewServer")
         self._ws_server = make_ws_server(self.server, logger)
@@ -209,16 +204,21 @@ class PreviewManager(LanguageFeature):
 
             return None
 
-        server = await self.get_http_server()
-        webview = await self.get_webview_server()
+        config = await self.get_preview_config()
+        server = await self.get_http_server(config)
+        webview = await self.get_webview_server(config)
 
         self._request_handler_factory.build_uri = client.build_uri
+        query_params = dict(ws=webview.port)
+
+        if config.show_line_markers:
+            query_params["show-markers"] = True
 
         uri = Uri.create(
             scheme="http",
             authority=f"localhost:{server.server_port}",
             path=build_path,
-            query=f"ws={webview.port}",
+            query=urlencode(query_params),
         )
 
         self.logger.info("Preview available at: %s", uri.as_string(encode=False))
