@@ -123,7 +123,7 @@ export class PreviewManager {
       'esbonioPreview',
       'Esbonio Preview',
       { preserveFocus: true, viewColumn: placement },
-      { enableScripts: true }
+      { enableScripts: true, retainContextWhenHidden: true }
     )
 
     let scriptNonce = getNonce()
