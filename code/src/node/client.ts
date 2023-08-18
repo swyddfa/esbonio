@@ -57,6 +57,8 @@ export class EsbonioClient {
 
   private client?: LanguageClient
 
+  private devtools?: vscode.TaskExecution
+
   private handlers: Map<string, any[]>
 
   constructor(
@@ -145,6 +147,7 @@ export class EsbonioClient {
 
     let config = vscode.workspace.getConfiguration("esbonio")
     if (config.get<boolean>('server.enableDevTools')) {
+      await this.startDevtools(command[0], ...command.slice(1), "-m", "lsp_devtools", "tui")
       command.push("-m", "lsp_devtools", "agent", "--", ...command)
     }
 
@@ -300,5 +303,29 @@ export class EsbonioClient {
         this.logger.error(`Error in '${method}' notification handler: ${err}`)
       }
     })
+  }
+
+  private async startDevtools(command: string, ...args: string[]) {
+
+    if (this.devtools) {
+      return
+    }
+
+    const task = new vscode.Task(
+      { type: 'esbonio-devtools' },
+      vscode.TaskScope.Workspace,
+      "lsp-devtools",
+      "esbonio",
+      new vscode.ProcessExecution(
+        command,
+        args,
+        {
+          env: {
+            PYTHONPATH: join(this.context.extensionPath, "bundled", "libs")
+          }
+        }
+      ),
+    )
+    this.devtools = await vscode.tasks.executeTask(task)
   }
 }
