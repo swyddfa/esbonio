@@ -7,7 +7,8 @@ import {
   LanguageClientOptions,
   ServerOptions,
   ExecutableOptions,
-  ResponseError
+  ResponseError,
+  State
 } from "vscode-languageclient/node";
 
 import { InitOptions } from "../common/config";
@@ -84,7 +85,12 @@ export class EsbonioClient {
    */
   async start(): Promise<void> {
 
-    this.client = await this.getStdioClient()
+    try {
+      this.client = await this.getStdioClient()
+    } catch (err) {
+      this.logger.error(`${err}`)
+      return
+    }
 
     if (!this.client) {
       return
@@ -117,7 +123,7 @@ export class EsbonioClient {
    */
   async stop() {
 
-    if (this.client) {
+    if (this.client && this.client.state === State.Running) {
       this.callHandlers(Events.SERVER_STOP, undefined)
       await this.client.stop()
     }
@@ -236,6 +242,9 @@ export class EsbonioClient {
       documentSelector: documentSelector,
       initializationOptions: initOptions,
       outputChannel: this.channel,
+      connectionOptions: {
+        maxRestartCount: 0
+      },
       middleware: {
         workspace: {
           configuration: async (params: ConfigurationParams, token: CancellationToken, next) => {
