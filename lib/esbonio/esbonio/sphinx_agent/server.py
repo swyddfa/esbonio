@@ -11,9 +11,11 @@ from typing import Dict
 from typing import Type
 from typing import TypeVar
 
-from .handlers import HANDLERS
+from .handlers import SphinxHandler
 from .util import send_error
 
+
+HANDLERS = SphinxHandler()
 logger = logging.getLogger(__name__)
 
 
@@ -40,12 +42,15 @@ def handle_message(data: bytes):
 
     method = message.get("method", None)
     if not method:
+        # TODO: Return a valid JSON-RPC error
         raise TypeError("Invalid message")
 
-    type_, handler = HANDLERS.get(method, (None, None))
-    if type_ is None or handler is None:
+    result = HANDLERS.get(method)
+    if result is None:
+        # TODO: Return a valid JSON-RPC error
         raise TypeError(f"Unknown method: '{method}'")
 
+    type_, handler = result
     obj = parse_message(message, type_)
     try:
         handler(obj)
