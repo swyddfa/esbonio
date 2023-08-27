@@ -64,6 +64,10 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
     async def on_document_save(
         ls: EsbonioLanguageServer, params: types.DidSaveTextDocumentParams
     ):
+        # Record the version number of the document
+        doc = ls.workspace.get_document(params.text_document.uri)
+        doc.saved_version = doc.version or 0
+
         await call_features(ls, "document_save", params)
 
     @server.feature(types.TEXT_DOCUMENT_DOCUMENT_SYMBOL)

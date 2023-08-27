@@ -9,6 +9,7 @@ import sys
 import typing
 from typing import Any
 from typing import Dict
+from typing import List
 from typing import Optional
 
 from pygls import IS_WIN
@@ -119,9 +120,8 @@ class SubprocessSphinxClient(Client):
                 "%s future '%s' for pending request '%s'", message, fut, id_
             )
 
-    async def create_application(self, config: SphinxConfig) -> types.SphinxInfo:
-        """Start the sphinx agent and create a sphinx application object."""
-
+    async def start(self, config: SphinxConfig):
+        """Start the client."""
         command = []
         if config.enable_dev_tools:
             command.extend([sys.executable, "-m", "lsp_devtools", "agent", "--"])
@@ -134,6 +134,17 @@ class SubprocessSphinxClient(Client):
 
         await self.start_io(*command, env=env, cwd=config.cwd)
 
+    async def stop(self):
+        """Stop the client."""
+        self.protocol.notify("exit", None)
+
+        # Give the agent a little time to close.
+        await asyncio.sleep(0.5)
+        await super().stop()
+
+    async def create_application(self, config: SphinxConfig) -> types.SphinxInfo:
+        """Create a sphinx application object."""
+
         params = types.CreateApplicationParams(
             command=config.build_command,
             enable_sync_scrolling=config.enable_sync_scrolling,
@@ -143,9 +154,24 @@ class SubprocessSphinxClient(Client):
         self.sphinx_info = sphinx_info
         return sphinx_info
 
-    async def build(self) -> types.BuildResult:
+    async def build(
+        self,
+        *,
+        filenames: Optional[List[str]] = None,
+        force_all: bool = False,
+        content_overrides: Optional[Dict[str, str]] = None,
+    ) -> types.BuildResult:
         """Trigger a Sphinx build."""
-        result = await self.protocol.send_request_async("sphinx/build", {})
+
+        params = types.BuildParams(
+            filenames=filenames or [],
+            force_all=force_all,
+            content_overrides=content_overrides or {},
+        )
+
+        self._building = True
+        result = await self.protocol.send_request_async("sphinx/build", params)
+        self._building = False
         self._build_file_map = {
             Uri.for_file(src): out for src, out in result.build_file_map.items()
         }

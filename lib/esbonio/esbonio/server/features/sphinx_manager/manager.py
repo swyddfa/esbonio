@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import inspect
 import typing
 from typing import Callable
@@ -35,28 +36,72 @@ class SphinxManager(LanguageFeature):
         self.handlers: Dict[str, set] = {}
         """Collection of handlers for various events."""
 
+        self._pending_builds: Dict[str, asyncio.Task] = {}
+        """Holds tasks that will trigger a build after a given delay if not cancelled."""
+
     def add_listener(self, event: str, handler):
         self.handlers.setdefault(event, set()).add(handler)
 
-    def document_change(self, params: lsp.DidChangeTextDocumentParams):
-        ...
+    async def document_change(self, params: lsp.DidChangeTextDocumentParams):
+        if (uri := Uri.parse(params.text_document.uri)) is None:
+            return
+
+        client = await self.get_client(uri)
+        if client is None or client.id is None:
+            return
+
+        # Cancel any existing pending builds
+        if (task := self._pending_builds.pop(client.id, None)) is not None:
+            task.cancel()
+
+        self._pending_builds[client.id] = asyncio.create_task(
+            self.trigger_build_after(uri, client.id, delay=2)
+        )
 
     async def document_open(self, params: lsp.DidOpenTextDocumentParams):
+        # Ensure that a Sphinx app instance is created the first time a document in a
+        # given project is opened.
         if (uri := Uri.parse(params.text_document.uri)) is not None:
             await self.get_client(uri)
 
     async def document_save(self, params: lsp.DidSaveTextDocumentParams):
-        if (uri := Uri.parse(params.text_document.uri)) is not None:
-            await self.trigger_build(uri)
+        if (uri := Uri.parse(params.text_document.uri)) is None:
+            return
+
+        client = await self.get_client(uri)
+        if client is None or client.id is None:
+            return
+
+        # Cancel any existing pending builds
+        if (task := self._pending_builds.pop(client.id, None)) is not None:
+            task.cancel()
+
+        await self.trigger_build(uri)
+
+    async def trigger_build_after(self, uri: Uri, app_id: str, delay: float):
+        """Trigger a build for the given uri after the given delay."""
+        await asyncio.sleep(delay)
+
+        self._pending_builds.pop(app_id)
+        self.logger.debug("Triggering build")
+        await self.trigger_build(uri)
 
     async def trigger_build(self, uri: Uri):
         """Trigger a build for the relevant Sphinx application for the given uri."""
         client = await self.get_client(uri)
-        if client is None:
+        if client is None or client.building:
             return
 
-        result = await client.build()
-        # self.logger.debug("Build result: %s", result)
+        # Pass through any unsaved content to the Sphinx agent.
+        content_overrides = {}
+        for src_uri in client.build_file_map.keys():
+            doc = self.server.workspace.get_document(str(src_uri))
+            saved_version = getattr(doc, "saved_version", 0)
+
+            if saved_version < (doc.version or 0):
+                content_overrides[src_uri.fs_path] = doc.source
+
+        result = await client.build(content_overrides=content_overrides)
 
         # Notify listeners.
         for listener in self.handlers.get("build", set()):
@@ -87,6 +132,8 @@ class SphinxManager(LanguageFeature):
             return None
 
         client = self.client_factory(self)
+        await client.start(resolved)
+
         sphinx_info = await client.create_application(resolved)
 
         if client.src_uri is None:

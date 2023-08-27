@@ -1,4 +1,5 @@
 from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Protocol
 
@@ -46,11 +47,21 @@ class SphinxClient(Protocol):
     def src_uri(self) -> Optional[Uri]:
         """The URI to the Sphinx application's src dir."""
 
+    async def start(self, config: SphinxConfig):
+        """Start the client."""
+        ...
+
     async def create_application(self, config: SphinxConfig) -> types.SphinxInfo:
         """Create a new Sphinx application instance."""
         ...
 
-    async def build(self) -> types.BuildResult:
+    async def build(
+        self,
+        *,
+        filenames: Optional[List[str]] = None,
+        force_all: bool = False,
+        content_overrides: Optional[Dict[str, str]] = None,
+    ) -> types.BuildResult:
         """Trigger a Sphinx build."""
         ...
 
