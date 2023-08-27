@@ -163,6 +163,21 @@ def make_subprocess_sphinx_client(manager: SphinxManager) -> SphinxClient:
     return client
 
 
+def make_test_sphinx_client() -> SubprocessSphinxClient:
+    """Factory function for creating a ``SubprocessSphinxClient`` instance
+    to use for testing."""
+    logger = logging.getLogger("sphinx_client")
+    logger.setLevel(logging.INFO)
+
+    client = SubprocessSphinxClient()
+
+    @client.feature("window/logMessage")
+    def _(params):
+        logger.info("%s", params.message)
+
+    return client
+
+
 def get_sphinx_env(config: SphinxConfig) -> Dict[str, str]:
     """Return the set of environment variables to use with the Sphinx process."""
     env = {"PYTHONPATH": ":".join([str(p) for p in config.python_path])}
