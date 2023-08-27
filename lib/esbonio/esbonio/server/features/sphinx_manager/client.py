@@ -13,6 +13,10 @@ class SphinxClient(Protocol):
     application instance."""
 
     @property
+    def id(self) -> Optional[str]:
+        """The id of the Sphinx instance."""
+
+    @property
     def builder(self) -> Optional[str]:
         """The name of the Sphinx builder."""
 

@@ -56,6 +56,14 @@ class SubprocessSphinxClient(Client):
         self._build_file_map: Dict[Uri, str] = {}
 
     @property
+    def id(self) -> Optional[str]:
+        """The id of the Sphinx instance."""
+        if self.sphinx_info is None:
+            return None
+
+        return self.sphinx_info.id
+
+    @property
     def builder(self) -> Optional[str]:
         """The sphinx application's builder name"""
         if self.sphinx_info is None:
