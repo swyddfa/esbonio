@@ -2,6 +2,7 @@ import inspect
 import logging
 import os.path
 import pathlib
+import sys
 import typing
 from functools import partial
 from typing import Callable
@@ -174,6 +175,11 @@ class SphinxHandler:
             send_message(response)
         except Exception:
             send_error(id=request.id, code=-32602, message="Sphinx build failed.")
+
+
+    def notify_exit(self, request: types.ExitNotification):
+        """Sent from the client to signal that the agent should exit."""
+        sys.exit(0)
 
 
 def _build_file_mapping(app: Sphinx) -> Dict[str, str]:

@@ -128,11 +128,25 @@ class LogMessage:
     jsonrpc: str = dataclasses.field(default="2.0")
 
 
+@dataclasses.dataclass
+class ExitNotification:
+    """An ``exit`` notification"""
+
+    params: None
+
+    method: str = "exit"
+
+    jsonrpc: str = dataclasses.field(default="2.0")
+
+
+
 METHOD_TO_MESSAGE_TYPE = {
     BuildRequest.method: BuildRequest,
+    ExitNotification.method: ExitNotification,
     CreateApplicationRequest.method: CreateApplicationRequest,
 }
 METHOD_TO_RESPONSE_TYPE = {
     BuildRequest.method: BuildResponse,
+    ExitNotification.method: None,
     CreateApplicationRequest.method: CreateApplicationResponse,
 }
