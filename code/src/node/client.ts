@@ -69,8 +69,18 @@ export class EsbonioClient {
   ) {
     this.handlers = new Map()
 
+    // Restart server implementation
     context.subscriptions.push(
       vscode.commands.registerCommand(Commands.RESTART_SERVER, async () => await this.restartServer())
+    )
+
+    // Unset devtools task when it finishes.
+    context.subscriptions.push(
+      vscode.tasks.onDidEndTask((event) => {
+        if (event.execution === this.devtools) {
+          this.devtools = undefined
+        }
+      })
     )
   }
 
@@ -146,8 +156,14 @@ export class EsbonioClient {
     command.push("-S")
 
     let config = vscode.workspace.getConfiguration("esbonio")
-    if (config.get<boolean>('server.enableDevTools')) {
+    let serverDevtools = config.get<boolean>('server.enableDevTools')
+    let sphinxDevtools = config.get<boolean>('sphinx.enableDevTools')
+
+    if (serverDevtools || sphinxDevtools) {
       await this.startDevtools(command[0], ...command.slice(1), "-m", "lsp_devtools", "tui")
+    }
+
+    if (serverDevtools) {
       command.push("-m", "lsp_devtools", "agent", "--", ...command)
     }
 
