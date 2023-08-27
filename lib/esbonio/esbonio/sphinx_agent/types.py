@@ -75,6 +75,8 @@ class BuildParams:
 
     force_all: bool = False
 
+    content_overrides: Dict[str, str] = dataclasses.field(default_factory=dict)
+
 
 @dataclasses.dataclass
 class BuildResult:

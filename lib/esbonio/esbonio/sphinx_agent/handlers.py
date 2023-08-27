@@ -8,6 +8,7 @@ from functools import partial
 from typing import Callable
 from typing import Dict
 from typing import IO
+from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Type
@@ -35,8 +36,14 @@ class SphinxHandler:
     """Responsible for implementing the JSON-RPC API exposed by the Sphinx agent."""
 
     def __init__(self):
-        self.sphinx_app: Optional[Sphinx] = None
+        self.app: Optional[Sphinx] = None
+        """The sphinx application instance"""
+
         self.log_handler: Optional[SphinxLogHandler] = None
+        """The logging handler"""
+
+        self._content_overrides: Dict[str, str] = {}
+        """Holds any additional content to inject into a build."""
 
         self._handlers: Dict[str, Tuple[Type, Callable]] = self._register_handlers()
 
@@ -109,24 +116,46 @@ class SphinxHandler:
 
         # Override Sphinx's logging setup with our own.
         sphinx_logging_module.setup = partial(self.setup_logging, sphinx_config)
-        self.sphinx_app = Sphinx(**sphinx_args)
+        self.app = Sphinx(**sphinx_args)
+
+        # Connect event handlers.
+        self.app.connect("env-before-read-docs", self._cb_env_before_read_docs)
+        self.app.connect("source-read", self._cb_source_read, priority=0)
 
         if request.params.enable_sync_scrolling:
-            _enable_sync_scrolling(self.sphinx_app)
+            _enable_sync_scrolling(self.app)
 
         response = types.CreateApplicationResponse(
             id=request.id,
             result=types.SphinxInfo(
                 id=str(uuid4()),
                 version=__sphinx_version__,
-                conf_dir=self.sphinx_app.confdir,
-                build_dir=self.sphinx_app.outdir,
-                builder_name=self.sphinx_app.builder.name,
-                src_dir=self.sphinx_app.srcdir,
+                conf_dir=self.app.confdir,
+                build_dir=self.app.outdir,
+                builder_name=self.app.builder.name,
+                src_dir=self.app.srcdir,
             ),
             jsonrpc=request.jsonrpc,
         )
         send_message(response)
+
+
+    def _cb_env_before_read_docs(self, app: Sphinx, env, docnames: List[str]):
+        """Used to add additional documents to the "to build" list."""
+
+        is_building = set(docnames)
+
+        for docname in env.found_docs - is_building:
+            filepath = env.doc2path(docname, base=True)
+            if filepath in self._content_overrides:
+                docnames.append(docname)
+
+    def _cb_source_read(self, app: Sphinx, docname: str, source):
+        """Used to inject unsaved content into a build."""
+
+        filepath = app.env.doc2path(docname, base=True)
+        if (content := self._content_overrides.get(filepath)) is not None:
+            source[0] = content
 
     def setup_logging(self, config: SphinxConfig, app: Sphinx, status: IO, warning: IO):
         """Setup Sphinx's logging so that it integrates well with the parent language
@@ -161,15 +190,17 @@ class SphinxHandler:
     def build_sphinx_app(self, request: types.BuildRequest):
         """Trigger a Sphinx build."""
 
-        if self.sphinx_app is None:
+        if self.app is None:
             send_error(id=request.id, code=-32803, message="Sphinx app not initialized")
             return
 
+        self._content_overrides = request.params.content_overrides
+
         try:
-            self.sphinx_app.build()
+            self.app.build()
             response = types.BuildResponse(
                 id=request.id,
-                result=types.BuildResult(build_file_map=_build_file_mapping(self.sphinx_app)),
+                result=types.BuildResult(build_file_map=_build_file_mapping(self.app)),
                 jsonrpc=request.jsonrpc,
             )
             send_message(response)
