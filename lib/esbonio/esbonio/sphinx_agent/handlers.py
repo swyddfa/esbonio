@@ -89,17 +89,17 @@ class SphinxHandler:
 
         for name in dir(self):
             method_func = getattr(self, name)
-            if name.startswith('_') or not inspect.ismethod(method_func):
+            if name.startswith("_") or not inspect.ismethod(method_func):
                 continue
 
             parameters = inspect.signature(method_func).parameters
-            if set(parameters.keys()) != {'request'}:
+            if set(parameters.keys()) != {"request"}:
                 continue
 
-            request_type = typing.get_type_hints(method_func)['request']
-            if not all([
-                hasattr(request_type, 'jsonrpc'), hasattr(request_type, 'method')
-            ]):
+            request_type = typing.get_type_hints(method_func)["request"]
+            if not all(
+                [hasattr(request_type, "jsonrpc"), hasattr(request_type, "method")]
+            ):
                 continue
 
             handlers[request_type.method] = (request_type, method_func)
@@ -138,7 +138,6 @@ class SphinxHandler:
             jsonrpc=request.jsonrpc,
         )
         send_message(response)
-
 
     def _cb_env_before_read_docs(self, app: Sphinx, env, docnames: List[str]):
         """Used to add additional documents to the "to build" list."""
@@ -207,7 +206,6 @@ class SphinxHandler:
         except Exception:
             send_error(id=request.id, code=-32602, message="Sphinx build failed.")
 
-
     def notify_exit(self, request: types.ExitNotification):
         """Sent from the client to signal that the agent should exit."""
         sys.exit(0)
@@ -234,9 +232,18 @@ def _enable_sync_scrolling(app: Sphinx):
     """Given a Sphinx application, configure it so that we can support syncronised
     scrolling."""
 
+    # On OSes like Fedora Silverblue where `/home` is a symlink for `/var/home`
+    # we could have a situation where `STATIC_DIR` and `app.confdir` have
+    # different root dirs... which is enough to cause `os.path.relpath` to return
+    # the wrong path.
+    #
+    # Fully resolving both `STATIC_DIR` and `app.confdir` should be enough to
+    # mitigate this.
+    confdir = pathlib.Path(app.confdir).resolve()
+
     # Push our folder of static assets into the user's project.
     # Path needs to be relative to their project's confdir.
-    reldir = os.path.relpath(str(STATIC_DIR), start=app.confdir)
+    reldir = os.path.relpath(str(STATIC_DIR), start=str(confdir))
     app.config.html_static_path.append(reldir)
 
     app.add_js_file("webview.js")
