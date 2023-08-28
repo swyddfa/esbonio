@@ -22,6 +22,10 @@ class SphinxClient(Protocol):
         """The name of the Sphinx builder."""
 
     @property
+    def building(self) -> bool:
+        """Indicates if the Sphinx instance is building."""
+
+    @property
     def build_uri(self) -> Optional[Uri]:
         """The URI to the Sphinx application's build dir."""
 

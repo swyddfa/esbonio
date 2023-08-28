@@ -54,6 +54,7 @@ class SubprocessSphinxClient(Client):
         self.logger = logger or logging.getLogger(__name__)
 
         self.sphinx_info: Optional[types.SphinxInfo] = None
+        self._building = False
         self._build_file_map: Dict[Uri, str] = {}
 
     @property
@@ -63,6 +64,10 @@ class SubprocessSphinxClient(Client):
             return None
 
         return self.sphinx_info.id
+
+    @property
+    def building(self) -> bool:
+        return self._building
 
     @property
     def builder(self) -> Optional[str]:
@@ -105,8 +110,10 @@ class SubprocessSphinxClient(Client):
 
         #   0: all good
         # -15: terminated
-        if server.returncode not in { 0, -15 }:
-            self.logger.error(f"sphinx-agent process exited with code: {server.returncode}")
+        if server.returncode not in {0, -15}:
+            self.logger.error(
+                f"sphinx-agent process exited with code: {server.returncode}"
+            )
 
             if server.stderr is not None:
                 stderr = await server.stderr.read()
