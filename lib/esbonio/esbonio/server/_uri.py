@@ -1,4 +1,5 @@
 import os.path
+import pathlib
 import re
 from typing import Callable
 from typing import Optional
@@ -96,6 +97,15 @@ class Uri:
             query=query,
             fragment=fragment,
         )
+
+    def resolve(self) -> "Uri":
+        """Return the fully resolved version of this Uri."""
+
+        # This operation only makes sense for file uris
+        if self.scheme != "file":
+            return Uri.parse(str(self))
+
+        return Uri.for_file(pathlib.Path(self).resolve())
 
     @classmethod
     def for_file(cls, filepath: Union[str, "os.PathLike[str]"]) -> "Uri":

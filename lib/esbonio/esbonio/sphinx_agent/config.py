@@ -1,5 +1,6 @@
 import dataclasses
 import inspect
+import pathlib
 from typing import Any
 from typing import Dict
 from typing import List
@@ -128,16 +129,29 @@ class SphinxConfig:
 
     def to_application_args(self) -> Dict[str, Any]:
         """Convert this into the equivalent Sphinx application arguments."""
+
+        # On OSes like Fedora Silverblue, `/home` is symlinked to `/var/home`.  This
+        # causes issues, since, depending on the origin of any path given to us `/home`
+        # may or may not be the true location of the file - which introduces consistency
+        # problems throughout the codebase.
+        #
+        # Resolving these paths here, should ensure that the agent always
+        # reports the true location of any given directory.
+        conf_dir = pathlib.Path(self.conf_dir).resolve()
+        build_dir = pathlib.Path(self.build_dir).resolve()
+        doctree_dir = pathlib.Path(self.doctree_dir).resolve()
+        src_dir = pathlib.Path(self.src_dir).resolve()
+
         return {
             "buildername": self.builder_name,
-            "confdir": self.conf_dir,
+            "confdir": str(conf_dir),
             "confoverrides": self.config_overrides,
-            "doctreedir": self.doctree_dir,
+            "doctreedir": str(doctree_dir),
             "freshenv": self.force_full_build,
             "keep_going": self.keep_going,
-            "outdir": self.build_dir,
+            "outdir": str(build_dir),
             "parallel": self.parallel,
-            "srcdir": self.src_dir,
+            "srcdir": str(src_dir),
             "status": None,
             "tags": self.tags,
             "verbosity": self.verbosity,

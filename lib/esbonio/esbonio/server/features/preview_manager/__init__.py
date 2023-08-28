@@ -11,6 +11,7 @@ import attrs
 from esbonio.server import EsbonioLanguageServer
 from esbonio.server import Uri
 from esbonio.server.feature import LanguageFeature
+from esbonio.server.features.sphinx_manager import SphinxClient
 from esbonio.server.features.sphinx_manager import SphinxManager
 
 from .webview import WebviewServer
@@ -156,13 +157,10 @@ class PreviewManager(LanguageFeature):
 
         return self._ws_server
 
-    async def on_build(self, src_uri: Uri, result):
+    async def on_build(self, client: SphinxClient, result):
         """Called whenever a sphinx build completes."""
 
         if self._ws_server is None:
-            return
-
-        if (client := await self.sphinx.get_client(src_uri)) is None:
             return
 
         # Only refresh the view if the project we are previewing was built.
@@ -181,7 +179,8 @@ class PreviewManager(LanguageFeature):
         self._ws_server.scroll(line)
 
     async def preview_file(self, params):
-        src_uri = Uri.parse(params["uri"])
+        # Always check the fully resolved uri.
+        src_uri = Uri.parse(params["uri"]).resolve()
         self.logger.debug("Previewing file: '%s'", src_uri)
 
         client = await self.sphinx.get_client(src_uri)

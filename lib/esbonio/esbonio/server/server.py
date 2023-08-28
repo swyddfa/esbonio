@@ -17,6 +17,8 @@ from typing import TypeVar
 import attrs
 from lsprotocol import types
 from pygls.server import LanguageServer
+from pygls.workspace import Document
+from pygls.workspace import Workspace
 
 from ._uri import Uri
 from .log import setup_logging
@@ -41,6 +43,30 @@ class ServerConfig:
 
     show_deprecation_warnings: bool = attrs.field(default=False)
     """Developer flag to enable deprecation warnings."""
+
+
+class EsbonioWorkspace(Workspace):
+    """A modified version of pygls' workspace that ensures uris are always resolved."""
+
+    def get_document(self, doc_uri: str) -> Document:
+        uri = str(Uri.parse(doc_uri).resolve())
+        return super().get_document(uri)
+
+    def put_document(self, text_document: types.TextDocumentItem):
+        text_document.uri = str(Uri.parse(text_document.uri).resolve())
+        return super().put_document(text_document)
+
+    def remove_document(self, doc_uri: str):
+        doc_uri = str(Uri.parse(doc_uri).resolve())
+        return super().remove_document(doc_uri)
+
+    def update_document(
+        self,
+        text_doc: types.VersionedTextDocumentIdentifier,
+        change: types.TextDocumentContentChangeEvent,
+    ):
+        text_doc.uri = str(Uri.parse(text_doc.uri).resolve())
+        return super().update_document(text_doc, change)
 
 
 class EsbonioLanguageServer(LanguageServer):
@@ -80,6 +106,13 @@ class EsbonioLanguageServer(LanguageServer):
         self.logger.info("Initialising esbonio v%s", __version__)
         if (client := params.client_info) is not None:
             self.logger.info("Language client: %s %s", client.name, client.version)
+
+        # TODO: Propose patch to pygls for providing custom Workspace implementations.
+        self.lsp.workspace = EsbonioWorkspace(
+            self.workspace.root_uri,
+            self.workspace._sync_kind,
+            list(self.workspace.folders.values()),
+        )
 
         self.initialization_options = params.initialization_options
 

@@ -107,7 +107,7 @@ class SphinxManager(LanguageFeature):
         for listener in self.handlers.get("build", set()):
             try:
                 # TODO: Concurrent awaiting?
-                res = listener(client.src_uri, result)
+                res = listener(client, result)
                 if inspect.isawaitable(res):
                     await res
             except Exception:
@@ -117,9 +117,26 @@ class SphinxManager(LanguageFeature):
     async def get_client(self, uri: Uri) -> Optional[SphinxClient]:
         """Given a uri, return the relevant sphinx client instance for it."""
 
+        # Always check the fully resolved uri.
+        resolved_uri = uri.resolve()
+
         for src_uri, client in self.clients.items():
-            if str(uri).startswith(str(src_uri)):
+
+            if resolved_uri in client.build_file_map:
                 return client
+
+            # For now assume a single client instance per srcdir.
+            # This *should* prevent us from spwaning endless client instances
+            # when given a file located near a valid Sphinx project - but not actually
+            # part of it.
+            in_src_dir = str(resolved_uri).startswith(str(src_uri))
+            if in_src_dir:
+                # Of course, we can only tell if a uri truly is not in a project
+                # when the build file map is populated!
+                if len(client.build_file_map) == 0:
+                    return client
+
+                return None
 
         config = await self.server.get_user_config(
             "esbonio.sphinx", SphinxConfig, scope=uri
