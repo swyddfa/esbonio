@@ -15,7 +15,7 @@ jobs:
       lsp: ${{steps.check-lsp.outputs.build}}
       vscode: ${{steps.check-vscode.outputs.build}}
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -59,7 +59,7 @@ jobs:
     if: always() && needs.trigger.outputs.vscode
     runs-on: ubuntu-latest
     steps:
-    - uses: 'actions/checkout@v3'
+    - uses: 'actions/checkout@v4'
 
     - uses: 'actions/setup-node@v3'
       with:
@@ -119,7 +119,7 @@ jobs:
     if: always() && needs.trigger.outputs.extensions
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - uses: actions/setup-python@v4
       with:
@@ -175,7 +175,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - uses: actions/setup-python@v4
       with:
