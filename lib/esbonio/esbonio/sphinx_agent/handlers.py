@@ -5,9 +5,9 @@ import pathlib
 import sys
 import typing
 from functools import partial
+from typing import IO
 from typing import Callable
 from typing import Dict
-from typing import IO
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -27,7 +27,6 @@ from .log import SphinxLogHandler
 from .transforms import LineNumberTransform
 from .util import send_error
 from .util import send_message
-
 
 STATIC_DIR = (pathlib.Path(__file__).parent / "static").resolve()
 

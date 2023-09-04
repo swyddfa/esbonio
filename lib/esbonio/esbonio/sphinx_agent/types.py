@@ -141,7 +141,6 @@ class ExitNotification:
     jsonrpc: str = dataclasses.field(default="2.0")
 
 
-
 METHOD_TO_MESSAGE_TYPE = {
     BuildRequest.method: BuildRequest,
     ExitNotification.method: ExitNotification,
