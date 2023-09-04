@@ -121,7 +121,6 @@ class SphinxManager(LanguageFeature):
         resolved_uri = uri.resolve()
 
         for src_uri, client in self.clients.items():
-
             if resolved_uri in client.build_file_map:
                 return client
 

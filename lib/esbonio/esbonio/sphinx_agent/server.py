@@ -14,7 +14,6 @@ from typing import TypeVar
 from .handlers import SphinxHandler
 from .util import send_error
 
-
 HANDLERS = SphinxHandler()
 logger = logging.getLogger(__name__)
 
