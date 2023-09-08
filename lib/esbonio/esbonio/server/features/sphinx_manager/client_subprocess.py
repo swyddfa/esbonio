@@ -13,7 +13,7 @@ from typing import List
 from typing import Optional
 
 from pygls import IS_WIN
-from pygls.client import Client
+from pygls.client import JsonRPCClient
 from pygls.protocol import JsonRPCProtocol
 
 import esbonio.sphinx_agent.types as types
@@ -36,7 +36,7 @@ class SphinxAgentProtocol(JsonRPCProtocol):
         return types.METHOD_TO_RESPONSE_TYPE.get(method, None)
 
 
-class SubprocessSphinxClient(Client):
+class SubprocessSphinxClient(JsonRPCClient):
     """JSON-RPC client used to drive a Sphinx application instance hosted in
     a separate subprocess.
 
