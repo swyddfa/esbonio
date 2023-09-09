@@ -224,6 +224,9 @@ def _build_file_mapping(app: Sphinx) -> Dict[str, str]:
         for doc in included_docs:
             mapping[env.doc2path(doc)] = mapping[env.doc2path(parent_doc)]
 
+    # Ensure any relative paths in included docs are resolved.
+    mapping = {str(pathlib.Path(d).resolve()): uri for d, uri in mapping.items()}
+
     return mapping
 
 
