@@ -129,10 +129,10 @@ class SphinxHandler:
             result=types.SphinxInfo(
                 id=str(uuid4()),
                 version=__sphinx_version__,
-                conf_dir=self.app.confdir,
-                build_dir=self.app.outdir,
+                conf_dir=str(self.app.confdir),
+                build_dir=str(self.app.outdir),
                 builder_name=self.app.builder.name,
-                src_dir=self.app.srcdir,
+                src_dir=str(self.app.srcdir),
             ),
             jsonrpc=request.jsonrpc,
         )
