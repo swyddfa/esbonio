@@ -39,6 +39,9 @@ class SphinxManager(LanguageFeature):
         self._pending_builds: Dict[str, asyncio.Task] = {}
         """Holds tasks that will trigger a build after a given delay if not cancelled."""
 
+        self._client_creating: Optional[asyncio.Task] = None
+        """If set, indicates we're in the process of setting up a new client."""
+
     def add_listener(self, event: str, handler):
         self.handlers.setdefault(event, set()).add(handler)
 
@@ -117,6 +120,10 @@ class SphinxManager(LanguageFeature):
     async def get_client(self, uri: Uri) -> Optional[SphinxClient]:
         """Given a uri, return the relevant sphinx client instance for it."""
 
+        # Wait until the new client is created - it might be the one we're looking for!
+        if self._client_creating:
+            await self._client_creating
+
         # Always check the fully resolved uri.
         resolved_uri = uri.resolve()
 
@@ -137,6 +144,12 @@ class SphinxManager(LanguageFeature):
 
                 return None
 
+        # Create a new client instance.
+        self._client_creating = asyncio.create_task(self._create_client(uri))
+        return await self._client_creating
+
+    async def _create_client(self, uri: Uri) -> Optional[SphinxClient]:
+        """Create a new sphinx client instance."""
         config = await self.server.get_user_config(
             "esbonio.sphinx", SphinxConfig, scope=uri
         )
