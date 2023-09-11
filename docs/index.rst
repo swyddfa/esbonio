@@ -93,6 +93,7 @@ Here is a quick summary of the features implemented by the language server.
    lsp/configuration
    lsp/advanced-usage
    lsp/extending
+   lsp/reference
    changelog
 
 Sphinx Extensions
