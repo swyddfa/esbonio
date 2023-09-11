@@ -44,6 +44,11 @@ class SphinxClient(Protocol):
         ...
 
     @property
+    def diagnostics(self) -> Dict[Uri, List[types.Diagnostic]]:
+        """A mapping of source file uris to any diagnostic items."""
+        ...
+
+    @property
     def conf_uri(self) -> Optional[Uri]:
         """The URI to the Sphinx application's conf dir."""
 

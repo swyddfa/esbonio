@@ -106,6 +106,20 @@ class SphinxManager(LanguageFeature):
 
         result = await client.build(content_overrides=content_overrides)
 
+        # Update diagnostics
+        source = f"sphinx[{client.id}]"
+        self.server.clear_diagnostics(source)
+        for uri, items in client.diagnostics.items():
+            diagnostics = [
+                lsp.Diagnostic(
+                    range=d.range, message=d.message, source=source, severity=d.severity
+                )
+                for d in items
+            ]
+            self.server.set_diagnostics(f"sphinx[{client.id}]", uri, diagnostics)
+
+        self.server.sync_diagnostics()
+
         # Notify listeners.
         for listener in self.handlers.get("build", set()):
             try:

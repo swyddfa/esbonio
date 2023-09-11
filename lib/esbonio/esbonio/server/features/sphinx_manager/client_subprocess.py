@@ -56,6 +56,7 @@ class SubprocessSphinxClient(JsonRPCClient):
         self.sphinx_info: Optional[types.SphinxInfo] = None
         self._building = False
         self._build_file_map: Dict[Uri, str] = {}
+        self._diagnostics: Dict[Uri, List[types.Diagnostic]] = {}
 
     @property
     def id(self) -> Optional[str]:
@@ -94,7 +95,16 @@ class SubprocessSphinxClient(JsonRPCClient):
         return Uri.for_file(self.sphinx_info.conf_dir)
 
     @property
+    def diagnostics(self) -> Dict[str, List[types.Diagnostic]]:
+        """Any diagnostics associated with the project.
+
+        These are automatically updated with each build.
+        """
+        return self._diagnostics
+
+    @property
     def build_file_map(self) -> Dict[Uri, str]:
+        """Mapping of source files to their corresponing output path."""
         return self._build_file_map
 
     @property
@@ -177,8 +187,14 @@ class SubprocessSphinxClient(JsonRPCClient):
         )
 
         self._building = True
+
         result = await self.protocol.send_request_async("sphinx/build", params)
         self._building = False
+
+        self._diagnostics = {
+            Uri.for_file(fpath): items for fpath, items in result.diagnostics.items()
+        }
+
         self._build_file_map = {
             Uri.for_file(src): out for src, out in result.build_file_map.items()
         }
