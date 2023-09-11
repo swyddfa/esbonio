@@ -1,0 +1,11 @@
+{
+    "esbonio.sphinx.buildCommand": [
+        "sphinx-build",
+        "-M",
+        "html",
+        ".",
+        "./_build"
+    ],
+    "esbonio.sphinx.enableDevTools": false,
+    "esbonio.trace.server": "verbose"
+}
