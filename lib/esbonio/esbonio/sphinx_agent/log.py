@@ -5,6 +5,7 @@ import pathlib
 import sys
 from types import ModuleType
 from typing import Any
+from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -14,10 +15,15 @@ from sphinx.util.logging import OnceFilter
 from sphinx.util.logging import SphinxLogRecord
 from sphinx.util.logging import WarningLogRecordTranslator
 
-from .types import LogMessage
-from .types import LogMessageParams
+from . import types
 from .util import logger
 from .util import send_message
+
+DIAGNOSTIC_SEVERITY = {
+    logging.ERROR: types.DiagnosticSeverity.Error,
+    logging.INFO: types.DiagnosticSeverity.Information,
+    logging.WARNING: types.DiagnosticSeverity.Warning,
+}
 
 
 class SphinxLogHandler(logging.Handler):
@@ -29,7 +35,7 @@ class SphinxLogHandler(logging.Handler):
         self.app = app
         self.translator = WarningLogRecordTranslator(app)
         self.only_once = OnceFilter()
-        # self.diagnostics: Dict[str, List[Diagnostic]] = {}
+        self.diagnostics: Dict[str, List[types.Diagnostic]] = {}
 
     def get_location(self, location: str) -> Tuple[str, Optional[int]]:
         if not location:
@@ -102,7 +108,7 @@ class SphinxLogHandler(logging.Handler):
         conditions = [
             "sphinx" not in record.name,
             record.levelno not in {logging.WARNING, logging.ERROR},
-            not self.translator,
+            # not self.translator,
         ]
 
         if any(conditions):
@@ -120,7 +126,6 @@ class SphinxLogHandler(logging.Handler):
         loc = record.location if isinstance(record, SphinxLogRecord) else ""
         doc, lineno = self.get_location(loc)
         line = lineno or 1
-        logger.debug("Reporting diagnostic at %s:%s", doc, line)
 
         try:
             # Not every message contains a string...
@@ -137,24 +142,20 @@ class SphinxLogHandler(logging.Handler):
             message = str(record.msg)
             logger.error("Unable to format diagnostic message: %s", exc_info=True)
 
-        # diagnostic = Diagnostic(
-        #     range=Range(
-        #         start=Position(line=line - 1, character=0),
-        #         end=Position(line=line, character=0),
-        #     ),
-        #     message=message,
-        #     severity=DIAGNOSTIC_SEVERITY.get(
-        #         record.levelno, DiagnosticSeverity.Warning
-        #     ),
-        # )
+        diagnostic = types.Diagnostic(
+            range=types.Range(
+                start=types.Position(line=line - 1, character=0),
+                end=types.Position(line=line, character=0),
+            ),
+            message=message,
+            severity=DIAGNOSTIC_SEVERITY.get(
+                record.levelno, types.DiagnosticSeverity.Warning
+            ),
+        )
 
-        # if doc not in self.diagnostics:
-        #     self.diagnostics[doc] = [diagnostic]
-        # else:
-        #     self.diagnostics[doc].append(diagnostic)
-
+        self.diagnostics.setdefault(doc, []).append(diagnostic)
         self.do_emit(record)
 
     def do_emit(self, record):
-        params = LogMessageParams(message=self.format(record).strip(), type=4)
-        send_message(LogMessage(params=params))
+        params = types.LogMessageParams(message=self.format(record).strip(), type=4)
+        send_message(types.LogMessage(params=params))

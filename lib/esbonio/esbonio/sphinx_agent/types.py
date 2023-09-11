@@ -4,9 +4,36 @@ This is the *only* file shared between the agent itself and the parent language 
 For this reason this file *cannot* import anything from Sphinx.
 """
 import dataclasses
+import enum
 from typing import Dict
 from typing import List
 from typing import Union
+
+
+@dataclasses.dataclass
+class Position:
+    line: int
+    character: int
+
+
+@dataclasses.dataclass
+class Range:
+    start: Position
+    end: Position
+
+
+class DiagnosticSeverity(enum.IntEnum):
+    Error = 1
+    Warning = 2
+    Information = 3
+    Hint = 4
+
+
+@dataclasses.dataclass
+class Diagnostic:
+    range: Range
+    message: str
+    severity: DiagnosticSeverity
 
 
 @dataclasses.dataclass
@@ -81,6 +108,9 @@ class BuildParams:
 @dataclasses.dataclass
 class BuildResult:
     """Results from a ``sphinx/build`` request."""
+
+    diagnostics: Dict[str, List[Diagnostic]] = dataclasses.field(default_factory=dict)
+    """Any diagnostics associated with the project."""
 
     build_file_map: Dict[str, str] = dataclasses.field(default_factory=dict)
     """A mapping of source files to the output files they contributed to."""

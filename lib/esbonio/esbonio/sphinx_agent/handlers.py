@@ -121,6 +121,9 @@ class SphinxHandler:
         self.app.connect("env-before-read-docs", self._cb_env_before_read_docs)
         self.app.connect("source-read", self._cb_source_read, priority=0)
 
+        # TODO: Sphinx 7.x has introduced a `include-read` event
+        # See: https://github.com/sphinx-doc/sphinx/pull/11657
+
         if request.params.enable_sync_scrolling:
             _enable_sync_scrolling(self.app)
 
@@ -149,9 +152,15 @@ class SphinxHandler:
                 docnames.append(docname)
 
     def _cb_source_read(self, app: Sphinx, docname: str, source):
-        """Used to inject unsaved content into a build."""
+        """Called whenever sphinx reads a file from disk."""
 
         filepath = app.env.doc2path(docname, base=True)
+
+        # Clear diagnostics
+        if self.log_handler:
+            self.log_handler.diagnostics.pop(filepath, None)
+
+        # Override file contents if necessary
         if (content := self._content_overrides.get(filepath)) is not None:
             source[0] = content
 
@@ -169,10 +178,10 @@ class SphinxHandler:
             for handler in sphinx_logger.handlers:
                 if isinstance(handler, SphinxLogHandler):
                     sphinx_logger.handlers.remove(handler)
-                    self.sphinx_log = None
+                    self.log_handler = None
 
-            self.sphinx_log = SphinxLogHandler(app)
-            sphinx_logger.addHandler(self.sphinx_log)
+            self.log_handler = SphinxLogHandler(app)
+            sphinx_logger.addHandler(self.log_handler)
 
             if config.quiet:
                 level = logging.WARNING
@@ -180,10 +189,10 @@ class SphinxHandler:
                 level = VERBOSITY_MAP[app.verbosity]
 
             sphinx_logger.setLevel(level)
-            self.sphinx_log.setLevel(level)
+            self.log_handler.setLevel(level)
 
             formatter = logging.Formatter("%(message)s")
-            self.sphinx_log.setFormatter(formatter)
+            self.log_handler.setFormatter(formatter)
 
     def build_sphinx_app(self, request: types.BuildRequest):
         """Trigger a Sphinx build."""
@@ -196,9 +205,17 @@ class SphinxHandler:
 
         try:
             self.app.build()
+
+            diagnostics = {}
+            if self.log_handler:
+                diagnostics = self.log_handler.diagnostics
+
             response = types.BuildResponse(
                 id=request.id,
-                result=types.BuildResult(build_file_map=_build_file_mapping(self.app)),
+                result=types.BuildResult(
+                    build_file_map=_build_file_mapping(self.app),
+                    diagnostics=diagnostics,
+                ),
                 jsonrpc=request.jsonrpc,
             )
             send_message(response)
