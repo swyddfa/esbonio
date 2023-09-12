@@ -4,6 +4,7 @@ on:
     branches:
     - release
     - develop
+    - beta
     paths:
     - 'docs/**'
     - 'lib/esbonio/**'
@@ -50,12 +51,3 @@ jobs:
       with:
         name: 'docs'
         path: 'docs/_build/${{ steps.build.outputs.version }}'
-
-    - name: 'Publish Docs'
-      uses: JamesIves/github-pages-deploy-action@v4
-      with:
-        branch: gh-pages
-        folder: docs/_build/${{ steps.build.outputs.version }}
-        target-folder: docs/${{ steps.build.outputs.version }}
-        clean: true
-      if: success() && ( startsWith(github.ref, 'refs/heads/release') || startsWith(github.ref, 'refs/heads/develop') )
