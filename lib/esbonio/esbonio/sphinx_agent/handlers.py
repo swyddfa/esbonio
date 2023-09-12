@@ -208,7 +208,10 @@ class SphinxHandler:
 
             diagnostics = {}
             if self.log_handler:
-                diagnostics = self.log_handler.diagnostics
+                diagnostics = {
+                    fpath: list(items)
+                    for fpath, items in self.log_handler.diagnostics.items()
+                }
 
             response = types.BuildResponse(
                 id=request.id,

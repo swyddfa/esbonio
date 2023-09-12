@@ -8,6 +8,7 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Set
 from typing import Tuple
 from typing import Union
 
@@ -35,7 +36,7 @@ class SphinxLogHandler(logging.Handler):
         self.app = app
         self.translator = WarningLogRecordTranslator(app)
         self.only_once = OnceFilter()
-        self.diagnostics: Dict[str, List[types.Diagnostic]] = {}
+        self.diagnostics: Dict[str, Set[types.Diagnostic]] = {}
 
     def get_location(self, location: str) -> Tuple[str, Optional[int]]:
         if not location:
@@ -108,7 +109,6 @@ class SphinxLogHandler(logging.Handler):
         conditions = [
             "sphinx" not in record.name,
             record.levelno not in {logging.WARNING, logging.ERROR},
-            # not self.translator,
         ]
 
         if any(conditions):
@@ -116,12 +116,14 @@ class SphinxLogHandler(logging.Handler):
             self.do_emit(record)
             return
 
+        # Let sphinx extract location info for warning/error messages
+        self.translator.filter(record)  # type: ignore
+
         # Only process errors/warnings once.
+        # Note: This isn't a silver bullet as it only catches messages that are explicitly
+        #       marked as to be logged only once e.g. logger.warning(..., once=True).
         if not self.only_once.filter(record):
             return
-
-        # Let sphinx do what it does to warning/error messages
-        self.translator.filter(record)  # type: ignore
 
         loc = record.location if isinstance(record, SphinxLogRecord) else ""
         doc, lineno = self.get_location(loc)
@@ -153,7 +155,7 @@ class SphinxLogHandler(logging.Handler):
             ),
         )
 
-        self.diagnostics.setdefault(doc, []).append(diagnostic)
+        self.diagnostics.setdefault(doc, set()).add(diagnostic)
         self.do_emit(record)
 
     def do_emit(self, record):

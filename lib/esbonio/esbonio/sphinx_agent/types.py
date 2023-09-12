@@ -10,13 +10,13 @@ from typing import List
 from typing import Union
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Position:
     line: int
     character: int
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Range:
     start: Position
     end: Position
@@ -29,7 +29,7 @@ class DiagnosticSeverity(enum.IntEnum):
     Hint = 4
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(frozen=True)
 class Diagnostic:
     range: Range
     message: str
