@@ -64,7 +64,7 @@ else
 fi
 
 # Bump the version accordingly
-python -m bumpversion ${KIND}
+#python -m bumpversion ${KIND}
 VERSION=$(grep 'current_version' .bumpversion.cfg | sed 's/.*=\s\(.*\)/\1/')
 
 # If we're in a PR build, make a dev version number based on it.
