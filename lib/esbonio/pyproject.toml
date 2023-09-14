@@ -31,7 +31,7 @@ dependencies = ["platformdirs", "docutils", "pygls>=1.0.0", "websockets"]
 "Source Code" = "https://github.com/swyddfa/esbonio"
 
 [project.scripts]
-esbonio = "esbonio.server:main"
+esbonio = "esbonio.server.cli:main"
 esbonio-sphinx = "esbonio.lsp.sphinx.cli:main"
 
 [project.optional-dependencies]
