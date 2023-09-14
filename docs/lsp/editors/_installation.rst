@@ -7,6 +7,12 @@ The language server can be installed using pip, or if you prefer, conda.
 
          $ pip install esbonio
 
+
+      .. tip::
+
+         Use `pipx <https://pypa.github.io/pipx/>`__
+         to have an isolated, easy to upgrade installation of the language server that you can reuse across projects.
+
       If you want to try the latest developments before they are released you can use ``pip`` to install from the development branch.
 
       .. code-block:: console

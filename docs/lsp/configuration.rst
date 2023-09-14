@@ -14,7 +14,7 @@ The following options control the creation of the Sphinx application object mana
 
    The ``sphinx-build`` command to use when invoking the Sphinx subprocess.
 
-.. confval:: esbonio.sphinx.pythonCommand (string [])
+.. confval:: esbonio.sphinx.pythonCommand (string[])
 
    The command to use when launching the Python interpreter for the process hosting the Sphinx application.
    Use this to select the Python environment you want to use when building your documentation.

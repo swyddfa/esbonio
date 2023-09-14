@@ -38,6 +38,11 @@ This section contains notes on how to use the language server with your text edi
       :link-type: doc
       :text-align: center
 
+   .. grid-item-card:: Neovim (nvim-lspconfig)
+      :link: editors/nvim-lspconfig
+      :link-type: doc
+      :text-align: center
+
    .. grid-item-card:: Sublime Text
       :link: editors/sublime
       :link-type: doc
