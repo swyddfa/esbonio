@@ -29,7 +29,7 @@
     "dependencies": {
         "semver": "^7.5.4",
         "@vscode/python-extension": "^1.0.5",
-        "vscode-languageclient": "^8.1.0"
+        "vscode-languageclient": "^9.0.0"
     },
     "devDependencies": {
         "@types/glob": "^8.1.0",
