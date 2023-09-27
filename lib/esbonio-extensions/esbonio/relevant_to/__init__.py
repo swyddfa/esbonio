@@ -89,7 +89,7 @@ class relevant_section(nodes.Element):
     ...
 
 
-def visit_relevent_section(self, node: relevant_section):
+def visit_relevant_section(self, node: relevant_section):
     # Swap the body out for an empty one so we can capture all the content that
     # should be written to a separate file
     node.page_body = self.body
@@ -197,7 +197,7 @@ class CollectSections(Transform):
 def setup(app: Sphinx):
     app.add_directive("relevant-to", RelevantTo)
     app.add_node(
-        relevant_section, html=(visit_relevent_section, depart_relevant_section)
+        relevant_section, html=(visit_relevant_section, depart_relevant_section)
     )
     app.add_node(
         relevant_to_script, html=(visit_relevant_to_script, depart_relevant_to_script)
