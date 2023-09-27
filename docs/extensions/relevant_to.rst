@@ -1,4 +1,4 @@
-Relevent To
+Relevant To
 ===========
 
 The ``esbonio.relevant_to`` extension is similar to the `sphinx-panels`_ and `sphinx-tabs`_ extensions, where you can define sections of documentation that is only relevant to a given subject (e.g. Python version) and be able to choose between them.
@@ -37,9 +37,9 @@ Ensure that the extension is enabled by including ``esbonio.relevant_to`` in the
    ]
 
 
-Then within your documentation, "relevant sections" are defined using the :rst:dir:`relevent-to` directive.
+Then within your documentation, "relevant sections" are defined using the :rst:dir:`relevant-to` directive.
 
-.. rst:directive:: relevent-to
+.. rst:directive:: relevant-to
 
    Define sections that can be swapped out based on the chosen subject.
    Consider the following example.
