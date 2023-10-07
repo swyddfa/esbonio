@@ -24,7 +24,7 @@ from lsprotocol.types import TextDocumentItem
 from lsprotocol.types import VersionedTextDocumentIdentifier
 from pygls.workspace import Document
 from pytest_lsp import LanguageClient
-from pytest_lsp import make_test_client
+from pytest_lsp import make_test_lsp_client
 from sphinx import __version__ as __sphinx_version__
 
 from esbonio.lsp import CompletionContext
@@ -39,7 +39,7 @@ def _noop(*args, **kwargs):
 
 def make_esbonio_client(*args, **kwargs) -> LanguageClient:
     """Construct a pytest-lsp client that is aware of esbonio specific messages"""
-    client = make_test_client(*args, **kwargs)
+    client = make_test_lsp_client(*args, **kwargs)
     client.feature("esbonio/buildStart")(_noop)
     client.feature("esbonio/buildComplete")(_noop)
 
