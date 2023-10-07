@@ -39,7 +39,7 @@
         "@vscode/vsce": "^2.21.0",
         "mocha": "^10.2.0",
         "path-browserify": "^1.0.1",
-        "ts-loader": "^9.4.4",
+        "ts-loader": "^9.5.0",
         "typescript": "^5.2.2",
         "webpack": "^5.88.2",
         "webpack-cli": "^5.1.4"
