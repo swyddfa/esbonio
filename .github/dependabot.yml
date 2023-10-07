@@ -12,12 +12,12 @@ updates:
 
   - package-ecosystem: "npm"
     directory: "/code"
-    target-branch: "beta"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
 
   - package-ecosystem: "pip"
     directory: "/code"
-    target-branch: "beta"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
