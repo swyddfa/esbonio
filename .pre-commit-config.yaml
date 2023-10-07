@@ -38,4 +38,5 @@ repos:
     - sphinx
     - types-docutils
     - types-pygments
+    - websockets
     files: 'lib/esbonio/esbonio/.*\.py'

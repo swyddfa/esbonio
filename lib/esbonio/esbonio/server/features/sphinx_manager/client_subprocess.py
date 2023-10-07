@@ -95,7 +95,7 @@ class SubprocessSphinxClient(JsonRPCClient):
         return Uri.for_file(self.sphinx_info.conf_dir)
 
     @property
-    def diagnostics(self) -> Dict[str, List[types.Diagnostic]]:
+    def diagnostics(self) -> Dict[Uri, List[types.Diagnostic]]:
         """Any diagnostics associated with the project.
 
         These are automatically updated with each build.

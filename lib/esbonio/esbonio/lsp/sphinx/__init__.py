@@ -431,7 +431,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
         if not self.preview_process and IS_LINUX:
             self.logger.debug("Starting preview server.")
-            server = make_preview_server(self.app.outdir)
+            server = make_preview_server(self.app.outdir)  # type: ignore[arg-type]
             self.preview_port = server.server_port
 
             self.preview_process = Process(target=server.serve_forever, daemon=True)

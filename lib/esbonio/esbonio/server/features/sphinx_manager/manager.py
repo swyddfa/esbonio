@@ -96,13 +96,14 @@ class SphinxManager(LanguageFeature):
             return
 
         # Pass through any unsaved content to the Sphinx agent.
-        content_overrides = {}
+        content_overrides: Dict[str, str] = {}
         for src_uri in client.build_file_map.keys():
             doc = self.server.workspace.get_document(str(src_uri))
+            doc_version = doc.version or 0
             saved_version = getattr(doc, "saved_version", 0)
 
-            if saved_version < (doc.version or 0):
-                content_overrides[src_uri.fs_path] = doc.source
+            if saved_version < doc_version and (fs_path := src_uri.fs_path) is not None:
+                content_overrides[fs_path] = doc.source
 
         result = await client.build(content_overrides=content_overrides)
 
@@ -112,7 +113,10 @@ class SphinxManager(LanguageFeature):
         for uri, items in client.diagnostics.items():
             diagnostics = [
                 lsp.Diagnostic(
-                    range=d.range, message=d.message, source=source, severity=d.severity
+                    range=d.range,  # type: ignore[arg-type]
+                    message=d.message,
+                    source=source,
+                    severity=d.severity,  # type: ignore[arg-type]
                 )
                 for d in items
             ]
