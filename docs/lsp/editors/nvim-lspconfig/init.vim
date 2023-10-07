@@ -48,7 +48,7 @@ end
 -- Attempt to find a virtualenv that the server can use to build the docs.
 
 local function find_venv()
-  
+
   -- If there is an active virtual env, use that
   if vim.env.VIRTUAL_ENV then
     return { vim.env.VIRTUAL_ENV .. "/bin/python" }
