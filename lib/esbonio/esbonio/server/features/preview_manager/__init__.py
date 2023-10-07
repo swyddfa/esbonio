@@ -3,6 +3,7 @@ import logging
 from http.server import HTTPServer
 from http.server import SimpleHTTPRequestHandler
 from typing import Any
+from typing import Dict
 from typing import Optional
 from urllib.parse import urlencode
 
@@ -208,7 +209,7 @@ class PreviewManager(LanguageFeature):
         webview = await self.get_webview_server(config)
 
         self._request_handler_factory.build_uri = client.build_uri
-        query_params = dict(ws=webview.port)
+        query_params: Dict[str, Any] = dict(ws=webview.port)
 
         if config.show_line_markers:
             query_params["show-markers"] = True

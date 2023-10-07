@@ -108,7 +108,7 @@ class EsbonioLanguageServer(LanguageServer):
             self.logger.info("Language client: %s %s", client.name, client.version)
 
         # TODO: Propose patch to pygls for providing custom Workspace implementations.
-        self.lsp.workspace = EsbonioWorkspace(
+        self.lsp._workspace = EsbonioWorkspace(
             self.workspace.root_uri,
             self.workspace._sync_kind,
             list(self.workspace.folders.values()),

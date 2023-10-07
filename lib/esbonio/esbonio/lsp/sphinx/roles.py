@@ -32,7 +32,7 @@ class Downloads:
         srcdir = self.rst.app.srcdir
         partial = context.match.group("label")
         base = os.path.dirname(Uri.to_fs_path(context.doc.uri))
-        items = complete_sphinx_filepaths(srcdir, base, partial)
+        items = complete_sphinx_filepaths(srcdir, base, partial)  # type: ignore[arg-type]
 
         return [path_to_completion_item(context, p) for p in items]
 

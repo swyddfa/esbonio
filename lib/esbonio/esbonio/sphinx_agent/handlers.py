@@ -84,7 +84,7 @@ class SphinxHandler:
            representing the message body, the second element is the method which
            implements it.
         """
-        handlers = {}
+        handlers: Dict[str, Tuple[Type, Callable]] = {}
 
         for name in dir(self):
             method_func = getattr(self, name)
