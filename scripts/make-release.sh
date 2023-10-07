@@ -112,8 +112,8 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     python -m towncrier build --yes --version="${VERSION}"
 
     # Setup git, commit, tag and push all the changes.
-    git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-    git config user.name "github-actions[bot]"
+    git config user.name github-actions
+    git config user.email github-actions@github.com
 
     git commit -am "${COMMIT_MSG}${VERSION}"
 
