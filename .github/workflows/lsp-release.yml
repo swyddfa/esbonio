@@ -1,0 +1,67 @@
+name: 'Release: esbonio'
+on:
+  push:
+    branches:
+    - release
+    paths:
+    - 'lib/esbonio/**'
+
+jobs:
+  release:
+    name: esbonio release
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/esbonio
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - run: |
+
+        sudo apt update
+        sudo apt install pandoc
+
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade tox bump2version towncrier docutils
+      name: Setup Environment
+
+    - run: |
+        set -e
+
+        ./scripts/make-release.sh lsp
+      name: Set Version
+      id: info
+
+    - name: Package
+      run: |
+        cd lib/esbonio
+        python -m tox -e pkg
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'dist'
+        path: lib/esbonio/dist
+
+    - name: Publish
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: lib/esbonio/dist/
+
+    - name: Create Release
+      run: |
+        gh release create "${RELEASE_TAG}" \
+          --title "Esbonio Language Server v${VERSION} - ${RELEASE_DATE}" \
+          -F lib/esbonio/.changes.html \
+          ./lib/esbonio/dist/*
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

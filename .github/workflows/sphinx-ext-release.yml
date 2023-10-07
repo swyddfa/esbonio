@@ -1,0 +1,66 @@
+name: 'Release: esbonio-extensions'
+on:
+  push:
+    branches:
+    - release
+    paths:
+    - 'lib/esbonio-extensions/**'
+
+jobs:
+  release:
+    name: "esbonio-extensions release"
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/esbonio-extensions
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+
+    - run: |
+        sudo apt update
+        sudo apt install pandoc
+
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade tox bump2version towncrier docutils
+      name: Setup Environment
+
+    - run: |
+        set -e
+
+        ./scripts/make-release.sh extensions
+      name: Set Version
+      id: info
+
+    - name: Package
+      run: |
+        cd lib/esbonio-extensions
+        python -m tox -e pkg
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'dist'
+        path: lib/esbonio-extensions/dist
+
+    - name: Publish
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: lib/esbonio-extensions/dist/
+
+    - name: Create Release
+      run: |
+        gh release create "${RELEASE_TAG}" \
+          --title "Esbonio Extensions v${VERSION} - ${RELEASE_DATE}" \
+          -F lib/esbonio-extensions/.changes.html \
+          ./lib/esbonio-extensions/dist/*
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
