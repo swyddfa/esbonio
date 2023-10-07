@@ -88,6 +88,16 @@
             "cwd": "${workspaceFolder}/docs"
         },
         {
+            "name": "pytest: esbonio",
+            "type": "python",
+            "request": "launch",
+            "module": "pytest",
+            "justMyCode": false,
+            "subProcess": false,
+            "python": "${command:python.interpreterPath}",
+            "cwd": "${workspaceFolder}/lib/esbonio"
+        },
+        {
             "name": "Python: Attach",
             "type": "python",
             "request": "attach",

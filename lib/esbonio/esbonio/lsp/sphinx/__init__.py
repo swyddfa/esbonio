@@ -137,7 +137,7 @@ class SphinxLanguageServer(RstLanguageServer):
     def initialize(self, params: InitializeParams):
         super().initialize(params)
         self.user_config = self.converter.structure(
-            params.initialization_options, InitializationOptions
+            params.initialization_options or {}, InitializationOptions
         )
 
     def initialized(self, params: InitializedParams):
@@ -313,13 +313,28 @@ class SphinxLanguageServer(RstLanguageServer):
         """Create a Sphinx application instance with the given config."""
         sphinx = options.sphinx
         server = options.server
-
-        self.logger.debug("Workspace root '%s'", self.workspace.root_uri)
         self.logger.debug(
             "User Config %s", json.dumps(self.converter.unstructure(sphinx), indent=2)
         )
 
-        sphinx_config = sphinx.resolve(self.workspace.root_uri)
+        # Until true multi-root support can be implemented let's try each workspace
+        # folder and use the first valid configuration we can find.
+        for folder_uri in self.workspace.folders.keys():
+            self.logger.debug("Workspace Folder: '%s'", folder_uri)
+
+            try:
+                sphinx_config = sphinx.resolve(folder_uri)
+                break
+            except MissingConfigError:
+                self.logger.debug(
+                    "No Sphinx conifg found in workspace folder: '%s'", folder_uri
+                )
+
+        # Not all clients use/support workspace folders, as a fallback, try the root_uri.
+        else:
+            self.logger.debug("Workspace root '%s'", self.workspace.root_uri)
+            sphinx_config = sphinx.resolve(self.workspace.root_uri)
+
         self.sphinx_args = sphinx_config.to_application_args()
         self.logger.debug("Sphinx Args %s", json.dumps(self.sphinx_args, indent=2))
 
@@ -416,7 +431,7 @@ class SphinxLanguageServer(RstLanguageServer):
 
         if not self.preview_process and IS_LINUX:
             self.logger.debug("Starting preview server.")
-            server = make_preview_server(self.app.outdir)
+            server = make_preview_server(self.app.outdir)  # type: ignore[arg-type]
             self.preview_port = server.server_port
 
             self.preview_process = Process(target=server.serve_forever, daemon=True)

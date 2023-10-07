@@ -4,16 +4,17 @@ repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
   rev: v4.4.0
   hooks:
+  - id: check-yaml
   - id: end-of-file-fixer
   - id: trailing-whitespace
 
 - repo: https://github.com/psf/black
-  rev: 23.1.0
+  rev: 23.9.1
   hooks:
   - id: black
 
 - repo: https://github.com/PyCQA/flake8
-  rev: 6.0.0
+  rev: 6.1.0
   hooks:
   - id: flake8
     args: [--config=lib/esbonio/setup.cfg]
@@ -26,16 +27,17 @@ repos:
       args: [--settings-file=lib/esbonio/pyproject.toml]
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.0.1'
+  rev: 'v1.5.1'
   hooks:
   - id: mypy
     name: mypy (esbonio)
     args: [--config,lib/esbonio/pyproject.toml]
     additional_dependencies:
+    - platformdirs
     - pygls
-    - pytest_lsp
+    - pytest_lsp>=0.3
     - sphinx
-    - types-appdirs
     - types-docutils
     - types-pygments
+    - websockets
     files: 'lib/esbonio/esbonio/.*\.py'
