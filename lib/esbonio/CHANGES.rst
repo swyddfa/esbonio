@@ -1,6 +1,17 @@
 v0.16.2 - 2023-10-07
 --------------------
 
+This somewhat quiet release marks the end of the ``0.x`` series as development has now shifted to focus on what will ultimately become the ``1.0`` release.
+
+In fact this release includes a sneaky preview of the ``1.0`` version of the server - which includes support for multi-root projects!
+If you are feeling adventurous and want to try it out - change the command you use to launch ``esbonio`` to ``python -m esbonio.server``
+
+However, to set expectations there are <em>many</em> missing features from the preview server. 
+The only features currently available are sphinx builds, diagnostics, document symbols and live preview/sync scrolling - but they should all work across multiple roots/projects!
+
+See `this issue <https://github.com/swyddfa/esbonio/issues/609">`__ for more information and if you want to submit any feedback and keep an eye out for some beta releases in the not-to-distant-future!
+
+
 Enhancements
 ^^^^^^^^^^^^
 
