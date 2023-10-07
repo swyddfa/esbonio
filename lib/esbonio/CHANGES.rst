@@ -1,3 +1,25 @@
+v0.16.2 - 2023-10-07
+--------------------
+
+Enhancements
+^^^^^^^^^^^^
+
+- When creating a Sphinx application instance, the language server will now look in all workspace folders choosing the first valid configuration it finds.
+  Failing that it will revert to its original behavior of looking in the ``workspaceRoot`` given by the client. (`#467 <https://github.com/swyddfa/esbonio/issues/467>`_)
+
+
+Fixes
+^^^^^
+
+- The server will no longer fail to handle the ``initialize`` request when clients set ``initializationOptions`` to ``null`` (`#586 <https://github.com/swyddfa/esbonio/issues/586>`_)
+
+
+Misc
+^^^^
+
+- Replace ``appdirs`` with ``platformdirs`` by @coloursofnoise (`#621 <https://github.com/swyddfa/esbonio/issues/621>`_)
+
+
 v0.16.1 - 2023-02-18
 --------------------
 

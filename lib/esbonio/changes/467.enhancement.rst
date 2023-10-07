@@ -1,2 +1,0 @@
-When creating a Sphinx application instance, the language server will now look in all workspace folders choosing the first valid configuration it finds.
-Failing that it will revert to its original behavior of looking in the ``workspaceRoot`` given by the client.
