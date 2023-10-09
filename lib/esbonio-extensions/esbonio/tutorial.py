@@ -618,11 +618,11 @@ def setup(app: Sphinx):
 
 if __name__ == "__main__":
     import argparse
+    import importlib.resources
     import shutil
     import subprocess
     import sys
 
-    import pkg_resources
     import platformdirs
 
     cli = argparse.ArgumentParser(description="Launch the demo tutorial.")
@@ -634,9 +634,21 @@ if __name__ == "__main__":
     )
 
     args = cli.parse_args()
-    demo = pkg_resources.resource_filename("esbonio.tutorial", "tutorial_demo")
 
-    source = pathlib.Path(demo)
+    path = "tutorial_demo"
+    package = "esbonio"
+
+    # `files` only available in Python 3.9+
+    if hasattr(importlib.resources, "files"):
+        demo = importlib.resources.files(package).joinpath(path)
+        source = pathlib.Path(demo)
+
+    else:
+        # `path` deprecated in Python 3.11, so let's only rely on it when we
+        # have to.
+        with importlib.resources.path(package, path) as demo:
+            source = pathlib.Path(demo)
+
     destination = pathlib.Path(
         platformdirs.user_data_dir(appname="esbonio-tutorial", appauthor="swyddfa")
     )

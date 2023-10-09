@@ -1,7 +1,7 @@
+import importlib.resources
 import pathlib
 import string
 
-import pkg_resources
 from docutils import nodes
 from docutils.transforms import Transform
 from sphinx.application import Sphinx
@@ -16,9 +16,19 @@ class relevant_to_script(nodes.Element):
     """A node allowing us to inject any JS we need to make this work."""
 
 
-SCRIPT = pkg_resources.resource_string("esbonio.relevant_to", "script.js").decode(
-    "utf8"
-)
+def load_script(package, filename):
+    # `files` only available in Python 3.9+
+    if hasattr(importlib.resources, "files"):
+        with importlib.resources.files(package).joinpath(filename).open("r") as f:
+            return f.read()
+
+    # `open_text` deprecated in Python 3.11, so let's only rely on it when we
+    # have to.
+    with importlib.resources.open_text(package, filename) as f:
+        return f.read()
+
+
+SCRIPT = load_script("esbonio.relevant_to", "script.js")
 
 
 def visit_relevant_to_script(self, node: relevant_to_script):
