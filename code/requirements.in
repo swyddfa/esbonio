@@ -9,6 +9,7 @@
 # To install the environment specified in requirements.txt (again using the minimum supported python)
 #
 # 3) python -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements.txt
-git+https://github.com/openlawlibrary/pygls.git#egg=pygls
-
-../lib/esbonio
+docutils
+platformdirs
+pygls>=1.1.0
+websockets
