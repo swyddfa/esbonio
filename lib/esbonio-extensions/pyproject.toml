@@ -9,36 +9,16 @@ title_format = "v{version} - {project_date}"
 issue_format = "`#{issue} <https://github.com/swyddfa/esbonio/issues/{issue}>`_"
 underlines = ["-", "^", "\""]
 
-[[tool.towncrier.type]]
-directory = "feature"
-name = "Features"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "fix"
-name = "Fixes"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "doc"
-name = "Docs"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "breaking"
-name = "Breaking Changes"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "deprecated"
-name = "Deprecated"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "misc"
-name = "Misc"
-showcontent = true
-
+type = [
+  { name = "Features", directory = "feature", showcontent = true },
+  { name = "Enhancements", directory = "enhancement", showcontent = true },
+  { name = "Fixes", directory = "fix", showcontent = true },
+  { name = "Docs", directory = "doc", showcontent = true },
+  { name = "Breaking Changes", directory = "breaking", showcontent = true },
+  { name = "Deprecated", directory = "deprecated", showcontent = true },
+  { name = "Misc", directory = "misc", showcontent = true },
+  { name = "Removed", directory = "removed", showcontent = true },
+]
 
 [tool.tox]
 legacy_tox_ini = """
