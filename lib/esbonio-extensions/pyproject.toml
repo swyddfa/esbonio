@@ -19,38 +19,3 @@ type = [
   { name = "Misc", directory = "misc", showcontent = true },
   { name = "Removed", directory = "removed", showcontent = true },
 ]
-
-[tool.tox]
-legacy_tox_ini = """
-[tox]
-isolated_build = True
-envlist = py{37,38,39,310,311}
-
-[testenv]
-deps =
-    mock
-    pytest
-    pytest-cov
-extras = tutorial
-commands =
-    pytest --cov=esbonio
-
-[testenv:pkg]
-deps =
-    build
-    ../esbonio
-    sphinx-panels
-    autodoc-pydantic
-usedevelop = True
-allowlist_externals =
-    cp
-    mkdir
-commands =
-
-    sphinx-build -b tutorial ../../docs/ ../../docs/_build/tutorial
-    mkdir esbonio/tutorial_demo
-    cp -r ../../docs/_build/tutorial/extensions esbonio/tutorial_demo/extensions
-    cp -r ../../docs/_build/tutorial/resources esbonio/tutorial_demo/resources
-
-    python -m build
-"""
