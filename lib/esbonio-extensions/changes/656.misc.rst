@@ -1,0 +1,5 @@
+Use ``importlib.resources`` instead of ``pkg_resources``
+
+Drop Python 3.7 support.
+
+Add support for Python 3.12
