@@ -18,8 +18,8 @@
     ],
     "scripts": {
         "watch": "tsc -p . --watch",
-        "deploy": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/beta/code/",
-        "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/beta/code/",
+        "deploy": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
+        "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "vscode:prepublish": "webpack --mode production --devtool hidden-source-map"
     },
     "main": "dist/node/extension",
