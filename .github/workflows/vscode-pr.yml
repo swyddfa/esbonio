@@ -1,4 +1,4 @@
-name: VSCode PR
+name: 'PR: vscode'
 on:
   pull_request:
     branches:
@@ -6,9 +6,9 @@ on:
     - release
     paths:
     - 'code/**'
+
 jobs:
   vscode:
-    name: Test Extension
     runs-on: ubuntu-latest
     steps:
     - uses: 'actions/checkout@v4'
@@ -16,41 +16,49 @@ jobs:
     - uses: 'actions/setup-node@v3'
       with:
         node-version: 16.x
+        cache: 'npm'
+        cache-dependency-path: 'code/package-lock.json'
 
     - uses: 'actions/setup-python@v4'
       with:
-        python-version: "3.10"
+        # This must be the minimum Python version we support
+        python-version: "3.8"
+
+    - name: Pip cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-vscode-pip-deps-${{ hashFiles('code/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-vscode-pip-deps
 
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade bump2version
-
+        python -m pip install --upgrade bump2version tox
       name: Install Build Tools
 
     - run: |
         set -e
+        cd lib/esbonio
+        tox run -e pkg
+        echo "ESBONIO_WHL=$(find $(pwd)/dist -name '*.whl')" >> $GITHUB_ENV
+      name: Package Language Server
 
-        # Despite the script's name, this is only used to obtain a
-        # dev version number e.g. v1.2.3-dev4
+    - run: |
+        set -e
         ./scripts/make-release.sh vscode
-      name: Set Version
+      name: Set Versions
 
     - run: |
         set -e
 
-        cd code
-        npm ci
-
-        mkdir dist
-        npm test
-      name: Test Extension
-
-    - run: |
-        set -e
+        echo "whl=${ESBONIO_WHL}"
 
         cd code
-        rm -r dist
+        ESBONIO_WHL=${ESBONIO_WHL} tox run -e bundle-deps
+
+        npm ci --prefer-offline
         npm run package
       id: assets
       name: Package Extension
@@ -60,3 +68,5 @@ jobs:
       with:
         name: 'vsix'
         path: code/*.vsix
+        if-no-files-found: error
+        retention-days: 7
