@@ -3,12 +3,14 @@ from __future__ import annotations
 import asyncio
 import inspect
 import typing
+import uuid
 from typing import Callable
 from typing import Dict
 from typing import Optional
 
 import lsprotocol.types as lsp
 
+import esbonio.sphinx_agent.types as types
 from esbonio.server import LanguageFeature
 from esbonio.server import Uri
 
@@ -41,6 +43,9 @@ class SphinxManager(LanguageFeature):
 
         self._client_creating: Optional[asyncio.Task] = None
         """If set, indicates we're in the process of setting up a new client."""
+
+        self._progress_tokens: Dict[str, str] = {}
+        """Holds work done progress tokens."""
 
     def add_listener(self, event: str, handler):
         self.handlers.setdefault(event, set()).add(handler)
@@ -105,11 +110,15 @@ class SphinxManager(LanguageFeature):
             if saved_version < doc_version and (fs_path := src_uri.fs_path) is not None:
                 content_overrides[fs_path] = doc.source
 
+        await self.start_progress(client)
+
         try:
             result = await client.build(content_overrides=content_overrides)
         except Exception as exc:
             self.server.show_message(f"{exc}", lsp.MessageType.Error)
             return
+        finally:
+            self.stop_progress(client)
 
         # Update diagnostics
         source = f"sphinx[{client.id}]"
@@ -208,3 +217,51 @@ class SphinxManager(LanguageFeature):
         self.server.lsp.notify("sphinx/appCreated", sphinx_info)
         self.clients[client.src_uri] = client
         return client
+
+    async def start_progress(self, client: SphinxClient):
+        """Start reporting work done progress for the given client."""
+
+        if client.id is None:
+            return
+
+        token = str(uuid.uuid4())
+        self.logger.error("Starting progress: '%s'", token)
+
+        try:
+            await self.server.progress.create_async(token)
+        except Exception as exc:
+            self.logger.debug("Unable to create progress token: %s", exc)
+            return
+
+        self._progress_tokens[client.id] = token
+        self.server.progress.begin(
+            token,
+            lsp.WorkDoneProgressBegin(title="sphinx-build", cancellable=False),
+        )
+
+    def stop_progress(self, client: SphinxClient):
+        if client.id is None:
+            return
+
+        if (token := self._progress_tokens.pop(client.id, None)) is None:
+            return
+
+        self.server.progress.end(token, lsp.WorkDoneProgressEnd(message="Finished"))
+
+    def report_progress(self, client: SphinxClient, progress: types.ProgressParams):
+        """Report progress done for the given client."""
+
+        if client.id is None:
+            return
+
+        if (token := self._progress_tokens.get(client.id, None)) is None:
+            return
+
+        self.server.progress.report(
+            token,
+            lsp.WorkDoneProgressReport(
+                message=progress.message,
+                percentage=progress.percentage,
+                cancellable=False,
+            ),
+        )
