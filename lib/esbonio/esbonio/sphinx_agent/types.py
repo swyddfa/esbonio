@@ -7,6 +7,7 @@ import dataclasses
 import enum
 from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Union
 
 
@@ -156,6 +157,24 @@ class LogMessage:
     params: LogMessageParams
 
     method: str = "window/logMessage"
+
+    jsonrpc: str = dataclasses.field(default="2.0")
+
+
+@dataclasses.dataclass
+class ProgressParams:
+    message: Optional[str] = None
+
+    percentage: Optional[int] = None
+
+
+@dataclasses.dataclass
+class ProgressMessage:
+    """A ``$/progress`` notification"""
+
+    params: ProgressParams
+
+    method: str = "$/progress"
 
     jsonrpc: str = dataclasses.field(default="2.0")
 
