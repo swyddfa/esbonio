@@ -11,7 +11,13 @@ from typing import Dict
 from typing import Type
 from typing import TypeVar
 
-from .handlers import SphinxHandler
+# This has to be called here before any imports from sphinx are made.
+# Otherwise we'll be too late and miss the chance to patch things properly
+from .patches import patch_sphinx
+
+patch_sphinx()
+
+from .handlers import SphinxHandler  # type: ignore
 from .util import send_error
 
 HANDLERS = SphinxHandler()
