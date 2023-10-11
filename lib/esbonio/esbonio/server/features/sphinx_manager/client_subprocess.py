@@ -222,6 +222,10 @@ def make_subprocess_sphinx_client(manager: SphinxManager) -> SphinxClient:
     def _on_msg(ls: SubprocessSphinxClient, params):
         manager.server.show_message_log(params.message)
 
+    @client.feature("$/progress")
+    def _on_progress(ls: SubprocessSphinxClient, params):
+        manager.report_progress(ls, params)
+
     return client
 
 

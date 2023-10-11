@@ -199,7 +199,7 @@ class PreviewManager(LanguageFeature):
             # Has the project been built yet?
             if len(client.build_file_map) == 0:
                 # If not, trigger a build and try again
-                await client.build()
+                await self.sphinx.trigger_build(src_uri)
                 return await self.preview_file(params)
 
             return None
