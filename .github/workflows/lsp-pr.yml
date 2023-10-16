@@ -1,25 +1,65 @@
-name: Language Server PR
+name: 'PR: esbonio'
 on:
   push:
     branches:
-    - beta
+    - develop
+    - release
     paths:
     - 'lib/esbonio/**'
 
   pull_request:
     branches:
-    - beta
+    - develop
+    - release
     paths:
     - 'lib/esbonio/**'
 
 jobs:
-  lsp:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: pip cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-lsp-pr-pip-deps-3.11
+
+    - run: |
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade tox bump2version
+      name: Setup Environment
+
+    - run: |
+        set -e
+        ./scripts/make-release.sh lsp
+      name: Set Version
+
+    - name: Package
+      run: |
+        cd lib/esbonio
+        python -m tox -e pkg
+
+    - name: 'Upload Artifact'
+      uses: actions/upload-artifact@v3
+      with:
+        name: 'dist'
+        path: lib/esbonio/dist
+
+  test:
     name: "Python v${{ matrix.python-version }} -- ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12"]
         os: [ubuntu-latest, windows-latest]
 
     steps:
@@ -39,17 +79,8 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version
+        python -m pip install --upgrade tox
       name: Setup Environment
-
-    - run: |
-        set -e
-
-        # Despite the script's name, this is only used to obtain a
-        # dev version number e.g. v1.2.3-dev4
-        ./scripts/make-release.sh lsp
-      name: Set Version
-      if: matrix.python-version == '3.10' && matrix.os == 'ubuntu-latest'
 
     - run: |
         cd lib/esbonio
@@ -58,16 +89,3 @@ jobs:
         python -m tox run -e `tox -l | grep $version | tr '\n' ','`
       shell: bash
       name: Run Tests
-
-    - name: Package
-      run: |
-        cd lib/esbonio
-        python -m tox -e pkg
-      if: always() && matrix.python-version == '3.10' && matrix.os == 'ubuntu-latest'
-
-    - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v3
-      with:
-        name: 'dist'
-        path: lib/esbonio/dist
-      if: always() && matrix.python-version == '3.10' && matrix.os == 'ubuntu-latest'
