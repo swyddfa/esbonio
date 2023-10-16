@@ -5,8 +5,8 @@
 
 .. _welcome:
 
-Welcome to Defaults's documentation!
-====================================
+Welcome to the documentation!
+=============================
 
 .. toctree::
    :maxdepth: 2
