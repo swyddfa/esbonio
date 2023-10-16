@@ -15,7 +15,7 @@ jobs:
 
     - uses: 'actions/setup-node@v3'
       with:
-        node-version: 16.x
+        node-version: 18.x
         cache: 'npm'
         cache-dependency-path: 'code/package-lock.json'
 
@@ -52,10 +52,10 @@ jobs:
 
     - run: |
         set -e
-
-        echo "whl=${ESBONIO_WHL}"
-
         cd code
+
+        # Use in-repo version of esbonio for dev builds
+        echo "whl=${ESBONIO_WHL}"
         ESBONIO_WHL=${ESBONIO_WHL} tox run -e bundle-deps
 
         npm ci --prefer-offline
