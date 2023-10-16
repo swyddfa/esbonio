@@ -35,13 +35,7 @@ esbonio = "esbonio.server.cli:main"
 esbonio-sphinx = "esbonio.lsp.sphinx.cli:main"
 
 [project.optional-dependencies]
-test = ["pytest", "pytest-lsp>=0.3.1", "pytest-cov", "pytest-timeout"]
-typecheck = [
-    "mypy",
-    "pytest-lsp>=0.3.1",
-    "types-docutils",
-    "types-pygments",
-]
+typecheck = ["mypy", "pytest-lsp>=0.3.1", "types-docutils", "types-pygments"]
 dev = ["black", "flake8", "pre-commit", "tox"]
 
 [tool.setuptools.packages.find]
