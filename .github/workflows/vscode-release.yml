@@ -1,4 +1,4 @@
-name: 'Release: vscode-extension'
+name: 'Release: vscode'
 on:
   push:
     branches:
@@ -7,19 +7,31 @@ on:
     - 'code/**'
 
 jobs:
-  vscode:
-    name: 'vscode extension release'
+  release:
     runs-on: ubuntu-latest
+    environment:
+      name: vscode-marketplace
     steps:
     - uses: 'actions/checkout@v4'
 
     - uses: 'actions/setup-node@v3'
       with:
-        node-version: 16.x
+        node-version: 18.x
+        cache: 'npm'
+        cache-dependency-path: 'code/package-lock.json'
 
     - uses: 'actions/setup-python@v4'
       with:
-        python-version: "3.10"
+        # This must be the minimum Python version we support
+        python-version: "3.8"
+
+    - name: Pip cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-vscode-pip-deps-${{ hashFiles('code/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-vscode-pip-deps
 
     - run: |
         sudo apt update
@@ -32,14 +44,17 @@ jobs:
 
     - run: |
         set -e
-
         ./scripts/make-release.sh vscode
       name: Set Version
-      id: info
 
     - run: |
+        set -e
         cd code
-        npm ci
+
+        # Use version of esbonio on PyPi for release builds
+        ESBONIO_WHL=esbonio tox run -e bundle-deps
+
+        npm ci --prefer-offline
         npm run package
       name: Package Extension
 
@@ -48,6 +63,7 @@ jobs:
       with:
         name: 'vsix'
         path: code/*.vsix
+        if-no-files-found: error
 
     - name: 'Publish Extension'
       run: |
