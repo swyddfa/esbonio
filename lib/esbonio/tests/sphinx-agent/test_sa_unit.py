@@ -36,6 +36,10 @@ def application_args(**kwargs) -> Dict[str, Any]:
         "warningiserror": False,
     }
 
+    for arg in {"srcdir", "outdir", "confdir", "doctreedir"}:
+        if arg in kwargs:
+            kwargs[arg] = str(pathlib.Path(kwargs[arg]).resolve())
+
     # Order matters, kwargs will override any keys found in defaults.
     return {**defaults, **kwargs}
 
