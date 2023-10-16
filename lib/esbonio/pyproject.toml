@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools >= 61.0.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.17.1"]
+build-backend = "hatchling.build"
 
 [project]
 name = "esbonio"
@@ -20,6 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Documentation",
     "Topic :: Documentation :: Sphinx",
 ]
@@ -37,9 +38,6 @@ esbonio-sphinx = "esbonio.lsp.sphinx.cli:main"
 [project.optional-dependencies]
 typecheck = ["mypy", "pytest-lsp>=0.3.1", "types-docutils", "types-pygments"]
 dev = ["black", "flake8", "pre-commit", "tox"]
-
-[tool.setuptools.packages.find]
-exclude = ["tests*"]
 
 [tool.coverage.run]
 parallel = true
