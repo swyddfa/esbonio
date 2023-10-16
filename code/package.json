@@ -17,6 +17,7 @@
         "Programming Languages"
     ],
     "scripts": {
+        "compile": "tsc -p .",
         "watch": "tsc -p . --watch",
         "deploy": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
@@ -29,7 +30,7 @@
     "dependencies": {
         "semver": "^7.5.4",
         "@vscode/python-extension": "^1.0.5",
-        "vscode-languageclient": "^8.1.0"
+        "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
         "@types/glob": "^8.1.0",
@@ -43,7 +44,7 @@
         "webpack-cli": "^5.1.4"
     },
     "engines": {
-        "vscode": "^1.78.0"
+        "vscode": "^1.82.0"
     },
     "capabilities": {
         "virtualWorkspaces": {
