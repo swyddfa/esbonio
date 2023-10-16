@@ -7,8 +7,6 @@ from pytest_lsp import ClientServerConfig
 from pytest_lsp import LanguageClient
 from pytest_lsp import client_capabilities
 
-from esbonio.server import Uri
-
 # Disable the sphinx integration - at least for now...
 SERVER_CMD = [
     "-m",
