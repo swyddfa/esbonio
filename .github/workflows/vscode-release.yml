@@ -25,7 +25,7 @@ jobs:
         # This must be the minimum Python version we support
         python-version: "3.8"
 
-    - name: Pip cache
+    - name: pip cache
       uses: actions/cache@v3
       with:
         path: ~/.cache/pip
@@ -39,12 +39,12 @@ jobs:
 
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version towncrier docutils
+        python -m pip install --upgrade tox hatch towncrier docutils
       name: Install Build Tools
 
     - run: |
         set -e
-        ./scripts/make-release.sh vscode
+        ./scripts/make_release.py vscode
       name: Set Version
 
     - run: |
