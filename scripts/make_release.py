@@ -16,6 +16,7 @@ import sys
 import tempfile
 from datetime import datetime
 from typing import Dict
+from typing import Optional
 from typing import TypedDict
 
 IS_CI = "CI" in os.environ
@@ -248,7 +249,7 @@ def commit_and_tag(component: Component, version: str) -> str:
     return tag
 
 
-def run(*cmd, cwd: str | None = None, capture: bool = False) -> str | None:
+def run(*cmd, cwd: Optional[str] = None, capture: bool = False) -> Optional[str]:
     """Run a command"""
 
     result = subprocess.run(cmd, cwd=cwd, capture_output=capture)
