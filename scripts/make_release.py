@@ -8,6 +8,7 @@ This script will
 """
 import argparse
 import io
+import json
 import os
 import pathlib
 import re
@@ -172,6 +173,13 @@ def set_version(component: Component) -> str:
     dev_version = f"{version}{sep}dev{match.group(1)}"
     run("hatch", "version", dev_version, cwd=component["src"])
 
+    # Annoying, but necessary since hatch normalises `-` to `.`
+    if component["name"] == "vscode":
+        package_json = pathlib.Path(component["src"]) / "package.json"
+        meta = json.loads(package_json.read_text())
+        meta["version"] = dev_version
+        package_json.write_text(json.dumps(meta, indent=2))
+
     print(f"Next version: {dev_version!r}")
     return dev_version
 
@@ -197,7 +205,7 @@ def generate_changelog(component: Component, version: str):
     draft_file.write_text(draft)
 
     with Output(STEP_SUMMARY) as summary:
-        draft >> summary
+        f"{draft}\n\n" >> summary
 
     if not IS_RELEASE:
         return
