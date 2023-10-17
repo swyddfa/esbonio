@@ -8,7 +8,7 @@ on:
     - 'code/**'
 
 jobs:
-  vscode:
+  build:
     runs-on: ubuntu-latest
     steps:
     - uses: 'actions/checkout@v4'
@@ -35,20 +35,21 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade bump2version tox
+        python -m pip install --upgrade hatch tox towncrier 'importlib-resources<6'
       name: Install Build Tools
 
     - run: |
         set -e
-        cd lib/esbonio
-        tox run -e pkg
-        echo "ESBONIO_WHL=$(find $(pwd)/dist -name '*.whl')" >> $GITHUB_ENV
-      name: Package Language Server
+        ./scripts/make_release.py lsp
+        ./scripts/make_release.py vscode
+      name: Set Versions
 
     - run: |
         set -e
-        ./scripts/make-release.sh vscode
-      name: Set Versions
+        cd lib/esbonio
+        hatch build
+        echo "ESBONIO_WHL=$(find $(pwd)/dist -name '*.whl')" >> $GITHUB_ENV
+      name: Package Language Server
 
     - run: |
         set -e
