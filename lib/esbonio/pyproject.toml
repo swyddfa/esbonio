@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "esbonio"
-version = "0.16.2"
+dynamic = ["version"]
 description = "A language server for sphinx/docutils based documentation projects."
 readme = "README.md"
 requires-python = ">=3.8"

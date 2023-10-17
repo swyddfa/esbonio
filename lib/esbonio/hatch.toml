@@ -1,3 +1,7 @@
+[version]
+path = "esbonio/server/server.py"
+validate-bump = false
+
 [build.targets.sdist]
 include = ["esbonio", "tests", "CHANGES.rst"]
 

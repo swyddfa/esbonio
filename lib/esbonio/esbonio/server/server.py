@@ -26,7 +26,7 @@ from .log import setup_logging
 if typing.TYPE_CHECKING:
     from .feature import LanguageFeature
 
-__version__ = "0.16.2"
+__version__ = "1.0.0b0"
 T = TypeVar("T")
 LF = TypeVar("LF", bound="LanguageFeature")
 

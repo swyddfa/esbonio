@@ -1,12 +1,5 @@
 name: 'PR: esbonio'
 on:
-  push:
-    branches:
-    - develop
-    - release
-    paths:
-    - 'lib/esbonio/**'
-
   pull_request:
     branches:
     - develop
@@ -20,10 +13,10 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Setup Python ${{ matrix.python-version }}
+    - name: Setup Python
       uses: actions/setup-python@v4
       with:
-        python-version: 3.11
+        python-version: "3.11"
 
     - name: pip cache
       uses: actions/cache@v3
@@ -34,18 +27,18 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version
+        python -m pip install --upgrade hatch towncrier
       name: Setup Environment
 
     - run: |
         set -e
-        ./scripts/make-release.sh lsp
+        ./scripts/make_release.py lsp
       name: Set Version
 
     - name: Package
       run: |
         cd lib/esbonio
-        python -m tox -e pkg
+        hatch build
 
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v3
