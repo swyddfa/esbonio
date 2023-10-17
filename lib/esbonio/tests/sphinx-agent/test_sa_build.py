@@ -122,12 +122,15 @@ async def test_diagnostics(client: SubprocessSphinxClient, uri_for):
         ],
     }
     result = await client.build()
+    actual = {pathlib.Path(p): items for p, items in result.diagnostics.items()}
 
-    assert set(result.diagnostics.keys()) == set(expected.keys())
+    actual_keys = set(actual.keys())
+    expected_keys = set(pathlib.Path(k) for k in expected.keys())
+    assert actual_keys == expected_keys
 
     for k, ex_diags in expected.items():
         # Order of results is not important
-        assert set(result.diagnostics[k]) == set(ex_diags)
+        assert set(actual[pathlib.Path(k)]) == set(ex_diags)
 
 
 @pytest.mark.asyncio

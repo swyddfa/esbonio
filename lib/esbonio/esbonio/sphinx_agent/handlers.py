@@ -41,7 +41,7 @@ class SphinxHandler:
         self.log_handler: Optional[SphinxLogHandler] = None
         """The logging handler"""
 
-        self._content_overrides: Dict[str, str] = {}
+        self._content_overrides: Dict[pathlib.Path, str] = {}
         """Holds any additional content to inject into a build."""
 
         self._handlers: Dict[str, Tuple[Type, Callable]] = self._register_handlers()
@@ -147,7 +147,7 @@ class SphinxHandler:
         is_building = set(docnames)
 
         for docname in env.found_docs - is_building:
-            filepath = env.doc2path(docname, base=True)
+            filepath = pathlib.Path(env.doc2path(docname, base=True))
             if filepath in self._content_overrides:
                 docnames.append(docname)
 
@@ -161,7 +161,8 @@ class SphinxHandler:
             self.log_handler.diagnostics.pop(filepath, None)
 
         # Override file contents if necessary
-        if (content := self._content_overrides.get(filepath)) is not None:
+        path = pathlib.Path(filepath)
+        if (content := self._content_overrides.get(path)) is not None:
             source[0] = content
 
     def setup_logging(self, config: SphinxConfig, app: Sphinx, status: IO, warning: IO):
@@ -201,7 +202,10 @@ class SphinxHandler:
             send_error(id=request.id, code=-32803, message="Sphinx app not initialized")
             return
 
-        self._content_overrides = request.params.content_overrides
+        self._content_overrides = {
+            pathlib.Path(p): content
+            for p, content in request.params.content_overrides.items()
+        }
 
         try:
             self.app.build()
