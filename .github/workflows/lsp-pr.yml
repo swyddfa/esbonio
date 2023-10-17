@@ -35,16 +35,9 @@ jobs:
         ./scripts/make_release.py lsp
       name: Set Version
 
-    - name: Package
-      run: |
-        cd lib/esbonio
-        hatch build
-
-    - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v3
+    - uses: hynek/build-and-inspect-python-package@v1
       with:
-        name: 'dist'
-        path: lib/esbonio/dist
+        path: lib/esbonio
 
   test:
     name: "Python v${{ matrix.python-version }} -- ${{ matrix.os }}"
