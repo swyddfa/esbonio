@@ -1,3 +1,4 @@
+"""Regular expressions for detecting various rst elements."""
 import re
 
 DIRECTIVE: "re.Pattern" = re.compile(
