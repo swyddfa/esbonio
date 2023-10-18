@@ -1,4 +1,4 @@
-name: Sphinx Extensions PR
+name: 'PR: esbonio-extensions'
 on:
   pull_request:
     branches:
@@ -8,7 +8,43 @@ on:
     - 'lib/esbonio-extensions/**'
 
 jobs:
-  sphinx-exts:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: pip cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-ext-pr-pip-deps-3.11
+
+    - run: |
+        python --version
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade tox hatch towncrier
+      name: Setup Environment
+
+    - run: |
+        set -e
+        ./scripts/make_release.py extensions
+      name: Set Version
+
+    - name: Prepare Package Resources
+      run: |
+        cd lib/esbonio-extensions
+        python -m tox run -e pkg
+
+    - uses: hynek/build-and-inspect-python-package@v1
+      with:
+        path: lib/esbonio-extensions
+
+  test:
     name: "Python v${{ matrix.python-version }}"
     runs-on: ubuntu-latest
     strategy:
@@ -22,36 +58,19 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
+    - name: pip cache
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-ext-pr-pip-deps-${{ matrix.python-version }}
+
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox bump2version
+        python -m pip install --upgrade tox
       name: Setup Environment
-
-    - run: |
-        set -e
-
-        # Despite the script's name, this is only used to obtain a
-        # dev version number e.g. v1.2.3-dev4
-        ./scripts/make-release.sh extensions
-      name: Set Version
-      id: info
-      if: matrix.python-version == '3.10'
 
     - run: |
         cd lib/esbonio-extensions
         python -m tox -e py`echo ${{ matrix.python-version }} | tr -d .`
       name: Test
-
-    - name: Package
-      run: |
-        cd lib/esbonio-extensions
-        python -m tox -e pkg
-      if: matrix.python-version == '3.10'
-
-    - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v3
-      with:
-        name: 'dist'
-        path: lib/esbonio-extensions/dist
-      if: matrix.python-version == '3.10'
