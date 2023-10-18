@@ -1,39 +1,33 @@
 [build-system]
-requires = ["setuptools >= 61.0.0"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.17.1"]
+build-backend = "hatchling.build"
 
 [project]
 name = "esbonio-extensions"
-version = "0.2.2"
+dynamic = ["version"]
 description = "A collection of extensions for Sphinx and the Esbonio language server"
 readme = "README.md"
 requires-python = ">=3.8"
 license = { text = "MIT" }
 authors = [{ name = "Alex Carney", email = "alcarneyme@gmail.com" }]
 classifiers = [
-    "Development Status :: 3 - Alpha",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Topic :: Documentation",
-    "Topic :: Documentation :: Sphinx",
+  "Development Status :: 3 - Alpha",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Documentation",
+  "Topic :: Documentation :: Sphinx",
 ]
 dependencies = ["esbonio", "platformdirs", "sphinx"]
 
 [project.optional-dependencies]
-dev = [
-    "black",
-    "flake8",
-    "pytest",
-    "pytest-cov",
-    "mock",
-]
+dev = ["black", "flake8", "pytest", "pytest-cov", "mock"]
 spelling = ["pyspellchecker"]
 tutorial = ["nbformat"]
 

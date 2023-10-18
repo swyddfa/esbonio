@@ -1,0 +1,9 @@
+[version]
+path = "esbonio/ext/__init__.py"
+validate-bump = false
+
+[build.targets.sdist]
+include = ["esbonio", "tests", "CHANGES.rst"]
+
+[build.targets.wheel]
+packages = ["esbonio"]
