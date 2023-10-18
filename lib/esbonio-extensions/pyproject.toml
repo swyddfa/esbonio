@@ -36,8 +36,8 @@ tutorial = ["nbformat"]
 "Documentation" = "https://swyddfa.github.io/esbonio/"
 "Source Code" = "https://github.com/swyddfa/esbonio"
 
-[tool.setuptools.packages.find]
-exclude = ["tests*"]
+[tool.check-wheel-contents]
+ignore = ["W004"]
 
 [tool.towncrier]
 filename = "CHANGES.rst"
