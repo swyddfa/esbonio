@@ -1,5 +1,5 @@
 # Changelog
 
-```{eval-rst}
-.. include:: ../lib/esbonio/CHANGES.rst
+```{include} ../lib/esbonio/CHANGES.md
+:relative-images:
 ```
