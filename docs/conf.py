@@ -54,6 +54,7 @@ extensions = [
     "esbonio.tutorial",
     "cli_help",
     "collection_items",
+    "myst_parser",
 ]
 
 autodoc_member_order = "groupwise"

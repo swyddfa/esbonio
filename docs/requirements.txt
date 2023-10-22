@@ -3,6 +3,7 @@
 sphinx
 sphinx-design
 furo
+myst-parser
 pytest_lsp
 -e lib/esbonio
 -e lib/esbonio-extensions[tutorial]
