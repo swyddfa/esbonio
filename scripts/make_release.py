@@ -188,7 +188,7 @@ def generate_changelog(component: Component, version: str):
     """Generate the changelog for the release."""
 
     changes = pathlib.Path(component["src"]) / "changes"
-    if IS_RELEASE and len(list(changes.glob("*.rst"))) == 0:
+    if IS_RELEASE and len(list(changes.glob("*.md"))) == 0:
         print("No changes detected, aborting")
         sys.exit(1)
 
@@ -201,7 +201,7 @@ def generate_changelog(component: Component, version: str):
         print("Unable to get changelog!")
         sys.exit(1)
 
-    draft_file = pathlib.Path(tempfile.gettempdir()) / "changelog.rst"
+    draft_file = pathlib.Path(tempfile.gettempdir()) / "changelog.md"
     draft_file.write_text(draft)
 
     with Output(STEP_SUMMARY) as summary:
@@ -212,20 +212,20 @@ def generate_changelog(component: Component, version: str):
 
     # Release notes for github
     run(
-        "rst2html.py",
+        "myst-docutils-html",
         "--template=changes/github-template.html",
         str(draft_file),
         ".changes.html",
         cwd=component["src"],
     )
 
-    # Release notes for changelog.
+    # Release notes for changelog
     run("towncrier", "build", "--yes", f"--version={version}", cwd=component["src"])
 
     # Needed for VSCode marketplace
     if component["name"] == "vscode":
         run(
-            *["pandoc", "CHANGES.rst", "-f", "rst", "-t", "gfm", "-o", "CHANGELOG.md"],
+            *["cp", "CHANGES.md", "CHANGELOG.md"],
             cwd=component["src"],
         )
 
