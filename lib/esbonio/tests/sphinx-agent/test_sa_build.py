@@ -6,6 +6,7 @@ import pytest
 import pytest_lsp
 from lsprotocol.types import WorkspaceFolder
 from pygls import IS_WIN
+from pygls.exceptions import JsonRpcInternalError
 from pygls.workspace import Workspace
 from pytest_lsp import ClientServerConfig
 
@@ -218,3 +219,56 @@ async def test_build_content_override(client: SubprocessSphinxClient, uri_for):
     expected = "My Custom Title"
     print(index_html.read_text())
     assert expected in index_html.read_text()
+
+
+@pytest_lsp.fixture(
+    scope="module",
+    config=ClientServerConfig(
+        server_command=[sys.executable, "-m", "esbonio.sphinx_agent"],
+        client_factory=make_test_sphinx_client,
+    ),
+)
+async def client_build_error(
+    sphinx_client: SubprocessSphinxClient, uri_for, tmp_path_factory
+):
+    """A sphinx client that will error when a build is triggered."""
+    build_dir = tmp_path_factory.mktemp("build")
+    test_uri = uri_for("sphinx-default", "workspace", "index.rst")
+    sd_workspace = uri_for("sphinx-default", "workspace")
+
+    workspace = Workspace(
+        None,
+        workspace_folders=[
+            WorkspaceFolder(uri=str(sd_workspace), name="sphinx-default"),
+        ],
+    )
+
+    conf_dir = uri_for("sphinx-default", "workspace-error-build").fs_path
+    config = SphinxConfig(
+        build_command=[
+            "sphinx-build",
+            "-b",
+            "html",
+            "-c",
+            str(conf_dir),
+            sd_workspace.fs_path,
+            str(build_dir),
+        ],
+    )
+    resolved = config.resolve(test_uri, workspace, sphinx_client.logger)
+    assert resolved is not None
+
+    info = await sphinx_client.create_application(resolved)
+    assert info is not None
+
+    yield
+
+
+@pytest.mark.asyncio
+async def test_build_error(client_build_error: SubprocessSphinxClient):
+    """Ensure that when a build error occurs, useful information is reported."""
+
+    with pytest.raises(
+        JsonRpcInternalError, match="sphinx-build failed:.*division by zero.*"
+    ):
+        await client_build_error.build()

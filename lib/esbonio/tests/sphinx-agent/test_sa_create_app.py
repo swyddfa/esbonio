@@ -4,6 +4,7 @@ import pytest
 import pytest_lsp
 from lsprotocol.types import WorkspaceFolder
 from pygls import IS_WIN
+from pygls.exceptions import JsonRpcInternalError
 from pygls.workspace import Workspace
 from pytest_lsp import ClientServerConfig
 
@@ -58,3 +59,42 @@ async def test_create_application(client: SubprocessSphinxClient, uri_for):
         assert info.src_dir == sd_workspace.fs_path
         assert info.conf_dir == sd_workspace.fs_path
         assert "cache" in info.build_dir
+
+
+@pytest.mark.asyncio
+async def test_create_application_error(
+    client: SubprocessSphinxClient, uri_for, tmp_path_factory
+):
+    """Ensure that we can handle errors during application creation."""
+
+    build_dir = tmp_path_factory.mktemp("build")
+    test_uri = uri_for("sphinx-default", "workspace", "index.rst")
+    sd_workspace = uri_for("sphinx-default", "workspace")
+
+    workspace = Workspace(
+        None,
+        workspace_folders=[
+            WorkspaceFolder(uri=str(sd_workspace), name="sphinx-default"),
+        ],
+    )
+
+    conf_dir = uri_for("sphinx-default", "workspace-error").fs_path
+    config = SphinxConfig(
+        build_command=[
+            "sphinx-build",
+            "-b",
+            "html",
+            "-c",
+            conf_dir,
+            sd_workspace.fs_path,
+            str(build_dir),
+        ]
+    )
+    resolved = config.resolve(test_uri, workspace, client.logger)
+    assert resolved is not None
+
+    with pytest.raises(
+        JsonRpcInternalError,
+        match="There is a programmable error in your configuration file:",
+    ):
+        await client.create_application(resolved)
