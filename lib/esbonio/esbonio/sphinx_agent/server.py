@@ -58,7 +58,7 @@ def handle_message(data: bytes):
         if msg_id is not None:
             send_error(
                 id=msg_id,
-                code=-32602,
+                code=-32603,
                 message=f"{e}",
                 data=dict(traceback=traceback.format_exc()),
             )
