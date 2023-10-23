@@ -3,6 +3,7 @@ import logging
 import os.path
 import pathlib
 import sys
+import traceback
 import typing
 from functools import partial
 from typing import IO
@@ -29,6 +30,7 @@ from .util import send_error
 from .util import send_message
 
 STATIC_DIR = (pathlib.Path(__file__).parent / "static").resolve()
+sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
 
 
 class SphinxHandler:
@@ -173,8 +175,6 @@ class SphinxHandler:
         console.nocolor()
 
         if not config.silent:
-            sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
-
             # Be sure to remove any old handlers
             for handler in sphinx_logger.handlers:
                 if isinstance(handler, SphinxLogHandler):
@@ -226,8 +226,12 @@ class SphinxHandler:
                 jsonrpc=request.jsonrpc,
             )
             send_message(response)
-        except Exception:
-            send_error(id=request.id, code=-32602, message="Sphinx build failed.")
+        except Exception as exc:
+            message = "".join(traceback.format_exception_only(type(exc), exc))
+            sphinx_logger.error("sphinx-build failed", exc_info=True)
+            send_error(
+                id=request.id, code=-32603, message=f"sphinx-build failed: {message}"
+            )
 
     def notify_exit(self, request: types.ExitNotification):
         """Sent from the client to signal that the agent should exit."""
