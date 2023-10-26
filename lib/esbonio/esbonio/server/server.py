@@ -50,15 +50,15 @@ class EsbonioWorkspace(Workspace):
 
     def get_document(self, doc_uri: str) -> Document:
         uri = str(Uri.parse(doc_uri).resolve())
-        return super().get_document(uri)
+        return super().get_text_document(uri)
 
     def put_document(self, text_document: types.TextDocumentItem):
         text_document.uri = str(Uri.parse(text_document.uri).resolve())
-        return super().put_document(text_document)
+        return super().put_text_document(text_document)
 
     def remove_document(self, doc_uri: str):
         doc_uri = str(Uri.parse(doc_uri).resolve())
-        return super().remove_document(doc_uri)
+        return super().remove_text_document(doc_uri)
 
     def update_document(
         self,
@@ -66,7 +66,7 @@ class EsbonioWorkspace(Workspace):
         change: types.TextDocumentContentChangeEvent,
     ):
         text_doc.uri = str(Uri.parse(text_doc.uri).resolve())
-        return super().update_document(text_doc, change)
+        return super().update_text_document(text_doc, change)
 
 
 class EsbonioLanguageServer(LanguageServer):
