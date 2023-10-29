@@ -14,7 +14,6 @@ import pathlib
 import re
 import subprocess
 import sys
-import tempfile
 from datetime import datetime
 from typing import Dict
 from typing import Optional
@@ -201,7 +200,7 @@ def generate_changelog(component: Component, version: str):
         print("Unable to get changelog!")
         sys.exit(1)
 
-    draft_file = pathlib.Path(tempfile.gettempdir()) / "changelog.md"
+    draft_file = pathlib.Path(component["src"]) / "changes.html"
     draft_file.write_text(draft)
 
     with Output(STEP_SUMMARY) as summary:
@@ -209,15 +208,6 @@ def generate_changelog(component: Component, version: str):
 
     if not IS_RELEASE:
         return
-
-    # Release notes for github
-    run(
-        "myst-docutils-html",
-        "--template=changes/github-template.html",
-        str(draft_file),
-        ".changes.html",
-        cwd=component["src"],
-    )
 
     # Release notes for changelog
     run("towncrier", "build", "--yes", f"--version={version}", cwd=component["src"])
