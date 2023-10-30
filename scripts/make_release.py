@@ -200,7 +200,7 @@ def generate_changelog(component: Component, version: str):
         print("Unable to get changelog!")
         sys.exit(1)
 
-    draft_file = pathlib.Path(component["src"]) / "changes.html"
+    draft_file = pathlib.Path(component["src"]) / ".changes.html"
     draft_file.write_text(draft)
 
     with Output(STEP_SUMMARY) as summary:
