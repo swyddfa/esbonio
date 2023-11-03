@@ -168,7 +168,11 @@ class SphinxManager(LanguageFeature):
 
         # Create a new client instance.
         self._client_creating = asyncio.create_task(self._create_client(uri))
-        return await self._client_creating
+        try:
+            return await self._client_creating
+        finally:
+            # Be sure to unset the task when it resolves
+            self._client_creating = None
 
     async def _create_client(self, uri: Uri) -> Optional[SphinxClient]:
         """Create a new sphinx client instance."""
