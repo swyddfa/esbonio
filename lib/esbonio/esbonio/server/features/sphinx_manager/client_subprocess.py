@@ -187,9 +187,10 @@ class SubprocessSphinxClient(JsonRPCClient):
         )
 
         self._building = True
-
-        result = await self.protocol.send_request_async("sphinx/build", params)
-        self._building = False
+        try:
+            result = await self.protocol.send_request_async("sphinx/build", params)
+        finally:
+            self._building = False
 
         self._diagnostics = {
             Uri.for_file(fpath): items for fpath, items in result.diagnostics.items()

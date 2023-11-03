@@ -105,7 +105,11 @@ class SphinxManager(LanguageFeature):
             if saved_version < doc_version and (fs_path := src_uri.fs_path) is not None:
                 content_overrides[fs_path] = doc.source
 
-        result = await client.build(content_overrides=content_overrides)
+        try:
+            result = await client.build(content_overrides=content_overrides)
+        except Exception as exc:
+            self.server.show_message(f"{exc}", lsp.MessageType.Error)
+            return
 
         # Update diagnostics
         source = f"sphinx[{client.id}]"
@@ -181,7 +185,14 @@ class SphinxManager(LanguageFeature):
         client = self.client_factory(self)
         await client.start(resolved)
 
-        sphinx_info = await client.create_application(resolved)
+        try:
+            sphinx_info = await client.create_application(resolved)
+        except Exception as exc:
+            self.logger.error("Unable to create sphinx application", exc_info=True)
+            self.server.show_message(f"{exc}", lsp.MessageType.Error)
+
+            await client.stop()
+            return None
 
         if client.src_uri is None:
             self.logger.error("No src uri!")
