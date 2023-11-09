@@ -20,6 +20,7 @@ from pygls.server import LanguageServer
 from pygls.workspace import Document
 from pygls.workspace import Workspace
 
+from ._configuration import WorkspaceConfiguration
 from ._uri import Uri
 from .log import setup_logging
 
@@ -96,8 +97,8 @@ class EsbonioLanguageServer(LanguageServer):
         self.converter = self.lsp._converter
         """The cattrs converter instance we should use."""
 
-        self.initialization_options: Optional[types.LSPAny] = None
-        """The received initializaion options (if any)"""
+        self.configuration = WorkspaceConfiguration(self)
+        """Manages the fetching of configuration values."""
 
     def __iter__(self):
         return iter(self._features.items())
@@ -114,18 +115,8 @@ class EsbonioLanguageServer(LanguageServer):
             list(self.workspace.folders.values()),
         )
 
-        self.initialization_options = params.initialization_options
+        self.configuration.initialization_options = params.initialization_options
 
-        # TODO: Merge this with self.get_user_config somehow...
-        server_config = ServerConfig()
-        if self.initialization_options is not None:
-            try:
-                config = self.initialization_options.get("server", {})
-                server_config = self.converter.structure(config, ServerConfig)
-            except Exception:
-                self.logger.error("Unable to parse server config", exc_info=True)
-
-        setup_logging(self, server_config)
 
     def load_extension(self, name: str, setup: Callable):
         """Load the given setup function as an extension.
@@ -198,60 +189,6 @@ class EsbonioLanguageServer(LanguageServer):
            The class definiion of the feature to retrieve
         """
         return self._features.get(feature_cls, None)  # type: ignore
-
-    async def get_user_config(
-        self,
-        section: str,
-        spec: Type[T],
-        scope: Optional[Uri] = None,
-    ) -> Optional[T]:
-        """Return the user's configuration for the given ``section``.
-
-        Using a ``workspace/configuration`` request, ask the client for the user's
-        configuration for the given ``section``.
-
-        ``spec`` should be a class definition representing the expected "shape" of the
-        result.
-
-        Parameters
-        ----------
-        section
-           The name of the configuration section to retrieve
-
-        spec
-           The class definition representing the expected result.
-
-        scope
-           An optional URI, useful in a multi-root context to select which root the
-           configuration should be retrieved from.
-
-        Returns
-        -------
-        T | None
-           The user's configuration, parsed as an instance of ``T``.
-           If ``None``, the config was not available / there was an error.
-        """
-        params = types.ConfigurationParams(
-            items=[
-                types.ConfigurationItem(
-                    section=section, scope_uri=str(scope) if scope else None
-                )
-            ]
-        )
-        self.logger.debug(
-            "workspace/configuration: %s",
-            json.dumps(self.converter.unstructure(params), indent=2),
-        )
-        result = await self.get_configuration_async(params)
-
-        try:
-            self.logger.debug("configuration: %s", json.dumps(result[0], indent=2))
-            return self.converter.structure(result[0], spec)
-        except Exception:
-            self.logger.error(
-                "Unable to parse configuration as '%s'", spec.__name__, exc_info=True
-            )
-            return None
 
     def clear_diagnostics(self, source: str, uri: Optional[Uri] = None) -> None:
         """Clear diagnostics from the given source.
