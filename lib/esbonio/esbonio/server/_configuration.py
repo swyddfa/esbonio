@@ -1,14 +1,19 @@
 from __future__ import annotations
 
+import inspect
 import json
 import typing
 from typing import Any
+from typing import Awaitable
+from typing import Callable
 from typing import Dict
+from typing import Generic
 from typing import List
 from typing import Optional
 from typing import Set
 from typing import Type
 from typing import TypeVar
+from typing import Union
 
 import attrs
 from lsprotocol import types
@@ -22,7 +27,27 @@ if typing.TYPE_CHECKING:
 T = TypeVar("T")
 
 
-class WorkspaceConfiguration:
+@attrs.define(frozen=True)
+class Subscription(Generic[T]):
+    """Represents a configuration subscription"""
+
+    section: str
+    """The configuration section."""
+
+    spec: Type[T]
+    """The subscription's class definition."""
+
+    callback: Callable[[T], Union[Awaitable[None], None]]
+    """The subscription's callback."""
+
+    workspace_scope: str
+    """The corresponding workspace scope for the subscription."""
+
+    file_scope: str
+    """The corresponding file scope for the subscription."""
+
+
+class Configuration:
     """Manages the configuration values for the server.
 
     This will looks configuration in the following locations, in descending order of
@@ -57,6 +82,9 @@ class WorkspaceConfiguration:
         self._file_config: Dict[str, Dict[str, Any]] = {}
         """The cached configuration coming from configuration files."""
 
+        self._subscriptions: Dict[Subscription, Any] = {}
+        """Subscriptions and their last known value"""
+
     @property
     def initialization_options(self):
         return self._initialization_options
@@ -87,9 +115,82 @@ class WorkspaceConfiguration:
             self.server.client_capabilities, "workspace.configuration", False
         )
 
-    def get(
-        self, section: str, spec: Type[T], scope: Optional[Uri] = None
-    ) -> Optional[T]:
+    async def subscribe(
+        self,
+        section: str,
+        spec: Type[T],
+        callback: Callable[[T], Union[Awaitable[None], None]],
+        scope: Optional[Uri] = None,
+    ):
+        """Subscribe to updates to the given configuration section.
+
+        Parameters
+        ----------
+        section
+           The configuration section to subscribe to
+
+        spec
+           A class representing the configuration values of interest
+
+        callback
+           The function to call when changes are detected.
+
+        scope
+           An optional uri, specifying the scope at which to lookup the configuration.
+        """
+        file_scope = self._uri_to_file_scope(scope)
+        workspace_scope = self._uri_to_workspace_scope(scope)
+        subscription = Subscription(
+            section, spec, callback, workspace_scope, file_scope
+        )
+
+        if subscription in self._subscriptions:
+            self.logger.debug("Ignoring duplicate subscription: %s", subscription)
+            return
+
+        result = self.get(section, spec, scope)
+        self._subscriptions[subscription] = result
+
+        try:
+            ret = callback(result)
+            if inspect.isawaitable(ret):
+                await ret
+        except Exception:
+            self.logger.error(
+                "Error in configuration callback: %s", callback, exc_info=True
+            )
+
+    async def _notify_subscriptions(self):
+        """Notify subscriptions about configuration changes, if necessary."""
+
+        for subscription, previous_value in self._subscriptions.items():
+            value = self._get_config(
+                subscription.section,
+                subscription.spec,
+                subscription.workspace_scope,
+                subscription.file_scope,
+            )
+
+            # No need to notify if nothing has changed
+            self.logger.debug("Previous: %s", previous_value)
+            self.logger.debug("Current: %s", value)
+            if previous_value == value:
+                continue
+
+            try:
+                ret = subscription.callback(value)
+                if inspect.isawaitable(ret):
+                    await ret
+
+                self._subscriptions[subscription] = value
+            except Exception:
+                self.logger.error(
+                    "Error in configuration callback: %s",
+                    subscription.callback,
+                    exc_info=True,
+                )
+
+    def get(self, section: str, spec: Type[T], scope: Optional[Uri] = None) -> T:
         """Get the requested configuration section.
 
         Parameters
@@ -98,21 +199,27 @@ class WorkspaceConfiguration:
            The configuration section to retrieve
 
         spec
-           A type representing the expected "shape" of the configuration section
+           A class representing the configuration values of interest
 
         scope
            An optional uri, specifying the scope in which to lookup the configuration.
 
         Returns
         -------
-        T | None
-           The requested configuration section, if available, parsed as an instance of
-           ``T``. ``None``, otherwise
+        T
+           The requested configuration section parsed as an instance of ``T``.
         """
         file_scope = self._uri_to_file_scope(scope)
-        self.logger.debug("File scope: '%s'", file_scope)
-
         workspace_scope = self._uri_to_workspace_scope(scope)
+
+        return self._get_config(section, spec, workspace_scope, file_scope)
+
+    def _get_config(
+        self, section: str, spec: Type[T], workspace_scope: str, file_scope: str
+    ) -> T:
+        """Get the requested configuration section."""
+
+        self.logger.debug("File scope: '%s'", file_scope)
         self.logger.debug("Workspace scope: '%s'", workspace_scope)
 
         # To keep things simple, this method assumes that all available config is already
@@ -124,17 +231,20 @@ class WorkspaceConfiguration:
         config = _merge_configs(
             file_config, workspace_config, self._initialization_options
         )
-        self.logger.debug("Resolved config: %s", json.dumps(config, indent=2))
+        # self.logger.debug("Full config: %s", json.dumps(config, indent=2))
 
         # Extract the requested section.
         config_section = config
         for name in section.split("."):
             config_section = config_section.get(name, {})
 
-        self.logger.debug("Config section: %s", json.dumps(config_section, indent=2))
+        self.logger.debug("Resolved config: %s", json.dumps(config_section, indent=2))
 
         try:
-            return self.converter.structure(config_section, spec)
+            value = self.converter.structure(config_section, spec)
+            self.logger.debug("%s", value)
+
+            return value
         except Exception:
             self.logger.error(
                 "Unable to parse configuation as '%s', using defaults",
@@ -190,6 +300,8 @@ class WorkspaceConfiguration:
                 result = dict(esbonio=result)
 
             self._workspace_config[scope or ""] = result
+
+        await self._notify_subscriptions()
 
 
 def _uri_to_scope(known_scopes: List[str], uri: Optional[Uri]) -> str:

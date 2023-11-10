@@ -188,8 +188,9 @@ class LogManager(LanguageFeature):
 
     async def initialized(self, params: types.InitializedParams):
         """Setup logging."""
-        config = self.server.configuration.get("esbonio.server", ServerLogConfig)
-        self.setup_logging(config or ServerLogConfig())
+        await self.server.configuration.subscribe(
+            "esbonio.server", ServerLogConfig, self.setup_logging
+        )
 
     def setup_logging(self, config: ServerLogConfig):
         """Setup logging to route log messages to the language client as
@@ -206,7 +207,7 @@ class LogManager(LanguageFeature):
 
         level = LOG_LEVELS[config.log_level]
 
-        warnlog = logging.getLogger("py.warnings")
+        # warnlog = logging.getLogger("py.warnings")
         logger = logging.getLogger(LOG_NAMESPACE)
         logger.setLevel(level)
 
@@ -221,17 +222,20 @@ class LogManager(LanguageFeature):
 
         # Look to see if there are any cached messages we should forward to the client.
         for handler in logger.handlers:
-            if not isinstance(handler, MemoryHandler):
-                continue
+            # Remove any previous instances of the LspHandler
+            if isinstance(handler, LspHandler):
+                logger.removeHandler(handler)
 
-            for record in handler.records:
-                if logger.isEnabledFor(record.levelno):
-                    lsp_handler.emit(record)
+            # Forward any cached messages to the client
+            if isinstance(handler, MemoryHandler):
+                for record in handler.records:
+                    if logger.isEnabledFor(record.levelno):
+                        lsp_handler.emit(record)
 
-            logger.removeHandler(handler)
+                logger.removeHandler(handler)
 
         logger.addHandler(lsp_handler)
-        warnlog.addHandler(lsp_handler)
+        # warnlog.addHandler(lsp_handler)
 
 
 def dump(obj) -> str:
