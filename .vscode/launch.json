@@ -61,19 +61,6 @@
             "preLaunchTask": "${defaultBuildTask}",
         },
         {
-            "name": "Language Server",
-            "type": "python",
-            "request": "launch",
-            "module": "esbonio",
-            "justMyCode": false,
-            "args": [
-                "--port",
-                "8421"
-            ],
-            "python": "${command:python.interpreterPath}",
-            "cwd": "${workspaceRoot}"
-        },
-        {
             "name": "Docs",
             "type": "python",
             "request": "launch",
@@ -108,35 +95,11 @@
             },
             "pathMappings": [
                 {
-                    "localRoot": "${workspaceFolder}",
+                    "localRoot": "${workspaceFolder}/lib/esbonio",
                     "remoteRoot": "."
                 }
             ],
             "justMyCode": false
         },
-        {
-            "name": "Python: Remote Attach",
-            "type": "python",
-            "request": "attach",
-            "connect": {
-                "host": "localhost",
-                "port": 5678
-            },
-            "pathMappings": [
-                {
-                    "localRoot": "${workspaceFolder}/lib/esbonio",
-                    "remoteRoot": "."
-                }
-            ]
-        }
     ],
-    "compounds": [
-        {
-            "name": "VSCode + Language Server",
-            "configurations": [
-                "Language Server",
-                "VSCode Extension"
-            ]
-        }
-    ]
 }

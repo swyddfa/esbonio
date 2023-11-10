@@ -156,11 +156,17 @@ export class EsbonioClient {
     command.push("-S")
 
     let config = vscode.workspace.getConfiguration("esbonio")
+    let debugServer = config.get<boolean>('server.debug')
     let serverDevtools = config.get<boolean>('server.enableDevTools')
     let sphinxDevtools = config.get<boolean>('sphinx.enableDevTools')
 
     if (serverDevtools || sphinxDevtools) {
       await this.startDevtools(command[0], ...command.slice(1), "-m", "lsp_devtools", "tui")
+    }
+
+    if (debugServer) {
+      let debugCommand = await this.python.getDebugerCommand()
+      command.push("-Xfrozen_modules=off", ...debugCommand)
     }
 
     if (serverDevtools) {
