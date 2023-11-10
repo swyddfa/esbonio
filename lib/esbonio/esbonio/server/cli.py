@@ -7,8 +7,8 @@ from typing import Sequence
 
 from pygls.protocol import default_converter
 
-from .log import LOG_NAMESPACE
-from .log import MemoryHandler
+from ._log import LOG_NAMESPACE
+from ._log import MemoryHandler
 from .server import EsbonioLanguageServer
 from .server import __version__
 from .setup import create_language_server
@@ -69,6 +69,7 @@ def main(argv: Optional[Sequence[str]] = None):
 
     # Order matters!
     modules = [
+        "esbonio.server.features.log",
         "esbonio.server.features.sphinx_manager",
         "esbonio.server.features.preview_manager",
         "esbonio.server.features.symbols",

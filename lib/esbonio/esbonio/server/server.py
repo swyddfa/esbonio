@@ -14,7 +14,6 @@ from typing import Type
 from typing import TypeVar
 from uuid import uuid4
 
-import attrs
 from lsprotocol import types
 from pygls.capabilities import get_capability
 from pygls.server import LanguageServer
@@ -23,7 +22,6 @@ from pygls.workspace import Workspace
 
 from ._configuration import WorkspaceConfiguration
 from ._uri import Uri
-from .log import setup_logging
 
 if typing.TYPE_CHECKING:
     from .feature import LanguageFeature
@@ -31,20 +29,6 @@ if typing.TYPE_CHECKING:
 __version__ = "1.0.0b0"
 T = TypeVar("T")
 LF = TypeVar("LF", bound="LanguageFeature")
-
-
-@attrs.define
-class ServerConfig:
-    """Configuration options for the server."""
-
-    log_filter: List[str] = attrs.field(factory=list)
-    """A list of logger names to restrict output to."""
-
-    log_level: str = attrs.field(default="error")
-    """The logging level of server messages to display."""
-
-    show_deprecation_warnings: bool = attrs.field(default=False)
-    """Developer flag to enable deprecation warnings."""
 
 
 class EsbonioWorkspace(Workspace):
