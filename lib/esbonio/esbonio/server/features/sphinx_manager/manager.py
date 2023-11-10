@@ -176,7 +176,7 @@ class SphinxManager(LanguageFeature):
 
     async def _create_client(self, uri: Uri) -> Optional[SphinxClient]:
         """Create a new sphinx client instance."""
-        config = await self.server.get_user_config(
+        config = self.server.configuration.get(
             "esbonio.sphinx", SphinxConfig, scope=uri
         )
         if config is None:

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import collections
 import inspect
-import json
 import logging
 import typing
 from typing import Any
@@ -13,9 +12,11 @@ from typing import Optional
 from typing import Tuple
 from typing import Type
 from typing import TypeVar
+from uuid import uuid4
 
 import attrs
 from lsprotocol import types
+from pygls.capabilities import get_capability
 from pygls.server import LanguageServer
 from pygls.workspace import Document
 from pygls.workspace import Workspace
@@ -117,6 +118,9 @@ class EsbonioLanguageServer(LanguageServer):
 
         self.configuration.initialization_options = params.initialization_options
 
+    async def initialized(self, params: types.InitializedParams):
+        await self.configuration.update_workspace_configuration()
+        await self._register_did_changed_handler()
 
     def load_extension(self, name: str, setup: Callable):
         """Load the given setup function as an extension.
@@ -254,6 +258,48 @@ class EsbonioLanguageServer(LanguageServer):
         for uri, diag_list in diagnostics.items():
             self.logger.debug("Publishing %d diagnostics for: %s", len(diag_list), uri)
             self.publish_diagnostics(str(uri), diag_list.data)
+
+    async def _register_did_changed_handler(self):
+        """Register the server's handler for ``workspace/didChangeConfiguration``.
+
+        The spec says that in order to receive these notifications we need to
+        dynamically register our capability to process them. (Though I think some
+        editors send them regardless.)
+        """
+        capabilities = self.client_capabilities
+        registration_supported = get_capability(
+            capabilities,
+            "workspace.did_change_configuration.dynamic_registration",
+            False,
+        )
+        if not registration_supported:
+            self.logger.info(
+                "Client does not support dynamic registration of '%s' handlers, "
+                "server might not be able to react to configuration changes.",
+                types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+            )
+            return
+
+        try:
+            await self.register_capability_async(
+                types.RegistrationParams(
+                    registrations=[
+                        types.Registration(
+                            id=str(uuid4()),
+                            method=types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+                        ),
+                    ]
+                )
+            )
+            self.logger.debug(
+                "Registered '%s' handler", types.WORKSPACE_DID_CHANGE_CONFIGURATION
+            )
+        except Exception:
+            self.logger.error(
+                "Unable to register '%s' handler",
+                types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+                exc_info=True,
+            )
 
 
 class DiagnosticList(collections.UserList):

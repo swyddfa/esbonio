@@ -42,6 +42,12 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
     async def on_initialize(ls: EsbonioLanguageServer, params: types.InitializeParams):
         ls.initialize(params)
 
+    @server.feature(types.INITIALIZED)
+    async def on_initialized(
+        ls: EsbonioLanguageServer, params: types.InitializedParams
+    ):
+        await ls.initialized(params)
+
     @server.feature(types.TEXT_DOCUMENT_DID_CHANGE)
     async def on_document_change(
         ls: EsbonioLanguageServer, params: types.DidChangeTextDocumentParams
@@ -75,6 +81,13 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
         ls: EsbonioLanguageServer, params: types.DocumentSymbolParams
     ):
         return await call_features_return_first(ls, "document_symbol", params)
+
+    @server.feature(types.WORKSPACE_DID_CHANGE_CONFIGURATION)
+    async def on_did_change_configuration(
+        ls: EsbonioLanguageServer, params: types.DidChangeConfigurationParams
+    ):
+        ls.logger.debug("%s: %s", types.WORKSPACE_DID_CHANGE_CONFIGURATION, params)
+        await ls.configuration.update_workspace_configuration()
 
     return server
 
