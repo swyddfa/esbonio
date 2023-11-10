@@ -51,6 +51,24 @@ export class PythonManager {
     return [pythonUri.fsPath]
   }
 
+  async getDebugerCommand(): Promise<string[]> {
+    let python = await this.getPythonExtension()
+    if (!python) {
+      return []
+    }
+
+    return await python.debug.getRemoteLauncherCommand('localhost', 5678, true)
+  }
+
+  async getDebugerPath(): Promise<string> {
+    let python = await this.getPythonExtension()
+    if (!python) {
+      return ''
+    }
+
+    let path = await python.debug.getDebuggerPackagePath()
+    return path || ''
+  }
   /**
    * Ensures that if the Python extension is available
    */

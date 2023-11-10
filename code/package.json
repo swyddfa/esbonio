@@ -241,6 +241,12 @@
                         "default": false,
                         "description": "Enable lsp-devtools integration for the language server"
                     },
+                    "esbonio.server.debug": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Debug the server process."
+                    },
                     "esbonio.server.showDeprecationWarnings": {
                         "scope": "window",
                         "type": "boolean",
