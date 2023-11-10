@@ -20,7 +20,7 @@ from pygls.server import LanguageServer
 from pygls.workspace import Document
 from pygls.workspace import Workspace
 
-from ._configuration import WorkspaceConfiguration
+from ._configuration import Configuration
 from ._uri import Uri
 
 if typing.TYPE_CHECKING:
@@ -82,7 +82,7 @@ class EsbonioLanguageServer(LanguageServer):
         self.converter = self.lsp._converter
         """The cattrs converter instance we should use."""
 
-        self.configuration = WorkspaceConfiguration(self)
+        self.configuration = Configuration(self)
         """Manages the fetching of configuration values."""
 
     def __iter__(self):
