@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import enum
 import json
 import logging
@@ -7,24 +5,18 @@ import pathlib
 import re
 import textwrap
 import traceback
-import typing
 from typing import List
 from typing import Tuple
 
-from lsprotocol.types import Diagnostic
-from lsprotocol.types import DiagnosticSeverity
-from lsprotocol.types import DiagnosticTag
-from lsprotocol.types import Position
-from lsprotocol.types import Range
+import attrs
+from lsprotocol import types
 
-from ._uri import Uri
+from esbonio.server import LOG_NAMESPACE
+from esbonio.server import EsbonioLanguageServer
+from esbonio.server import LanguageFeature
+from esbonio.server import MemoryHandler
+from esbonio.server import Uri
 
-if typing.TYPE_CHECKING:
-    from .server import EsbonioLanguageServer
-    from .server import ServerConfig
-
-
-LOG_NAMESPACE = "esbonio"
 LOG_LEVELS = {
     "debug": logging.DEBUG,
     "error": logging.ERROR,
@@ -45,11 +37,11 @@ DOCUTILS_ERROR = re.compile(
 )
 
 DOCUTILS_SEVERITY = {
-    0: DiagnosticSeverity.Hint,
-    1: DiagnosticSeverity.Information,
-    2: DiagnosticSeverity.Warning,
-    3: DiagnosticSeverity.Error,
-    4: DiagnosticSeverity.Error,
+    0: types.DiagnosticSeverity.Hint,
+    1: types.DiagnosticSeverity.Information,
+    2: types.DiagnosticSeverity.Warning,
+    3: types.DiagnosticSeverity.Error,
+    4: types.DiagnosticSeverity.Error,
 }
 
 
@@ -61,17 +53,6 @@ class LogFilter(logging.Filter):
 
     def filter(self, record):
         return any(record.name == name for name in self.names)
-
-
-class MemoryHandler(logging.Handler):
-    """A logging handler that caches messages in memory."""
-
-    def __init__(self):
-        super().__init__()
-        self.records: List[logging.LogRecord] = []
-
-    def emit(self, record: logging.LogRecord) -> None:
-        self.records.append(record)
 
 
 class LspHandler(logging.Handler):
@@ -132,15 +113,15 @@ class LspHandler(logging.Handler):
 
         tags = []
         if category == "DeprecationWarning":
-            tags.append(DiagnosticTag.Deprecated)
+            tags.append(types.DiagnosticTag.Deprecated)
 
-        diagnostic = Diagnostic(
-            range=Range(
-                start=Position(line=line - 1, character=0),
-                end=Position(line=line, character=0),
+        diagnostic = types.Diagnostic(
+            range=types.Range(
+                start=types.Position(line=line - 1, character=0),
+                end=types.Position(line=line, character=0),
             ),
             message=message,
-            severity=DiagnosticSeverity.Warning,
+            severity=types.DiagnosticSeverity.Warning,
             tags=tags,
         )
 
@@ -155,12 +136,12 @@ class LspHandler(logging.Handler):
             line = int(match.group("linum"))
             severity = int(match.group("levelnum"))
 
-            diagnostic = Diagnostic(
+            diagnostic = types.Diagnostic(
                 message=match.group("message").strip(),
                 severity=DOCUTILS_SEVERITY.get(severity),
-                range=Range(
-                    start=Position(line=line - 1, character=0),
-                    end=Position(line=line, character=0),
+                range=types.Range(
+                    start=types.Position(line=line - 1, character=0),
+                    end=types.Position(line=line, character=0),
                 ),
             )
             self.server.add_diagnostics("docutils", uri, diagnostic)
@@ -185,47 +166,72 @@ class LspHandler(logging.Handler):
         self.server.show_message_log(log)
 
 
-def setup_logging(server: EsbonioLanguageServer, config: ServerConfig):
-    """Setup logging to route log messages to the language client as
-    ``window/logMessage`` messages.
+@attrs.define
+class ServerLogConfig:
+    """Configuration options for server logging."""
 
-    Parameters
-    ----------
-    server
-       The server to use to send messages
+    log_filter: List[str] = attrs.field(factory=list)
+    """A list of logger names to restrict output to."""
 
-    config
-       The configuration to use
-    """
+    log_level: str = attrs.field(default="error")
+    """The logging level of server messages to display."""
 
-    level = LOG_LEVELS[config.log_level]
+    show_deprecation_warnings: bool = attrs.field(default=False)
+    """Developer flag to enable deprecation warnings."""
 
-    warnlog = logging.getLogger("py.warnings")
-    logger = logging.getLogger(LOG_NAMESPACE)
-    logger.setLevel(level)
 
-    lsp_handler = LspHandler(server, config.show_deprecation_warnings)
-    lsp_handler.setLevel(level)
+class LogManager(LanguageFeature):
+    """Manages the logging setup for the server."""
 
-    if len(config.log_filter) > 0:
-        lsp_handler.addFilter(LogFilter(config.log_filter))
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
-    formatter = logging.Formatter("[%(name)s] %(message)s")
-    lsp_handler.setFormatter(formatter)
+    async def initialized(self, params: types.InitializedParams):
+        """Setup logging."""
+        config = self.server.configuration.get("esbonio.server", ServerLogConfig)
+        self.setup_logging(config or ServerLogConfig())
 
-    # Look to see if there are any cached messages we should forward to the client.
-    for handler in logger.handlers:
-        if not isinstance(handler, MemoryHandler):
-            continue
+    def setup_logging(self, config: ServerLogConfig):
+        """Setup logging to route log messages to the language client as
+        ``window/logMessage`` messages.
 
-        for record in handler.records:
-            if logger.isEnabledFor(record.levelno):
-                lsp_handler.emit(record)
+        Parameters
+        ----------
+        server
+           The server to use to send messages
 
-        logger.removeHandler(handler)
+        config
+           The configuration to use
+        """
 
-    logger.addHandler(lsp_handler)
-    warnlog.addHandler(lsp_handler)
+        level = LOG_LEVELS[config.log_level]
+
+        warnlog = logging.getLogger("py.warnings")
+        logger = logging.getLogger(LOG_NAMESPACE)
+        logger.setLevel(level)
+
+        lsp_handler = LspHandler(self.server, config.show_deprecation_warnings)
+        lsp_handler.setLevel(level)
+
+        if len(config.log_filter) > 0:
+            lsp_handler.addFilter(LogFilter(config.log_filter))
+
+        formatter = logging.Formatter("[%(name)s] %(message)s")
+        lsp_handler.setFormatter(formatter)
+
+        # Look to see if there are any cached messages we should forward to the client.
+        for handler in logger.handlers:
+            if not isinstance(handler, MemoryHandler):
+                continue
+
+            for record in handler.records:
+                if logger.isEnabledFor(record.levelno):
+                    lsp_handler.emit(record)
+
+            logger.removeHandler(handler)
+
+        logger.addHandler(lsp_handler)
+        warnlog.addHandler(lsp_handler)
 
 
 def dump(obj) -> str:
@@ -249,3 +255,8 @@ def dump(obj) -> str:
         return fields
 
     return json.dumps(obj, default=default, indent=2)
+
+
+def esbonio_setup(server: EsbonioLanguageServer):
+    manager = LogManager(server)
+    server.add_feature(manager)
