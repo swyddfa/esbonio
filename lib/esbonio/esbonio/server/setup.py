@@ -41,12 +41,14 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
     @server.feature(types.INITIALIZE)
     async def on_initialize(ls: EsbonioLanguageServer, params: types.InitializeParams):
         ls.initialize(params)
+        await call_features(ls, "initialize", params)
 
     @server.feature(types.INITIALIZED)
     async def on_initialized(
         ls: EsbonioLanguageServer, params: types.InitializedParams
     ):
         await ls.initialized(params)
+        await call_features(ls, "initialized", params)
 
     @server.feature(types.TEXT_DOCUMENT_DID_CHANGE)
     async def on_document_change(

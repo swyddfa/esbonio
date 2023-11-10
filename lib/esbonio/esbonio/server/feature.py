@@ -18,6 +18,12 @@ class LanguageFeature:
         self.converter = server.converter
         self.logger = server.logger.getChild(self.__class__.__name__)
 
+    def initialize(self, params: types.InitializeParams):
+        """Called during ``initialize``."""
+
+    def initialized(self, params: types.InitializedParams):
+        """Called when the ``initialized`` notification is received."""
+
     def document_change(self, params: types.DidChangeTextDocumentParams):
         """Called when a text document is changed."""
 
