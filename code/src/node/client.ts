@@ -274,40 +274,32 @@ export class EsbonioClient {
         workspace: {
           configuration: async (params: ConfigurationParams, token: CancellationToken, next) => {
             // this.logger.debug(`workspace/configuration: ${JSON.stringify(params, undefined, 2)}`)
-
-            let index = -1
-            params.items.forEach((item, i) => {
-              if (item.section === "esbonio.sphinx") {
-                index = i
-              }
-            })
-
             let result = await next(params, token);
             if (result instanceof ResponseError) {
               return result
             }
 
-            if (index < 0) {
-              return result
-            }
+            result.forEach(async (config, i) => {
+              if (params.items[i].section !== "esbonio") {
+                return
+              }
 
-            let item = result[index]
-            if (item.pythonCommand.length > 0) {
-              return result
-            }
+              if (config.sphinx.pythonCommand.length > 0) {
+                return
+              }
 
-            // User has not explictly configured a Python command, try and inject the
-            // Python interpreter they have configured for this resource.
-            let scopeUri: vscode.Uri | undefined = undefined
-            let scope = params.items[index].scopeUri
-            if (scope) {
-              scopeUri = vscode.Uri.parse(scope)
-            }
-            let python = await this.python.getCmd(scopeUri)
-            if (python) {
-              item.pythonCommand = python
-            }
-
+              // User has not explictly configured a Python command, try and inject the
+              // Python interpreter they have configured for this resource.
+              let scopeUri: vscode.Uri | undefined
+              let scope = params.items[i].scopeUri
+              if (scope) {
+                scopeUri = vscode.Uri.parse(scope)
+              }
+              let python = await this.python.getCmd(scopeUri)
+              if (python) {
+                config.sphinx.pythonCommand = python
+              }
+            })
             return result
           }
         }
