@@ -242,17 +242,6 @@ export class EsbonioClient {
    */
   private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
 
-    let initOptions: InitOptions = {
-      server: {
-        logLevel: config.get<string>('server.logLevel'),
-        logFilter: config.get<string[]>('server.logFilter'),
-        showDeprecationWarnings: config.get<boolean>('server.showDeprecationWarnings'),
-        completion: {
-          preferredInsertBehavior: config.get<string>('server.completion.preferredInsertBehavior')
-        }
-      }
-    }
-
     let documentSelector = [
       { scheme: 'file', language: 'restructuredtext' },
     ]
@@ -265,7 +254,6 @@ export class EsbonioClient {
 
     let clientOptions: LanguageClientOptions = {
       documentSelector: documentSelector,
-      initializationOptions: initOptions,
       outputChannel: this.channel,
       connectionOptions: {
         maxRestartCount: 0
