@@ -11,6 +11,8 @@ from typing import Type
 from typing import TypeVar
 
 import attrs
+from lsprotocol import types
+from pygls.capabilities import get_capability
 
 from ._uri import Uri
 
@@ -74,6 +76,17 @@ class WorkspaceConfiguration:
     def converter(self):
         return self.server.converter
 
+    @property
+    def workspace(self):
+        return self.server.workspace
+
+    @property
+    def supports_workspace_config(self):
+        """Indicates if the client supports ``workspace/configuration`` requests."""
+        return get_capability(
+            self.server.client_capabilities, "workspace.configuration", False
+        )
+
     def get(
         self, section: str, spec: Type[T], scope: Optional[Uri] = None
     ) -> Optional[T]:
@@ -135,12 +148,49 @@ class WorkspaceConfiguration:
         return _uri_to_scope(folder_uris, uri)
 
     def _uri_to_workspace_scope(self, uri: Optional[Uri]) -> str:
-        folder_uris = [f.uri for f in self.server.workspace.folders.values()]
+        folder_uris = [f.uri for f in self.workspace.folders.values()]
 
-        if (root_uri := self.server.workspace.root_uri) is not None:
+        if (root_uri := self.workspace.root_uri) is not None:
             folder_uris.append(root_uri)
 
         return _uri_to_scope(folder_uris, uri)
+
+    async def update_workspace_configuration(self):
+        """Update the internal cache of the client's workspace configuration."""
+        if not self.supports_workspace_config:
+            return
+
+        # Request configuration at the global scope, and at each workspace.
+        scopes = [None] + [f.uri for f in self.workspace.folders.values()]
+        if (root_uri := self.workspace.root_uri) is not None and root_uri not in scopes:
+            scopes.append(root_uri)
+
+        params = types.ConfigurationParams(
+            items=[
+                types.ConfigurationItem(section="esbonio", scope_uri=scope)
+                for scope in scopes
+            ]
+        )
+        self.logger.debug(
+            "workspace/configuration: %s",
+            json.dumps(self.converter.unstructure(params), indent=2),
+        )
+
+        try:
+            results = await self.server.get_configuration_async(params)
+        except Exception:
+            self.logger.error("Unable to get workspace configuration", exc_info=True)
+            return
+
+        for scope, result in zip(scopes, results):
+            self.logger.debug(
+                "'%s' configuration: %s", scope, json.dumps(result, indent=2)
+            )
+            if "esbonio" not in result:
+                result = dict(esbonio=result)
+
+            self._workspace_config[scope or ""] = result
+
 
 def _uri_to_scope(known_scopes: List[str], uri: Optional[Uri]) -> str:
     """Convert the given uri to a scope or the empty string if none could be found.

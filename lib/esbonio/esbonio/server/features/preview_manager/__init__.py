@@ -109,7 +109,7 @@ class PreviewManager(LanguageFeature):
 
     async def get_preview_config(self) -> PreviewConfig:
         """Return the user's preview server configuration."""
-        config = await self.server.get_user_config("esbonio.preview", PreviewConfig)
+        config = self.server.configuration.get("esbonio.preview", PreviewConfig)
         if config is None:
             self.logger.info(
                 "Unable to obtain preview configuration, proceeding with defaults"
