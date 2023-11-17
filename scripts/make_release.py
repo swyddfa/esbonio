@@ -242,7 +242,7 @@ def commit_and_tag(component: Component, version: str) -> str:
     run("git", "pull", "--rebase", "origin", "release", cwd=component["src"])
     run("git", "tag", "-a", tag, "-m", commit, cwd=component["src"])
     run("git", "push", "origin", "release", cwd=component["src"])
-    run("git", "push", "origin", "tags", cwd=component["src"])
+    run("git", "push", "origin", "--tags", cwd=component["src"])
 
     return tag
 
