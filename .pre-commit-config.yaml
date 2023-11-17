@@ -40,6 +40,7 @@ repos:
     - pygls
     - pytest_lsp>=0.3
     - sphinx
+    - tomli
     - types-docutils
     - types-pygments
     - websockets

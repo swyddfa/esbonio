@@ -24,7 +24,13 @@ classifiers = [
     "Topic :: Documentation",
     "Topic :: Documentation :: Sphinx",
 ]
-dependencies = ["platformdirs", "docutils", "pygls>=1.1.0", "websockets"]
+dependencies = [
+    "platformdirs",
+    "docutils",
+    "pygls>=1.1.0",
+    "tomli ; python_version<'3.11'",
+    "websockets",
+]
 
 [project.urls]
 "Bug Tracker" = "https://github.com/swyddfa/esbonio/issues"
