@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import json
+import pathlib
 import typing
 from typing import Any
 from typing import Awaitable
@@ -23,6 +24,11 @@ from ._uri import Uri
 
 if typing.TYPE_CHECKING:
     from .server import EsbonioLanguageServer
+
+try:
+    import tomllib as toml
+except ImportError:
+    import tomli as toml  # type: ignore[no-redef]
 
 T = TypeVar("T")
 
@@ -265,6 +271,52 @@ class Configuration:
 
         return _uri_to_scope(folder_uris, uri)
 
+    def _discover_config_files(self) -> List[pathlib.Path]:
+        """Scan the workspace for available configuration files."""
+        folder_uris = {f.uri for f in self.workspace.folders.values()}
+
+        if (root_uri := self.workspace.root_uri) is not None:
+            folder_uris.add(root_uri)
+
+        paths = []
+        for uri in folder_uris:
+            if (folder_path := Uri.parse(uri).fs_path) is None:
+                continue
+
+            self.logger.debug("Scanning workspace folder: '%s'", folder_path)
+            for p in pathlib.Path(folder_path).glob("**/pyproject.toml"):
+                self.logger.debug("Found '%s'", p)
+                paths.append(p)
+
+        return paths
+
+    def update_file_configuration(self, paths: Optional[List[pathlib.Path]] = None):
+        """Update the internal cache of configuration coming from files.
+
+        Parameters
+        ----------
+        paths
+           A list of filepaths to read from.
+           If not set, this method will scan each workspace folder for relevant files.
+        """
+        if paths is None:
+            paths = self._discover_config_files()
+
+        for path in paths:
+            try:
+                data = toml.loads(path.read_text())
+                config = dict(esbonio=data.get("tool", {}).get("esbonio", {}))
+                scope = str(Uri.for_file(path.parent))
+
+                self._file_config[scope] = config
+                self.logger.debug(
+                    "File '%s' configuration: %s", scope, json.dumps(config, indent=2)
+                )
+            except Exception:
+                self.logger.error(
+                    "Unable to read configuration file: '%s'", exc_info=True
+                )
+
     async def update_workspace_configuration(self):
         """Update the internal cache of the client's workspace configuration."""
         if not self.supports_workspace_config:
@@ -294,7 +346,7 @@ class Configuration:
 
         for scope, result in zip(scopes, results):
             self.logger.debug(
-                "'%s' configuration: %s", scope, json.dumps(result, indent=2)
+                "Workspace '%s' configuration: %s", scope, json.dumps(result, indent=2)
             )
             if "esbonio" not in result:
                 result = dict(esbonio=result)

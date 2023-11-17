@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import collections
 import inspect
 import logging
@@ -103,8 +104,13 @@ class EsbonioLanguageServer(LanguageServer):
         self.configuration.initialization_options = params.initialization_options
 
     async def initialized(self, params: types.InitializedParams):
-        await self.configuration.update_workspace_configuration()
-        await self._register_did_changed_handler()
+        # TODO: Async file I/O?
+        self.configuration.update_file_configuration()
+
+        await asyncio.gather(
+            self.configuration.update_workspace_configuration(),
+            self._register_did_changed_handler(),
+        )
 
     def load_extension(self, name: str, setup: Callable):
         """Load the given setup function as an extension.
