@@ -272,25 +272,8 @@ export class EsbonioClient {
             }
 
             result.forEach(async (config, i) => {
-              if (params.items[i].section !== "esbonio") {
-                return
-              }
-
-              if (config.sphinx.pythonCommand.length > 0) {
-                return
-              }
-
-              // User has not explictly configured a Python command, try and inject the
-              // Python interpreter they have configured for this resource.
-              let scopeUri: vscode.Uri | undefined
-              let scope = params.items[i].scopeUri
-              if (scope) {
-                scopeUri = vscode.Uri.parse(scope)
-              }
-              let python = await this.python.getCmd(scopeUri)
-              if (python) {
-                config.sphinx.pythonCommand = python
-              }
+              await this.injectPython(params, i, config)
+              this.stripNulls(config)
             })
             return result
           }
@@ -299,6 +282,44 @@ export class EsbonioClient {
     }
     this.logger.debug(`LanguageClientOptions: ${JSON.stringify(clientOptions, null, 2)}`)
     return clientOptions
+  }
+
+  /**
+   * Strip any `null` values from the returned configuration.
+   */
+  private stripNulls(config: any) {
+    for (let k of Object.keys(config)) {
+      if (config[k] === null) {
+        delete config[k]
+      } else if (typeof config[k] === 'object') {
+        this.stripNulls(config[k])
+      }
+    }
+  }
+
+  /**
+   * Inject the user's configured Python interpreter into the configuration.
+   */
+  private async injectPython(params: ConfigurationParams, index: number, config: any) {
+    if (params.items[index].section !== "esbonio") {
+      return
+    }
+
+    if (config?.sphinx?.pythonCommand?.length > 0) {
+      return
+    }
+
+    // User has not explictly configured a Python command, try and inject the
+    // Python interpreter they have configured for this resource.
+    let scopeUri: vscode.Uri | undefined
+    let scope = params.items[index].scopeUri
+    if (scope) {
+      scopeUri = vscode.Uri.parse(scope)
+    }
+    let python = await this.python.getCmd(scopeUri)
+    if (python) {
+      config.sphinx.pythonCommand = python
+    }
   }
 
   private callHandlers(method: string, params: any) {

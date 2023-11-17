@@ -124,7 +124,7 @@
                     "esbonio.server.logLevel": {
                         "scope": "window",
                         "type": "string",
-                        "default": "error",
+                        "default": null,
                         "enum": [
                             "debug",
                             "info",
@@ -135,7 +135,7 @@
                     "esbonio.server.logFilter": {
                         "scope": "window",
                         "type": "array",
-                        "default": [],
+                        "default": null,
                         "items": {
                             "type": "string"
                         },
@@ -144,7 +144,7 @@
                     "esbonio.server.pythonPath": {
                         "scope": "window",
                         "type": "string",
-                        "default": "",
+                        "default": null,
                         "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
                     }
                 }
@@ -158,19 +158,19 @@
                         "items": {
                             "type": "string"
                         },
-                        "default": [],
+                        "default": null,
                         "description": "The sphinx-build command to use."
                     },
                     "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
                         "type": "array",
-                        "default": [],
+                        "default": null,
                         "description": "The command to use when launching the Python interpreter for the process hosting the Sphinx application."
                     },
                     "esbonio.sphinx.cwd": {
                         "scope": "resource",
                         "type": "string",
-                        "default": "",
+                        "default": null,
                         "description": "The working directory from which to launch the Sphinx process. If not set, this will default to the root of the workspace folder containing the project."
                     },
                     "esbonio.sphinx.envPassthrough": {
@@ -179,7 +179,7 @@
                         "items": {
                             "type": "string"
                         },
-                        "default": [],
+                        "default": null,
                         "description": "A list of environment variables to pass through to the Sphinx process."
                     }
                 }
@@ -191,24 +191,24 @@
                         "scope": "window",
                         "type": "boolean",
                         "default": true,
-                        "description": "Enable syncronsied scrolling between the editor and preview pane"
+                        "description": "Enable syncronized scrolling between the editor and preview pane"
                     },
                     "esbonio.preview.bind": {
                         "scope": "window",
                         "type": "string",
-                        "default": "localhost",
+                        "default": null,
                         "description": "The network interface to bind the preview server to."
                     },
                     "esbonio.preview.httpPort": {
                         "scope": "window",
                         "type": "integer",
-                        "default": 0,
+                        "default": null,
                         "description": "The port number to bind the HTTP server to.\nIf 0, a random port number will be chosen"
                     },
                     "esbonio.preview.wsPort": {
                         "scope": "window",
                         "type": "integer",
-                        "default": 0,
+                        "default": null,
                         "description": "The port number to bind the WebSocket server to.\nIf 0, a random port number will be chosen"
                     }
                 }
