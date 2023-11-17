@@ -1,17 +1,17 @@
+import { execSync } from "child_process";
 import * as vscode from 'vscode';
 import { join } from "path";
 import {
-  ConfigurationParams,
   CancellationToken,
+  ConfigurationParams,
+  ExecutableOptions,
   LanguageClient,
   LanguageClientOptions,
-  ServerOptions,
-  ExecutableOptions,
   ResponseError,
+  ServerOptions,
   State
 } from "vscode-languageclient/node";
 
-import { InitOptions } from "../common/config";
 import { OutputChannelLogger } from "../common/log";
 import { PythonManager } from "./python";
 import { Commands, Events, Notifications } from '../common/constants';
@@ -147,30 +147,34 @@ export class EsbonioClient {
    * Return a LanguageClient configured to communicate with the server over stdio.
    */
   private async getStdioClient(): Promise<LanguageClient | undefined> {
-    let command = await this.python.getCmd()
-    if (!command) {
+    const config = vscode.workspace.getConfiguration("esbonio")
+    const debugServer = config.get<boolean>('server.debug')
+    const serverDevtools = config.get<boolean>('server.enableDevTools')
+    const sphinxDevtools = config.get<boolean>('sphinx.enableDevTools')
+    const lsp_devtools = this.resolveCommand("lsp-devtools")?.trim()
+
+    const command = []
+    if (serverDevtools && lsp_devtools) {
+      // Requires lsp-devtools to be on the user's PATH
+      command.push(lsp_devtools, "agent", "--")
+    }
+
+    let pythonCommand = await this.python.getCmd()
+    if (!pythonCommand) {
       return
     }
 
     // Isolate the Python interpreter from the user's environment - we brought our own.
-    command.push("-S")
+    command.push(...pythonCommand, "-S")
 
-    let config = vscode.workspace.getConfiguration("esbonio")
-    let debugServer = config.get<boolean>('server.debug')
-    let serverDevtools = config.get<boolean>('server.enableDevTools')
-    let sphinxDevtools = config.get<boolean>('sphinx.enableDevTools')
-
-    if (serverDevtools || sphinxDevtools) {
-      await this.startDevtools(command[0], ...command.slice(1), "-m", "lsp_devtools", "tui")
+    if ((serverDevtools || sphinxDevtools) && lsp_devtools) {
+      // Requires lsp-devtools to be on the user's PATH.
+      await this.startDevtools(lsp_devtools, "inspect")
     }
 
     if (debugServer) {
       let debugCommand = await this.python.getDebugerCommand()
       command.push("-Xfrozen_modules=off", ...debugCommand)
-    }
-
-    if (serverDevtools) {
-      command.push("-m", "lsp_devtools", "agent", "--", ...command)
     }
 
     let startupModule = config.get<string>("server.startupModule") || "esbonio.server"
@@ -305,6 +309,17 @@ export class EsbonioClient {
         this.logger.error(`Error in '${method}' notification handler: ${err}`)
       }
     })
+  }
+
+  private resolveCommand(command: string): string | undefined {
+    // TODO: Windows support
+    try {
+      let result = execSync(`command -v ${command}`)
+      return result.toString()
+    } catch (err) {
+      this.logger.debug(`Unable to resolve command ${command}: ${err}`)
+      return undefined
+    }
   }
 
   private async startDevtools(command: string, ...args: string[]) {
