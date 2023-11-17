@@ -15,6 +15,7 @@ from typing import Type
 from typing import TypeVar
 from uuid import uuid4
 
+import cattrs
 from lsprotocol import types
 from pygls.capabilities import get_capability
 from pygls.server import LanguageServer
@@ -80,14 +81,16 @@ class EsbonioLanguageServer(LanguageServer):
         self.logger = logger or logging.getLogger(__name__)
         """The logger instance to use."""
 
-        self.converter = self.lsp._converter
-        """The cattrs converter instance we should use."""
-
         self.configuration = Configuration(self)
         """Manages the fetching of configuration values."""
 
     def __iter__(self):
         return iter(self._features.items())
+
+    @property
+    def converter(self) -> cattrs.Converter:
+        """The cattrs converter instance we should use."""
+        return self.lsp._converter
 
     def initialize(self, params: types.InitializeParams):
         self.logger.info("Initialising esbonio v%s", __version__)
