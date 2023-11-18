@@ -78,6 +78,9 @@ class EsbonioLanguageServer(LanguageServer):
         self._features: Dict[Type[LanguageFeature], LanguageFeature] = {}
         """The collection of language features registered with the server."""
 
+        self._ready: asyncio.Future[bool] = asyncio.Future()
+        """Indicates if the server is ready."""
+
         self.logger = logger or logging.getLogger(__name__)
         """The logger instance to use."""
 
@@ -86,6 +89,10 @@ class EsbonioLanguageServer(LanguageServer):
 
     def __iter__(self):
         return iter(self._features.items())
+
+    @property
+    def ready(self) -> asyncio.Future:
+        return self._ready
 
     @property
     def converter(self) -> cattrs.Converter:
@@ -107,13 +114,13 @@ class EsbonioLanguageServer(LanguageServer):
         self.configuration.initialization_options = params.initialization_options
 
     async def initialized(self, params: types.InitializedParams):
-        # TODO: Async file I/O?
-        self.configuration.update_file_configuration()
-
         await asyncio.gather(
             self.configuration.update_workspace_configuration(),
-            self._register_did_changed_handler(),
+            self.configuration.update_file_configuration(),
+            self._register_did_change_configuration_handler(),
+            self._register_did_change_watched_files_handler(),
         )
+        self._ready.set_result(True)
 
     def load_extension(self, name: str, setup: Callable):
         """Load the given setup function as an extension.
@@ -252,7 +259,51 @@ class EsbonioLanguageServer(LanguageServer):
             self.logger.debug("Publishing %d diagnostics for: %s", len(diag_list), uri)
             self.publish_diagnostics(str(uri), diag_list.data)
 
-    async def _register_did_changed_handler(self):
+    async def _register_did_change_watched_files_handler(self):
+        """Register the server's handler for ``workspace/didChangeWatchedFiles``."""
+        capabilities = self.client_capabilities
+        registration_supported = get_capability(
+            capabilities,
+            "workspace.did_change_watched_files.dynamic_registration",
+            False,
+        )
+        if not registration_supported:
+            self.logger.info(
+                "Client does not support dynamic registration of '%s' handlers, "
+                "server might not be able to react to configuration changes.",
+                types.WORKSPACE_DID_CHANGE_WATCHED_FILES,
+            )
+            return
+
+        try:
+            await self.register_capability_async(
+                types.RegistrationParams(
+                    registrations=[
+                        types.Registration(
+                            id=str(uuid4()),
+                            method=types.WORKSPACE_DID_CHANGE_WATCHED_FILES,
+                            register_options=types.DidChangeWatchedFilesRegistrationOptions(
+                                watchers=[
+                                    types.FileSystemWatcher(
+                                        glob_pattern="**/pyproject.toml"
+                                    )
+                                ]
+                            ),
+                        ),
+                    ]
+                )
+            )
+            self.logger.debug(
+                "Registered '%s' handler", types.WORKSPACE_DID_CHANGE_WATCHED_FILES
+            )
+        except Exception:
+            self.logger.error(
+                "Unable to register '%s' handler",
+                types.WORKSPACE_DID_CHANGE_WATCHED_FILES,
+                exc_info=True,
+            )
+
+    async def _register_did_change_configuration_handler(self):
         """Register the server's handler for ``workspace/didChangeConfiguration``.
 
         The spec says that in order to receive these notifications we need to
