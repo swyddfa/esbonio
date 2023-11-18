@@ -1,3 +1,4 @@
+import asyncio
 from unittest.mock import Mock
 
 import pytest
@@ -22,7 +23,11 @@ def workspace(uri_for):
 @pytest.fixture()
 def server(event_loop, workspace: Uri):
     """A mock instance of the language"""
+    ready = asyncio.Future()
+    ready.set_result(True)
+
     esbonio = EsbonioLanguageServer(loop=event_loop)
+    esbonio._ready = ready
     esbonio.show_message = Mock()
     esbonio.configuration.get = Mock(return_value=SphinxConfig())
     esbonio.lsp._workspace = EsbonioWorkspace(
