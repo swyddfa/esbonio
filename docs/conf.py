@@ -140,6 +140,13 @@ def setup(app: Sphinx):
     )
 
     app.add_object_type(
+        "confval",
+        "confval",
+        objname="configuration value",
+        indextemplate="pair: %s; configuration value",
+    )
+
+    app.add_object_type(
         "startmod",
         "startmod",
         objname="startup module",

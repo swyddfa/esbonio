@@ -20,23 +20,33 @@ Configuration
 
 In addition to the standard :ref:`lsp-configuration` options, the Esbonio VSCode extension provides the following options.
 
-.. confval:: esbonio.server.enabled (boolean)
+.. esbonio:config:: esbonio.server.enabled
+   :scope: global
+   :type: boolean
 
    A flag that can be used to completely disable the language server, if required.
 
-.. confval:: esbonio.server.enabledInPyFiles (boolean)
+.. esbonio:config:: esbonio.server.enabledInPyFiles (boolean)
+   :scope: global
+   :type: boolean
 
    A flag that controls if the language server is enabled in Python files.
 
-.. confval:: esbonio.server.excludedModules (string[])
+.. esbonio:config:: esbonio.server.excludedModules
+   :scope: global
+   :type: string[]
 
    A list of :ref:`lsp-extension-modules` to exclude from the server.
 
-.. confval:: esbonio.server.includedModules (string[])
+.. esbonio:config:: esbonio.server.includedModules
+   :scope: global
+   :type: string[]
 
    A list of additional :ref:`lsp-extension-modules` to include in the server.
 
-.. confval:: esbonio.server.pythonPath (string)
+.. esbonio:config:: esbonio.server.pythonPath
+   :scope: global
+   :type: string
 
    If the official `Python Extension`_ is available the extension will use the same
    Python environment as you have configured for your workspace. However, if you wish
