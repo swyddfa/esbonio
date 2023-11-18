@@ -1,1 +1,0 @@
-Removed ``esbonio.lsp.spelling`` module, though it will be available as ``esbonio.ext.spelling`` via the ``esbonio-extensions`` package.
