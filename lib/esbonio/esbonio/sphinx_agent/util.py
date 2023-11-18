@@ -5,14 +5,23 @@ import sys
 from typing import Any
 from typing import Union
 
+from sphinx.locale import _TranslationProxy
+
 logger = logging.getLogger("esbonio.sphinx_agent")
+
+
+def _serialize_message(obj):
+    if isinstance(obj, _TranslationProxy):
+        return str(obj)
+
+    return obj
 
 
 def format_message(data: Any) -> str:
     if dataclasses.is_dataclass(data):
         data = dataclasses.asdict(data)
 
-    content = json.dumps(data)
+    content = json.dumps(data, default=_serialize_message)
     content_length = len(content)
 
     return f"Content-Length: {content_length}\r\n\r\n{content}"
