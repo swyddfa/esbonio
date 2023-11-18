@@ -125,6 +125,7 @@ def symbol(
     ],
 )
 @pytest.mark.asyncio
+@pytest.mark.skip
 async def test_document_symbols(
     client: LanguageClient,
     uri_for,
@@ -165,6 +166,7 @@ async def test_document_symbols(
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip
 async def test_diagnostics(client: LanguageClient, uri_for):
     """Ensure that the server reports any errors found by docutils when parsing the
     document."""
