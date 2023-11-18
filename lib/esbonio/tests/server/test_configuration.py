@@ -88,7 +88,23 @@ def server(event_loop):
             ExampleConfig,
             "file:///path/to/workspace/file.txt",
             ExampleConfig(log_level="info", log_names=[]),
-            id="workspace-config",
+            id="workspace-config[unix]",
+            marks=pytest.mark.skipif(IS_WIN, reason="windows"),
+        ),
+        pytest.param(
+            {},
+            {
+                "file:///c%3A/path/to/workspace": dict(
+                    esbonio=dict(server=dict(logLevel="info"))
+                )
+            },
+            {},
+            "esbonio.server",
+            ExampleConfig,
+            "file:///c:/path/to/workspace/file.txt",
+            ExampleConfig(log_level="info", log_names=[]),
+            id="workspace-config[win]",
+            marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
         pytest.param(  # Handle the case where the scope does not match a known workspace
             {},
@@ -102,7 +118,23 @@ def server(event_loop):
             ExampleConfig,
             "file:///path/to/other/workspace/file.txt",
             ExampleConfig(log_level="error", log_names=[]),
-            id="workspace-config-scope-mismatch",
+            id="workspace-config-scope-mismatch[unix]",
+            marks=pytest.mark.skipif(IS_WIN, reason="windows"),
+        ),
+        pytest.param(  # Handle the case where the scope does not match a known workspace
+            {},
+            {
+                "file:///c%3A/path/to/workspace": dict(
+                    esbonio=dict(server=dict(logLevel="info"))
+                )
+            },
+            {},
+            "esbonio.server",
+            ExampleConfig,
+            "file:///c:/path/to/other/workspace/file.txt",
+            ExampleConfig(log_level="error", log_names=[]),
+            id="workspace-config-scope-mismatch[win]",
+            marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
         pytest.param(  # Handle the case where the scope does not match a known file
             {},
@@ -116,7 +148,23 @@ def server(event_loop):
             ExampleConfig,
             "file:///path/to/workspace/docs/file.txt",
             ExampleConfig(log_level="info", log_names=[]),
-            id="file-config",
+            id="file-config[unix]",
+            marks=pytest.mark.skipif(IS_WIN, reason="windows"),
+        ),
+        pytest.param(  # Handle the case where the scope does not match a known file
+            {},
+            {},
+            {
+                "file:///c%3A/path/to/workspace/docs": dict(
+                    esbonio=dict(server=dict(logLevel="info"))
+                )
+            },
+            "esbonio.server",
+            ExampleConfig,
+            "file:///c:/path/to/workspace/docs/file.txt",
+            ExampleConfig(log_level="info", log_names=[]),
+            id="file-config[win]",
+            marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
         pytest.param(  # Handle the case where the scope does not match a known file
             {},
@@ -130,7 +178,23 @@ def server(event_loop):
             ExampleConfig,
             "file:///path/to/workspace/workspace/file.txt",
             ExampleConfig(log_level="error", log_names=[]),
-            id="file-config-scope-mismatch",
+            id="file-config-scope-mismatch[unix]",
+            marks=pytest.mark.skipif(IS_WIN, reason="windows"),
+        ),
+        pytest.param(  # Handle the case where the scope does not match a known file
+            {},
+            {},
+            {
+                "file:///c%3A/path/to/workspace/docs": dict(
+                    esbonio=dict(server=dict(logLevel="info"))
+                )
+            },
+            "esbonio.server",
+            ExampleConfig,
+            "file:///c:/path/to/workspace/workspace/file.txt",
+            ExampleConfig(log_level="error", log_names=[]),
+            id="file-config-scope-mismatch[win]",
+            marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
         pytest.param(  # Allow the client to override the file based config
             {},
@@ -148,7 +212,27 @@ def server(event_loop):
             ExampleConfig,
             "file:///path/to/workspace/docs/file.txt",
             ExampleConfig(log_level="debug", log_names=["file"]),
-            id="workspace-file-override",
+            id="workspace-file-override[unix]",
+            marks=pytest.mark.skipif(IS_WIN, reason="windows"),
+        ),
+        pytest.param(  # Allow the client to override the file based config
+            {},
+            {
+                "file:///c%3A/path/to/workspace": dict(
+                    esbonio=dict(server=dict(logLevel="debug"))
+                )
+            },
+            {
+                "file:///c%3A/path/to/workspace/docs": dict(
+                    esbonio=dict(server=dict(logLevel="info", logNames=["file"]))
+                )
+            },
+            "esbonio.server",
+            ExampleConfig,
+            "file:///c:/path/to/workspace/docs/file.txt",
+            ExampleConfig(log_level="debug", log_names=["file"]),
+            id="workspace-file-override[win]",
+            marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
     ],
 )
@@ -237,6 +321,7 @@ def test_get_configuration(
         ),
     ],
 )
+@pytest.mark.skipif(IS_WIN, reason="windows")
 def test_uri_to_scope(known_scopes, setup):
     """Ensure that we can determine the correct scope for the given uri."""
 
@@ -254,14 +339,14 @@ def test_uri_to_scope(known_scopes, setup):
                 ["file:///c:/path/to/test", "file:///c:/path/to/test/sub/folder"],
             ],
             [
-                ("file:///c:/path/to/test/file.txt", "file:///c:/path/to/test"),
-                ("file:///c%3A/path/to/test/file.txt", "file:///c:/path/to/test"),
-                ("file:///C:/path/to/test/file.txt", "file:///c:/path/to/test"),
-                ("file:///C%3A/path/to/test/file.txt", "file:///c:/path/to/test"),
-                ("file:///c:/path/to/test/sub/file.txt", "file:///c:/path/to/test"),
+                ("file:///c:/path/to/test/file.txt", "file:///c%3A/path/to/test"),
+                ("file:///c%3A/path/to/test/file.txt", "file:///c%3A/path/to/test"),
+                ("file:///C:/path/to/test/file.txt", "file:///c%3A/path/to/test"),
+                ("file:///C%3A/path/to/test/file.txt", "file:///c%3A/path/to/test"),
+                ("file:///c:/path/to/test/sub/file.txt", "file:///c%3A/path/to/test"),
                 (
                     "file:///c:/path/to/test/sub/folder/file.txt",
-                    "file:///c:/path/to/test/sub/folder",
+                    "file:///c%3A/path/to/test/sub/folder",
                 ),
             ],
         ),
