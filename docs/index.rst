@@ -90,7 +90,6 @@ Here is a quick summary of the features implemented by the language server.
    :maxdepth: 2
 
    lsp/getting-started
-   lsp/configuration
    lsp/advanced-usage
    lsp/extending
    lsp/reference

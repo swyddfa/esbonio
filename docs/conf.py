@@ -50,11 +50,12 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_design",
+    "myst_parser",
     "esbonio.relevant_to",
     "esbonio.tutorial",
     "cli_help",
     "collection_items",
-    "myst_parser",
+    "domain",
 ]
 
 autodoc_member_order = "groupwise"
@@ -136,13 +137,6 @@ def setup(app: Sphinx):
     app.add_css_file("custom.css")
     app.add_object_type(
         "command", "command", objname="command", indextemplate="pair: %s; command"
-    )
-
-    app.add_object_type(
-        "confval",
-        "confval",
-        objname="configuration value",
-        indextemplate="pair: %s; configuration value",
     )
 
     app.add_object_type(
