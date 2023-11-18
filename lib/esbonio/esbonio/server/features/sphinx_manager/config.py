@@ -183,15 +183,6 @@ class SphinxConfig:
             return []
 
         python_path = [sphinx_agent]
-        if self.enable_dev_tools:
-            if (lsp_devtools := get_module_path("lsp_devtools")) is None:
-                logger.warning(
-                    "Unable to locate module 'lsp_devtools', dev tools will not "
-                    "be availble."
-                )
-            else:
-                python_path.append(lsp_devtools)
-
         return python_path
 
     def _resolve_build_command(self, uri: Uri, logger: logging.Logger) -> List[str]:
