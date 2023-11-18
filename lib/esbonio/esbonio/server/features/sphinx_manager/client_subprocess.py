@@ -5,7 +5,7 @@ import asyncio
 import json
 import logging
 import os
-import sys
+import subprocess
 import typing
 from typing import Any
 from typing import Dict
@@ -140,8 +140,11 @@ class SubprocessSphinxClient(JsonRPCClient):
     async def start(self, config: SphinxConfig):
         """Start the client."""
         command = []
-        if config.enable_dev_tools:
-            command.extend([sys.executable, "-m", "lsp_devtools", "agent", "--"])
+
+        if config.enable_dev_tools and (
+            lsp_devtools := self._get_lsp_devtools_command()
+        ):
+            command.extend([lsp_devtools, "agent", "--"])
 
         command.extend([*config.python_command, "-m", "sphinx_agent"])
         env = get_sphinx_env(config)
@@ -150,6 +153,18 @@ class SubprocessSphinxClient(JsonRPCClient):
         self.logger.debug("Starting sphinx agent: %s", " ".join(command))
 
         await self.start_io(*command, env=env, cwd=config.cwd)
+
+    def _get_lsp_devtools_command(self) -> Optional[str]:
+        # Assumes that the user has `lsp-devtools` available on their PATH
+        # TODO: Windows support
+        result = subprocess.run(["command", "-v", "lsp-devtools"], capture_output=True)
+        if result.returncode == 0:
+            lsp_devtools = result.stdout.decode("utf8").strip()
+            return lsp_devtools
+
+        stderr = result.stderr.decode("utf8").strip()
+        self.logger.debug("Unable to locate lsp-devtools command", stderr)
+        return None
 
     async def stop(self):
         """Stop the client."""
