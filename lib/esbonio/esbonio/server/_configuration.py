@@ -154,6 +154,9 @@ class Configuration:
             self.logger.debug("Ignoring duplicate subscription: %s", subscription)
             return
 
+        # Wait until the server is ready before fetching the initial configuration
+        await self.server.ready
+
         result = self.get(section, spec, scope)
         self._subscriptions[subscription] = result
 
@@ -290,7 +293,9 @@ class Configuration:
 
         return paths
 
-    def update_file_configuration(self, paths: Optional[List[pathlib.Path]] = None):
+    async def update_file_configuration(
+        self, paths: Optional[List[pathlib.Path]] = None
+    ):
         """Update the internal cache of configuration coming from files.
 
         Parameters
@@ -316,6 +321,8 @@ class Configuration:
                 self.logger.error(
                     "Unable to read configuration file: '%s'", exc_info=True
                 )
+
+        await self._notify_subscriptions()
 
     async def update_workspace_configuration(self):
         """Update the internal cache of the client's workspace configuration."""

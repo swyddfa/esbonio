@@ -2,11 +2,14 @@ from __future__ import annotations
 
 import importlib
 import inspect
+import pathlib
 import typing
 from typing import Iterable
 from typing import Type
 
 from lsprotocol import types
+
+from ._uri import Uri
 
 if typing.TYPE_CHECKING:
     from .server import EsbonioLanguageServer
@@ -90,6 +93,15 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
     ):
         ls.logger.debug("%s: %s", types.WORKSPACE_DID_CHANGE_CONFIGURATION, params)
         await ls.configuration.update_workspace_configuration()
+
+    @server.feature(types.WORKSPACE_DID_CHANGE_WATCHED_FILES)
+    async def on_did_change_watched_files(
+        ls: EsbonioLanguageServer, params: types.DidChangeWatchedFilesParams
+    ):
+        ls.logger.debug("%s: %s", types.WORKSPACE_DID_CHANGE_WATCHED_FILES, params)
+        # TODO: Handle deleted files.
+        paths = [pathlib.Path(Uri.parse(event.uri)) for event in params.changes]
+        await ls.configuration.update_file_configuration(paths)
 
     return server
 
