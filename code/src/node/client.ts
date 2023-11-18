@@ -199,6 +199,7 @@ export class EsbonioClient {
     this.logger.debug(`Server start command: ${command.join(" ")}`)
     let serverEnv: ExecutableOptions = {
       env: {
+        PATH: process.env.PATH,
         PYTHONPATH: join(this.context.extensionPath, "bundled", "libs")
       }
     }
