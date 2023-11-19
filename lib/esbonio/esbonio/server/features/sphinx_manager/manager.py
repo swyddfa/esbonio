@@ -198,13 +198,22 @@ class SphinxManager(LanguageFeature):
             return None
 
         client = self.client_factory(self)
-        await client.start(resolved)
+
+        try:
+            await client.start(resolved)
+        except Exception as exc:
+            message = "Unable to start sphinx-agent"
+            self.logger.error(message, exc_info=True)
+            self.server.show_message(f"{message}: {exc}", lsp.MessageType.Error)
+
+            return None
 
         try:
             sphinx_info = await client.create_application(resolved)
         except Exception as exc:
-            self.logger.error("Unable to create sphinx application", exc_info=True)
-            self.server.show_message(f"{exc}", lsp.MessageType.Error)
+            message = "Unable to create sphinx application"
+            self.logger.error(message, exc_info=True)
+            self.server.show_message(f"{message}: {exc}", lsp.MessageType.Error)
 
             await client.stop()
             return None

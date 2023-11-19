@@ -139,6 +139,10 @@ class SubprocessSphinxClient(JsonRPCClient):
 
     async def start(self, config: SphinxConfig):
         """Start the client."""
+
+        if len(config.python_command) == 0:
+            raise ValueError("No python environment configured")
+
         command = []
 
         if config.enable_dev_tools and (
