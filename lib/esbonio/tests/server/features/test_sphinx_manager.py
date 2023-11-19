@@ -62,7 +62,8 @@ async def test_create_application_error(server, workspace: Uri):
     assert result is None
 
     server.show_message.assert_called_with(
-        "create sphinx application failed.", lsp.MessageType.Error
+        "Unable to create sphinx application: create sphinx application failed.",
+        lsp.MessageType.Error,
     )
 
 
