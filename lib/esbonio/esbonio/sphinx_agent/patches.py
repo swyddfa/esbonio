@@ -6,6 +6,7 @@ from typing import Callable
 from typing import Iterable
 from typing import Iterator
 from typing import Optional
+from typing import Type
 from typing import TypeVar
 
 from . import types
@@ -77,9 +78,9 @@ class progress_message:
 
     def __exit__(
         self,
-        typ: type[BaseException] | None,
-        val: BaseException | None,
-        tb: TracebackType | None,
+        typ: Optional[Type[BaseException]],
+        val: Optional[BaseException],
+        tb: Optional[TracebackType],
     ) -> bool:
         from sphinx.locale import __
         from sphinx.util.logging import NAMESPACE
