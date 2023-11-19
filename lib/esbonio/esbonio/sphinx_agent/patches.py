@@ -16,7 +16,11 @@ T = TypeVar("T")
 
 def patch_sphinx():
     """Monkey patch parts of Sphinx with our own implementations."""
-    from sphinx.util import display
+    try:
+        from sphinx.util import display
+    except ImportError:
+        # display submodule was not introduced until Sphinx 6.x
+        import sphinx.util as display  # type: ignore[no-redef]
 
     display.status_iterator = status_iterator
     display.progress_message = progress_message  # type: ignore
@@ -33,8 +37,13 @@ def status_iterator(
     """Used to override Sphinx's version of this function.
     Sends progress reports to the client as well as the usual logs.
     """
-    from sphinx.util.display import display_chunk
     from sphinx.util.logging import NAMESPACE
+
+    try:
+        from sphinx.util.display import display_chunk
+    except ImportError:
+        # display submodule was not introduced until Sphinx 5.x
+        from sphinx.util import display_chunk  # type: ignore[no-redef]
 
     if stringify_func is None:
         stringify_func = display_chunk
@@ -73,8 +82,13 @@ class progress_message:
         tb: TracebackType | None,
     ) -> bool:
         from sphinx.locale import __
-        from sphinx.util import display
         from sphinx.util.logging import NAMESPACE
+
+        try:
+            from sphinx.util import display
+        except ImportError:
+            # display submodule was not introduced until Sphinx 6.x
+            import sphinx.util as display  # type: ignore[no-redef]
 
         logger = logging.getLogger(NAMESPACE)
 
