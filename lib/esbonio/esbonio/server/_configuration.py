@@ -355,6 +355,9 @@ class Configuration:
             self.logger.debug(
                 "Workspace '%s' configuration: %s", scope, json.dumps(result, indent=2)
             )
+            # result can be `None`
+            result = result or {}
+
             if "esbonio" not in result:
                 result = dict(esbonio=result)
 
