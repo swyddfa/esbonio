@@ -92,6 +92,7 @@ Here is a quick summary of the features implemented by the language server.
    lsp/getting-started
    lsp/advanced-usage
    lsp/extending
+   lsp/howto
    lsp/reference
    changelog
 
