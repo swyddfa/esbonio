@@ -50,6 +50,14 @@ class MockSphinxClient:
         self.building = False
         self.build_file_map = build_file_map or {}
 
+    @property
+    def id(self) -> Optional[str]:
+        """The id of the Sphinx instance."""
+        if isinstance(self._create_result, Exception):
+            return None
+
+        return self._create_result.id
+
     async def start(self, *args, **kwargs):
         await asyncio.sleep(self._startup_delay)
 
