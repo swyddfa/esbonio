@@ -55,6 +55,7 @@ def sphinx_info(workspace: Uri):
         build_dir=(workspace / "_build" / "html").fs_path,
         builder_name="html",
         src_dir=workspace.fs_path,
+        dbpath=(workspace / "_build" / "html" / "esbonio.db").fs_path,
     )
 
 

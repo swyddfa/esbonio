@@ -15,22 +15,26 @@ from typing import Tuple
 from typing import Type
 from uuid import uuid4
 
+import sphinx.application
 from sphinx import __version__ as __sphinx_version__
-from sphinx.application import Sphinx
 from sphinx.util import console
 from sphinx.util import logging as sphinx_logging_module
 from sphinx.util.logging import NAMESPACE as SPHINX_LOG_NAMESPACE
 from sphinx.util.logging import VERBOSITY_MAP
 
-from . import types
-from .config import SphinxConfig
-from .log import SphinxLogHandler
-from .transforms import LineNumberTransform
-from .util import send_error
-from .util import send_message
+from .. import types
+from ..app import Sphinx
+from ..config import SphinxConfig
+from ..log import SphinxLogHandler
+from ..transforms import LineNumberTransform
+from ..util import send_error
+from ..util import send_message
 
-STATIC_DIR = (pathlib.Path(__file__).parent / "static").resolve()
+STATIC_DIR = (pathlib.Path(__file__).parent.parent / "static").resolve()
 sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
+
+# Inject our own 'core' extensions into Sphinx
+sphinx.application.builtin_extensions += (f"{__name__}.database",)
 
 
 class SphinxHandler:
@@ -138,6 +142,7 @@ class SphinxHandler:
                 build_dir=str(self.app.outdir),
                 builder_name=self.app.builder.name,
                 src_dir=str(self.app.srcdir),
+                dbpath=str(self.app.esbonio.dbpath),
             ),
             jsonrpc=request.jsonrpc,
         )
@@ -220,7 +225,6 @@ class SphinxHandler:
             response = types.BuildResponse(
                 id=request.id,
                 result=types.BuildResult(
-                    build_file_map=_build_file_mapping(self.app),
                     diagnostics=diagnostics,
                 ),
                 jsonrpc=request.jsonrpc,
@@ -236,26 +240,6 @@ class SphinxHandler:
     def notify_exit(self, request: types.ExitNotification):
         """Sent from the client to signal that the agent should exit."""
         sys.exit(0)
-
-
-def _build_file_mapping(app: Sphinx) -> Dict[str, str]:
-    """Given a Sphinx application, return a mapping of all known source files to their
-    corresponding output files."""
-
-    env = app.env
-    builder = app.builder
-    mapping = {env.doc2path(doc): builder.get_target_uri(doc) for doc in env.found_docs}
-
-    # Don't forget any included files.
-    # TODO: How best to handle files included in multiple documents?
-    for parent_doc, included_docs in env.included.items():
-        for doc in included_docs:
-            mapping[env.doc2path(doc)] = mapping[env.doc2path(parent_doc)]
-
-    # Ensure any relative paths in included docs are resolved.
-    mapping = {str(pathlib.Path(d).resolve()): uri for d, uri in mapping.items()}
-
-    return mapping
 
 
 def _enable_sync_scrolling(app: Sphinx):
