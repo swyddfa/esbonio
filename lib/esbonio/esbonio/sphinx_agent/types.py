@@ -83,6 +83,9 @@ class SphinxInfo:
     src_dir: str
     """The folder containing the source files for the project"""
 
+    dbpath: str
+    """The filepath the database is stored in."""
+
 
 @dataclasses.dataclass
 class CreateApplicationResponse:
