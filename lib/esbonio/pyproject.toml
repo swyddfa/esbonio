@@ -25,6 +25,7 @@ classifiers = [
     "Topic :: Documentation :: Sphinx",
 ]
 dependencies = [
+    "aiosqlite",
     "platformdirs",
     "docutils",
     "pygls>=1.1.0",

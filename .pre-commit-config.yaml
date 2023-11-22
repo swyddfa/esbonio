@@ -36,6 +36,7 @@ repos:
     name: mypy (esbonio)
     args: [--config,lib/esbonio/pyproject.toml]
     additional_dependencies:
+    - aiosqlite
     - platformdirs
     - pygls
     - pytest_lsp>=0.3
