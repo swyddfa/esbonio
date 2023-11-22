@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import typing
 from typing import Dict
+from typing import List
 from typing import Optional
 from typing import Union
 
@@ -33,12 +34,12 @@ class MockSphinxClient:
            The result to return when calling ``create_application``.
            If an exception is given it will be raised.
 
+        build_file_map
+           The build file map to use.
+
         build_result
            The result to return when calling ``build``.
            If an exception is given it will be raised.
-
-        build_file_map
-           The build file map to use.
 
         startup_delay
            The duration to sleep for when calling ``start``
@@ -46,9 +47,8 @@ class MockSphinxClient:
         self._create_result = create_result
         self._startup_delay = startup_delay
         self._build_result = build_result or types.BuildResult()
-
+        self._build_file_map = build_file_map or {}
         self.building = False
-        self.build_file_map = build_file_map or {}
 
     @property
     def id(self) -> Optional[str]:
@@ -79,6 +79,14 @@ class MockSphinxClient:
             raise self._build_result
 
         return self._build_result
+
+    async def get_src_uris(self) -> List[Uri]:
+        """Return all known source files."""
+        return [s for s in self._build_file_map.keys()]
+
+    async def get_build_path(self, src_uri: Uri) -> Optional[str]:
+        """Get the build path associated with the given ``src_uri``."""
+        return self._build_file_map.get(src_uri)
 
 
 def mock_sphinx_client_factory(client: Optional[SphinxClient] = None):

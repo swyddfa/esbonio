@@ -3,6 +3,8 @@ from typing import List
 from typing import Optional
 from typing import Protocol
 
+import aiosqlite
+
 from esbonio.server import Uri
 from esbonio.sphinx_agent import types
 
@@ -18,6 +20,10 @@ class SphinxClient(Protocol):
         """The id of the Sphinx instance."""
 
     @property
+    def db(self) -> Optional[aiosqlite.Connection]:
+        """Connection to the associated database."""
+
+    @property
     def builder(self) -> Optional[str]:
         """The name of the Sphinx builder."""
 
@@ -28,20 +34,6 @@ class SphinxClient(Protocol):
     @property
     def build_uri(self) -> Optional[Uri]:
         """The URI to the Sphinx application's build dir."""
-
-    @property
-    def build_file_map(self) -> Dict[Uri, str]:
-        """A mapping of source file uris to the corresponding build path that contains
-        their content.
-
-        Example
-        -------
-        >>> client.build_file_map
-        {
-           Uri(scheme='file', path='/path/to/index.rst'): "index.html",
-        }
-        """
-        ...
 
     @property
     def diagnostics(self) -> Dict[Uri, List[types.Diagnostic]]:
@@ -73,6 +65,13 @@ class SphinxClient(Protocol):
     ) -> types.BuildResult:
         """Trigger a Sphinx build."""
         ...
+
+    async def get_src_uris(self) -> List[Uri]:
+        """Return all known source files."""
+        ...
+
+    async def get_build_path(self, src_uri: Uri) -> Optional[str]:
+        """Get the build path associated with the given ``src_uri``."""
 
     async def stop(self):
         """Stop the client."""

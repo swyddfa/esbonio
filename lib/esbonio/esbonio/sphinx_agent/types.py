@@ -116,9 +116,6 @@ class BuildResult:
     diagnostics: Dict[str, List[Diagnostic]] = dataclasses.field(default_factory=dict)
     """Any diagnostics associated with the project."""
 
-    build_file_map: Dict[str, str] = dataclasses.field(default_factory=dict)
-    """A mapping of source files to the output files they contributed to."""
-
 
 @dataclasses.dataclass
 class BuildRequest:

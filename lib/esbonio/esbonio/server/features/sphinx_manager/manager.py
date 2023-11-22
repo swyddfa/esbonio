@@ -102,7 +102,9 @@ class SphinxManager(LanguageFeature):
 
         # Pass through any unsaved content to the Sphinx agent.
         content_overrides: Dict[str, str] = {}
-        for src_uri in client.build_file_map.keys():
+        known_src_uris = await client.get_src_uris()
+
+        for src_uri in known_src_uris:
             doc = self.server.workspace.get_document(str(src_uri))
             doc_version = doc.version or 0
             saved_version = getattr(doc, "saved_version", 0)
@@ -159,7 +161,7 @@ class SphinxManager(LanguageFeature):
         resolved_uri = uri.resolve()
 
         for src_uri, client in self.clients.items():
-            if resolved_uri in client.build_file_map:
+            if resolved_uri in (await client.get_src_uris()):
                 return client
 
             # For now assume a single client instance per srcdir.
@@ -170,10 +172,8 @@ class SphinxManager(LanguageFeature):
             if in_src_dir:
                 # Of course, we can only tell if a uri truly is not in a project
                 # when the build file map is populated!
-                if len(client.build_file_map) == 0:
-                    return client
-
-                return None
+                # if len(client.build_file_map) == 0:
+                return client
 
         # Create a new client instance.
         self._client_creating = asyncio.create_task(self._create_client(uri))
