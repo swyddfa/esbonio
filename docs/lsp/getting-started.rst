@@ -23,11 +23,6 @@ This section contains notes on how to use the language server with your text edi
 .. grid:: 2 2 3 4
    :gutter: 1
 
-   .. grid-item-card:: Emacs
-      :link: editors/emacs
-      :link-type: doc
-      :text-align: center
-
    .. grid-item-card:: Kate
       :link: editors/kate
       :link-type: doc
