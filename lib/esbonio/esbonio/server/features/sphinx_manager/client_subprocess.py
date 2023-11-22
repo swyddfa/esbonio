@@ -12,6 +12,7 @@ from typing import Dict
 from typing import List
 from typing import Optional
 
+import aiosqlite
 from pygls import IS_WIN
 from pygls.client import JsonRPCClient
 from pygls.protocol import JsonRPCProtocol
@@ -54,8 +55,9 @@ class SubprocessSphinxClient(JsonRPCClient):
         self.logger = logger or logging.getLogger(__name__)
 
         self.sphinx_info: Optional[types.SphinxInfo] = None
+
+        self._connection: Optional[aiosqlite.Connection] = None
         self._building = False
-        self._build_file_map: Dict[Uri, str] = {}
         self._diagnostics: Dict[Uri, List[types.Diagnostic]] = {}
 
     @property
@@ -103,9 +105,9 @@ class SubprocessSphinxClient(JsonRPCClient):
         return self._diagnostics
 
     @property
-    def build_file_map(self) -> Dict[Uri, str]:
-        """Mapping of source files to their corresponing output path."""
-        return self._build_file_map
+    def db(self) -> Optional[aiosqlite.Connection]:
+        """Connection to the associated database."""
+        return self._connection
 
     @property
     def build_uri(self) -> Optional[Uri]:
@@ -172,10 +174,13 @@ class SubprocessSphinxClient(JsonRPCClient):
 
     async def stop(self):
         """Stop the client."""
+
         self.protocol.notify("exit", None)
+        if self._connection:
+            await self._connection.close()
 
         # Give the agent a little time to close.
-        await asyncio.sleep(0.5)
+        # await asyncio.sleep(0.5)
         await super().stop()
 
     async def create_application(self, config: SphinxConfig) -> types.SphinxInfo:
@@ -188,6 +193,12 @@ class SubprocessSphinxClient(JsonRPCClient):
 
         sphinx_info = await self.protocol.send_request_async("sphinx/createApp", params)
         self.sphinx_info = sphinx_info
+
+        try:
+            self._connection = await aiosqlite.connect(sphinx_info.dbpath)
+        except Exception:
+            self.logger.error("Unable to connect to database", exc_info=True)
+
         return sphinx_info
 
     async def build(
@@ -215,11 +226,31 @@ class SubprocessSphinxClient(JsonRPCClient):
             Uri.for_file(fpath): items for fpath, items in result.diagnostics.items()
         }
 
-        self._build_file_map = {
-            Uri.for_file(src): out for src, out in result.build_file_map.items()
-        }
-
         return result
+
+    async def get_src_uris(self) -> List[Uri]:
+        """Return all known source uris."""
+
+        if self.db is None:
+            return []
+
+        query = "SELECT path FROM files"
+        async with self.db.execute(query) as cursor:
+            results = await cursor.fetchall()
+            return [Uri.for_file(s[0]) for s in results]
+
+    async def get_build_path(self, src_uri: Uri) -> Optional[str]:
+        """Get the build path associated with the given ``src_uri``."""
+
+        if self.db is None or (path := src_uri.fs_path) is None:
+            return None
+
+        query = "SELECT uri FROM files WHERE path = ?"
+        async with self.db.execute(query, (path,)) as cursor:
+            if (result := await cursor.fetchone()) is None:
+                return None
+
+            return result[0]
 
 
 def make_subprocess_sphinx_client(manager: SphinxManager) -> SphinxClient:

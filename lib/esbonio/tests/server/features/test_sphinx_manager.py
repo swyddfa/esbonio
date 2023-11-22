@@ -83,7 +83,6 @@ async def test_trigger_build_error(sphinx_info, server, workspace):
 
     client = MockSphinxClient(
         sphinx_info,
-        build_file_map={(workspace / "index.rst").resolve(): "/"},
         build_result=JsonRpcInternalError("sphinx-build failed:"),
     )
     client_factory = mock_sphinx_client_factory()

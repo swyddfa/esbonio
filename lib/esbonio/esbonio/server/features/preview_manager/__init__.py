@@ -195,13 +195,10 @@ class PreviewManager(LanguageFeature):
             )
             return None
 
-        if (build_path := client.build_file_map.get(src_uri, None)) is None:
-            # Has the project been built yet?
-            if len(client.build_file_map) == 0:
-                # If not, trigger a build and try again
-                await self.sphinx.trigger_build(src_uri)
-                return await self.preview_file(params)
-
+        if (build_path := await client.get_build_path(src_uri)) is None:
+            self.logger.debug(
+                "Unable to preview file '%s', not included in build output.", src_uri
+            )
             return None
 
         config = await self.get_preview_config()
