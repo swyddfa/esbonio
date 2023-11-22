@@ -74,9 +74,4 @@ Then within your documentation, "relevant sections" are defined using the :rst:d
 
    The body of a definition can contain most reStructuredText constructs including roles and directives
 
-   .. literalinclude:: /lsp/getting-started.rst
-      :language: rst
-      :start-at: .. relevant-to:: Editor
-      :end-before: Emacs
-
    However section titles are not supported.
