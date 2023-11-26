@@ -16,7 +16,6 @@ from esbonio.server.features.sphinx_manager.client_subprocess import (
     make_test_sphinx_client,
 )
 from esbonio.server.features.sphinx_manager.config import SphinxConfig
-from esbonio.sphinx_agent import types
 
 
 @pytest.mark.asyncio
@@ -36,59 +35,6 @@ async def test_build_includes_webview_js(client: SubprocessSphinxClient, uri_for
     index_html = pathlib.Path(out / "index.html")
     pattern = re.compile(r'<script src="_static/webview.js(\?v=[\w]+)?"></script>')
     assert pattern.search(index_html.read_text()) is not None
-
-
-@pytest.mark.asyncio
-async def test_diagnostics(client: SubprocessSphinxClient, uri_for):
-    """Ensure that the sphinx agent reports diagnostics collected during the build"""
-    expected = {
-        uri_for("sphinx-default/workspace/definitions.rst").fs_path: [
-            types.Diagnostic(
-                message="unknown document: '/changelog'",
-                severity=types.DiagnosticSeverity.Warning,
-                range=types.Range(
-                    start=types.Position(line=13, character=0),
-                    end=types.Position(line=14, character=0),
-                ),
-            ),
-            types.Diagnostic(
-                message="image file not readable: _static/bad.png",
-                severity=types.DiagnosticSeverity.Warning,
-                range=types.Range(
-                    start=types.Position(line=28, character=0),
-                    end=types.Position(line=29, character=0),
-                ),
-            ),
-        ],
-        uri_for("sphinx-default/workspace/directive_options.rst").fs_path: [
-            types.Diagnostic(
-                message="document isn't included in any toctree",
-                severity=types.DiagnosticSeverity.Warning,
-                range=types.Range(
-                    start=types.Position(line=0, character=0),
-                    end=types.Position(line=1, character=0),
-                ),
-            ),
-            types.Diagnostic(
-                message="image file not readable: filename.png",
-                severity=types.DiagnosticSeverity.Warning,
-                range=types.Range(
-                    start=types.Position(line=0, character=0),
-                    end=types.Position(line=1, character=0),
-                ),
-            ),
-        ],
-    }
-    result = await client.build()
-    actual = {pathlib.Path(p): items for p, items in result.diagnostics.items()}
-
-    actual_keys = set(actual.keys())
-    expected_keys = set(pathlib.Path(k) for k in expected.keys())
-    assert actual_keys == expected_keys
-
-    for k, ex_diags in expected.items():
-        # Order of results is not important
-        assert set(actual[pathlib.Path(k)]) == set(ex_diags)
 
 
 @pytest.mark.asyncio

@@ -34,7 +34,10 @@ STATIC_DIR = (pathlib.Path(__file__).parent.parent / "static").resolve()
 sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
 
 # Inject our own 'core' extensions into Sphinx
-sphinx.application.builtin_extensions += (f"{__name__}.database",)
+sphinx.application.builtin_extensions += (
+    f"{__name__}.files",
+    f"{__name__}.diagnostics",
+)
 
 
 class SphinxHandler:
