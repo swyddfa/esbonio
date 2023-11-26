@@ -44,9 +44,6 @@ class SphinxHandler:
         self.app: Optional[Sphinx] = None
         """The sphinx application instance"""
 
-        self.log_handler: Optional[SphinxLogHandler] = None
-        """The logging handler"""
-
         self._content_overrides: Dict[pathlib.Path, str] = {}
         """Holds any additional content to inject into a build."""
 
@@ -142,7 +139,7 @@ class SphinxHandler:
                 build_dir=str(self.app.outdir),
                 builder_name=self.app.builder.name,
                 src_dir=str(self.app.srcdir),
-                dbpath=str(self.app.esbonio.dbpath),
+                dbpath=str(self.app.esbonio.db.path),
             ),
             jsonrpc=request.jsonrpc,
         )
@@ -163,10 +160,6 @@ class SphinxHandler:
 
         filepath = app.env.doc2path(docname, base=True)
 
-        # Clear diagnostics
-        if self.log_handler:
-            self.log_handler.diagnostics.pop(filepath, None)
-
         # Override file contents if necessary
         path = pathlib.Path(filepath)
         if (content := self._content_overrides.get(path)) is not None:
@@ -186,8 +179,8 @@ class SphinxHandler:
                     sphinx_logger.handlers.remove(handler)
                     self.log_handler = None
 
-            self.log_handler = SphinxLogHandler(app)
-            sphinx_logger.addHandler(self.log_handler)
+            app.esbonio.log = SphinxLogHandler(app)
+            sphinx_logger.addHandler(app.esbonio.log)
 
             if config.quiet:
                 level = logging.WARNING
@@ -195,10 +188,10 @@ class SphinxHandler:
                 level = VERBOSITY_MAP[app.verbosity]
 
             sphinx_logger.setLevel(level)
-            self.log_handler.setLevel(level)
+            app.esbonio.log.setLevel(level)
 
             formatter = logging.Formatter("%(message)s")
-            self.log_handler.setFormatter(formatter)
+            app.esbonio.log.setFormatter(formatter)
 
     def build_sphinx_app(self, request: types.BuildRequest):
         """Trigger a Sphinx build."""
@@ -215,18 +208,9 @@ class SphinxHandler:
         try:
             self.app.build()
 
-            diagnostics = {}
-            if self.log_handler:
-                diagnostics = {
-                    fpath: list(items)
-                    for fpath, items in self.log_handler.diagnostics.items()
-                }
-
             response = types.BuildResponse(
                 id=request.id,
-                result=types.BuildResult(
-                    diagnostics=diagnostics,
-                ),
+                result=types.BuildResult(),
                 jsonrpc=request.jsonrpc,
             )
             send_message(response)
