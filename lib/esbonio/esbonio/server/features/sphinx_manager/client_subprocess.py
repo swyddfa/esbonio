@@ -291,6 +291,10 @@ def make_test_sphinx_client() -> SubprocessSphinxClient:
     def _(params):
         logger.info("%s", params.message)
 
+    @client.feature("$/progress")
+    def _on_progress(params):
+        logger.info("%s", params)
+
     return client
 
 

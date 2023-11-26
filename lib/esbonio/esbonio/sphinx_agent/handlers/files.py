@@ -19,10 +19,7 @@ FILES_TABLE = Database.Table(
 
 
 def init_db(app: Sphinx, config: Config):
-    dbpath = pathlib.Path(app.outdir, "esbonio.db")
-
-    app.esbonio = Database(dbpath)
-    app.esbonio.ensure_table(FILES_TABLE)
+    app.esbonio.db.ensure_table(FILES_TABLE)
 
 
 def build_file_mapping(app: Sphinx, exc: Optional[Exception]):
@@ -48,8 +45,8 @@ def build_file_mapping(app: Sphinx, exc: Optional[Exception]):
 
             files.append((str(path), docname, build_uri))
 
-    app.esbonio.clear_table(FILES_TABLE)
-    app.esbonio.insert_values(FILES_TABLE, files)
+    app.esbonio.db.clear_table(FILES_TABLE)
+    app.esbonio.db.insert_values(FILES_TABLE, files)
 
 
 def setup(app: Sphinx):

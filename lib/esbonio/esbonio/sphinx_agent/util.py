@@ -17,11 +17,15 @@ def _serialize_message(obj):
     return obj
 
 
-def format_message(data: Any) -> str:
+def as_json(data: Any) -> str:
     if dataclasses.is_dataclass(data):
         data = dataclasses.asdict(data)
 
-    content = json.dumps(data, default=_serialize_message)
+    return json.dumps(data, default=_serialize_message)
+
+
+def format_message(data: Any) -> str:
+    content = as_json(data)
     content_length = len(content)
 
     return f"Content-Length: {content_length}\r\n\r\n{content}"
