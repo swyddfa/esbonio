@@ -1,1 +1,0 @@
-Fix ``ValueError`` thrown when building the document symbol for a title node that only contains a role.

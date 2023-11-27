@@ -1,3 +1,12 @@
+v0.16.3 - 2023-11-27
+--------------------
+
+Fixes
+^^^^^
+
+- Fix ``ValueError`` thrown when building the document symbol for a title node that only contains a role. (`#685 <https://github.com/swyddfa/esbonio/issues/685>`_)
+
+
 v0.16.2 - 2023-10-07
 --------------------
 
