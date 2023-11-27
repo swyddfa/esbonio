@@ -73,6 +73,9 @@ class SymbolVisitor(NodeVisitor):
             symbol = self.push_symbol()
 
         name = node.astext()
+        if len(name) == 0:
+            name = "title_node"
+
         line = (node.line or 1) - 1
 
         symbol.name = name
@@ -93,6 +96,9 @@ class SymbolVisitor(NodeVisitor):
         symbol = self.push_symbol()
 
         name = node["text"]  # type: ignore
+        if len(name) == 0:
+            name = "a_directive"
+
         line = (node.line or 1) - 1
 
         symbol.name = name
