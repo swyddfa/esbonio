@@ -30,6 +30,9 @@ length of a missing side of a right angled triangle when the other two are known
 
    Used to represent an unknown value.
 
+:code:`Triangle`
+^^^^^^^^^^^^^^^^
+
 .. class:: Triangle(a: float, b: float, c: float)
 
    Represents a triangle

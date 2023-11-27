@@ -481,7 +481,7 @@ async def test_insert_range(
         ),
         (
             "theorems/pythagoras.rst",
-            53,
+            56,
             9,
             "sphinx/domains/python.py",
         ),
