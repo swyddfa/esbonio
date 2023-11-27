@@ -51,6 +51,58 @@ def symbol(
     )
 
 
+CODE_TRIANGLE = symbol(
+    name=":code:`Triangle`",
+    kind=SymbolKind.String,
+    range="33:0-33:15",
+    children=[
+        symbol(
+            name=".. class:: Triangle(a: float, b: float, c: float)",
+            kind=SymbolKind.Class,
+            range="35:0-35:48",
+            children=[
+                symbol(
+                    name=".. attribute:: a",
+                    kind=SymbolKind.Class,
+                    range="39:0-39:15",
+                ),
+                symbol(
+                    name=".. attribute:: b",
+                    kind=SymbolKind.Class,
+                    range="43:0-43:15",
+                ),
+                symbol(
+                    name=".. attribute:: c",
+                    kind=SymbolKind.Class,
+                    range="47:0-47:15",
+                ),
+                symbol(
+                    name=".. method:: is_right_angled() -> bool",
+                    kind=SymbolKind.Class,
+                    range="51:0-51:36",
+                    children=[],
+                ),
+            ],
+        ),
+        symbol(
+            name=".. function:: calc_hypotenuse(a: float, b: float) -> float",
+            kind=SymbolKind.Class,
+            range="56:0-56:57",
+        ),
+        symbol(
+            name=".. function:: calc_side(c: float, b: float) -> float",
+            kind=SymbolKind.Class,
+            range="65:0-65:51",
+        ),
+        symbol(
+            name=".. |rhs| replace:: right hand side",
+            kind=SymbolKind.Class,
+            range="74:0-74:33",
+        ),
+    ],
+)
+
+
 @pytest.mark.parametrize(
     "filepath,expected",
     [
@@ -98,49 +150,7 @@ def symbol(
                                     kind=SymbolKind.Class,
                                     range="28:0-28:16",
                                 ),
-                                symbol(
-                                    name=".. class:: Triangle(a: float, b: float, c: float)",
-                                    kind=SymbolKind.Class,
-                                    range="32:0-32:48",
-                                    children=[
-                                        symbol(
-                                            name=".. attribute:: a",
-                                            kind=SymbolKind.Class,
-                                            range="36:0-36:15",
-                                        ),
-                                        symbol(
-                                            name=".. attribute:: b",
-                                            kind=SymbolKind.Class,
-                                            range="40:0-40:15",
-                                        ),
-                                        symbol(
-                                            name=".. attribute:: c",
-                                            kind=SymbolKind.Class,
-                                            range="44:0-44:15",
-                                        ),
-                                        symbol(
-                                            name=".. method:: is_right_angled() -> bool",
-                                            kind=SymbolKind.Class,
-                                            range="48:0-48:36",
-                                            children=[],
-                                        ),
-                                    ],
-                                ),
-                                symbol(
-                                    name=".. function:: calc_hypotenuse(a: float, b: float) -> float",
-                                    kind=SymbolKind.Class,
-                                    range="53:0-53:57",
-                                ),
-                                symbol(
-                                    name=".. function:: calc_side(c: float, b: float) -> float",
-                                    kind=SymbolKind.Class,
-                                    range="62:0-62:51",
-                                ),
-                                symbol(
-                                    name=".. |rhs| replace:: right hand side",
-                                    kind=SymbolKind.Class,
-                                    range="71:0-71:33",
-                                ),
+                                CODE_TRIANGLE,
                             ],
                         ),
                     ],

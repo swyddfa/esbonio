@@ -32,6 +32,9 @@ class a_directive(nodes.Element, nodes.Inline):
 class a_role(nodes.Element):
     """Represents a role."""
 
+    def astext(self):
+        return self["text"]
+
 
 def dummy_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     node = a_role()

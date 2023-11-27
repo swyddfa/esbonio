@@ -430,7 +430,7 @@ async def test_role_target_insert_range(
         ),
         pytest.param(
             "theorems/pythagoras.rst",
-            50,
+            53,
             19,
             "docutils/parsers/rst/roles.py",
             marks=pytest.mark.skipif(
@@ -440,7 +440,7 @@ async def test_role_target_insert_range(
         ),
         pytest.param(
             "theorems/pythagoras.rst",
-            50,
+            53,
             19,
             "sphinx/roles.py",
             marks=pytest.mark.skipif(
