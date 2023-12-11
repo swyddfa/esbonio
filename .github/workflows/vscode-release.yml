@@ -20,7 +20,7 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'code/package-lock.json'
 
-    - uses: 'actions/setup-python@v4'
+    - uses: 'actions/setup-python@v5'
       with:
         # This must be the minimum Python version we support
         python-version: "3.8"
