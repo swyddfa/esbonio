@@ -58,7 +58,10 @@ class SubprocessSphinxClient(JsonRPCClient):
 
         self._connection: Optional[aiosqlite.Connection] = None
         self._building = False
-        self._diagnostics: Dict[Uri, List[types.Diagnostic]] = {}
+
+    @property
+    def converter(self):
+        return self.protocol._converter
 
     @property
     def id(self) -> Optional[str]:
@@ -95,14 +98,6 @@ class SubprocessSphinxClient(JsonRPCClient):
             return None
 
         return Uri.for_file(self.sphinx_info.conf_dir)
-
-    @property
-    def diagnostics(self) -> Dict[Uri, List[types.Diagnostic]]:
-        """Any diagnostics associated with the project.
-
-        These are automatically updated with each build.
-        """
-        return self._diagnostics
 
     @property
     def db(self) -> Optional[aiosqlite.Connection]:
@@ -222,10 +217,6 @@ class SubprocessSphinxClient(JsonRPCClient):
         finally:
             self._building = False
 
-        self._diagnostics = {
-            Uri.for_file(fpath): items for fpath, items in result.diagnostics.items()
-        }
-
         return result
 
     async def get_src_uris(self) -> List[Uri]:
@@ -251,6 +242,21 @@ class SubprocessSphinxClient(JsonRPCClient):
                 return None
 
             return result[0]
+
+    async def get_diagnostics(self) -> Dict[Uri, List[Dict[str, Any]]]:
+        """Get diagnostics for the project."""
+        if self.db is None:
+            return {}
+
+        cursor = await self.db.execute("SELECT * FROM diagnostics")
+        results: Dict[Uri, List[Dict[str, Any]]] = {}
+
+        for path, item in await cursor.fetchall():
+            uri = Uri.for_file(path)
+            diagnostic = json.loads(item)
+            results.setdefault(uri, []).append(diagnostic)
+
+        return results
 
 
 def make_subprocess_sphinx_client(manager: SphinxManager) -> SphinxClient:
