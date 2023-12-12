@@ -245,15 +245,21 @@ class EsbonioLanguageServer(LanguageServer):
         self._diagnostics[(source, uri)] = diagnostics
 
     def sync_diagnostics(self) -> None:
-        """Update the client with the currently stored diagnostics."""
+        """Update the client with the currently stored diagnostics.
+
+        When the client supports the pull diagnostics model, this is a no-op.
+        """
+        pull_support = get_capability(
+            self.client_capabilities, "text_document.diagnostic", None
+        )
+        if pull_support is not None:
+            return
 
         uris = {uri for _, uri in self._diagnostics.keys()}
         diagnostics = {uri: DiagnosticList() for uri in uris}
 
-        for (source, uri), diags in self._diagnostics.items():
-            for diag in diags:
-                diag.source = source
-                diagnostics[uri].append(diag)
+        for (_, uri), diags in self._diagnostics.items():
+            diagnostics[uri].extend(diags)
 
         for uri, diag_list in diagnostics.items():
             self.logger.debug("Publishing %d diagnostics for: %s", len(diag_list), uri)
