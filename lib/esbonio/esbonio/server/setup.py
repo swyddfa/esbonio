@@ -81,6 +81,31 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
 
         await call_features(ls, "document_save", params)
 
+    @server.feature(
+        types.TEXT_DOCUMENT_DIAGNOSTIC,
+        types.DiagnosticOptions(
+            identifier="esbonio",
+            inter_file_dependencies=True,
+            workspace_diagnostics=True,
+        ),
+    )
+    async def on_document_diagnostic(
+        ls: EsbonioLanguageServer, params: types.DocumentDiagnosticParams
+    ):
+        """Handle a ``textDocument/diagnostic`` request."""
+        doc_uri = Uri.parse(params.text_document.uri).resolve()
+        items = []
+
+        for (_, uri), diags in ls._diagnostics.items():
+            if uri.resolve() == doc_uri:
+                items.extend(diags)
+
+        # TODO: Detect no changes and send 'unchanged' responses
+        return types.RelatedFullDocumentDiagnosticReport(
+            items=items,
+            kind=types.DocumentDiagnosticReportKind.Full,
+        )
+
     @server.feature(types.TEXT_DOCUMENT_DOCUMENT_SYMBOL)
     async def on_document_symbol(
         ls: EsbonioLanguageServer, params: types.DocumentSymbolParams
