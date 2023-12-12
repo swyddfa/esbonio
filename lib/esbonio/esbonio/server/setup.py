@@ -4,6 +4,7 @@ import importlib
 import inspect
 import pathlib
 import typing
+from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
@@ -137,7 +138,7 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
     async def on_document_symbol(
         ls: EsbonioLanguageServer, params: types.DocumentSymbolParams
     ):
-        return await call_features_return_first(ls, "document_symbol", params)
+        return await return_first_result(ls, "document_symbol", params)
 
     @server.feature(types.WORKSPACE_DID_CHANGE_CONFIGURATION)
     async def on_did_change_configuration(
@@ -174,9 +175,32 @@ async def call_features(ls: EsbonioLanguageServer, method: str, *args, **kwargs)
             ls.logger.error("Error in '%s.%s' handler", name, method, exc_info=True)
 
 
-async def call_features_return_first(
-    ls: EsbonioLanguageServer, method: str, *args, **kwargs
-):
+async def gather_results(ls: EsbonioLanguageServer, method: str, *args, **kwargs):
+    """Call all features, gathering all results into a list."""
+    results: List[Any] = []
+    for cls, feature in ls:
+        try:
+            impl = getattr(feature, method)
+
+            result = impl(*args, **kwargs)
+            if inspect.isawaitable(result):
+                items = await result
+            else:
+                items = result
+
+            if isinstance(items, list):
+                results.extend(items)
+            elif items is not None:
+                results.append(items)
+
+        except Exception:
+            name = f"{cls.__name__}"
+            ls.logger.error("Error in '%s.%s' handler", name, method, exc_info=True)
+
+    return results
+
+
+async def return_first_result(ls: EsbonioLanguageServer, method: str, *args, **kwargs):
     """Call all features, returning the first non ``None`` result we find."""
 
     for cls, feature in ls:
