@@ -4,7 +4,9 @@ import importlib
 import inspect
 import pathlib
 import typing
+from typing import Dict
 from typing import Iterable
+from typing import List
 from typing import Type
 
 from lsprotocol import types
@@ -105,6 +107,31 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
             items=items,
             kind=types.DocumentDiagnosticReportKind.Full,
         )
+
+    @server.feature(types.WORKSPACE_DIAGNOSTIC)
+    async def on_workspace_diagnostic(
+        ls: EsbonioLanguageServer, params: types.WorkspaceDiagnosticParams
+    ):
+        """Handle a ``workspace/diagnostic`` request."""
+        diagnostics: Dict[Uri, List[types.Diagnostic]] = {}
+
+        for (_, uri), diags in ls._diagnostics.items():
+            diagnostics.setdefault(uri, []).extend(diags)
+
+        # TODO: Detect no changes and send 'unchanged' responses
+        reports = []
+        for uri, items in diagnostics.items():
+            reports.append(
+                types.WorkspaceFullDocumentDiagnosticReport(
+                    uri=str(uri),
+                    items=items,
+                    kind=types.DocumentDiagnosticReportKind.Full,
+                )
+            )
+
+        # Typing issues should be fixed in a future version of lsprotocol
+        # see: https://github.com/microsoft/lsprotocol/pull/285
+        return types.WorkspaceDiagnosticReport(items=reports)  # type: ignore[arg-type]
 
     @server.feature(types.TEXT_DOCUMENT_DOCUMENT_SYMBOL)
     async def on_document_symbol(
