@@ -1,3 +1,4 @@
+from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
@@ -36,11 +37,6 @@ class SphinxClient(Protocol):
         """The URI to the Sphinx application's build dir."""
 
     @property
-    def diagnostics(self) -> Dict[Uri, List[types.Diagnostic]]:
-        """A mapping of source file uris to any diagnostic items."""
-        ...
-
-    @property
     def conf_uri(self) -> Optional[Uri]:
         """The URI to the Sphinx application's conf dir."""
 
@@ -72,6 +68,10 @@ class SphinxClient(Protocol):
 
     async def get_build_path(self, src_uri: Uri) -> Optional[str]:
         """Get the build path associated with the given ``src_uri``."""
+
+    async def get_diagnostics(self) -> Dict[Uri, List[Dict[str, Any]]]:
+        """Get the diagnostics for the project."""
+        ...
 
     async def stop(self):
         """Stop the client."""
