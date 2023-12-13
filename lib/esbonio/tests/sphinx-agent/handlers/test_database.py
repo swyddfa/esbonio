@@ -34,56 +34,31 @@ async def test_files_table(client: SubprocessSphinxClient):
     else:
         actual = {r for r in results if "badfile" not in r[1]}
 
-    if client.builder == "html":
-        expected = {
-            # Ignore this file..., it's behavior seems very inconsistent across
-            # Python/Sphinx versions...
-            # (apath(src, "..", "badfile.rst"), "../badfile", "definitions.html"),
-            (apath(src, "index.rst"), "index", "index.html"),
-            (apath(src, "definitions.rst"), "definitions", "definitions.html"),
-            (apath(src, "glossary.rst"), "glossary", "glossary.html"),
-            (apath(src, "math.rst"), "math", "math.html"),
-            (apath(src, "math.rst"), "math", "theorems/pythagoras.html"),
-            (apath(src, "code", "cpp.rst"), "code/cpp", "code/cpp.html"),
-            (
-                apath(src, "theorems", "index.rst"),
-                "theorems/index",
-                "theorems/index.html",
-            ),
-            (
-                apath(src, "theorems", "pythagoras.rst"),
-                "theorems/pythagoras",
-                "theorems/pythagoras.html",
-            ),
-            (
-                apath(src, "directive_options.rst"),
-                "directive_options",
-                "directive_options.html",
-            ),
-        }
-
-    else:
-        expected = {
-            # Ignore this file..., it's behavior seems very inconsistent across
-            # Python/Sphinx versions...
-            # (apath(src, "..", "badfile.rst"), "../badfile", "definitions/"),
-            (apath(src, "index.rst"), "index", ""),
-            (apath(src, "definitions.rst"), "definitions", "definitions/"),
-            (apath(src, "glossary.rst"), "glossary", "glossary/"),
-            (apath(src, "math.rst"), "math", "math/"),
-            (apath(src, "math.rst"), "math", "theorems/pythagoras/"),
-            (apath(src, "code", "cpp.rst"), "code/cpp", "code/cpp/"),
-            (apath(src, "theorems", "index.rst"), "theorems/index", "theorems/"),
-            (
-                apath(src, "theorems", "pythagoras.rst"),
-                "theorems/pythagoras",
-                "theorems/pythagoras/",
-            ),
-            (
-                apath(src, "directive_options.rst"),
-                "directive_options",
-                "directive_options/",
-            ),
-        }
+    expected = {
+        # Ignore this file..., it's behavior seems very inconsistent across
+        # Python/Sphinx versions...
+        # (apath(src, "..", "badfile.rst"), "../badfile", "definitions.html"),
+        (apath(src, "index.rst"), "index", "index.html"),
+        (apath(src, "definitions.rst"), "definitions", "definitions.html"),
+        (apath(src, "glossary.rst"), "glossary", "glossary.html"),
+        (apath(src, "math.rst"), "math", "math.html"),
+        (apath(src, "math.rst"), "math", "theorems/pythagoras.html"),
+        (apath(src, "code", "cpp.rst"), "code/cpp", "code/cpp.html"),
+        (
+            apath(src, "theorems", "index.rst"),
+            "theorems/index",
+            "theorems/index.html",
+        ),
+        (
+            apath(src, "theorems", "pythagoras.rst"),
+            "theorems/pythagoras",
+            "theorems/pythagoras.html",
+        ),
+        (
+            apath(src, "directive_options.rst"),
+            "directive_options",
+            "directive_options.html",
+        ),
+    }
 
     assert expected == actual
