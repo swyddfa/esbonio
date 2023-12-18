@@ -40,7 +40,7 @@ jobs:
         cd lib/esbonio-extensions
         python -m tox run -e pkg
 
-    - uses: hynek/build-and-inspect-python-package@v1
+    - uses: hynek/build-and-inspect-python-package@v2
       with:
         path: lib/esbonio-extensions
 

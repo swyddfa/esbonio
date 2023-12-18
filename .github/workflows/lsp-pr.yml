@@ -35,7 +35,7 @@ jobs:
         ./scripts/make_release.py lsp
       name: Set Version
 
-    - uses: hynek/build-and-inspect-python-package@v1
+    - uses: hynek/build-and-inspect-python-package@v2
       with:
         path: lib/esbonio
 
