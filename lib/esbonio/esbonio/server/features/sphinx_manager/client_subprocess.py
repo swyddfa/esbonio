@@ -243,6 +243,18 @@ class SubprocessSphinxClient(JsonRPCClient):
 
             return result[0]
 
+    async def get_document_symbols(self, src_uri: Uri) -> List[types.Symbol]:
+        """Get the symbols for the given file."""
+        if self.db is None:
+            return []
+
+        query = (
+            "SELECT id, name, kind, detail, range, parent_id, order_id "
+            "FROM symbols WHERE path = ?"
+        )
+        cursor = await self.db.execute(query, (src_uri.fs_path,))
+        return await cursor.fetchall()  # type: ignore[return-value]
+
     async def get_diagnostics(self) -> Dict[Uri, List[Dict[str, Any]]]:
         """Get diagnostics for the project."""
         if self.db is None:

@@ -73,5 +73,9 @@ class SphinxClient(Protocol):
         """Get the diagnostics for the project."""
         ...
 
+    async def get_document_symbols(self, src_uri: Uri) -> List[types.Symbol]:
+        """Get the symbols for the given file."""
+        ...
+
     async def stop(self):
         """Stop the client."""
