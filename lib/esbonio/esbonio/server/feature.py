@@ -1,13 +1,22 @@
 from __future__ import annotations
 
 import typing
+from typing import Any
+from typing import Coroutine
 from typing import List
 from typing import Optional
+from typing import Union
 
 from lsprotocol import types
 
 if typing.TYPE_CHECKING:
     from .server import EsbonioLanguageServer
+
+
+DocumentSymbolResult = Union[
+    Optional[List[types.DocumentSymbol]],
+    Coroutine[Any, Any, Optional[List[types.DocumentSymbol]]],
+]
 
 
 class LanguageFeature:
@@ -38,6 +47,6 @@ class LanguageFeature:
 
     def document_symbol(
         self, params: types.DocumentSymbolParams
-    ) -> Optional[List[types.DocumentSymbol]]:
+    ) -> DocumentSymbolResult:
         """Called when a document symbols request it received."""
         ...
