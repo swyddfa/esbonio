@@ -78,12 +78,32 @@ class Database:
         cursor.execute(table.create_statement)
         self.db.commit()
 
-    def clear_table(self, table: Table):
-        """Clear the given table"""
-        cursor = self.db.cursor()
+    def clear_table(self, table: Table, **kwargs):
+        """Clear the given table
 
-        # TODO: Is there a way to do this via a prepared statement?
-        cursor.execute(f"DELETE FROM {table.name}")
+        Parameters
+        ----------
+        kwargs
+           Constraints to limit the rows that get cleared
+        """
+
+        # TODO: Is there a way to pass the table name as a '?' parameter?
+        base_query = f"DELETE FROM {table.name}"
+        where: List[str] = []
+        parameters: List[Any] = []
+
+        for param, value in kwargs.items():
+            where.append(f"{param} = ?")
+            parameters.append(value)
+
+        if where:
+            conditions = " AND ".join(where)
+            query = " ".join([base_query, "WHERE", conditions])
+        else:
+            query = base_query
+
+        cursor = self.db.cursor()
+        cursor.execute(query, tuple(parameters))
         self.db.commit()
 
     def ensure_table(self, table: Table):
