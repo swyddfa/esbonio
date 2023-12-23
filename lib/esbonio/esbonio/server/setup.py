@@ -138,7 +138,8 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
     async def on_document_symbol(
         ls: EsbonioLanguageServer, params: types.DocumentSymbolParams
     ):
-        return await return_first_result(ls, "document_symbol", params)
+        result = await return_first_result(ls, "document_symbol", params)
+        return result
 
     @server.feature(types.WORKSPACE_DID_CHANGE_CONFIGURATION)
     async def on_did_change_configuration(
@@ -209,7 +210,7 @@ async def return_first_result(ls: EsbonioLanguageServer, method: str, *args, **k
 
             result = impl(*args, **kwargs)
             if inspect.isawaitable(result):
-                await result
+                result = await result
 
             if result is not None:
                 return result
