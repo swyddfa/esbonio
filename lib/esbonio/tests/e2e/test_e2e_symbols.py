@@ -1,5 +1,7 @@
 from typing import List
 from typing import Optional
+from typing import Set
+from typing import Tuple
 
 import pytest
 from lsprotocol import types
@@ -162,6 +164,175 @@ async def test_document_symbols(
         assert len(actual) == len(expected)
         for actual_symbol, expected_symbol in zip(actual, expected):
             check_document_symbol(actual_symbol, expected_symbol)
+
+
+@pytest.mark.parametrize(
+    "query, expected",
+    [
+        # No query -> return all symbols.
+        (
+            "",
+            set(
+                [
+                    # (
+                    #   path (relative to workspace root),
+                    #   range (s:c-e:c),
+                    #   "name",
+                    #   types.SymbolKind,
+                    #   "container_name"
+                    #  )
+                    (
+                        "/definitions.rst",
+                        "21:0-21:43",
+                        "/theorems/pythagoras.rst .. literalinclude::",
+                        types.SymbolKind.Class,
+                        "Definition Tests",
+                    ),
+                    (
+                        "/theorems/pythagoras.rst",
+                        "3:0-3:18",
+                        "Pythagoras' Theorem",
+                        types.SymbolKind.String,
+                        "",
+                    ),
+                    (
+                        "/theorems/pythagoras.rst",
+                        "20:0-20:21",
+                        "pythagoras .. module::",
+                        types.SymbolKind.Class,
+                        "Implementation",
+                    ),
+                    (
+                        "/theorems/pythagoras.rst",
+                        "22:0-22:28",
+                        "pythagoras .. currentmodule::",
+                        types.SymbolKind.Class,
+                        "Implementation",
+                    ),
+                    (
+                        "/code/cpp.rst",
+                        "5:0-5:33",
+                        "bool isExample() .. cpp:function::",
+                        types.SymbolKind.Class,
+                        "ExampleClass",
+                    ),
+                    (
+                        "/theorems/pythagoras.rst",
+                        "53:0-53:57",
+                        "calc_hypotenuse(a: float, b: float) -> float .. function::",
+                        types.SymbolKind.Class,
+                        "Implementation",
+                    ),
+                    (
+                        "/theorems/pythagoras.rst",
+                        "62:0-62:51",
+                        "calc_side(c: float, b: float) -> float .. function::",
+                        types.SymbolKind.Class,
+                        "Implementation",
+                    ),
+                ]
+            ),
+        ),
+        # We should be able to query by symbol name
+        (
+            "pythagoras",
+            set(
+                [
+                    (
+                        "/definitions.rst",
+                        "21:0-21:43",
+                        "/theorems/pythagoras.rst .. literalinclude::",
+                        types.SymbolKind.Class,
+                        "Definition Tests",
+                    ),
+                    (
+                        "/theorems/pythagoras.rst",
+                        "3:0-3:18",
+                        "Pythagoras' Theorem",
+                        types.SymbolKind.String,
+                        "",
+                    ),
+                    (
+                        "/theorems/pythagoras.rst",
+                        "20:0-20:21",
+                        "pythagoras .. module::",
+                        types.SymbolKind.Class,
+                        "Implementation",
+                    ),
+                    (
+                        "/theorems/pythagoras.rst",
+                        "22:0-22:28",
+                        "pythagoras .. currentmodule::",
+                        types.SymbolKind.Class,
+                        "Implementation",
+                    ),
+                ]
+            ),
+        ),
+        # We should also be able to query by (document) symbol `detail` e.g. a directive name
+        (
+            "function::",
+            set(
+                [
+                    (
+                        "/code/cpp.rst",
+                        "5:0-5:33",
+                        "bool isExample() .. cpp:function::",
+                        types.SymbolKind.Class,
+                        "ExampleClass",
+                    ),
+                    (
+                        "/theorems/pythagoras.rst",
+                        "53:0-53:57",
+                        "calc_hypotenuse(a: float, b: float) -> float .. function::",
+                        types.SymbolKind.Class,
+                        "Implementation",
+                    ),
+                    (
+                        "/theorems/pythagoras.rst",
+                        "62:0-62:51",
+                        "calc_side(c: float, b: float) -> float .. function::",
+                        types.SymbolKind.Class,
+                        "Implementation",
+                    ),
+                ]
+            ),
+        ),
+        # Make sure we don't return anything when there are no matches
+        ("--not-a-real-symbol-name--", None),
+    ],
+)
+@pytest.mark.asyncio
+async def test_workspace_symbols(
+    client: LanguageClient,
+    query: str,
+    uri_for,
+    expected: Optional[Set[Tuple[str, str, str, types.SymbolKind, str]]],
+):
+    """Ensure that we handle ``workspace/symbol`` requests correctly."""
+
+    workspace_uri = str(uri_for("sphinx-default", "workspace"))
+    result = await client.workspace_symbol_async(
+        types.WorkspaceSymbolParams(query=query)
+    )
+
+    if expected is None:
+        assert result is None
+        return
+
+    assert result is not None
+
+    actual = set()
+    for symbol in result:
+        loc = symbol.location
+        uri = loc.uri.replace(workspace_uri, "")
+
+        actual.add(
+            (uri, repr(loc.range), symbol.name, symbol.kind, symbol.container_name),
+        )
+
+    for symbol in expected:
+        assert symbol in actual
 
 
 def check_document_symbol(actual: types.DocumentSymbol, expected: types.DocumentSymbol):

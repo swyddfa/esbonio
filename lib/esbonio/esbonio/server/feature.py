@@ -18,6 +18,11 @@ DocumentSymbolResult = Union[
     Coroutine[Any, Any, Optional[List[types.DocumentSymbol]]],
 ]
 
+WorkspaceSymbolResult = Union[
+    Optional[List[types.WorkspaceSymbol]],
+    Coroutine[Any, Any, Optional[List[types.WorkspaceSymbol]]],
+]
+
 
 class LanguageFeature:
     """Base class for language features."""
@@ -48,5 +53,11 @@ class LanguageFeature:
     def document_symbol(
         self, params: types.DocumentSymbolParams
     ) -> DocumentSymbolResult:
-        """Called when a document symbols request it received."""
+        """Called when a document symbols request is received."""
+        ...
+
+    def workspace_symbol(
+        self, params: types.WorkspaceSymbolParams
+    ) -> WorkspaceSymbolResult:
+        """Called when a workspace symbols request is received."""
         ...

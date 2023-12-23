@@ -1,3 +1,4 @@
+import asyncio
 import json
 from typing import Dict
 from typing import List
@@ -21,7 +22,7 @@ class SphinxSymbols(LanguageFeature):
     async def document_symbol(
         self, params: types.DocumentSymbolParams
     ) -> Optional[List[types.DocumentSymbol]]:
-        """Called when a document symbols request it received."""
+        """Called when a document symbols request is received."""
 
         uri = Uri.parse(params.text_document.uri)
         if (client := await self.manager.get_client(uri)) is None:
@@ -56,6 +57,41 @@ class SphinxSymbols(LanguageFeature):
                     parent.children.append(symbol)
 
         return root
+
+    async def workspace_symbol(
+        self, params: types.WorkspaceSymbolParams
+    ) -> Optional[List[types.WorkspaceSymbol]]:
+        """Called when a workspace symbol request is received."""
+
+        tasks = []
+        for client in self.manager.clients.values():
+            tasks.append(
+                asyncio.create_task(client.get_workspace_symbols(params.query))
+            )
+
+        symbols = await asyncio.gather(*tasks)
+        result: List[types.WorkspaceSymbol] = []
+
+        for batch in symbols:
+            for path, name, kind, detail, range_json, container in batch:
+                uri = Uri.for_file(path)
+                range_ = self.converter.structure(json.loads(range_json), types.Range)
+
+                if detail != "" and name != detail:
+                    display_name = f"{name} {detail}"
+                else:
+                    display_name = name
+
+                result.append(
+                    types.WorkspaceSymbol(
+                        location=types.Location(uri=str(uri), range=range_),
+                        name=display_name,
+                        kind=self.converter.structure(kind, types.SymbolKind),
+                        container_name=container,
+                    )
+                )
+
+        return result
 
 
 def esbonio_setup(server: EsbonioLanguageServer, sphinx_manager: SphinxManager):

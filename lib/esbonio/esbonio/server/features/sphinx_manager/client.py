@@ -3,6 +3,7 @@ from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Protocol
+from typing import Tuple
 
 import aiosqlite
 
@@ -75,6 +76,12 @@ class SphinxClient(Protocol):
 
     async def get_document_symbols(self, src_uri: Uri) -> List[types.Symbol]:
         """Get the symbols for the given file."""
+        ...
+
+    async def get_workspace_symbols(
+        self, query: str
+    ) -> List[Tuple[str, str, int, str, str, str]]:
+        """Return all the workspace symbols matching the given query"""
         ...
 
     async def stop(self):

@@ -11,6 +11,7 @@ from typing import Any
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 
 import aiosqlite
 from pygls import IS_WIN
@@ -253,6 +254,33 @@ class SubprocessSphinxClient(JsonRPCClient):
             "FROM symbols WHERE path = ?"
         )
         cursor = await self.db.execute(query, (src_uri.fs_path,))
+        return await cursor.fetchall()  # type: ignore[return-value]
+
+    async def get_workspace_symbols(
+        self, query: str
+    ) -> List[Tuple[str, str, int, str, str, str]]:
+        """Return all the workspace symbols matching the given query"""
+
+        if self.db is None:
+            return []
+
+        sql_query = """\
+SELECT
+    child.path,
+    child.name,
+    child.kind,
+    child.detail,
+    child.range,
+    COALESCE(parent.name, '') AS container_name
+FROM
+    symbols child
+LEFT JOIN
+    symbols parent ON (child.parent_id = parent.id AND child.path = parent.path)
+WHERE
+    child.name like ? or child.detail like ?;"""
+
+        query_str = f"%{query}%"
+        cursor = await self.db.execute(sql_query, (query_str, query_str))
         return await cursor.fetchall()  # type: ignore[return-value]
 
     async def get_diagnostics(self) -> Dict[Uri, List[Dict[str, Any]]]:
