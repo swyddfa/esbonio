@@ -141,6 +141,16 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
         result = await return_first_result(ls, "document_symbol", params)
         return result
 
+    @server.feature(types.WORKSPACE_SYMBOL)
+    async def on_workspace_symbol(
+        ls: EsbonioLanguageServer, params: types.WorkspaceSymbolParams
+    ):
+        result = await return_first_result(ls, "workspace_symbol", params)
+        if len(result) == 0:
+            return None
+
+        return result
+
     @server.feature(types.WORKSPACE_DID_CHANGE_CONFIGURATION)
     async def on_did_change_configuration(
         ls: EsbonioLanguageServer, params: types.DidChangeConfigurationParams
