@@ -9,6 +9,7 @@ import re
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
 DIRECTIVE: "re.Pattern" = re.compile(
@@ -155,6 +156,17 @@ DEFAULT_ROLE = re.compile(
 
 A "default" role is the target part of a normal role - but without the ``:name:`` part.
 """
+
+# Could represent either a document symbol or workspace symbol depending on context.
+Symbol = Tuple[
+    int,  # id
+    str,  # name
+    int,  # kind
+    str,  # detail
+    str,  # range - as json object
+    Optional[int],  # parent_id
+    int,  # order_id
+]
 
 
 @dataclasses.dataclass(frozen=True)
