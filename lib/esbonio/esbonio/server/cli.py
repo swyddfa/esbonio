@@ -72,7 +72,6 @@ def main(argv: Optional[Sequence[str]] = None):
         "esbonio.server.features.log",
         "esbonio.server.features.sphinx_manager",
         "esbonio.server.features.preview_manager",
-        "esbonio.server.features.symbols",
         "esbonio.server.features.sphinx_support.diagnostics",
     ]
 
