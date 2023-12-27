@@ -10,7 +10,7 @@ Additionally this extension
 - Reflects the chosen topic in the page's URL, making subject choices linkable
 - Uses `htmx`_ to swap out the relevant sections.
 
-See the Esbonio language server's :ref:`lsp_getting_started` guide for an example of this extension in action.
+See the Esbonio language server's :ref:`lsp-getting-started` guide for an example of this extension in action.
 
 .. note::
 

@@ -3,13 +3,48 @@ Esbonio
 
 .. rubric:: esbonio -- (v.) to explain
 
-Esbonio aims to make it easier to work with `reStructuredText`_ tools such as
-`Sphinx`_ by providing a `Language Server`_ to enhance your editing experience.
+Esbonio is a `Language Server`_ for `Sphinx`_ documentation projects.
+
+Esbonio aids the writing process by resolving references, providing completion suggestions and highlighting errors.
+It ensures your local build is always up to date, allowing you to preview your changes in (almost!) real-time.
+The server itself can even be extended to better suit the needs of your project.
+
+The primary goal of Esbonio is to reduce the friction that comes from trying to remember the specifics of a markup language, so that you can focus on your content and not your tooling.
+
+.. grid:: 2
+   :gutter: 1
+
+   .. grid-item-card:: Getting Started
+      :text-align: center
+      :link: lsp-getting-started
+      :link-type: ref
+
+      Using Esbonio for the first time within VSCode.
+
+   .. grid-item-card:: How-To Guides
+      :text-align: center
+
+      Step-by-step guides on integrating Esbonio with other text editors.
+
+   .. grid-item-card:: Reference
+      :text-align: center
+      :link: lsp-reference
+      :link-type: ref
+
+      Configuration options, API documentation, architecture diagrams and more.
+
+   .. grid-item-card:: Extending
+      :text-align: center
+      :link: lsp-extending
+      :link-type: ref
+
+      Documentation on extendining the Esbonio language server
+
 
 Language Server
 ---------------
 
-Here is a quick summary of the features implemented by the language server.
+Below are some of the features provided by the language server.
 
 .. collection:: features
 
@@ -74,15 +109,6 @@ Here is a quick summary of the features implemented by the language server.
          :align: center
          :target: /_images/implementation-demo.gif
 
-- See the :ref:`lsp_getting_started` guide for details on how to get up and
-  running.
-
-- For further details on more advanced use cases, see the :ref:`lsp-advanced` section.
-
-- Interested in adding support for your own Sphinx extensions?
-  See the section on :ref:`lsp-extending` for more information.
-
-
 .. toctree::
    :glob:
    :caption: Language Server
@@ -91,6 +117,7 @@ Here is a quick summary of the features implemented by the language server.
 
    lsp/getting-started
    lsp/advanced-usage
+   lsp/how-to
    lsp/extending
    lsp/howto
    lsp/reference
