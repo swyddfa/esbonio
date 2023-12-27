@@ -1,3 +1,0 @@
-This following directive contains an error
-
-.. figure:: not-a-valid-image-path.png
