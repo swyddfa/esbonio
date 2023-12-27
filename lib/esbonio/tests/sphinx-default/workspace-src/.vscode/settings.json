@@ -1,5 +1,0 @@
-{
-    "python.pythonPath": "${workspaceRoot}/../../../../../.env/bin/python",
-    "python.formatting.provider": "black",
-    "esbonio.sphinx.srcDir": "${confDir}/../sphinx-default"
-}
