@@ -249,6 +249,7 @@ export class EsbonioClient {
 
     let documentSelector = [
       { scheme: 'file', language: 'restructuredtext' },
+      { scheme: 'file', language: 'markdown' },
     ]
 
     if (config.get<boolean>('server.enabledInPyFiles')) {
