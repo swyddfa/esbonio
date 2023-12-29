@@ -7,6 +7,7 @@ version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
 
@@ -18,6 +19,12 @@ updates:
 
   - package-ecosystem: "pip"
     directory: "/code"
+    target-branch: "develop"
+    schedule:
+      interval: "weekly"
+        
+  - package-ecosystem: "pip"
+    directory: "/lib/esbonio/tests/workspaces/demo"
     target-branch: "develop"
     schedule:
       interval: "weekly"
