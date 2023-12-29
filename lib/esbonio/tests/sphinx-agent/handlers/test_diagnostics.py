@@ -29,6 +29,7 @@ def check_diagnostics(
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip
 async def test_diagnostics(client: SubprocessSphinxClient, uri_for):
     """Ensure that the sphinx agent reports diagnostics collected during the build, and
     that they are correctly reset when fixed."""

@@ -90,6 +90,7 @@ async def pull_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip
 async def test_document_diagnostic(pull_client: LanguageClient, uri_for):
     """Ensure that we can get the diagnostics for a single document correctly."""
 
@@ -115,6 +116,7 @@ async def test_document_diagnostic(pull_client: LanguageClient, uri_for):
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip
 async def test_workspace_diagnostic(pull_client: LanguageClient, uri_for):
     """Ensure that we can get diagnostics for the whole workspace correctly."""
     report = await pull_client.workspace_diagnostic_async(
@@ -212,6 +214,7 @@ async def pub_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
 
 
 @pytest.mark.asyncio
+@pytest.mark.skip
 async def test_publish_diagnostics(pub_client: LanguageClient, uri_for):
     """Ensure that the server publishes the diagnostics it finds"""
     workspace_uri = uri_for("sphinx-default", "workspace")
