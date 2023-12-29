@@ -18,7 +18,7 @@ from esbonio.sphinx_agent import types
 
 @pytest.fixture()
 def workspace(uri_for):
-    return uri_for("sphinx-default", "workspace")
+    return uri_for("workspaces", "demo")
 
 
 @pytest.fixture()

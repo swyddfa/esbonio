@@ -31,15 +31,13 @@ async def client(sphinx_client: SubprocessSphinxClient):
 async def test_create_application(client: SubprocessSphinxClient, uri_for):
     """Ensure that we can create a Sphinx application instance correctly."""
 
-    test_uri = uri_for("sphinx-default", "workspace", "index.rst")
-    sd_workspace = uri_for("sphinx-default", "workspace")
-    se_workspace = uri_for("sphinx-extensions", "workspace")
+    demo_workspace = uri_for("workspaces", "demo")
+    test_uri = demo_workspace / "index.rst"
 
     workspace = Workspace(
         None,
         workspace_folders=[
-            WorkspaceFolder(uri=str(se_workspace), name="sphinx-extensions"),
-            WorkspaceFolder(uri=str(sd_workspace), name="sphinx-default"),
+            WorkspaceFolder(uri=str(demo_workspace), name="demo"),
         ],
     )
     config = SphinxConfig()
@@ -52,12 +50,12 @@ async def test_create_application(client: SubprocessSphinxClient, uri_for):
 
     # Paths are case insensitive on Windows
     if IS_WIN:
-        assert info.src_dir.lower() == sd_workspace.fs_path.lower()
-        assert info.conf_dir.lower() == sd_workspace.fs_path.lower()
+        assert info.src_dir.lower() == demo_workspace.fs_path.lower()
+        assert info.conf_dir.lower() == demo_workspace.fs_path.lower()
         assert "cache" in info.build_dir.lower()
     else:
-        assert info.src_dir == sd_workspace.fs_path
-        assert info.conf_dir == sd_workspace.fs_path
+        assert info.src_dir == demo_workspace.fs_path
+        assert info.conf_dir == demo_workspace.fs_path
         assert "cache" in info.build_dir
 
 
@@ -68,17 +66,17 @@ async def test_create_application_error(
     """Ensure that we can handle errors during application creation."""
 
     build_dir = tmp_path_factory.mktemp("build")
-    test_uri = uri_for("sphinx-default", "workspace", "index.rst")
-    sd_workspace = uri_for("sphinx-default", "workspace")
+    demo_workspace = uri_for("workspaces", "demo")
+    test_uri = demo_workspace / "index.rst"
 
     workspace = Workspace(
         None,
         workspace_folders=[
-            WorkspaceFolder(uri=str(sd_workspace), name="sphinx-default"),
+            WorkspaceFolder(uri=str(demo_workspace), name="demo"),
         ],
     )
 
-    conf_dir = uri_for("sphinx-default", "workspace-error").fs_path
+    conf_dir = uri_for("workspaces", "demo-error").fs_path
     config = SphinxConfig(
         build_command=[
             "sphinx-build",
@@ -86,7 +84,7 @@ async def test_create_application_error(
             "html",
             "-c",
             conf_dir,
-            sd_workspace.fs_path,
+            demo_workspace.fs_path,
             str(build_dir),
         ]
     )

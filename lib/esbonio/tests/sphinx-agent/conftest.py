@@ -22,13 +22,13 @@ from esbonio.server.features.sphinx_manager.config import SphinxConfig
 )
 async def client(sphinx_client: SubprocessSphinxClient, uri_for, tmp_path_factory):
     build_dir = tmp_path_factory.mktemp("build")
-    test_uri = uri_for("sphinx-default", "workspace", "index.rst")
-    sd_workspace = uri_for("sphinx-default", "workspace")
+    demo_workspace = uri_for("workspaces", "demo")
+    test_uri = demo_workspace / "index.rst"
 
     workspace = Workspace(
         None,
         workspace_folders=[
-            WorkspaceFolder(uri=str(sd_workspace), name="sphinx-default"),
+            WorkspaceFolder(uri=str(demo_workspace), name="sphinx-default"),
         ],
     )
     config = SphinxConfig(
@@ -36,7 +36,7 @@ async def client(sphinx_client: SubprocessSphinxClient, uri_for, tmp_path_factor
             "sphinx-build",
             "-M",
             "html",
-            sd_workspace.fs_path,
+            demo_workspace.fs_path,
             str(build_dir),
         ],
     )
