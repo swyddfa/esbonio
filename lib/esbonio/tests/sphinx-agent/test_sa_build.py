@@ -49,7 +49,7 @@ async def test_build_content_override(client: SubprocessSphinxClient, uri_for):
     await client.build()
 
     # Before
-    expected = "Welcome to the documentation!"
+    expected = "Welcome to the demo documentation"
     index_html = pathlib.Path(out / "index.html")
     assert expected in index_html.read_text()
 
@@ -77,17 +77,17 @@ async def client_build_error(
 ):
     """A sphinx client that will error when a build is triggered."""
     build_dir = tmp_path_factory.mktemp("build")
-    test_uri = uri_for("sphinx-default", "workspace", "index.rst")
-    sd_workspace = uri_for("sphinx-default", "workspace")
+    demo_workspace = uri_for("workspaces", "demo")
+    test_uri = demo_workspace / "index.rst"
 
     workspace = Workspace(
         None,
         workspace_folders=[
-            WorkspaceFolder(uri=str(sd_workspace), name="sphinx-default"),
+            WorkspaceFolder(uri=str(demo_workspace), name="demo"),
         ],
     )
 
-    conf_dir = uri_for("sphinx-default", "workspace-error-build").fs_path
+    conf_dir = uri_for("workspaces", "demo-error-build").fs_path
     config = SphinxConfig(
         build_command=[
             "sphinx-build",
@@ -95,7 +95,7 @@ async def client_build_error(
             "html",
             "-c",
             str(conf_dir),
-            sd_workspace.fs_path,
+            demo_workspace.fs_path,
             str(build_dir),
         ],
     )
