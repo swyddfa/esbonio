@@ -1,9 +1,62 @@
 import pytest
 
-from esbonio.sphinx_agent.types import DEFAULT_ROLE
-from esbonio.sphinx_agent.types import DIRECTIVE
-from esbonio.sphinx_agent.types import DIRECTIVE_OPTION
-from esbonio.sphinx_agent.types import ROLE
+from esbonio.sphinx_agent.types import MYST_DIRECTIVE
+from esbonio.sphinx_agent.types import RST_DEFAULT_ROLE
+from esbonio.sphinx_agent.types import RST_DIRECTIVE
+from esbonio.sphinx_agent.types import RST_DIRECTIVE_OPTION
+from esbonio.sphinx_agent.types import RST_ROLE
+
+
+@pytest.mark.parametrize(
+    "string, expected",
+    [
+        ("`", None),
+        ("``", None),
+        ("```", {"directive": "```"}),
+        ("````", {"directive": "````"}),
+        ("```{d", {"directive": "```{d", "name": "d"}),
+        # Regular code blocks should not be recognised
+        ("```python", None),
+        ("```{image}", {"name": "image", "directive": "```{image}"}),
+        (
+            "```{image}  filename.png",
+            {"name": "image", "directive": "```{image}", "argument": "filename.png"},
+        ),
+        (
+            "```{image}  filename.png  \n",
+            {"name": "image", "directive": "```{image}", "argument": "filename.png"},
+        ),
+    ],
+)
+def test_myst_directive_regex(string, expected):
+    """Ensure that the regular expression we use to detect and parse directives
+    works as expected.
+
+    As with most test cases, this one is parameterized with the following arguments::
+
+       (".. figure::", {"name": "figure"})
+
+    The first argument is the string to test the pattern against, the second a
+    dictionary containing the groups we expect to see in the resulting match object.
+    Groups that appear in the resulting match object but not in the expected result
+    will **not** fail the test.
+
+    To test situations where the pattern should **not** match the input, pass ``None``
+    as the second argument.
+
+    To test situaions where the pattern should match, but we don't expect to see any
+    groups pass an empty dictionary as the second argument.
+    """
+
+    match = MYST_DIRECTIVE.match(string)
+
+    if expected is None:
+        assert match is None
+    else:
+        assert match is not None
+
+        for name, value in expected.items():
+            assert match.groupdict().get(name, None) == value, name
 
 
 @pytest.mark.parametrize(
@@ -139,7 +192,7 @@ def test_directive_regex(string, expected):
     groups pass an empty dictionary as the second argument.
     """
 
-    match = DIRECTIVE.match(string)
+    match = RST_DIRECTIVE.match(string)
 
     if expected is None:
         assert match is None
@@ -186,7 +239,7 @@ def test_directive_option_regex(string, expected):
     groups pass an empty dictionary as the second argument.
     """
 
-    match = DIRECTIVE_OPTION.match(string)
+    match = RST_DIRECTIVE_OPTION.match(string)
 
     if expected is None:
         assert match is None
@@ -462,7 +515,7 @@ def test_role_regex(string, expected):
     groups pass an empty dictionary as the second argument.
     """
 
-    match = ROLE.search(string)
+    match = RST_ROLE.search(string)
 
     if expected is None:
         assert match is None
@@ -595,7 +648,7 @@ def test_default_role_regex(string, expected):
     groups pass an empty dictionary as the second argument.
     """
 
-    match = DEFAULT_ROLE.search(string)
+    match = RST_DEFAULT_ROLE.search(string)
 
     if expected is None:
         assert match is None
