@@ -12,7 +12,28 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-DIRECTIVE: "re.Pattern" = re.compile(
+MYST_DIRECTIVE: "re.Pattern" = re.compile(
+    r"""
+    (\s*)                             # directives can be indented
+    (?P<directive>
+      ```(`*)?                        # directives start with at least 3 ` chars
+      (?!\w)                          # -- regular code blocks are not directives
+      [{]?                            # followed by an opening brace
+      (?P<name>[^}]+)?                # directives have a name
+      [}]?                            # directives are closed with a closing brace
+    )
+    (\s+(?P<argument>.*?)\s*$)?       # directives may take an argument
+    """,
+    re.VERBOSE,
+)
+"""A regular expression to detect and parse partial and complete MyST directives.
+
+This does **not** include any options or content that may be included with the
+initial declaration.
+"""
+
+
+RST_DIRECTIVE: "re.Pattern" = re.compile(
     r"""
     (\s*)                             # directives can be indented
     (?P<directive>
@@ -53,7 +74,7 @@ the initial declaration. A number of named capture groups are available.
 """
 
 
-DIRECTIVE_OPTION: "re.Pattern" = re.compile(
+RST_DIRECTIVE_OPTION: "re.Pattern" = re.compile(
     r"""
     (?P<indent>\s+)       # directive options must be indented
     (?P<option>
@@ -86,7 +107,7 @@ A number of named capture groups are available
 """
 
 
-ROLE = re.compile(
+RST_ROLE = re.compile(
     r"""
     ([^\w:]|^\s*)                     # roles cannot be preceeded by letter chars
     (?P<role>
@@ -133,12 +154,10 @@ is overriden, for example::
       ^^^^^^^^ name
     ^ domain (optional)
 
-See :func:`tests.test_roles.test_role_regex` for a list of example strings this pattern
-is expected to match.
 """
 
 
-DEFAULT_ROLE = re.compile(
+RST_DEFAULT_ROLE = re.compile(
     r"""
     (?<![:`])
     (?P<target>

@@ -110,7 +110,7 @@ def dummy_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     node = a_role()
     node.line = lineno
 
-    match = types.ROLE.match(rawtext)
+    match = types.RST_ROLE.match(rawtext)
     if match is None:
         node.attributes["text"] = rawtext
     else:
