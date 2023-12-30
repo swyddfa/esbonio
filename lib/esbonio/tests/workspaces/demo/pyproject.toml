@@ -1,0 +1,2 @@
+[tool.esbonio.sphinx]
+buildCommand = ["sphinx-build", "-M", "dirhtml", ".", "./_build"]
