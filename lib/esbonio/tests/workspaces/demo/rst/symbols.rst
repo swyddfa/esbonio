@@ -18,6 +18,7 @@ As the name suggests, the ``textDocument/documentSymbol`` request returns all th
 The server can also include hierarchical information about the symbols, e.g. The symbol ``Sub-section`` is contained within the symbol ``Section``.
 
 In VSCode this information is typically used to populate the :guilabel:`Outline` view.
+You can also search for a symbol in the current document using the :kbd:`Ctrl+Shift+O` keybinding.
 
 Workspace Symbols
 -----------------
