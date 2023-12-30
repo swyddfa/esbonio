@@ -19,8 +19,8 @@ TEST_DIR = pathlib.Path(__file__).parent.parent
 async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
     """The "main" client to use for our tests."""
     build_dir = tmp_path_factory.mktemp("build")
-    workspace_uri = uri_for("sphinx-default", "workspace")
-    test_uri = workspace_uri / "definitions.rst"
+    workspace_uri = uri_for("workspaces", "demo")
+    test_uri = workspace_uri / "index.rst"
 
     await lsp_client.initialize_session(
         types.InitializeParams(
@@ -50,7 +50,7 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                 },
             },
             workspace_folders=[
-                types.WorkspaceFolder(uri=str(workspace_uri), name="sphinx-default"),
+                types.WorkspaceFolder(uri=str(workspace_uri), name="demo"),
             ],
         )
     )
