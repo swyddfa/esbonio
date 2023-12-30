@@ -39,6 +39,10 @@ async def test_files_table(client: SubprocessSphinxClient):
         # Python/Sphinx versions...
         # (apath(src, "..", "badfile.rst"), "../badfile", "definitions.html"),
         (apath(src, "index.rst"), "index", "index.html"),
+        (apath(src, "rst", "symbols.rst"), "rst/symbols", "rst/symbols.html"),
+        (apath(src, "myst", "symbols.md"), "myst/symbols", "myst/symbols.html"),
+        (apath(src, "demo_rst.rst"), "demo_rst", "demo_rst.html"),
+        (apath(src, "demo_myst.md"), "demo_myst", "demo_myst.html"),
     }
 
     assert expected == actual

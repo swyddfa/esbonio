@@ -34,106 +34,60 @@ def document_symbol(
     [
         (["conf.py"], None),
         (
-            ["theorems", "pythagoras.rst"],
+            ["rst", "symbols.rst"],
             [
                 document_symbol(
-                    name="Pythagoras' Theorem",
-                    kind=types.SymbolKind.String,
-                    range="3:0-3:18",
+                    "Symbols",
+                    types.SymbolKind.String,
+                    "1:0-1:6",
                     children=[
                         document_symbol(
-                            name="../math.rst",
-                            detail=".. include::",
-                            kind=types.SymbolKind.Class,
-                            range="8:0-8:23",
+                            "What is a symbol?",
+                            types.SymbolKind.Class,
+                            "3:0-3:16",
+                            detail="admonition",
                         ),
                         document_symbol(
-                            name="/math.rst",
-                            detail=".. include::",
-                            kind=types.SymbolKind.Class,
-                            range="10:0-10:21",
+                            "Document Symbols", types.SymbolKind.String, "14:0-14:15"
                         ),
                         document_symbol(
-                            name="Implementation",
-                            kind=types.SymbolKind.String,
-                            range="15:0-15:13",
+                            "Workspace Symbols", types.SymbolKind.String, "23:0-23:16"
+                        ),
+                    ],
+                )
+            ],
+        ),
+        (
+            ["myst", "symbols.md"],
+            [
+                document_symbol(
+                    "Symbols",
+                    types.SymbolKind.String,
+                    "0:0-0:6",
+                    children=[
+                        document_symbol(
+                            "What is a symbol?",
+                            types.SymbolKind.Class,
+                            "2:0-2:16",
+                            detail="admonition",
+                        ),
+                        document_symbol(
+                            "Document Symbols",
+                            types.SymbolKind.String,
+                            "12:0-12:15",
                             children=[
                                 document_symbol(
-                                    name="pythagoras",
-                                    detail=".. module::",
-                                    kind=types.SymbolKind.Class,
-                                    range="20:0-20:21",
-                                ),
-                                document_symbol(
-                                    name="pythagoras",
-                                    detail=".. currentmodule::",
-                                    kind=types.SymbolKind.Class,
-                                    range="22:0-22:28",
-                                ),
-                                document_symbol(
-                                    name="PI",
-                                    detail=".. data::",
-                                    kind=types.SymbolKind.Class,
-                                    range="24:0-24:11",
-                                ),
-                                document_symbol(
-                                    name="UNKNOWN",
-                                    detail=".. data::",
-                                    kind=types.SymbolKind.Class,
-                                    range="28:0-28:16",
-                                ),
-                                document_symbol(
-                                    name="Triangle(a: float, b: float, c: float)",
-                                    detail=".. class::",
-                                    kind=types.SymbolKind.Class,
-                                    range="32:0-32:48",
-                                    children=[
-                                        document_symbol(
-                                            name="a",
-                                            detail=".. attribute::",
-                                            kind=types.SymbolKind.Class,
-                                            range="36:0-36:15",
-                                        ),
-                                        document_symbol(
-                                            name="b",
-                                            detail=".. attribute::",
-                                            kind=types.SymbolKind.Class,
-                                            range="40:0-40:15",
-                                        ),
-                                        document_symbol(
-                                            name="c",
-                                            detail=".. attribute::",
-                                            kind=types.SymbolKind.Class,
-                                            range="44:0-44:15",
-                                        ),
-                                        document_symbol(
-                                            name="is_right_angled() -> bool",
-                                            detail=".. method::",
-                                            kind=types.SymbolKind.Class,
-                                            range="48:0-48:36",
-                                            children=[],
-                                        ),
-                                    ],
-                                ),
-                                document_symbol(
-                                    name="calc_hypotenuse(a: float, b: float) -> float",
-                                    detail=".. function::",
-                                    kind=types.SymbolKind.Class,
-                                    range="53:0-53:57",
-                                ),
-                                document_symbol(
-                                    name="calc_side(c: float, b: float) -> float",
-                                    detail="function::",
-                                    kind=types.SymbolKind.Class,
-                                    range="62:0-62:51",
-                                ),
-                                document_symbol(
-                                    name="right hand side",
-                                    detail=".. |rhs| replace::",
-                                    kind=types.SymbolKind.Class,
-                                    range="71:0-71:33",
+                                    "note",
+                                    types.SymbolKind.Class,
+                                    "20:0-20:3",
+                                    detail="note",
                                 ),
                             ],
+                        ),
+                        document_symbol(
+                            "Workspace Symbols",
+                            types.SymbolKind.String,
+                            "27:0-27:16",
                         ),
                     ],
                 )
@@ -150,7 +104,7 @@ async def test_document_symbols(
 ):
     """Ensure that we handle ``textDocument/documentSymbols`` requests correctly."""
 
-    test_uri = uri_for("sphinx-default", "workspace", *filepath)
+    test_uri = uri_for("workspaces", "demo", *filepath)
     actual = await client.text_document_document_symbol_async(
         types.DocumentSymbolParams(
             text_document=types.TextDocumentIdentifier(uri=str(test_uri))
@@ -182,118 +136,111 @@ async def test_document_symbols(
                     #   "container_name"
                     #  )
                     (
-                        "/definitions.rst",
-                        "21:0-21:43",
-                        "/theorems/pythagoras.rst .. literalinclude::",
-                        types.SymbolKind.Class,
-                        "Definition Tests",
-                    ),
-                    (
-                        "/theorems/pythagoras.rst",
-                        "3:0-3:18",
-                        "Pythagoras' Theorem",
+                        "/rst/symbols.rst",
+                        "1:0-1:6",
+                        "Symbols",
                         types.SymbolKind.String,
                         "",
                     ),
                     (
-                        "/theorems/pythagoras.rst",
-                        "20:0-20:21",
-                        "pythagoras .. module::",
+                        "/rst/symbols.rst",
+                        "3:0-3:16",
+                        "What is a symbol? admonition",
                         types.SymbolKind.Class,
-                        "Implementation",
+                        "Symbols",
                     ),
                     (
-                        "/theorems/pythagoras.rst",
-                        "22:0-22:28",
-                        "pythagoras .. currentmodule::",
-                        types.SymbolKind.Class,
-                        "Implementation",
+                        "/myst/symbols.md",
+                        "0:0-0:6",
+                        "Symbols",
+                        types.SymbolKind.String,
+                        "",
                     ),
                     (
-                        "/code/cpp.rst",
-                        "5:0-5:33",
-                        "bool isExample() .. cpp:function::",
+                        "/myst/symbols.md",
+                        "2:0-2:16",
+                        "What is a symbol? admonition",
                         types.SymbolKind.Class,
-                        "ExampleClass",
+                        "Symbols",
                     ),
                     (
-                        "/theorems/pythagoras.rst",
-                        "53:0-53:57",
-                        "calc_hypotenuse(a: float, b: float) -> float .. function::",
+                        "/myst/symbols.md",
+                        "20:0-20:3",
+                        "note",
                         types.SymbolKind.Class,
-                        "Implementation",
-                    ),
-                    (
-                        "/theorems/pythagoras.rst",
-                        "62:0-62:51",
-                        "calc_side(c: float, b: float) -> float .. function::",
-                        types.SymbolKind.Class,
-                        "Implementation",
+                        "Document Symbols",
                     ),
                 ]
             ),
         ),
         # We should be able to query by symbol name
         (
-            "pythagoras",
+            "Symbols",
             set(
                 [
                     (
-                        "/definitions.rst",
-                        "21:0-21:43",
-                        "/theorems/pythagoras.rst .. literalinclude::",
-                        types.SymbolKind.Class,
-                        "Definition Tests",
-                    ),
-                    (
-                        "/theorems/pythagoras.rst",
-                        "3:0-3:18",
-                        "Pythagoras' Theorem",
+                        "/rst/symbols.rst",
+                        "1:0-1:6",
+                        "Symbols",
                         types.SymbolKind.String,
                         "",
                     ),
                     (
-                        "/theorems/pythagoras.rst",
-                        "20:0-20:21",
-                        "pythagoras .. module::",
-                        types.SymbolKind.Class,
-                        "Implementation",
+                        "/rst/symbols.rst",
+                        "14:0-14:15",
+                        "Document Symbols",
+                        types.SymbolKind.String,
+                        "Symbols",
                     ),
                     (
-                        "/theorems/pythagoras.rst",
-                        "22:0-22:28",
-                        "pythagoras .. currentmodule::",
-                        types.SymbolKind.Class,
-                        "Implementation",
+                        "/rst/symbols.rst",
+                        "23:0-23:16",
+                        "Workspace Symbols",
+                        types.SymbolKind.String,
+                        "Symbols",
+                    ),
+                    (
+                        "/myst/symbols.md",
+                        "0:0-0:6",
+                        "Symbols",
+                        types.SymbolKind.String,
+                        "",
+                    ),
+                    (
+                        "/myst/symbols.md",
+                        "12:0-12:15",
+                        "Document Symbols",
+                        types.SymbolKind.String,
+                        "Symbols",
+                    ),
+                    (
+                        "/myst/symbols.md",
+                        "27:0-27:16",
+                        "Workspace Symbols",
+                        types.SymbolKind.String,
+                        "Symbols",
                     ),
                 ]
             ),
         ),
         # We should also be able to query by (document) symbol `detail` e.g. a directive name
         (
-            "function::",
+            "admonition",
             set(
                 [
                     (
-                        "/code/cpp.rst",
-                        "5:0-5:33",
-                        "bool isExample() .. cpp:function::",
+                        "/myst/symbols.md",
+                        "2:0-2:16",
+                        "What is a symbol? admonition",
                         types.SymbolKind.Class,
-                        "ExampleClass",
+                        "Symbols",
                     ),
                     (
-                        "/theorems/pythagoras.rst",
-                        "53:0-53:57",
-                        "calc_hypotenuse(a: float, b: float) -> float .. function::",
+                        "/rst/symbols.rst",
+                        "3:0-3:16",
+                        "What is a symbol? admonition",
                         types.SymbolKind.Class,
-                        "Implementation",
-                    ),
-                    (
-                        "/theorems/pythagoras.rst",
-                        "62:0-62:51",
-                        "calc_side(c: float, b: float) -> float .. function::",
-                        types.SymbolKind.Class,
-                        "Implementation",
+                        "Symbols",
                     ),
                 ]
             ),
@@ -311,7 +258,7 @@ async def test_workspace_symbols(
 ):
     """Ensure that we handle ``workspace/symbol`` requests correctly."""
 
-    workspace_uri = str(uri_for("sphinx-default", "workspace"))
+    workspace_uri = str(uri_for("workspaces", "demo"))
     result = await client.workspace_symbol_async(
         types.WorkspaceSymbolParams(query=query)
     )

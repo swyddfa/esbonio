@@ -8,6 +8,7 @@ from docutils.core import Publisher
 from docutils.io import NullOutput
 from docutils.io import StringInput
 from docutils.parsers.rst import Directive
+from docutils.parsers.rst import directives
 from docutils.readers.standalone import Reader
 from docutils.utils import Reporter
 from sphinx.config import Config
@@ -120,45 +121,36 @@ def dummy_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
     return [node], []
 
 
-class DummyDirective(Directive):
-    has_content = True
+def run_dummy_directive(self):
+    """This is a dummy implementation"""
+    node = a_directive()
+    node.line = self.lineno
 
-    def run(self):
-        node = a_directive()
-        node.line = self.lineno
-        parent = self.state.parent
-        lines = self.block_text
+    node.attributes["name"] = self.name
+    node.attributes["options"] = self.options
 
-        # substitution definitions require special handling
-        if isinstance(parent, nodes.substitution_definition):
-            lines = parent.rawsource
+    if len(self.arguments) > 0:
+        node.attributes["argument"] = self.arguments[0]
+    else:
+        node.attributes["argument"] = None
 
-        text = lines.split("\n")[0]
-        match = types.DIRECTIVE.match(text)
-        if match:
-            node.attributes.update(match.groupdict())
-            node.attributes["text"] = match.group(0)
-        else:
-            self.state.reporter.warning(f"Unable to parse directive: '{text}'")
-            node.attributes["text"] = text
+    if self.content:
+        # This is essentially what `nested_parse_with_titles` does in Sphinx.
+        # But by passing the content_offset to state.nested_parse we ensure any line
+        # numbers remain relative to the start of the current file.
+        current_titles = self.state.memo.title_styles
+        current_sections = self.state.memo.section_level
+        self.state.memo.title_styles = []
+        self.state.memo.section_level = 0
+        try:
+            self.state.nested_parse(
+                self.content, self.content_offset, node, match_titles=1
+            )
+        finally:
+            self.state.memo.title_styles = current_titles
+            self.state.memo.section_level = current_sections
 
-        if self.content:
-            # This is essentially what `nested_parse_with_titles` does in Sphinx.
-            # But by passing the content_offset to state.nested_parse we ensure any line
-            # numbers remain relative to the start of the current file.
-            current_titles = self.state.memo.title_styles
-            current_sections = self.state.memo.section_level
-            self.state.memo.title_styles = []
-            self.state.memo.section_level = 0
-            try:
-                self.state.nested_parse(
-                    self.content, self.content_offset, node, match_titles=1
-                )
-            finally:
-                self.state.memo.title_styles = current_titles
-                self.state.memo.section_level = current_sections
-
-        return [node]
+    return [node]
 
 
 class disable_roles_and_directives(CustomReSTDispatcher):
@@ -174,7 +166,41 @@ class disable_roles_and_directives(CustomReSTDispatcher):
     """
 
     def directive(self, directive_name, language_module, document):
-        return DummyDirective, []
+        # We still have access to the original dispatch mechanism
+        # This allows us to adapt our dummy directive to match the "shape" of the real
+        # directive implementation!
+        impl, _ = self.directive_func(directive_name, language_module, document)
+        if impl is None:
+            # Fallback to some sensible defaults.
+            has_content = True
+            option_spec = None
+            required_arguments = 0
+            optional_arguments = 1
+            final_argument_whitespace = True
+        else:
+            # Mimic the "shape" of the real directive
+            if impl.option_spec is None:
+                option_spec = None
+            else:
+                option_spec = {o: directives.unchanged for o in impl.option_spec}
+
+            # It probably doesn't make sense to copy these values, as often the user's
+            # usage of a directive will be incorrect.
+            required_arguments = 0  # impl.required_arguments
+            has_content = True  # impl.has_content
+
+            optional_arguments = 1
+            final_argument_whitespace = True
+
+        attrs = {
+            "has_content": has_content,
+            "option_spec": option_spec,
+            "required_arguments": required_arguments,
+            "optional_arguments": optional_arguments,
+            "final_argument_whitespace": final_argument_whitespace,
+            "run": run_dummy_directive,
+        }
+        return type("DummyDirective", (Directive,), attrs), []
 
     def role(self, role_name, language_module, lineno, reporter):
         return dummy_role, []
@@ -245,8 +271,7 @@ class SymbolVisitor(nodes.NodeVisitor):
 
     def visit_a_directive(self, node: a_directive):
         argument = node.attributes.get("argument", None)
-        directive = node.attributes.get("directive", None)
-        text = node["text"]  # type: ignore
+        directive = node.attributes.get("name", "<<unknown>>")
 
         name = None
         detail = ""
@@ -258,12 +283,12 @@ class SymbolVisitor(nodes.NodeVisitor):
             detail = directive
 
         if name is None:
-            name = text
+            name = directive
 
         line = (node.line or 1) - 1
         range_ = types.Range(
             start=types.Position(line=line, character=0),
-            end=types.Position(line=line, character=len(text) - 1),
+            end=types.Position(line=line, character=len(name) - 1),
         )
 
         self.push_symbol(name, ClassSymbol, range_, detail=detail)
