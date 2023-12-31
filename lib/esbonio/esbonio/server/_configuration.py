@@ -20,7 +20,7 @@ import attrs
 from lsprotocol import types
 from pygls.capabilities import get_capability
 
-from ._uri import Uri
+from . import Uri
 
 if typing.TYPE_CHECKING:
     from .server import EsbonioLanguageServer

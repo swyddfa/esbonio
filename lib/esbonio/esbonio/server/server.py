@@ -22,8 +22,8 @@ from pygls.server import LanguageServer
 from pygls.workspace import Document
 from pygls.workspace import Workspace
 
+from . import Uri
 from ._configuration import Configuration
-from ._uri import Uri
 
 if typing.TYPE_CHECKING:
     from .feature import LanguageFeature
