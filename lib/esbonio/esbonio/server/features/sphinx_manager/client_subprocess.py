@@ -226,19 +226,19 @@ class SubprocessSphinxClient(JsonRPCClient):
         if self.db is None:
             return []
 
-        query = "SELECT path FROM files"
+        query = "SELECT uri FROM files"
         async with self.db.execute(query) as cursor:
             results = await cursor.fetchall()
-            return [Uri.for_file(s[0]) for s in results]
+            return [Uri.parse(s[0]) for s in results]
 
     async def get_build_path(self, src_uri: Uri) -> Optional[str]:
         """Get the build path associated with the given ``src_uri``."""
 
-        if self.db is None or (path := src_uri.fs_path) is None:
+        if self.db is None:
             return None
 
-        query = "SELECT uri FROM files WHERE path = ?"
-        async with self.db.execute(query, (path,)) as cursor:
+        query = "SELECT urlpath FROM files WHERE url = ?"
+        async with self.db.execute(query, (str(src_uri.resolve()),)) as cursor:
             if (result := await cursor.fetchone()) is None:
                 return None
 
@@ -251,9 +251,9 @@ class SubprocessSphinxClient(JsonRPCClient):
 
         query = (
             "SELECT id, name, kind, detail, range, parent_id, order_id "
-            "FROM symbols WHERE path = ?"
+            "FROM symbols WHERE uri = ?"
         )
-        cursor = await self.db.execute(query, (src_uri.fs_path,))
+        cursor = await self.db.execute(query, (str(src_uri.resolve()),))
         return await cursor.fetchall()  # type: ignore[return-value]
 
     async def get_workspace_symbols(
@@ -266,7 +266,7 @@ class SubprocessSphinxClient(JsonRPCClient):
 
         sql_query = """\
 SELECT
-    child.path,
+    child.uri,
     child.name,
     child.kind,
     child.detail,
@@ -275,7 +275,7 @@ SELECT
 FROM
     symbols child
 LEFT JOIN
-    symbols parent ON (child.parent_id = parent.id AND child.path = parent.path)
+    symbols parent ON (child.parent_id = parent.id AND child.uri = parent.uri)
 WHERE
     child.name like ? or child.detail like ?;"""
 
@@ -291,8 +291,8 @@ WHERE
         cursor = await self.db.execute("SELECT * FROM diagnostics")
         results: Dict[Uri, List[Dict[str, Any]]] = {}
 
-        for path, item in await cursor.fetchall():
-            uri = Uri.for_file(path)
+        for uri_str, item in await cursor.fetchall():
+            uri = Uri.parse(uri_str)
             diagnostic = json.loads(item)
             results.setdefault(uri, []).append(diagnostic)
 

@@ -1,20 +1,16 @@
-import pathlib
-
 import pytest
-from pygls import IS_WIN
 
 from esbonio.server.features.sphinx_manager.client_subprocess import (
     SubprocessSphinxClient,
 )
 
 
-def apath(*args):
-    p = str(pathlib.Path(*args).resolve())
+def anuri(base, *args):
+    uri = base
+    for a in args:
+        uri /= a
 
-    if IS_WIN:
-        return p.lower()
-
-    return p
+    return str(uri.resolve())
 
 
 @pytest.mark.asyncio
@@ -27,22 +23,14 @@ async def test_files_table(client: SubprocessSphinxClient):
     assert client.db is not None
     cursor = await client.db.execute("SELECT * FROM files")
     results = await cursor.fetchall()
-
-    if IS_WIN:
-        # Paths are case insensitive on Windows
-        actual = {(p.lower(), d, u) for (p, d, u) in results if "badfile" not in d}
-    else:
-        actual = {r for r in results if "badfile" not in r[1]}
+    actual = {r for r in results if "badfile" not in r[1]}
 
     expected = {
-        # Ignore this file..., it's behavior seems very inconsistent across
-        # Python/Sphinx versions...
-        # (apath(src, "..", "badfile.rst"), "../badfile", "definitions.html"),
-        (apath(src, "index.rst"), "index", "index.html"),
-        (apath(src, "rst", "symbols.rst"), "rst/symbols", "rst/symbols.html"),
-        (apath(src, "myst", "symbols.md"), "myst/symbols", "myst/symbols.html"),
-        (apath(src, "demo_rst.rst"), "demo_rst", "demo_rst.html"),
-        (apath(src, "demo_myst.md"), "demo_myst", "demo_myst.html"),
+        (anuri(src, "index.rst"), "index", "index.html"),
+        (anuri(src, "rst", "symbols.rst"), "rst/symbols", "rst/symbols.html"),
+        (anuri(src, "myst", "symbols.md"), "myst/symbols", "myst/symbols.html"),
+        (anuri(src, "demo_rst.rst"), "demo_rst", "demo_rst.html"),
+        (anuri(src, "demo_myst.md"), "demo_myst", "demo_myst.html"),
     }
 
     assert expected == actual

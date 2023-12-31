@@ -25,7 +25,7 @@ from . import sphinx_logger
 SYMBOLS_TABLE = Database.Table(
     "symbols",
     [
-        Database.Column(name="path", dtype="TEXT"),  # TODO: Replace with foreign key??
+        Database.Column(name="uri", dtype="TEXT"),  # TODO: Replace with foreign key??
         Database.Column(name="id", dtype="INTEGER"),
         Database.Column(name="name", dtype="TEXT"),
         Database.Column(name="kind", dtype="INTEGER"),
@@ -74,10 +74,10 @@ def update_symbols(app: Sphinx, docname: str, source):
     visitor = SymbolVisitor(document)
     document.walkabout(visitor)
 
-    filepath = app.env.doc2path(docname, base=True)
-    symbols = [(filepath, *s) for s in visitor.symbols]
+    uri = str(types.Uri.for_file(app.env.doc2path(docname, base=True)).resolve())
+    symbols = [(uri, *s) for s in visitor.symbols]
 
-    app.esbonio.db.clear_table(SYMBOLS_TABLE, path=filename)
+    app.esbonio.db.clear_table(SYMBOLS_TABLE, uri=uri)
     app.esbonio.db.insert_values(SYMBOLS_TABLE, symbols)
 
 
