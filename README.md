@@ -12,7 +12,7 @@ The Esbonio project is made up from a number of sub-projects
 ## `lib/esbonio/` - A Language Server for Sphinx projects.
 [![PyPI](https://img.shields.io/pypi/v/esbonio?style=flat-square)![PyPI - Downloads](https://img.shields.io/pypi/dm/esbonio?style=flat-square)](https://pypistats.org/packages/esbonio)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/lib/esbonio/LICENSE)
 
-The language server is still in early development, but already provides the following features.
+The language server provides the following features.
 
 **Completion**
 
@@ -39,10 +39,10 @@ The language server is still in early development, but already provides the foll
 </p>
 
 
-**Document Symbols**
+**Document & Workspace Symbols**
 
 <p align="center">
-  <img src="./resources/images/document-symbols-demo.png" alt="Document Symbols Demo"></img>
+  <img src="https://private-user-images.githubusercontent.com/2675694/292643698-0313faec-51e8-4721-96d7-6655dd097e0d.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3MDQwNDk3NTcsIm5iZiI6MTcwNDA0OTQ1NywicGF0aCI6Ii8yNjc1Njk0LzI5MjY0MzY5OC0wMzEzZmFlYy01MWU4LTQ3MjEtOTZkNy02NjU1ZGQwOTdlMGQucG5nP1gtQW16LUFsZ29yaXRobT1BV1M0LUhNQUMtU0hBMjU2JlgtQW16LUNyZWRlbnRpYWw9QUtJQVZDT0RZTFNBNTNQUUs0WkElMkYyMDIzMTIzMSUyRnVzLWVhc3QtMSUyRnMzJTJGYXdzNF9yZXF1ZXN0JlgtQW16LURhdGU9MjAyMzEyMzFUMTkwNDE3WiZYLUFtei1FeHBpcmVzPTMwMCZYLUFtei1TaWduYXR1cmU9MzM4ZTI2NmU4MjMxMDdkNzg0NTljZmY3YmZiOTkyZDk4YzRiMmIwYjE3ZmYzM2ZjYTE0ZWQ1MzE2MDQwNWViOCZYLUFtei1TaWduZWRIZWFkZXJzPWhvc3QmYWN0b3JfaWQ9MCZrZXlfaWQ9MCZyZXBvX2lkPTAifQ.6wPVjBj3NijMyDtaWP3vEE55vGHHt9wC0XGFMiImo1Q" alt="Document Symbols Demo"></img>
 </p>
 
 **Hover**
