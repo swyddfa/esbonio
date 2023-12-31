@@ -1,4 +1,3 @@
-import pathlib
 from typing import List
 from typing import Optional
 from typing import Tuple
@@ -7,13 +6,14 @@ from sphinx.config import Config
 
 from ..app import Database
 from ..app import Sphinx
+from ..types import Uri
 
 FILES_TABLE = Database.Table(
     "files",
     [
-        Database.Column(name="path", dtype="TEXT"),
-        Database.Column(name="docname", dtype="TEXT"),
         Database.Column(name="uri", dtype="TEXT"),
+        Database.Column(name="docname", dtype="TEXT"),
+        Database.Column(name="urlpath", dtype="TEXT"),
     ],
 )
 
@@ -31,19 +31,19 @@ def build_file_mapping(app: Sphinx, exc: Optional[Exception]):
     files: List[Tuple[str, str, str]] = []
 
     for docname in env.found_docs:
-        path = pathlib.Path(env.doc2path(docname)).resolve()
+        uri = Uri.for_file(env.doc2path(docname)).resolve()
         build_uri = builder.get_target_uri(docname)
 
-        files.append((str(path), docname, build_uri))
+        files.append((str(uri), docname, build_uri))
 
     # Don't forget any included files.
     # TODO: How best to handle files included in multiple documents?
     for parent_doc, included_docs in env.included.items():
         for docname in included_docs:
-            path = pathlib.Path(env.doc2path(docname)).resolve()
+            uri = Uri.for_file(env.doc2path(docname)).resolve()
             build_uri = builder.get_target_uri(parent_doc)
 
-            files.append((str(path), docname, build_uri))
+            files.append((str(uri), docname, build_uri))
 
     app.esbonio.db.clear_table(FILES_TABLE)
     app.esbonio.db.insert_values(FILES_TABLE, files)

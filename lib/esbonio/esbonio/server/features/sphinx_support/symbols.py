@@ -73,8 +73,8 @@ class SphinxSymbols(LanguageFeature):
         result: List[types.WorkspaceSymbol] = []
 
         for batch in symbols:
-            for path, name, kind, detail, range_json, container in batch:
-                uri = Uri.for_file(path)
+            for uri_str, name, kind, detail, range_json, container in batch:
+                uri = Uri.parse(uri_str)
                 range_ = self.converter.structure(json.loads(range_json), types.Range)
 
                 if detail != "" and name != detail:
