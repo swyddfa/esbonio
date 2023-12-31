@@ -462,8 +462,11 @@ def _normalize_path(path: str, preserve_case: bool = False) -> str:
     return path
 
 
-# Could represent either a document symbol or workspace symbol depending on context.
-Symbol = Tuple[
+# -- DB Types
+#
+# These represent the structure of data as stored in the SQLite database
+Directive = Tuple[str, Optional[str], Optional[str]]
+Symbol = Tuple[  # Represents either a document symbol or workspace symbol depending on context.
     int,  # id
     str,  # name
     int,  # kind
@@ -484,6 +487,12 @@ class Position:
 class Range:
     start: Position
     end: Position
+
+
+@dataclasses.dataclass(frozen=True)
+class Location:
+    uri: str
+    range: Range
 
 
 class DiagnosticSeverity(enum.IntEnum):

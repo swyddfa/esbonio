@@ -38,6 +38,7 @@ sphinx.application.builtin_extensions += (
     f"{__name__}.files",
     f"{__name__}.diagnostics",
     f"{__name__}.symbols",
+    f"{__name__}.directives",
 )
 
 
