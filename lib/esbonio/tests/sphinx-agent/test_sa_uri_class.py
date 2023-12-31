@@ -5,9 +5,9 @@ import pathlib
 from typing import Dict
 
 import pytest
-from pygls import IS_WIN
 
-from esbonio.server import Uri
+from esbonio.sphinx_agent.types import IS_WIN
+from esbonio.sphinx_agent.types import Uri
 
 
 def test_uri_is_pathlike():

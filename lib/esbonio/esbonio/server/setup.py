@@ -12,7 +12,7 @@ from typing import Type
 
 from lsprotocol import types
 
-from ._uri import Uri
+from . import Uri
 
 if typing.TYPE_CHECKING:
     from .server import EsbonioLanguageServer

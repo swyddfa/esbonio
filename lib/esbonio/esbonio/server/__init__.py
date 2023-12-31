@@ -1,6 +1,7 @@
+from esbonio.sphinx_agent.types import Uri
+
 from ._log import LOG_NAMESPACE
 from ._log import MemoryHandler
-from ._uri import Uri
 from .feature import LanguageFeature
 from .server import EsbonioLanguageServer
 from .server import EsbonioWorkspace
