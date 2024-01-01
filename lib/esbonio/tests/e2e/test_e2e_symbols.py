@@ -95,7 +95,7 @@ def document_symbol(
         ),
     ],
 )
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_document_symbols(
     client: LanguageClient,
     uri_for,
@@ -249,7 +249,7 @@ async def test_document_symbols(
         ("--not-a-real-symbol-name--", None),
     ],
 )
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="session")
 async def test_workspace_symbols(
     client: LanguageClient,
     query: str,
