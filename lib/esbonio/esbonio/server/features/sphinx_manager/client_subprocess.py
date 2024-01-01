@@ -237,7 +237,7 @@ class SubprocessSphinxClient(JsonRPCClient):
         if self.db is None:
             return None
 
-        query = "SELECT urlpath FROM files WHERE url = ?"
+        query = "SELECT urlpath FROM files WHERE uri = ?"
         async with self.db.execute(query, (str(src_uri.resolve()),)) as cursor:
             if (result := await cursor.fetchone()) is None:
                 return None
