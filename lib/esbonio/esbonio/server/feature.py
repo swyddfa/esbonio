@@ -7,21 +7,32 @@ from typing import List
 from typing import Optional
 from typing import Union
 
+import attrs
 from lsprotocol import types
+from pygls.capabilities import get_capability
+from pygls.workspace import TextDocument
+
+from . import Uri
 
 if typing.TYPE_CHECKING:
+    import re
+
     from .server import EsbonioLanguageServer
 
+    CompletionResult = Union[
+        Optional[List[types.CompletionItem]],
+        Coroutine[Any, Any, Optional[List[types.CompletionItem]]],
+    ]
 
-DocumentSymbolResult = Union[
-    Optional[List[types.DocumentSymbol]],
-    Coroutine[Any, Any, Optional[List[types.DocumentSymbol]]],
-]
+    DocumentSymbolResult = Union[
+        Optional[List[types.DocumentSymbol]],
+        Coroutine[Any, Any, Optional[List[types.DocumentSymbol]]],
+    ]
 
-WorkspaceSymbolResult = Union[
-    Optional[List[types.WorkspaceSymbol]],
-    Coroutine[Any, Any, Optional[List[types.WorkspaceSymbol]]],
-]
+    WorkspaceSymbolResult = Union[
+        Optional[List[types.WorkspaceSymbol]],
+        Coroutine[Any, Any, Optional[List[types.WorkspaceSymbol]]],
+    ]
 
 
 class LanguageFeature:
@@ -50,6 +61,11 @@ class LanguageFeature:
     def document_save(self, params: types.DidSaveTextDocumentParams):
         """Called when a text document is saved."""
 
+    completion_triggers: List["re.Pattern"] = []
+
+    def completion(self, context: CompletionContext) -> CompletionResult:
+        """Called when a completion request matches one of the specified triggers."""
+
     def document_symbol(
         self, params: types.DocumentSymbolParams
     ) -> DocumentSymbolResult:
@@ -61,3 +77,97 @@ class LanguageFeature:
     ) -> WorkspaceSymbolResult:
         """Called when a workspace symbols request is received."""
         ...
+
+
+@attrs.define
+class CompletionContext:
+    """Captures the context within which a completion request has been made."""
+
+    uri: Uri
+    """The uri for the document in which the completion request was made."""
+
+    doc: TextDocument
+    """The document within which the completion request was made."""
+
+    match: "re.Match"
+    """The match object describing the site of the completion request."""
+
+    position: types.Position
+    """The position at which the completion request was made."""
+
+    capabilities: types.ClientCapabilities
+    """The client's capabilities."""
+
+    def __repr__(self):
+        p = f"{self.position.line}:{self.position.character}"
+        return f"CompletionContext<{self.doc.uri}:{p} -- {self.match}>"
+
+    @property
+    def commit_characters_support(self) -> bool:
+        """Indicates if the client supports commit characters."""
+        return get_capability(
+            self.capabilities,
+            "text_document.completion.completion_item.commit_characters_support",
+            False,
+        )
+
+    @property
+    def deprecated_support(self) -> bool:
+        """Indicates if the client supports the deprecated field on a
+        ``CompletionItem``."""
+        return get_capability(
+            self.capabilities,
+            "text_document.completion.completion_item.deprecated_support",
+            False,
+        )
+
+    @property
+    def documentation_formats(self) -> List[types.MarkupKind]:
+        """The list of documentation formats supported by the client."""
+        return get_capability(
+            self.capabilities,
+            "text_document.completion.completion_item.documentation_format",
+            [],
+        )
+
+    @property
+    def insert_replace_support(self) -> bool:
+        """Indicates if the client supports ``InsertReplaceEdit``."""
+        return get_capability(
+            self.capabilities,
+            "text_document.completion.completion_item.insert_replace_support",
+            False,
+        )
+
+    @property
+    def preselect_support(self) -> bool:
+        """Indicates if the client supports the preselect field on a
+        ``CompletionItem``."""
+        return get_capability(
+            self.capabilities,
+            "text_document.completion.completion_item.preselect_support",
+            False,
+        )
+
+    @property
+    def snippet_support(self) -> bool:
+        """Indicates if the client supports snippets"""
+        return get_capability(
+            self.capabilities,
+            "text_document.completion.completion_item.snippet_support",
+            False,
+        )
+
+    @property
+    def supported_tags(self) -> List[types.CompletionItemTag]:
+        """The list of ``CompletionItemTags`` supported by the client."""
+        capabilities = get_capability(
+            self.capabilities,
+            "text_document.completion.completion_item.tag_support",
+            None,
+        )
+
+        if not capabilities:
+            return []
+
+        return capabilities.value_set

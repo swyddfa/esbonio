@@ -13,6 +13,7 @@ from typing import Type
 from lsprotocol import types
 
 from . import Uri
+from .feature import CompletionContext
 
 if typing.TYPE_CHECKING:
     from .server import EsbonioLanguageServer
@@ -83,6 +84,80 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
         doc.saved_version = doc.version or 0
 
         await call_features(ls, "document_save", params)
+
+    @server.feature(
+        types.TEXT_DOCUMENT_COMPLETION,
+        types.CompletionOptions(
+            trigger_characters=[">", ".", ":", "`", "<", "/"], resolve_provider=True
+        ),
+    )
+    async def on_completion(ls: EsbonioLanguageServer, params: types.CompletionParams):
+        uri = params.text_document.uri
+        pos = params.position
+        doc = ls.workspace.get_text_document(uri)
+
+        try:
+            line = doc.lines[pos.line]
+        except IndexError:
+            line = ""
+
+        items = []
+
+        for cls, feature in ls:
+            for pattern in feature.completion_triggers:
+                for match in pattern.finditer(line):
+                    if not match:
+                        continue
+
+                    # Only trigger completions if the position of the request is within
+                    # the match.
+                    start, stop = match.span()
+                    if not (start <= pos.character <= stop):
+                        continue
+
+                    context = CompletionContext(
+                        uri=Uri.parse(uri),
+                        doc=doc,
+                        match=match,
+                        position=pos,
+                        capabilities=ls.client_capabilities,
+                    )
+
+                    ls.logger.debug("%s", context)
+                    name = f"{cls.__name__}"
+
+                    try:
+                        result = feature.completion(context)
+                        if inspect.isawaitable(result):
+                            result = await result
+                    except Exception:
+                        ls.logger.error(
+                            "Error in '%s.complete' handler", name, exc_info=True
+                        )
+                        continue
+
+                    for item in result or []:
+                        item.data = {"source_feature": name, **(item.data or {})}  # type: ignore
+                        items.append(item)
+
+        if len(items) > 0:
+            return types.CompletionList(is_incomplete=False, items=items)
+
+    @server.feature(types.COMPLETION_ITEM_RESOLVE)
+    def on_completion_resolve(
+        ls: EsbonioLanguageServer, item: types.CompletionItem
+    ) -> types.CompletionItem:
+        # source = (item.data or {}).get("source_feature", "")  # type: ignore
+        # feature = ls.get_feature(source)
+
+        # if not feature:
+        #     ls.logger.error(
+        #         "Unable to resolve completion item, unknown source: '%s'", source
+        #     )
+        #     return item
+
+        # return feature.completion_resolve(item)
+        return item
 
     @server.feature(
         types.TEXT_DOCUMENT_DIAGNOSTIC,
