@@ -22,7 +22,7 @@ updates:
     target-branch: "develop"
     schedule:
       interval: "weekly"
-        
+
   - package-ecosystem: "pip"
     directory: "/lib/esbonio/tests/workspaces/demo"
     target-branch: "develop"
