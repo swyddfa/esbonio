@@ -244,6 +244,15 @@ class SubprocessSphinxClient(JsonRPCClient):
 
             return result[0]
 
+    async def get_directives(self) -> List[Tuple[str, Optional[str]]]:
+        """Get the directives known to Sphinx."""
+        if self.db is None:
+            return []
+
+        query = "SELECT name, implementation FROM directives"
+        cursor = await self.db.execute(query)
+        return await cursor.fetchall()  # type: ignore[return-value]
+
     async def get_document_symbols(self, src_uri: Uri) -> List[types.Symbol]:
         """Get the symbols for the given file."""
         if self.db is None:
