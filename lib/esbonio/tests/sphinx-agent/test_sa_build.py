@@ -108,7 +108,7 @@ async def client_build_error(
     yield
 
 
-@pytest.mark.asyncio
+@pytest.mark.asyncio(scope="module")
 async def test_build_error(client_build_error: SubprocessSphinxClient):
     """Ensure that when a build error occurs, useful information is reported."""
 
