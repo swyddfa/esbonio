@@ -1,9 +1,16 @@
-final: prev: {
+final: prev:
+
+let
+  # Read the package's version from file
+  lines = prev.lib.splitString "\n" (builtins.readFile ../esbonio/server/server.py);
+  matches = builtins.map (builtins.match ''__version__ = "(.+)"'') lines;
+  versionStr = prev.lib.concatStrings (prev.lib.flatten (builtins.filter builtins.isList matches));
+in {
   pythonPackagesExtensions = prev.pythonPackagesExtensions ++ [(
     python-final: python-prev: {
       esbonio = python-prev.buildPythonPackage {
         pname = "esbonio";
-        version = "0.16.1";
+        version = versionStr;
         format = "pyproject";
 
         src = ./..;
