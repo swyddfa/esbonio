@@ -4,17 +4,29 @@ set tabstop=3
 set softtabstop=3
 set shiftwidth=3
 
-let mapleader='<space>'
+let mapleader=' '
 
+colorscheme everforest
 lua << EOF
 local lspconfig = require('lspconfig')
 local util = require('lspconfig.util')
 
+local LSP_DEVTOOLS_PORT = '91234'
+
+-- The helm/vertico/etc of the nvim world
+local telescope = require('telescope.builtin')
 local keymap_opts = { noremap = true, silent = true}
-vim.keymap.set('n', '<space>e', vim.diagnostic.open_float, keymap_opts)
+vim.keymap.set('n', '<leader>ff', telescope.find_files, {})
+vim.keymap.set('n', '<leader>fg', telescope.live_grep, {})
+vim.keymap.set('n', '<leader>fb', telescope.buffers, {})
+vim.keymap.set('n', '<leader>fh', telescope.help_tags, {})
+
+vim.keymap.set('n', '<leader>ds', telescope.lsp_document_symbols, keymap_opts)
+vim.keymap.set('n', '<leader>ws', telescope.lsp_workspace_symbols, keymap_opts)
+vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float, keymap_opts)
 vim.keymap.set('n', '[d', vim.diagnostic.goto_prev, keymap_opts)
 vim.keymap.set('n', ']d', vim.diagnostic.goto_next, keymap_opts)
-vim.keymap.set('n', '<space>q', vim.diagnostic.setloclist, keymap_opts)
+vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist, keymap_opts)
 
 vim.lsp.set_log_level("info")
 
@@ -69,13 +81,12 @@ local function find_venv()
 end
 
 lspconfig.esbonio.setup {
-  cmd = { 'esbonio' },
+  -- Wrap server with the lsp-devtools agent so that we can create out own
+  -- VSCode style output window.
+  cmd = { 'lsp-devtools', 'agent', '--port', LSP_DEVTOOLS_PORT, '--', 'esbonio' },
   init_options = {
     server = {
       logLevel = 'debug',
-      completion = {
-        preferredInsertBehavior = 'insert'
-      }
     }
   },
   settings = {
@@ -102,4 +113,35 @@ lspconfig.esbonio.setup {
     vim.api.nvim_create_user_command("EsbonioPreviewFile", preview_file, { desc = "Preview file" })
   end
 }
+
+-- UI for $/progress and other notifications
+require('fidget').setup {
+  notification = {
+    override_vim_notify = true,
+  }
+}
+
+-- smooth scrolling
+require('neoscroll').setup {}
+
+-- statusline
+require('lualine').setup { theme = "everforest" }
+
+-- VSCode-style output window
+local Terminal  = require('toggleterm.terminal').Terminal
+local log_output = Terminal:new({
+  cmd = "lsp-devtools record --port " .. LSP_DEVTOOLS_PORT .. " -f '{.params.message}'",
+  hidden = false,
+  direction = 'horizontal',
+  auto_scroll = true,
+})
+-- Ensure that the terminal is launched, so that it can connect to the server.
+log_output:spawn()
+
+function _log_output_toggle()
+  log_output:toggle()
+end
+
+vim.api.nvim_set_keymap("n", "<leader>wl", "<cmd>lua _log_output_toggle()<CR>", keymap_opts)
+
 EOF
