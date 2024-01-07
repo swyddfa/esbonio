@@ -26,6 +26,15 @@
       overlays.default = self: super:
         nixpkgs.lib.composeManyExtensions [ lsp-devtools.overlays.default esbonio-overlay ] self super;
 
+      packages =  utils.lib.eachDefaultSystemMap (system:
+        let
+          pkgs = import nixpkgs { inherit system; overlays = [ self.overlays.default ]; };
+        in
+          applyMatrix buildMatrix ({ py, ... }: {
+            "py${py}" = pkgs."python${py}Packages".esbonio;
+          })
+      );
+
       devShells = utils.lib.eachDefaultSystemMap (system:
         let
           pkgs = import nixpkgs { inherit system; overlays = [ self.overlays.default ]; };
