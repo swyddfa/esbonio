@@ -19,7 +19,7 @@
         nvim-lspconfig = pkgs.callPackage ./docs/lsp/editors/nvim-lspconfig {};
 
       in {
-         apps.nvim-lspconfig = {
+         apps.nvim = {
            type = "app";
            program = "${nvim-lspconfig}/bin/nvim";
          };

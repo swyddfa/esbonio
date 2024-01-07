@@ -1,6 +1,7 @@
 {
   lib,
   neovim,
+  ripgrep,
   stdenv,
   python3Packages,
   vimPlugins,
@@ -9,13 +10,25 @@
 }:
 
 let
+  # Executables that should be on $PATH
   paths = lib.makeBinPath [
     neovim
+    ripgrep
+    python3Packages.lsp-devtools
     (python3Packages.esbonio.overridePythonAttrs (_: { doCheck = false ;}))
   ];
 
+  # Plugins that should be avaiable to nvim.
   pluginList = with vimPlugins; [
+    everforest         # colortheme
+    fidget-nvim        # UI for '$/progress'
+    lualine-nvim       # statusline
+    neoscroll-nvim     # smooth scrolling
     nvim-lspconfig
+    nvim-web-devicons
+    plenary-nvim       # Required for telescope
+    telescope-nvim     # The helm/vertico/etc. of the nvim world
+    toggleterm-nvim    # popup terminal windows
   ];
 
   plugins = stdenv.mkDerivation {
