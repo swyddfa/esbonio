@@ -20,18 +20,17 @@ in {
         ];
 
         propagatedBuildInputs = with python-final; [
+          aiosqlite
           docutils
           platformdirs
           pygls
           websockets
-        ];
+        ] ++ prev.lib.optional (pythonOlder "3.11") tomli;
 
         doCheck = true;
         pythonImportsCheck = [ "esbonio.server" ];
         nativeCheckInputs = with python-prev; [
-          mock
           pytest-lsp
-          pytest-timeout
           pytestCheckHook
         ];
       };
