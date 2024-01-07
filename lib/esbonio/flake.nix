@@ -3,10 +3,11 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    # pytest-lsp.url = "github:swyddfa/lsp-devtools?dir=lib/pytest-lsp";
-    lsp-devtools.url = "path:/var/home/alex/Projects/lsp-devtools";
-    lsp-devtools.inputs.nixpkgs.follows = "nixpkgs";
     utils.url = "github:numtide/flake-utils";
+
+    lsp-devtools.url = "github:swyddfa/lsp-devtools";
+    lsp-devtools.inputs.nixpkgs.follows = "nixpkgs";
+    lsp-devtools.inputs.utils.follows = "utils";
   };
 
   outputs = { self, nixpkgs, lsp-devtools, utils }:
