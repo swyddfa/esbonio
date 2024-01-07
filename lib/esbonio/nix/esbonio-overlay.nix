@@ -4,10 +4,15 @@ final: prev: {
       esbonio = python-prev.buildPythonPackage {
         pname = "esbonio";
         version = "0.16.1";
+        format = "pyproject";
 
         src = ./..;
 
-        propagatedBuildInputs = with python-prev; [
+        nativeBuildInputs = with python-final; [
+          hatchling
+        ];
+
+        propagatedBuildInputs = with python-final; [
           docutils
           platformdirs
           pygls
@@ -15,15 +20,13 @@ final: prev: {
         ];
 
         doCheck = true;
-
+        pythonImportsCheck = [ "esbonio.server" ];
         nativeCheckInputs = with python-prev; [
           mock
           pytest-lsp
           pytest-timeout
           pytestCheckHook
         ];
-
-        pythonImportsCheck = [ "esbonio.server" ];
       };
     }
   )];
