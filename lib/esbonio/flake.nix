@@ -50,6 +50,7 @@
 
                 packages = with pkgs."python${py}Packages"; [
                   # Runtime deps
+                  aiosqlite
                   docutils
                   platformdirs
                   pygls
@@ -57,8 +58,7 @@
 
                   # Test deps
                   pytest-lsp
-                  pytest-timeout
-                ];
+                ] ++ pkgs.lib.optional (pythonOlder "3.11") tomli;
             };
 
             "py${py}-sphinx" = pkgs.mkShell {
@@ -76,7 +76,6 @@
 
                 # Test deps
                 pytest-lsp
-                pytest-timeout
               ];
 
             };
