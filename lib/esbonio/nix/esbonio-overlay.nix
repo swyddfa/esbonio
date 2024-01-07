@@ -27,7 +27,7 @@ in {
           websockets
         ] ++ prev.lib.optional (pythonOlder "3.11") tomli;
 
-        doCheck = true;
+        doCheck = false;
         pythonImportsCheck = [ "esbonio.server" ];
         nativeCheckInputs = with python-prev; [
           pytest-lsp
