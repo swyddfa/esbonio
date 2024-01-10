@@ -16,12 +16,8 @@
                     "value": "docs"
                 },
                 {
-                    "label": "sphinx-default",
-                    "value": "lib/esbonio/tests/sphinx-default/workspace"
-                },
-                {
-                    "label": "sphinx-extensions",
-                    "value": "lib/esbonio/tests/sphinx-extensions/workspace"
+                    "label": "demo",
+                    "value": "lib/esbonio/tests/workspaces/demo"
                 },
             ]
         }
@@ -35,7 +31,7 @@
             "args": [
                 "--extensionDevelopmentPath=${workspaceRoot}/code",
                 "--folder-uri=${workspaceRoot}/docs",
-                "--folder-uri=${workspaceRoot}/lib/esbonio/tests/sphinx-default/workspace"
+                "--folder-uri=${workspaceRoot}/lib/esbonio/tests/workspaces/demo"
             ],
             "outFiles": [
                 "${workspaceRoot}/code/dist/node/**/*.js"
