@@ -277,7 +277,6 @@
                 }
             }
         ],
-        "keybindings": [],
         "languages": [
             {
                 "id": "restructuredtext",
@@ -307,6 +306,18 @@
                 "language": "esbonio-log-output",
                 "scopeName": "source.esbonio-log-output",
                 "path": "./syntaxes/esbonio-log-output.tmLanguage.json"
+            }
+        ],
+        "keybindings": [
+            {
+                "command": "esbonio.preview.open",
+                "key": "ctrl+shift+v",
+                "when": "editorTextFocus && editorLangId == restructuredtext"
+            },
+            {
+                "command": "esbonio.preview.openSide",
+                "key": "ctrl+k v",
+                "when": "editorTextFocus && editorLangId == restructuredtext"
             }
         ],
         "menus": {
