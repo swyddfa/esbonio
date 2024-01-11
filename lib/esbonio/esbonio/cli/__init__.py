@@ -4,6 +4,7 @@ import sys
 import warnings
 from typing import Union
 
+from lsprotocol import types
 from pygls.protocol import default_converter
 
 try:
@@ -16,6 +17,18 @@ def esbonio_converter():
     converter = default_converter()
     converter.register_structure_hook(Union[Literal["auto"], int], lambda obj, _: obj)
 
+    def position_hook(obj, type_):
+        """Parse a position, gracefully handling invalid data"""
+        l: int = obj.get("line", None) or 0
+        c: int = obj.get("character", None) or 0
+
+        # Clamp positions to valid range.
+        return types.Position(
+            line=min(max(l, 0), 2147483647),
+            character=min(max(c, 0), 2147483647),
+        )
+
+    converter.register_structure_hook(types.Position, position_hook)
     return converter
 
 
