@@ -84,7 +84,7 @@ deps =
 extras = test
 commands =
     python ../../scripts/check-sphinx-version.py
-    pytest {posargs}
+    pytest {posargs:tests}
 
 [testenv:pkg]
 deps =
