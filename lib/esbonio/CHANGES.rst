@@ -1,3 +1,13 @@
+v0.16.4 - 2024-01-11
+--------------------
+
+Fixes
+^^^^^
+
+- Fix ``ValueError`` thrown when the server is given invalid ``Position`` data.
+  Invalid values will be clamped to the range permitted by the language server protocol (``[0, 2147483647]``) (`#714 <https://github.com/swyddfa/esbonio/issues/714>`_)
+
+
 v0.16.3 - 2023-11-27
 --------------------
 

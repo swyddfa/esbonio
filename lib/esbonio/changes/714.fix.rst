@@ -1,2 +1,0 @@
-Fix ``ValueError`` thrown when the server is given invalid ``Position`` data.
-Invalid values will be clamped to the range permitted by the language server protocol (``[0, 2147483647]``)
