@@ -1,153 +1,63 @@
-import inspect
-import re
-from typing import Dict
-from typing import List
-from typing import Optional
+"""Helper functions for completion support"""
+from __future__ import annotations
 
-import attrs
+import re
+import typing
+
 from lsprotocol import types
 
 from esbonio import server
-from esbonio.sphinx_agent.types import RST_DIRECTIVE
 
+if typing.TYPE_CHECKING:
+    from typing import Callable
+    from typing import Dict
+    from typing import Optional
+    from typing import Tuple
 
-@attrs.define
-class Directive:
-    """Represents a directive."""
+    from . import Directive
 
-    name: str
-    """The name of the directive, as the user would type in an rst file."""
-
-    implementation: Optional[str]
-    """The dotted name of the directive's implementation."""
-
-
-class DirectiveProvider:
-    """Base class for directive providers"""
-
-    def suggest_directives(
-        self, context: server.CompletionContext
-    ) -> Optional[List[Directive]]:
-        """Given a completion context, suggest directives that may be used."""
-        return None
-
-
-class DirectiveFeature(server.LanguageFeature):
-    """reStructuredText directive support."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        self._providers: Dict[int, DirectiveProvider] = {}
-
-    def add_provider(self, provider: DirectiveProvider):
-        """Register a directive provider.
-
-        Parameters
-        ----------
-        provider
-           The directive provider
-        """
-        self._providers[id(provider)] = provider
-
-    completion_triggers = [RST_DIRECTIVE]
-
-    async def completion(
-        self, context: server.CompletionContext
-    ) -> Optional[List[types.CompletionItem]]:
-        """Provide auto-completion suggestions for directives."""
-
-        groups = context.match.groupdict()
-
-        # Are we completing a directive's options?
-        if "directive" not in groups:
-            return await self.complete_options(context)
-
-        # Are we completing the directive's argument?
-        directive_end = context.match.span()[0] + len(groups["directive"])
-        complete_directive = groups["directive"].endswith("::")
-
-        if complete_directive and directive_end < context.position.character:
-            return await self.complete_arguments(context)
-
-        return await self.complete_directives(context)
-
-    async def complete_options(self, context: server.CompletionContext):
-        return None
-
-    async def complete_arguments(self, context: server.CompletionContext):
-        return None
-
-    async def complete_directives(self, context: server.CompletionContext):
-        items = []
-
-        for directive in await self.suggest_directives(context):
-            if (item := render_directive_completion(context, directive)) is not None:
-                items.append(item)
-
-        if len(items) > 0:
-            return items
-
-    async def suggest_directives(
-        self, context: server.CompletionContext
-    ) -> List[Directive]:
-        """Suggest directives that may be used, given a completion context.
-
-        Parameters
-        ----------
-        context
-           The completion context.
-        """
-        items = []
-
-        for provider in self._providers.values():
-            try:
-                result = provider.suggest_directives(context)
-                if inspect.isawaitable(result):
-                    result = await result
-
-                if result:
-                    items.extend(result)
-            except Exception:
-                name = type(provider).__name__
-                self.logger.error(
-                    "Error in '%s.suggest_directives'", name, exc_info=True
-                )
-
-        return items
+    DirectiveRenderer = Callable[
+        [server.CompletionContext, Directive], Optional[types.CompletionItem]
+    ]
 
 
 WORD = re.compile("[a-zA-Z]+")
+_DIRECTIVE_RENDERERS: Dict[Tuple[str, str], DirectiveRenderer] = {}
+"""CompletionItem rendering functions for directives."""
 
 
-def render_directive_completion(
-    context: server.CompletionContext, directive: Directive
-) -> Optional[types.CompletionItem]:
-    """Render the given directive as a ``CompletionItem`` according to the current
-    context.
+def renderer(*, language: str, insert_behavior: str):
+    """Define a new rendering function."""
+
+    def fn(f: DirectiveRenderer) -> DirectiveRenderer:
+        _DIRECTIVE_RENDERERS[(language, insert_behavior)] = f
+        return f
+
+    return fn
+
+
+def get_directive_renderer(
+    language: str, insert_behavior: str
+) -> Optional[DirectiveRenderer]:
+    """Return the directive renderer to use.
 
     Parameters
     ----------
-    context
-       The context in which the completion should be rendered.
+    language
+       The source language the completion item will be inserted into
 
-    directive
-       The directive to render
+    insert_behavior
+       How the completion should behave when inserted.
 
     Returns
     -------
-    Optional[CompletionItem]
-       The final completion item or ``None``.
-       If ``None`` is returned, then the given completion should be skipped.
+    Optional[DirectiveRenderer]
+       The rendering function to use that matches the given criteria, if available.
     """
-
-    # TODO: Bring this back
-    # if context.config.preferred_insert_behavior == "insert":
-    #     return _render_directive_with_insert_text(context, name, directive)
-
-    return _render_directive_with_text_edit(context, directive)
+    return _DIRECTIVE_RENDERERS.get((language, insert_behavior), None)
 
 
+@renderer(language="rst", insert_behavior="insert")
 def _render_directive_with_insert_text(
     context: server.CompletionContext,
     directive: Directive,
@@ -222,13 +132,13 @@ def _render_directive_with_insert_text(
     return item
 
 
-def _render_directive_with_text_edit(
+@renderer(language="rst", insert_behavior="replace")
+def _render_rst_directive_with_text_edit(
     context: server.CompletionContext,
     directive: Directive,
 ) -> Optional[types.CompletionItem]:
-    """Render a directive's ``CompletionItem`` using the ``textEdit`` field.
-
-    This implements the ``replace`` insert behavior for directives.
+    """Render a ``CompletionItem`` for a reStructuredText directive using the
+    ``textEdit`` field.
 
     Parameters
     ----------
@@ -238,6 +148,10 @@ def _render_directive_with_text_edit(
     directive
        The directive to render.
 
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item
     """
     match = context.match
 
@@ -256,6 +170,50 @@ def _render_directive_with_text_edit(
     item = _render_directive_common(directive)
     item.filter_text = insert_text
     item.insert_text_format = types.InsertTextFormat.PlainText
+    item.text_edit = types.TextEdit(
+        new_text=insert_text,
+        range=types.Range(
+            start=types.Position(line=context.position.line, character=start),
+            end=types.Position(line=context.position.line, character=end),
+        ),
+    )
+
+    return item
+
+
+@renderer(language="markdown", insert_behavior="replace")
+def _render_myst_directive_with_text_edit(
+    context: server.CompletionContext,
+    directive: Directive,
+) -> Optional[types.CompletionItem]:
+    """Render a ``CompletionItem`` for a MyST directive using the ``textEdit`` field.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    directive
+       The directive to render.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item
+    """
+
+    start, end = context.match.span()
+
+    if context.snippet_support:
+        insert_text = f"```{{{directive.name}}} $0\n```"
+        insert_text_format = types.InsertTextFormat.Snippet
+    else:
+        insert_text = f"```{{{directive.name}}}"
+        insert_text_format = types.InsertTextFormat.PlainText
+
+    item = _render_directive_common(directive)
+    item.filter_text = insert_text
+    item.insert_text_format = insert_text_format
     item.text_edit = types.TextEdit(
         new_text=insert_text,
         range=types.Range(
@@ -385,8 +343,3 @@ def _render_directive_common(directive: Directive) -> types.CompletionItem:
 #         kind=CompletionItemKind.Field,
 #         data={"completion_type": "directive_option", "for_directive": directive},
 #     )
-
-
-def esbonio_setup(server: server.EsbonioLanguageServer):
-    directives = DirectiveFeature(server)
-    server.add_feature(directives)

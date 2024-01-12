@@ -19,7 +19,7 @@ import cattrs
 from lsprotocol import types
 from pygls.capabilities import get_capability
 from pygls.server import LanguageServer
-from pygls.workspace import Document
+from pygls.workspace import TextDocument
 from pygls.workspace import Workspace
 
 from . import Uri
@@ -36,7 +36,7 @@ LF = TypeVar("LF", bound="LanguageFeature")
 class EsbonioWorkspace(Workspace):
     """A modified version of pygls' workspace that ensures uris are always resolved."""
 
-    def get_document(self, doc_uri: str) -> Document:
+    def get_document(self, doc_uri: str) -> TextDocument:
         uri = str(Uri.parse(doc_uri).resolve())
         return super().get_text_document(uri)
 
@@ -243,6 +243,18 @@ class EsbonioLanguageServer(LanguageServer):
            The diagnostics themselves
         """
         self._diagnostics[(source, uri)] = diagnostics
+
+    def get_language_at(self, document: TextDocument, position: types.Position) -> str:
+        """Return the language at the given location"""
+        language = document.language_id
+
+        if language in {"rst", "restructuredtext"}:
+            return "rst"
+
+        if language in {"markdown"}:
+            return "markdown"
+
+        return ""
 
     def sync_diagnostics(self) -> None:
         """Update the client with the currently stored diagnostics.
