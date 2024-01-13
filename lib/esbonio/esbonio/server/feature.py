@@ -1,11 +1,7 @@
 from __future__ import annotations
 
 import typing
-from typing import Any
-from typing import Coroutine
-from typing import List
-from typing import Optional
-from typing import Union
+from typing import Literal
 
 import attrs
 from lsprotocol import types
@@ -16,6 +12,11 @@ from . import Uri
 
 if typing.TYPE_CHECKING:
     import re
+    from typing import Any
+    from typing import Coroutine
+    from typing import List
+    from typing import Optional
+    from typing import Union
 
     from .server import EsbonioLanguageServer
 
@@ -40,8 +41,15 @@ class LanguageFeature:
 
     def __init__(self, server: EsbonioLanguageServer):
         self.server = server
-        self.converter = server.converter
         self.logger = server.logger.getChild(self.__class__.__name__)
+
+    @property
+    def converter(self):
+        return self.server.converter
+
+    @property
+    def configuration(self):
+        return self.server.configuration
 
     def initialize(self, params: types.InitializeParams):
         """Called during ``initialize``."""
@@ -77,6 +85,17 @@ class LanguageFeature:
     ) -> WorkspaceSymbolResult:
         """Called when a workspace symbols request is received."""
         ...
+
+
+@attrs.define
+class CompletionConfig:
+    """Configuration options that control completion behavior."""
+
+    preferred_insert_behavior: Literal["insert", "replace"] = attrs.field(
+        default="replace"
+    )
+    """This option indicates if the user prefers we use ``insertText`` or ``textEdit``
+    when rendering ``CompletionItems``."""
 
 
 @attrs.define

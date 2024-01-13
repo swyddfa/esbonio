@@ -49,6 +49,7 @@ class DirectiveFeature(server.LanguageFeature):
         super().__init__(*args, **kwargs)
 
         self._providers: Dict[int, DirectiveProvider] = {}
+        self._insert_behavior = "replace"
 
     def add_provider(self, provider: DirectiveProvider):
         """Register a directive provider.
@@ -61,6 +62,18 @@ class DirectiveFeature(server.LanguageFeature):
         self._providers[id(provider)] = provider
 
     completion_triggers = [RST_DIRECTIVE, MYST_DIRECTIVE]
+
+    async def initialized(self, params: types.InitializedParams):
+        """Called once the initial handshake between client and server has finished."""
+        await self.configuration.subscribe(
+            "esbonio.server.completion",
+            server.CompletionConfig,
+            self.update_configuration,
+        )
+
+    def update_configuration(self, config: server.CompletionConfig):
+        """Called when the user's configuration is updated."""
+        self._insert_behavior = config.preferred_insert_behavior
 
     async def completion(
         self, context: server.CompletionContext
@@ -93,9 +106,8 @@ class DirectiveFeature(server.LanguageFeature):
     ) -> Optional[List[types.CompletionItem]]:
         """Return completion suggestions for the available directives."""
 
-        style = "replace"  # TODO: Use config value
         language = self.server.get_language_at(context.doc, context.position)
-        render_func = completion.get_directive_renderer(language, style)
+        render_func = completion.get_directive_renderer(language, self._insert_behavior)
 
         if render_func is None:
             return None
