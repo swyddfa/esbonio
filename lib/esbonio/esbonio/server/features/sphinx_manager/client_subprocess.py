@@ -346,7 +346,7 @@ def make_test_sphinx_client() -> SubprocessSphinxClient:
 
 def get_sphinx_env(config: SphinxConfig) -> Dict[str, str]:
     """Return the set of environment variables to use with the Sphinx process."""
-    env = {"PYTHONPATH": ":".join([str(p) for p in config.python_path])}
+    env = {"PYTHONPATH": os.pathsep.join([str(p) for p in config.python_path])}
 
     passthrough = set(config.env_passthrough)
     if IS_WIN and "SYSTEMROOT" not in passthrough:
