@@ -5,13 +5,6 @@ import collections
 import inspect
 import logging
 import typing
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
-from typing import Type
 from typing import TypeVar
 from uuid import uuid4
 
@@ -26,6 +19,14 @@ from . import Uri
 from ._configuration import Configuration
 
 if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Callable
+    from typing import Dict
+    from typing import List
+    from typing import Optional
+    from typing import Tuple
+    from typing import Type
+
     from .feature import LanguageFeature
 
 __version__ = "1.0.0b0"
