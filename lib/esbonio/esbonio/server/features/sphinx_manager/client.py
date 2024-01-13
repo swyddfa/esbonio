@@ -1,16 +1,21 @@
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
+from __future__ import annotations
+
+import typing
 from typing import Protocol
-from typing import Tuple
 
-import aiosqlite
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Dict
+    from typing import List
+    from typing import Optional
+    from typing import Tuple
 
-from esbonio.server import Uri
-from esbonio.sphinx_agent import types
+    import aiosqlite
 
-from .config import SphinxConfig
+    from esbonio.server import Uri
+    from esbonio.sphinx_agent import types
+
+    from .config import SphinxConfig
 
 
 class SphinxClient(Protocol):
@@ -85,10 +90,14 @@ class SphinxClient(Protocol):
         """Get the symbols for the given file."""
         ...
 
+    async def find_symbols(self, **kwargs) -> List[types.Symbol]:
+        """Find symbols which match the given criteria."""
+        ...
+
     async def get_workspace_symbols(
         self, query: str
     ) -> List[Tuple[str, str, int, str, str, str]]:
-        """Return all the workspace symbols matching the given query"""
+        """Return all the workspace symbols matching the given query string"""
         ...
 
     async def stop(self):
