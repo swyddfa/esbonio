@@ -58,7 +58,7 @@ def get_directive_renderer(
 
 
 @renderer(language="rst", insert_behavior="insert")
-def _render_directive_with_insert_text(
+def render_rst_directive_with_insert_text(
     context: server.CompletionContext,
     directive: Directive,
 ) -> Optional[types.CompletionItem]:
@@ -81,7 +81,7 @@ def _render_directive_with_insert_text(
     user_text = context.match.group(0).strip()
 
     # Since we can't replace any existing text, it only makes sense
-    # to offer completions that ailgn with what the user has already written.
+    # to offer completions that align with what the user has already written.
     if not insert_text.startswith(user_text):
         return None
 
@@ -129,11 +129,12 @@ def _render_directive_with_insert_text(
 
     item = _render_directive_common(directive)
     item.insert_text = insert_text[start_index:]
+    item.insert_text_format = types.InsertTextFormat.PlainText
     return item
 
 
 @renderer(language="rst", insert_behavior="replace")
-def _render_rst_directive_with_text_edit(
+def render_rst_directive_with_text_edit(
     context: server.CompletionContext,
     directive: Directive,
 ) -> Optional[types.CompletionItem]:
@@ -155,12 +156,13 @@ def _render_rst_directive_with_text_edit(
     """
     match = context.match
 
-    # Calculate the range of text the CompletionItems should edit.
-    # If there is an existing argument to the directive, we should leave it untouched
-    # otherwise, edit the whole line to insert any required arguments.
+    # Calculate the range of text the CompletionItems should edit, we don't need to
+    # touch indentation.
     start = match.span()[0] + match.group(0).find(".")
 
     if match.group("argument"):
+        # If there is an existing argument to the directive, we should leave it
+        # untouched
         end = match.span()[0] + match.group(0).find("::") + 2
     else:
         end = match.span()[1]
@@ -182,7 +184,7 @@ def _render_rst_directive_with_text_edit(
 
 
 @renderer(language="markdown", insert_behavior="replace")
-def _render_myst_directive_with_text_edit(
+def render_myst_directive_with_text_edit(
     context: server.CompletionContext,
     directive: Directive,
 ) -> Optional[types.CompletionItem]:
@@ -202,9 +204,16 @@ def _render_myst_directive_with_text_edit(
        The rendered completion item
     """
 
-    start, end = context.match.span()
+    # Calculate the range of text the CompletionItems should edit, we don't need to
+    # touch indentation.
+    start = context.match.span()[0] + context.match.group(0).find("`")
 
-    if context.snippet_support:
+    if has_argument := context.match.group("argument"):
+        end = context.match.span()[0] + context.match.group(0).find("}") + 1
+    else:
+        end = context.match.span()[1]
+
+    if context.snippet_support and not has_argument:
         insert_text = f"```{{{directive.name}}} $0\n```"
         insert_text_format = types.InsertTextFormat.Snippet
     else:
@@ -221,6 +230,62 @@ def _render_myst_directive_with_text_edit(
             end=types.Position(line=context.position.line, character=end),
         ),
     )
+
+    return item
+
+
+@renderer(language="markdown", insert_behavior="insert")
+def render_myst_directive_with_insert_text(
+    context: server.CompletionContext,
+    directive: Directive,
+) -> Optional[types.CompletionItem]:
+    """Render a ``CompletionItem`` for a MyST directive using the ``insertText`` field.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    directive
+       The directive to render.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item
+    """
+    if context.snippet_support:
+        insert_text = f"```{{{directive.name}}} $0\n```"
+        insert_text_format = types.InsertTextFormat.Snippet
+    else:
+        insert_text = f"```{{{directive.name}}}"
+        insert_text_format = types.InsertTextFormat.PlainText
+
+    user_text = context.match.group(0).strip()
+
+    # Since we can't replace any existing text, it only makes sense
+    # to offer completions that align with what the user has already written.
+    if not insert_text.startswith(user_text):
+        return None
+
+    # See comment in `render_rst_directive_with_insert_text` above for an extended
+    # discussion on how `insertText` completions work.
+
+    # If the existing text ends with a delimiter, then we should simply remove the
+    # entire prefix
+    if user_text.endswith((":", "-", "{", "}", "`")):
+        start_index = len(user_text)
+
+    else:
+        # Look for groups of word chars, replace text until the start of the final group
+        start_indices = [m.start() for m in WORD.finditer(user_text)] or [
+            len(user_text)
+        ]
+        start_index = max(start_indices)
+
+    item = _render_directive_common(directive)
+    item.insert_text = insert_text[start_index:]
+    item.insert_text_format = insert_text_format
 
     return item
 
