@@ -20,8 +20,18 @@ class SphinxDirectives(directives.DirectiveProvider):
         if (client := await self.manager.get_client(context.uri)) is None:
             return None
 
+        # TODO .. default-domain:: support
+        primary_domain = await client.get_config_value("primary_domain")
+
         result: List[directives.Directive] = []
         for name, implementation in await client.get_directives():
+            # Also suggest unqualified versions of directives from the primary_domain.
+            if name.startswith(f"{primary_domain}:"):
+                short_name = name.replace(f"{primary_domain}:", "")
+                result.append(
+                    directives.Directive(name=short_name, implementation=implementation)
+                )
+
             result.append(
                 directives.Directive(name=name, implementation=implementation)
             )

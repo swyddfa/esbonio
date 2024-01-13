@@ -13,9 +13,12 @@ from esbonio.sphinx_agent.types import RST_DIRECTIVE
 from . import completion
 
 if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Coroutine
     from typing import Dict
     from typing import List
     from typing import Optional
+    from typing import Union
 
 
 @attrs.define
@@ -34,7 +37,9 @@ class DirectiveProvider:
 
     def suggest_directives(
         self, context: server.CompletionContext
-    ) -> Optional[List[Directive]]:
+    ) -> Union[
+        Optional[List[Directive]], Coroutine[Any, Any, Optional[List[Directive]]]
+    ]:
         """Given a completion context, suggest directives that may be used."""
         return None
 
@@ -115,7 +120,7 @@ class DirectiveFeature(server.LanguageFeature):
         context
            The completion context.
         """
-        items = []
+        items: List[Directive] = []
 
         for provider in self._providers.values():
             try:
