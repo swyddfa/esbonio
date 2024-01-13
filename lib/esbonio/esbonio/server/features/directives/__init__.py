@@ -124,9 +124,11 @@ class DirectiveFeature(server.LanguageFeature):
 
         for provider in self._providers.values():
             try:
-                result = provider.suggest_directives(context)
-                if inspect.isawaitable(result):
-                    result = await result
+                result: Optional[List[Directive]] = None
+
+                aresult = provider.suggest_directives(context)
+                if inspect.isawaitable(aresult):
+                    result = await aresult
 
                 if result:
                     items.extend(result)
