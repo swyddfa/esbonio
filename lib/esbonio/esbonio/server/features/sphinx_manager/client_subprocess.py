@@ -7,11 +7,6 @@ import logging
 import os
 import subprocess
 import typing
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
 
 import aiosqlite
 from pygls import IS_WIN
@@ -24,6 +19,12 @@ from esbonio.server import Uri
 from .config import SphinxConfig
 
 if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Dict
+    from typing import List
+    from typing import Optional
+    from typing import Tuple
+
     from .client import SphinxClient
     from .manager import SphinxManager
 
@@ -243,6 +244,20 @@ class SubprocessSphinxClient(JsonRPCClient):
                 return None
 
             return result[0]
+
+    async def get_config_value(self, name: str) -> Optional[Any]:
+        """Return the requested configuration value, if available."""
+        if self.db is None:
+            return None
+
+        query = "SELECT value FROM config WHERE name = ?"
+        cursor = await self.db.execute(query, (name,))
+
+        if (row := await cursor.fetchone()) is None:
+            return None
+
+        (value,) = row
+        return json.loads(value)
 
     async def get_directives(self) -> List[Tuple[str, Optional[str]]]:
         """Get the directives known to Sphinx."""

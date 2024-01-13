@@ -1,12 +1,19 @@
-from typing import List
-from typing import Optional
-from typing import Tuple
+from __future__ import annotations
 
-from sphinx.config import Config
+import typing
 
 from ..app import Database
 from ..app import Sphinx
 from ..types import Uri
+from ..util import as_json
+
+if typing.TYPE_CHECKING:
+    from typing import List
+    from typing import Optional
+    from typing import Tuple
+
+    from sphinx.config import Config
+
 
 FILES_TABLE = Database.Table(
     "files",
@@ -17,9 +24,59 @@ FILES_TABLE = Database.Table(
     ],
 )
 
+CONFIG_TABLE = Database.Table(
+    "config",
+    [
+        Database.Column(name="name", dtype="TEXT"),
+        Database.Column(name="scope", dtype="TEXT"),
+        Database.Column(name="value", dtype="TEXT"),
+    ],
+)
+
+IGNORED_CONFIG_NAMES = {
+    # Deprecated/removed in v3.5 and the backwards compatibility code causes issues when
+    # dumping the config
+    "html_add_permalinks",
+}
+
 
 def init_db(app: Sphinx, config: Config):
     app.esbonio.db.ensure_table(FILES_TABLE)
+    app.esbonio.db.ensure_table(CONFIG_TABLE)
+
+
+def dump_config(app: Sphinx, *args):
+    """Dump the user's config into the db so that the parent language server can inspect
+    it."""
+    app.esbonio.db.clear_table(CONFIG_TABLE)
+
+    values: List[Tuple[str, str, str]] = []
+    config = app.config.__getstate__()
+
+    # For some reason, most config values are nested under 'values'
+    config_values = config.pop("values", {})
+
+    for name, item in config_values.items():
+        if name in IGNORED_CONFIG_NAMES:
+            continue
+
+        try:
+            (value, scope, _) = item
+            values.append((name, scope, as_json(value)))
+        except Exception:
+            values.append((name, "", as_json(item)))
+
+    for name, item in config.items():
+        if name in IGNORED_CONFIG_NAMES:
+            continue
+
+        try:
+            (value, scope, _) = item
+            values.append((name, scope, as_json(value)))
+        except Exception:
+            values.append((name, "", as_json(item)))
+
+    app.esbonio.db.insert_values(CONFIG_TABLE, values)
 
 
 def build_file_mapping(app: Sphinx, exc: Optional[Exception]):
@@ -51,4 +108,5 @@ def build_file_mapping(app: Sphinx, exc: Optional[Exception]):
 
 def setup(app: Sphinx):
     app.connect("config-inited", init_db)
+    app.connect("builder-inited", dump_config)
     app.connect("build-finished", build_file_mapping)
