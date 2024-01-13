@@ -280,10 +280,34 @@ class SubprocessSphinxClient(JsonRPCClient):
         cursor = await self.db.execute(query, (str(src_uri.resolve()),))
         return await cursor.fetchall()  # type: ignore[return-value]
 
+    async def find_symbols(self, **kwargs) -> List[types.Symbol]:
+        """Find symbols which match the given criteria."""
+        if self.db is None:
+            return []
+
+        base_query = (
+            "SELECT id, name, kind, detail, range, parent_id, order_id FROM symbols"
+        )
+        where: List[str] = []
+        parameters: List[Any] = []
+
+        for param, value in kwargs.items():
+            where.append(f"{param} = ?")
+            parameters.append(value)
+
+        if where:
+            conditions = " AND ".join(where)
+            query = " ".join([base_query, "WHERE", conditions])
+        else:
+            query = base_query
+
+        cursor = await self.db.execute(query, tuple(parameters))
+        return await cursor.fetchall()  # type: ignore[return-value]
+
     async def get_workspace_symbols(
         self, query: str
     ) -> List[Tuple[str, str, int, str, str, str]]:
-        """Return all the workspace symbols matching the given query"""
+        """Return all the workspace symbols matching the given query string"""
 
         if self.db is None:
             return []
