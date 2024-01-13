@@ -70,6 +70,9 @@ class SphinxClient(Protocol):
     async def get_build_path(self, src_uri: Uri) -> Optional[str]:
         """Get the build path associated with the given ``src_uri``."""
 
+    async def get_config_value(self, name: str) -> Optional[Any]:
+        """Return the requested configuration value, if available."""
+
     async def get_diagnostics(self) -> Dict[Uri, List[Dict[str, Any]]]:
         """Get the diagnostics for the project."""
         ...

@@ -14,6 +14,9 @@ def _serialize_message(obj):
     if isinstance(obj, _TranslationProxy):
         return str(obj)
 
+    if isinstance(obj, set):
+        return list(obj)
+
     return obj
 
 
