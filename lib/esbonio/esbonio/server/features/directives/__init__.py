@@ -86,9 +86,13 @@ class DirectiveFeature(server.LanguageFeature):
         if "directive" not in groups:
             return await self.complete_options(context)
 
+        # Don't offer completions for targets
+        if (groups["name"] or "").startswith("_"):
+            return None
+
         # Are we completing the directive's argument?
         directive_end = context.match.span()[0] + len(groups["directive"])
-        complete_directive = groups["directive"].endswith("::")
+        complete_directive = groups["directive"].endswith(("::", "}"))
 
         if complete_directive and directive_end < context.position.character:
             return await self.complete_arguments(context)
@@ -108,7 +112,6 @@ class DirectiveFeature(server.LanguageFeature):
 
         language = self.server.get_language_at(context.doc, context.position)
         render_func = completion.get_directive_renderer(language, self._insert_behavior)
-
         if render_func is None:
             return None
 
