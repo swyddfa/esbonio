@@ -73,6 +73,12 @@
                 "category": "Esbonio"
             },
             {
+                "command": "esbonio.preview.showSource",
+                "title": "Show Source",
+                "icon": "$(go-to-file)",
+                "category": "Esbonio"
+            },
+            {
                 "command": "esbonio.server.restart",
                 "title": "Restart Language Server",
                 "category": "Esbonio"
@@ -324,6 +330,11 @@
                     "alt": "esbonio.preview.open",
                     "group": "navigation",
                     "when": "resourceLangId == restructuredtext"
+                },
+                {
+                    "command": "esbonio.preview.showSource",
+                    "group": "navigation",
+                    "when": "restructuredtextPreviewFocus"
                 }
             ]
         },
