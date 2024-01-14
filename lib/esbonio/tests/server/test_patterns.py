@@ -66,7 +66,7 @@ def test_myst_directive_regex(string, expected):
         ("..", {"directive": ".."}),
         (".. d", {"directive": ".. d"}),
         (".. image::", {"name": "image", "directive": ".. image::"}),
-        (".. c:", {"domain": "c", "directive": ".. c:"}),
+        (".. c:", {"name": "c:", "directive": ".. c:"}),
         (".. |", {"directive": ".. |", "substitution": "|"}),
         (
             ".. |e",
@@ -109,7 +109,7 @@ def test_myst_directive_regex(string, expected):
         ),
         (
             ".. c:function::",
-            {"name": "function", "domain": "c", "directive": ".. c:function::"},
+            {"name": "c:function", "directive": ".. c:function::"},
         ),
         (
             ".. image:: filename.png",
@@ -126,8 +126,7 @@ def test_myst_directive_regex(string, expected):
         (
             ".. cpp:function:: malloc",
             {
-                "name": "function",
-                "domain": "cpp",
+                "name": "cpp:function",
                 "argument": "malloc",
                 "directive": ".. cpp:function::",
             },
@@ -139,8 +138,7 @@ def test_myst_directive_regex(string, expected):
         (
             "   .. cpp:function:: malloc",
             {
-                "name": "function",
-                "domain": "cpp",
+                "name": "cpp:function",
                 "argument": "malloc",
                 "directive": ".. cpp:function::",
             },
@@ -148,24 +146,21 @@ def test_myst_directive_regex(string, expected):
         (
             ".. rst:directive:option::",
             {
-                "name": "directive:option",
-                "domain": "rst",
+                "name": "rst:directive:option",
                 "directive": ".. rst:directive:option::",
             },
         ),
         (
             "   .. rst:directive:option::",
             {
-                "name": "directive:option",
-                "domain": "rst",
+                "name": "rst:directive:option",
                 "directive": ".. rst:directive:option::",
             },
         ),
         (
             "   .. rst:directive:option:: height",
             {
-                "name": "directive:option",
-                "domain": "rst",
+                "name": "rst:directive:option",
                 "directive": ".. rst:directive:option::",
                 "argument": "height",
             },

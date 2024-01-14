@@ -47,7 +47,6 @@ RST_DIRECTIVE: "re.Pattern" = re.compile(
         (?P<substitution_text>[^|]+)?
       \|?)?
       [ ]?
-      ((?P<domain>[\w]+):(?!:))?      # directives may include a domain
       (?P<name>([\w-]|:(?!:))+)?      # directives have a name
       (::)?                           # directives end with '::'
     )
@@ -62,9 +61,6 @@ the initial declaration. A number of named capture groups are available.
 
 ``name``
    The name of the directive, not including the domain prefix.
-
-``domain``
-   The domain prefix
 
 ``directive``
    Everything that makes up a directive, from the initial ``..`` up to and including the
