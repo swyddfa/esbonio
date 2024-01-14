@@ -17,6 +17,7 @@ repos:
   rev: 7.0.0
   hooks:
   - id: flake8
+    exclude: 'scripts/sphinx-app.py'
     args: [--config=lib/esbonio/setup.cfg]
 
 - repo: https://github.com/pycqa/isort
