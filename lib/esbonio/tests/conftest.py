@@ -14,7 +14,7 @@ def uri_for():
 
     def fn(*args):
         path = (TEST_DIR / pathlib.Path(*args)).resolve()
-        assert path.exists()
+        assert path.exists(), f"{path} does not exist"
         return Uri.for_file(str(path))
 
     return fn
