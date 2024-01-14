@@ -29,11 +29,12 @@ The HTML pages are in docs/_build.
 >>> app
 <sphinx.application.Sphinx object at 0x7f0ad0fdb5b0>
 """
+import inspect
 import pathlib
+import time
 
-from sphinx.application import Sphinx
-
-from esbonio.lsp.sphinx import SphinxLanguageServer
+from esbonio.sphinx_agent import types
+from esbonio.sphinx_agent.app import Sphinx
 
 root = pathlib.Path(__file__).parent.parent
 
@@ -46,5 +47,3 @@ app = Sphinx(
     freshenv=True,  # Have Sphinx reload everything on first build.
 )
 app.build()
-ls = SphinxLanguageServer()
-ls.app = app
