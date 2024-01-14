@@ -54,6 +54,10 @@ source_pkgs = ["esbonio"]
 show_missing = true
 skip_covered = true
 sort = "Cover"
+exclude_also = [
+    # Typing imports will never be executed
+    "if typing.TYPE_CHECKING:",
+]
 
 [tool.isort]
 force_single_line = true
