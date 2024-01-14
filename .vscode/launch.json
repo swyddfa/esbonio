@@ -77,9 +77,13 @@
             "request": "launch",
             "module": "pytest",
             "justMyCode": false,
-            "subProcess": false,
+            "subProcess": true,
             "python": "${command:python.interpreterPath}",
-            "cwd": "${workspaceFolder}/lib/esbonio"
+            // "python": "${workspaceFolder}/lib/esbonio/.tox/py312-sphinx5/bin/python",
+            "cwd": "${workspaceFolder}/lib/esbonio",
+            //"args": [
+            //    "tests/sphinx-agent/test_sa_build.py"
+            //]
         },
         {
             "name": "Python: Attach",
