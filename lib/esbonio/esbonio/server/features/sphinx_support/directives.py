@@ -43,8 +43,15 @@ class SphinxDirectives(directives.DirectiveProvider):
 
         result: List[directives.Directive] = []
         for name, implementation in await client.get_directives():
+            # std: directives can be used unqualified
+            if name.startswith("std:"):
+                short_name = name.replace("std:", "")
+                result.append(
+                    directives.Directive(name=short_name, implementation=implementation)
+                )
+
             # Also suggest unqualified versions of directives from the currently active domain.
-            if name.startswith(f"{active_domain}:"):
+            elif name.startswith(f"{active_domain}:"):
                 short_name = name.replace(f"{active_domain}:", "")
                 result.append(
                     directives.Directive(name=short_name, implementation=implementation)
