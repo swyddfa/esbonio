@@ -7,7 +7,7 @@
 
 The Esbonio extension integrates the [`esbonio`](https://pypi.org/project/esbonio/) language server into VSCode.
 
-The `esbonio` language server aims to make it easier to work with [Sphinx](https://www.sphinx-doc.org/en/master/) documentation projects by bringing IDE-like features to your documentation experience.
+The `esbonio` language server aims to make it easier to work with [Sphinx](https://www.sphinx-doc.org/en/master/) documentation projects by proving IDE-like features to your reStructuredText and Markdown files.
 
 ## Features
 
@@ -44,7 +44,7 @@ Errors from a build are published to VSCode as diagnostics
 
 ### Hover
 
-Documentation is provided for certain roles and directives when the cursor hovers over them in the editor
+Documentation is provided for certain roles and directives.
 
 ![Hover](../resources/images/hover-demo.png)
 

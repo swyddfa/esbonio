@@ -213,13 +213,6 @@ def generate_changelog(component: Component, version: str):
     # Release notes for changelog
     run("towncrier", "build", "--yes", f"--version={version}", cwd=component["src"])
 
-    # Needed for VSCode marketplace
-    if component["name"] == "vscode":
-        run(
-            *["cp", "CHANGES.md", "CHANGELOG.md"],
-            cwd=component["src"],
-        )
-
 
 def commit_and_tag(component: Component, version: str) -> str:
     """Commit tag and push the new version."""
