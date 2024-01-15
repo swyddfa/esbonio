@@ -4,7 +4,6 @@ import { join } from "path";
 import {
   CancellationToken,
   ConfigurationParams,
-  ExecutableOptions,
   LanguageClient,
   LanguageClientOptions,
   ResponseError,
@@ -197,15 +196,21 @@ export class EsbonioClient {
     })
 
     this.logger.debug(`Server start command: ${command.join(" ")}`)
-    let serverEnv: ExecutableOptions = {
-      env: {
-        PATH: process.env.PATH,
-        PYTHONPATH: join(this.context.extensionPath, "bundled", "libs")
+    const serverEnv: any = {
+      PYTHONPATH: join(this.context.extensionPath, "bundled", "libs")
+    };
+
+    // Passthrough any environment variables we haven't set ourselves..
+    Object.keys(process.env).forEach((key) => {
+      if (!serverEnv[key]) {
+        serverEnv[key] = process.env[key]
       }
-    }
+    });
 
     let server: ServerOptions = {
-      command: command[0], args: command.slice(1), options: serverEnv
+      command: command[0], args: command.slice(1), options: {
+        env: serverEnv
+      }
     }
 
     let client = new LanguageClient(
