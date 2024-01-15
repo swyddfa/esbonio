@@ -61,9 +61,14 @@ The `esbonio` language server is bundled with this extension, so there is no nee
 However, the server will need access the Python environment you use to build your documentation.
 
 1. Open the folder containing your documentation project in VSCode, (opening a single file without an active workspace is not currently supported and will lead to errors).
+
 1. Using the `Python: Select Interpreter` command from the Python extension, choose the environment you use to build your documentation.
-   (You might be required to run the `Esbonio: Restart Language Server` command for it to take effect)
+   (You might be required to run the `Esbonio: Restart Language Server` command for it to take effect).
+
+   Alternatively, you can set the `esbonio.sphinx.pythonCommand` option to override the python interpreter used.
+
 1. Open a reStructuredText or markdown file from your Sphinx project.
+
 1. Sphinx build output will be available in Esbonio's `Output` view in VSCode's panel.
 
 ## Supplementry Extensions

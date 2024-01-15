@@ -50,7 +50,7 @@ jobs:
         cd code
 
         # Use version of esbonio on PyPi for release builds
-        ESBONIO_WHL=--pre esbonio tox run -e bundle-deps
+        ESBONIO_WHL="--pre esbonio" tox run -e bundle-deps
 
         npm ci --prefer-offline
         npm run package
