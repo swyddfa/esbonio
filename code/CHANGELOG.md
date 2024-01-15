@@ -1,3 +1,75 @@
+## v0.92.0 - 2024-01-15
+
+
+### Breaking Changes
+
+- The following server configuration options have been removed as they are no longer required.
+
+  - `esbonio.server.installBehavior`
+  - `esbonio.server.updateBehavior`
+  - `esbonio.server.updateFrequency`
+
+  The language server is now bundled as part of the VSCode extension itself, so a separate installation step is no longer necessary.
+
+  The following sphinx configuration options have been removed
+
+  - `esbonio.server.hideSphinxOutput`
+  - `esbonio.sphinx.buildDir`
+  - `esbonio.sphinx.builderName`
+  - `esbonio.sphinx.confDir`
+  - `esbonio.sphinx.doctreeDir`
+  - `esbonio.sphinx.forceFullBuild`
+  - `esbonio.sphinx.keepGoing`
+  - `esbonio.sphinx.makeMode`
+  - `esbonio.sphinx.numJobs`
+  - `esbonio.sphinx.quiet`
+  - `esbonio.sphinx.silent`
+  - `esbonio.sphinx.srcDir`
+  - `esbonio.sphinx.tags`
+  - `esbonio.sphinx.verbosity`
+  - `esbonio.sphinx.warningIsError`
+
+  The Sphinx application instance is now launched using a standard `sphinx-build` command line provided through the `esbonio.sphinx.buildCommand` option, so individual options are no longer necessary.
+  **Note:** The `esbonio.sphinx.configOverrides` option has been preserved as it can be easier to use than the equivalent command line options.
+
+  ([#619](https://github.com/swyddfa/esbonio/issues/619))
+- The minimum required VSCode version is now 1.82.0 ([#666](https://github.com/swyddfa/esbonio/issues/666))
+
+### Enhancements
+
+- The following server configuration values have been added
+
+  - `esbonio.server.enableDevTools`: Enable integration with [lsp-devtools](https://github.com/swyddfa/lsp-devtools) for the language server itself.
+
+  The following sphinx configuration values have been added
+
+  - `esbonio.sphinx.buildCommand`: Set the `sphinx-build` command to use when invoking the Sphinx subprocess
+
+  - `esbonio.sphinx.pythonCommand`: By default, the extension will attempt to reuse the Python environment you have configured in the Python extension when invoking Sphinx.
+    This option can be used to override this behavior.
+
+  - `esbonio.sphinx.cwd`: The working directory from which to launch the Sphinx process
+
+  - `esbonio.sphinx.envPassthrough`: A list of envrionment variables to pass through to the Sphinx process.
+
+  - `esbonio.sphinx.enableDevTools`: Enable integration with [lsp-devtools](https://github.com/swyddfa/lsp-devtools) for the sphinx process
+
+    - `esbonio.sphinx.pythonPath`: Used to override the Python packages (typically `esbonio.sphinx_agent`) that are injected into the Sphinx environment
+
+  The following preview related options have been added
+
+  - `esbonio.sphinx.enableSyncScrolling`: Enable support for syncronised scrolling between the editor and preview pane
+  - `esbonio.preview.bind`: Set the network interface that the preview server binds to
+  - `esbonio.preview.httpPort`: Set the port number the HTTP server binds to
+  - `esbonio.preview.wsPort`: Set the port number the WebSocket server binds to
+
+  ([#626](https://github.com/swyddfa/esbonio/issues/626))
+
+### Misc
+
+- Updated the bundled version of `esbonio` to `1.0.0b1` ([#720](https://github.com/swyddfa/esbonio/issues/720))
+
+
 # v0.11.0 - 2023-03-06
 
 ## Features
