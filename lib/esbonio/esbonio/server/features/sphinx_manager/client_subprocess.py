@@ -9,7 +9,6 @@ import subprocess
 import typing
 
 import aiosqlite
-from pygls import IS_WIN
 from pygls.client import JsonRPCClient
 from pygls.protocol import JsonRPCProtocol
 
@@ -152,9 +151,7 @@ class SubprocessSphinxClient(JsonRPCClient):
         command.extend([*config.python_command, "-m", "sphinx_agent"])
         env = get_sphinx_env(config)
 
-        self.logger.debug("Sphinx agent env: %s", json.dumps(env, indent=2))
         self.logger.debug("Starting sphinx agent: %s", " ".join(command))
-
         await self.start_io(*command, env=env, cwd=config.cwd)
 
     def _get_lsp_devtools_command(self) -> Optional[str]:
@@ -394,18 +391,15 @@ def make_test_sphinx_client() -> SubprocessSphinxClient:
 
 def get_sphinx_env(config: SphinxConfig) -> Dict[str, str]:
     """Return the set of environment variables to use with the Sphinx process."""
-    env = {"PYTHONPATH": os.pathsep.join([str(p) for p in config.python_path])}
 
-    passthrough = set(config.env_passthrough)
-    if IS_WIN and "SYSTEMROOT" not in passthrough:
-        passthrough.add("SYSTEMROOT")
+    env = {
+        "PYTHONPATH": os.pathsep.join([str(p) for p in config.python_path]),
+    }
+    for envname, value in os.environ.items():
+        # Don't pass any vars we've explictly set.
+        if envname in env:
+            continue
 
-    for envname in passthrough:
-        value = os.environ.get(envname, None)
-        if value is not None:
-            if envname == "PYTHONPATH":
-                env["PYTHONPATH"] = f"{env['PYTHONPATH']}{os.pathsep}{value}"
-            else:
-                env[envname] = value
+        env[envname] = value
 
     return env
