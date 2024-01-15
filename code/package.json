@@ -17,11 +17,11 @@
         "Programming Languages"
     ],
     "scripts": {
-        "compile": "tsc -p .",
+        "compile": "node esbuild.mjs",
         "watch": "tsc -p . --watch",
         "deploy": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
-        "vscode:prepublish": "webpack --mode production --devtool hidden-source-map"
+        "vscode:prepublish": "npm run compile"
     },
     "main": "dist/node/extension",
     "extensionDependencies": [
@@ -37,11 +37,8 @@
         "@types/node": "^18",
         "@types/vscode": "1.78.0",
         "@vscode/vsce": "^2.22.0",
-        "path-browserify": "^1.0.1",
-        "ts-loader": "^9.5.1",
-        "typescript": "^5.3.3",
-        "webpack": "^5.89.0",
-        "webpack-cli": "^5.1.4"
+        "esbuild": "^0.19.11",
+        "typescript": "^5.3.3"
     },
     "engines": {
         "vscode": "^1.82.0"
@@ -52,7 +49,7 @@
         },
         "untrustedWorkspaces": {
             "supported": false,
-            "description": "Building and inspecting Sphinx projects has the potential to execute arbitrary code."
+            "description": "Building and inspecting Sphinx projects executes arbitrary code."
         }
     },
     "icon": "icon.png",
