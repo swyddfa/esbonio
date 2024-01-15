@@ -8,11 +8,11 @@ pattern = "\\s*\"version\": \"(?P<version>[^\"]+)\""
 validate-bump = false
 
 [tool.towncrier]
-filename = "CHANGES.rst"
+filename = "CHANGELOG.md"
 directory = "changes/"
-title_format = "v{version} - {project_date}"
-issue_format = "`#{issue} <https://github.com/swyddfa/esbonio/issues/{issue}>`_"
-underlines = ["-", "^", "\""]
+title_format = "## v{version} - {project_date}"
+issue_format = "[#{issue}](https://github.com/swyddfa/esbonio/issues/{issue})"
+underlines = ["", "", ""]
 
 type = [
     { name = "Breaking Changes", directory = "breaking", showcontent = true },
