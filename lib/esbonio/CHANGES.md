@@ -1,3 +1,30 @@
+## v1.0.0b1 - 2024-01-15
+
+
+### Breaking Changes
+
+- Removed `esbonio.lsp.spelling` module, though it will be available as `esbonio.ext.spelling` via the `esbonio-extensions` package. ([#583](https://github.com/swyddfa/esbonio/issues/583))
+- Drop Python 3.7 support ([#584](https://github.com/swyddfa/esbonio/issues/584))
+- Drop Sphinx 4.x support ([#585](https://github.com/swyddfa/esbonio/issues/585))
+
+### Features
+
+- The language server now supports reading configuration values from `workspace/configuration` requests and `pyproject.toml` files.
+  When supported by the client, the server can detect and respond to changes in (most) configuration automatically - no more manually restarting the server! ([#527](https://github.com/swyddfa/esbonio/issues/527))
+- The language server now supports `workspace/symbol` requests ([#611](https://github.com/swyddfa/esbonio/issues/611))
+- Sphinx build progress is now reported using the `window/workDoneProgress/create` API ([#659](https://github.com/swyddfa/esbonio/issues/659))
+- For the clients that support the pull diagnostics model, the server now supports the `textDocument/diagnostic` and `workspace/diagnostic` methods. ([#689](https://github.com/swyddfa/esbonio/issues/689))
+- The language server can now provide completion suggestions for MyST directives. ([#706](https://github.com/swyddfa/esbonio/issues/706))
+
+### Enhancements
+
+- When providing completion suggestions for directives, `esbonio` now takes the `.. default-domain::` directive into account ([#105](https://github.com/swyddfa/esbonio/issues/105))
+
+### Fixes
+
+- Fix path separator character on Windows by @ExaneServerTeam ([#719](https://github.com/swyddfa/esbonio/issues/719))
+
+
 ## v0.16.2 - 2023-10-07
 
 This somewhat quiet release marks the end of the `0.x` series as development has now shifted to focus on what will ultimately become the `1.0` release.
