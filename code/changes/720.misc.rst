@@ -1,1 +1,0 @@
-Updated the bundled language server to ``1.0.0b1``
