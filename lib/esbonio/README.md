@@ -7,7 +7,7 @@
 
 A [Language Server](https://microsoft.github.io/language-server-protocol/) that aims to make it easier to work with [reStructuredText](https://docutils.sourceforge.io/rst.html) tools such as [Sphinx](https://www.sphinx-doc.org/en/master/)
 
-It's still in early development, but already provides the following features.
+The language server provides the following features
 
 ## Completion
 
@@ -26,9 +26,9 @@ It's still in early development, but already provides the following features.
 
 ![Document Link Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/document-links-demo.png)
 
-## Document Symbols
+## Document & Workspace Symbols
 
-![Document Symbols](https://github.com/swyddfa/esbonio/raw/release/resources/images/document-symbols-demo.png)
+![Document & Workspace Symbol Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/document-workspace-symbols-demo.png)
 
 ## Hover
 
@@ -37,12 +37,13 @@ It's still in early development, but already provides the following features.
 ## Implementations
 
 ![Implementations Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/implementation-demo.gif)
+
 ## Installation
 
-The Language Server can be installed via pip.
+It's recommended to install the language server with [`pipx`](https://pipx.pypa.io/stable/)
 
-Be sure to check out the [Getting Started](https://swyddfa.github.io/esbonio/docs/latest/en/lsp/getting-started.html) guide for details on integrating the server with your editor of choice.
+Be sure to check out the [Getting Started](https://docs.esbon.io/latest/en/lsp/getting-started.html) guide for details on integrating the server with your editor of choice.
 
 ```
-$ pip install esbonio
+$ pipx install esbonio
 ```
