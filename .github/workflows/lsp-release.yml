@@ -33,7 +33,7 @@ jobs:
     - run: |
         set -e
 
-        ./scripts/make-release.sh lsp
+        ./scripts/make_release.py lsp
       name: Set Version
       id: info
 
