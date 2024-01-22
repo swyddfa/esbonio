@@ -19,7 +19,7 @@ jobs:
         python-version: "3.11"
 
     - name: pip cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-lsp-pr-pip-deps-3.11
@@ -57,7 +57,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
 
     - name: pip cache
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: ~/.cache/pip
         key: ${{ runner.os }}-lsp-pr-pip-deps-${{ matrix.python-version }}
