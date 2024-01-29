@@ -1,5 +1,6 @@
 """Script to convert documentation for docutils' roles and directives into a format
 the language server can use."""
+
 import argparse
 import importlib
 import json

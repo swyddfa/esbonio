@@ -129,8 +129,7 @@ def _configure_lsp_methods(server: RstLanguageServer) -> RstLanguageServer:
             feature.on_shutdown(*args)
 
     @server.feature(TEXT_DOCUMENT_DID_OPEN)
-    def on_open(ls: RstLanguageServer, params: DidOpenTextDocumentParams):
-        ...
+    def on_open(ls: RstLanguageServer, params: DidOpenTextDocumentParams): ...
 
     @server.feature(TEXT_DOCUMENT_DID_CHANGE)
     def on_change(ls: RstLanguageServer, params: DidChangeTextDocumentParams):

@@ -1,4 +1,5 @@
 """Default startup module, identical to calling ``python -m esbonio.server``"""
+
 import sys
 
 from esbonio.server.cli import main

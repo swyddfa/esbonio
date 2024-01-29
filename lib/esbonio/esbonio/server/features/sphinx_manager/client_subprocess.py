@@ -1,4 +1,5 @@
 """Subprocess implementation of the ``SphinxClient`` protocol."""
+
 from __future__ import annotations
 
 import asyncio

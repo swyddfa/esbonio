@@ -1,4 +1,5 @@
 """Extra support for roles added by sphinx."""
+
 import json
 import os.path
 from typing import List

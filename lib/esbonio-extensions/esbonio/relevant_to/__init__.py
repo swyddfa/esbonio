@@ -39,8 +39,7 @@ def visit_relevant_to_script(self, node: relevant_to_script):
     self.body.append("<script>" + SCRIPT + "</script>")
 
 
-def depart_relevant_to_script(self, node: relevant_to_script):
-    ...
+def depart_relevant_to_script(self, node: relevant_to_script): ...
 
 
 class selection(nodes.Element):
@@ -91,12 +90,10 @@ def visit_selection(self, node: selection):
     )
 
 
-def depart_selection(self, node: selection):
-    ...
+def depart_selection(self, node: selection): ...
 
 
-class relevant_section(nodes.Element):
-    ...
+class relevant_section(nodes.Element): ...
 
 
 def visit_relevant_section(self, node: relevant_section):

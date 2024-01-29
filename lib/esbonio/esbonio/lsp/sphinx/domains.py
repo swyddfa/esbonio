@@ -1,4 +1,5 @@
 """Support for Sphinx domains."""
+
 import pathlib
 from typing import Any
 from typing import Dict

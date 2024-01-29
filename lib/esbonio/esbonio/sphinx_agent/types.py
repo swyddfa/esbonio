@@ -3,6 +3,7 @@
 This is the *only* file shared between the agent itself and the parent language server.
 For this reason this file *cannot* import anything from Sphinx.
 """
+
 import dataclasses
 import enum
 import os
