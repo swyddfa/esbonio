@@ -1,4 +1,5 @@
 """Additional command line utilities for the SphinxLanguageServer."""
+
 import argparse
 import json
 import sys

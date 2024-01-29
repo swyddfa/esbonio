@@ -1,5 +1,6 @@
 """This module implements the websocket server used to communicate with preivew
  windows."""
+
 import asyncio
 import json
 import logging

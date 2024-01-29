@@ -1,4 +1,5 @@
 """Utility functions to help with testing Language Server features."""
+
 import logging
 import pathlib
 import re
@@ -33,8 +34,7 @@ from esbonio.lsp.rst.config import ServerCompletionConfig
 logger = logging.getLogger(__name__)
 
 
-def _noop(*args, **kwargs):
-    ...
+def _noop(*args, **kwargs): ...
 
 
 def make_esbonio_client(*args, **kwargs) -> LanguageClient:

@@ -19,6 +19,7 @@ Usage:
 
       ...
 """
+
 import string
 import uuid
 
@@ -27,12 +28,10 @@ from docutils.parsers.rst import Directive
 from sphinx.application import Sphinx
 
 
-class collection(nodes.General, nodes.Element):
-    ...
+class collection(nodes.General, nodes.Element): ...
 
 
-class collection_item(nodes.General, nodes.Element):
-    ...
+class collection_item(nodes.General, nodes.Element): ...
 
 
 STYLE_TEMPLATE = string.Template(

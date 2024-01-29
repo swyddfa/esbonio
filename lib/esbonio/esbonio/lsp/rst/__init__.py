@@ -509,12 +509,10 @@ class RstLanguageServer(LanguageServer):
         self._features[key] = feature
 
     @typing.overload
-    def get_feature(self, key: str) -> "Optional[LanguageFeature]":
-        ...
+    def get_feature(self, key: str) -> "Optional[LanguageFeature]": ...
 
     @typing.overload
-    def get_feature(self, key: Type[LF]) -> Optional[LF]:
-        ...
+    def get_feature(self, key: Type[LF]) -> Optional[LF]: ...
 
     def get_feature(self, key):
         """Returns the requested language feature if it exists, otherwise it returns

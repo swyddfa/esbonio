@@ -1,4 +1,5 @@
 """Script to preview completion item documentation."""
+
 import argparse
 import json
 import re

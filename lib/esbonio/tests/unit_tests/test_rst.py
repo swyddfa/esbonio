@@ -57,8 +57,7 @@ def test_get_setup_arguments_rst_server(event_loop):
     """Ensure that we can correctly construct the set of arguments to pass to a module's
     setup function."""
 
-    def setup(rst: RstLanguageServer):
-        ...
+    def setup(rst: RstLanguageServer): ...
 
     server = RstLanguageServer(name="esbonio-test", version="v0.1", loop=event_loop)
     args = _get_setup_arguments(server, setup, "modname")
@@ -70,8 +69,7 @@ def test_get_setup_arguments_server_superclass(event_loop):
     """If the setup function is not compatible with the given server it should be
     skipped."""
 
-    def setup(rst: SphinxLanguageServer):
-        ...
+    def setup(rst: SphinxLanguageServer): ...
 
     server = RstLanguageServer(name="esbonio-test", version="v0.1", loop=event_loop)
     args = _get_setup_arguments(server, setup, "modname")
@@ -83,8 +81,7 @@ def test_get_setup_arguments_sphinx_server(event_loop):
     """Ensure that we can correctly construct the set of arguments to pass to a module's
     setup function."""
 
-    def setup(ls: SphinxLanguageServer):
-        ...
+    def setup(ls: SphinxLanguageServer): ...
 
     server = SphinxLanguageServer(name="esbonio-test", version="v0.1", loop=event_loop)
     args = _get_setup_arguments(server, setup, "modname")
@@ -96,8 +93,7 @@ def test_get_setup_arguments_server_subclass(event_loop):
     """Ensure that we can correctly construct the set of arguments to pass to a module's
     setup function."""
 
-    def setup(ls: RstLanguageServer):
-        ...
+    def setup(ls: RstLanguageServer): ...
 
     server = SphinxLanguageServer(name="esbonio-test", version="v0.1", loop=event_loop)
     args = _get_setup_arguments(server, setup, "modname")
@@ -108,8 +104,7 @@ def test_get_setup_arguments_server_subclass(event_loop):
 def test_get_setup_arguments_server_and_feature(event_loop):
     """We should also be able to automatically pass the correct language features"""
 
-    def setup(rst: RstLanguageServer, rs: Roles):
-        ...
+    def setup(rst: RstLanguageServer, rs: Roles): ...
 
     server = RstLanguageServer(name="esbonio-test", version="v0.1", loop=event_loop)
 
@@ -124,8 +119,7 @@ def test_get_setup_arguments_server_and_feature(event_loop):
 def test_get_setup_arguments_feature_only(event_loop):
     """It should be possible to request just language features."""
 
-    def setup(roles: Roles):
-        ...
+    def setup(roles: Roles): ...
 
     server = RstLanguageServer(name="esbonio-test", version="v0.1", loop=event_loop)
 
@@ -140,8 +134,7 @@ def test_get_setup_arguments_feature_only(event_loop):
 def test_get_setup_arguments_missing_feature(event_loop):
     """If a requested feature is not available the function should be skipped."""
 
-    def setup(rst: RstLanguageServer, rs: Roles):
-        ...
+    def setup(rst: RstLanguageServer, rs: Roles): ...
 
     server = RstLanguageServer(name="esbonio-test", version="v0.1", loop=event_loop)
     args = _get_setup_arguments(server, setup, "modname")
@@ -152,8 +145,7 @@ def test_get_setup_arguments_missing_feature(event_loop):
 def test_get_setup_arguments_wrong_type(event_loop):
     """If an unsupported type is requested it should be skipped."""
 
-    def setup(rst: RstLanguageServer, rs: int):
-        ...
+    def setup(rst: RstLanguageServer, rs: int): ...
 
     server = RstLanguageServer(name="esbonio-test", version="v0.1", loop=event_loop)
     args = _get_setup_arguments(server, setup, "modname")
