@@ -77,6 +77,13 @@ mypy_path = "$MYPY_CONFIG_FILE_DIR"
 explicit_package_bases = true
 check_untyped_defs = true
 
+[tool.pyright]
+venv = ".env"
+include = ["esbonio"]
+
+pythonVersion = "3.8"
+pythonPlatform = "All"
+
 [tool.towncrier]
 filename = "CHANGES.md"
 directory = "changes/"
