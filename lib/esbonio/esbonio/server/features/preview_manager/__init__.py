@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from http.server import HTTPServer
 from http.server import SimpleHTTPRequestHandler
 from typing import Any
@@ -91,6 +92,20 @@ class PreviewManager(LanguageFeature):
 
         self._ws_server: Optional[WebviewServer] = None
         self._ws_task: Optional[asyncio.Task] = None
+
+    def shutdown(self, params: None):
+        """Called when the client instructs the server to ``shutdown``."""
+        args = {}
+        if sys.version_info.minor > 8:
+            args["msg"] = "Server is shutting down."
+
+        if self._http_server:
+            self.logger.debug("Shutting down preview HTTP server")
+            self._http_server.shutdown()
+
+        if self._ws_task:
+            self.logger.debug("Shutting down preview WebSocket server")
+            self._ws_task.cancel(**args)
 
     @property
     def preview_active(self) -> bool:
