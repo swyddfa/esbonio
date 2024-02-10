@@ -57,6 +57,9 @@ class LanguageFeature:
     def initialized(self, params: types.InitializedParams):
         """Called when the ``initialized`` notification is received."""
 
+    def shutdown(self, params: None):
+        """Called when the server is instructed to ``shutdown`` by the client."""
+
     def document_change(self, params: types.DidChangeTextDocumentParams):
         """Called when a text document is changed."""
 

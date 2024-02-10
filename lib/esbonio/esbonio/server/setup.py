@@ -57,6 +57,11 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
         await ls.initialized(params)
         await call_features(ls, "initialized", params)
 
+    @server.feature(types.SHUTDOWN)
+    async def on_shutdown(ls: EsbonioLanguageServer, params: None):
+        ls.lsp_shutdown(params)
+        await call_features(ls, "shutdown", params)
+
     @server.feature(types.TEXT_DOCUMENT_DID_CHANGE)
     async def on_document_change(
         ls: EsbonioLanguageServer, params: types.DidChangeTextDocumentParams
