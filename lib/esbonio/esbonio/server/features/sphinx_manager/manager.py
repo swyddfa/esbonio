@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import inspect
+import sys
 import typing
 import uuid
 from typing import Callable
@@ -85,6 +86,26 @@ class SphinxManager(LanguageFeature):
             task.cancel()
 
         await self.trigger_build(uri)
+
+    async def shutdown(self, params: None):
+        """Called when the server is instructed to ``shutdown``."""
+
+        # Stop creating any new clients.
+        if self._client_creating and not self._client_creating.done():
+            args = {}
+            if sys.version_info.minor > 8:
+                args["msg"] = "Server is shutting down"
+
+            self.logger.debug("Aborting client creation")
+            self._client_creating.cancel(**args)
+
+        # Stop any existing clients.
+        tasks = []
+        for client in self.clients.values():
+            self.logger.debug("Stopping SphinxClient: %s", client)
+            tasks.append(asyncio.create_task(client.stop()))
+
+        await asyncio.gather(*tasks)
 
     async def trigger_build_after(self, uri: Uri, app_id: str, delay: float):
         """Trigger a build for the given uri after the given delay."""
@@ -217,7 +238,7 @@ class SphinxManager(LanguageFeature):
             return
 
         token = str(uuid.uuid4())
-        self.logger.error("Starting progress: '%s'", token)
+        self.logger.debug("Starting progress: '%s'", token)
 
         try:
             await self.server.progress.create_async(token)
