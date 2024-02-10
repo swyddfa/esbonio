@@ -123,6 +123,9 @@ class EsbonioLanguageServer(LanguageServer):
         )
         self._ready.set_result(True)
 
+    def lsp_shutdown(self, params: None):
+        """Called when the server is instructed to ``shutdown`` by the client."""
+
     def load_extension(self, name: str, setup: Callable):
         """Load the given setup function as an extension.
 
