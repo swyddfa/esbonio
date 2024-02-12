@@ -28,7 +28,7 @@
         "ms-python.python"
     ],
     "dependencies": {
-        "semver": "^7.5.4",
+        "semver": "^7.6.0",
         "@vscode/python-extension": "^1.0.5",
         "vscode-languageclient": "^9.0.1"
     },
