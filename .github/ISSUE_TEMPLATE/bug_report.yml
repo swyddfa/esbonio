@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         If troubleshooting does not reveal any useful information, please fill out the bug report below.
-        
+
         Thanks for taking the time!
   - type: textarea
     id: expected
@@ -26,7 +26,7 @@ body:
       placeholder: Tell us what you see!
       value: "But a bug happened like this,"
     validations:
-      required: true      
+      required: true
   - type: textarea
     id: steps
     attributes:
@@ -35,7 +35,7 @@ body:
       placeholder: Detailed steps to reproduce the problem.
       value: "The steps are,"
     validations:
-      required: true   
+      required: true
   - type: input
     id: version
     attributes:
