@@ -4,17 +4,8 @@ import inspect
 import json
 import pathlib
 import typing
-from typing import Any
-from typing import Awaitable
-from typing import Callable
-from typing import Dict
 from typing import Generic
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Type
 from typing import TypeVar
-from typing import Union
 
 import attrs
 from lsprotocol import types
@@ -22,15 +13,30 @@ from pygls.capabilities import get_capability
 
 from . import Uri
 
+T = TypeVar("T")
+
 if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Awaitable
+    from typing import Callable
+    from typing import Dict
+    from typing import List
+    from typing import Optional
+    from typing import Set
+    from typing import Type
+    from typing import Union
+
     from .server import EsbonioLanguageServer
+
+    ConfigurationCallback = Callable[
+        ["ConfigChangeEvent"], Union[Awaitable[None], None]
+    ]
+
 
 try:
     import tomllib as toml
 except ImportError:
     import tomli as toml  # type: ignore[no-redef]
-
-T = TypeVar("T")
 
 
 @attrs.define(frozen=True)
@@ -43,7 +49,7 @@ class Subscription(Generic[T]):
     spec: Type[T]
     """The subscription's class definition."""
 
-    callback: Callable[[T], Union[Awaitable[None], None]]
+    callback: ConfigurationCallback
     """The subscription's callback."""
 
     workspace_scope: str
@@ -51,6 +57,20 @@ class Subscription(Generic[T]):
 
     file_scope: str
     """The corresponding file scope for the subscription."""
+
+
+@attrs.define
+class ConfigChangeEvent(Generic[T]):
+    """Is sent to subscribers when a configuration change occurs."""
+
+    scope: str
+    """The scope at which this configuration change occured."""
+
+    value: T
+    """The latest configuration value."""
+
+    previous: Optional[T] = None
+    """The previous configuration value, (if any)."""
 
 
 class Configuration:
@@ -125,7 +145,7 @@ class Configuration:
         self,
         section: str,
         spec: Type[T],
-        callback: Callable[[T], Union[Awaitable[None], None]],
+        callback: ConfigurationCallback,
         scope: Optional[Uri] = None,
     ):
         """Subscribe to updates to the given configuration section.
@@ -160,8 +180,13 @@ class Configuration:
         result = self.get(section, spec, scope)
         self._subscriptions[subscription] = result
 
+        change_event = ConfigChangeEvent(
+            scope=max([file_scope, workspace_scope], key=len), value=result
+        )
+        self.logger.info("%s", change_event)
+
         try:
-            ret = callback(result)
+            ret = callback(change_event)
             if inspect.isawaitable(ret):
                 await ret
         except Exception:
@@ -186,8 +211,17 @@ class Configuration:
             if previous_value == value:
                 continue
 
+            change_event = ConfigChangeEvent(
+                scope=max(
+                    [subscription.file_scope, subscription.workspace_scope], key=len
+                ),
+                value=value,
+                previous=previous_value,
+            )
+            self.logger.info("%s", change_event)
+
             try:
-                ret = subscription.callback(value)
+                ret = subscription.callback(change_event)
                 if inspect.isawaitable(ret):
                     await ret
 

@@ -11,10 +11,7 @@ from typing import Tuple
 import attrs
 from lsprotocol import types
 
-from esbonio.server import LOG_NAMESPACE
-from esbonio.server import EsbonioLanguageServer
-from esbonio.server import LanguageFeature
-from esbonio.server import MemoryHandler
+from esbonio import server
 from esbonio.server import Uri
 
 LOG_LEVELS = {
@@ -59,7 +56,9 @@ class LspHandler(logging.Handler):
     """A logging handler that will send log records to an LSP client."""
 
     def __init__(
-        self, server: EsbonioLanguageServer, show_deprecation_warnings: bool = False
+        self,
+        server: server.EsbonioLanguageServer,
+        show_deprecation_warnings: bool = False,
     ):
         super().__init__()
         self.server = server
@@ -180,7 +179,7 @@ class ServerLogConfig:
     """Developer flag to enable deprecation warnings."""
 
 
-class LogManager(LanguageFeature):
+class LogManager(server.LanguageFeature):
     """Manages the logging setup for the server."""
 
     def __init__(self, *args, **kwargs):
@@ -192,23 +191,23 @@ class LogManager(LanguageFeature):
             "esbonio.server", ServerLogConfig, self.setup_logging
         )
 
-    def setup_logging(self, config: ServerLogConfig):
+    def setup_logging(self, event: server.ConfigChangeEvent[ServerLogConfig]):
         """Setup logging to route log messages to the language client as
         ``window/logMessage`` messages.
 
         Parameters
         ----------
-        server
-           The server to use to send messages
+        previous
+           The previous configuration value
 
         config
            The configuration to use
         """
-
+        config = event.value
         level = LOG_LEVELS[config.log_level]
 
         # warnlog = logging.getLogger("py.warnings")
-        logger = logging.getLogger(LOG_NAMESPACE)
+        logger = logging.getLogger(server.LOG_NAMESPACE)
         logger.setLevel(level)
 
         lsp_handler = LspHandler(self.server, config.show_deprecation_warnings)
@@ -227,7 +226,7 @@ class LogManager(LanguageFeature):
                 logger.removeHandler(handler)
 
             # Forward any cached messages to the client
-            if isinstance(handler, MemoryHandler):
+            if isinstance(handler, server.MemoryHandler):
                 for record in handler.records:
                     if logger.isEnabledFor(record.levelno):
                         lsp_handler.emit(record)
@@ -261,6 +260,6 @@ def dump(obj) -> str:
     return json.dumps(obj, default=default, indent=2)
 
 
-def esbonio_setup(server: EsbonioLanguageServer):
+def esbonio_setup(server: server.EsbonioLanguageServer):
     manager = LogManager(server)
     server.add_feature(manager)

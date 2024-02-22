@@ -71,9 +71,11 @@ class DirectiveFeature(server.LanguageFeature):
             self.update_configuration,
         )
 
-    def update_configuration(self, config: server.CompletionConfig):
+    def update_configuration(
+        self, event: server.ConfigChangeEvent[server.CompletionConfig]
+    ):
         """Called when the user's configuration is updated."""
-        self._insert_behavior = config.preferred_insert_behavior
+        self._insert_behavior = event.value.preferred_insert_behavior
 
     async def completion(
         self, context: server.CompletionContext

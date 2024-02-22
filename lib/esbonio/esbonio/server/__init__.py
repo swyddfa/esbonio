@@ -1,5 +1,6 @@
 from esbonio.sphinx_agent.types import Uri
 
+from ._configuration import ConfigChangeEvent
 from ._log import LOG_NAMESPACE
 from ._log import MemoryHandler
 from .feature import CompletionConfig
@@ -8,8 +9,9 @@ from .feature import LanguageFeature
 from .server import EsbonioLanguageServer
 from .server import EsbonioWorkspace
 
-__all__ = [
+__all__ = (
     "LOG_NAMESPACE",
+    "ConfigChangeEvent",
     "CompletionConfig",
     "CompletionContext",
     "EsbonioLanguageServer",
@@ -17,4 +19,4 @@ __all__ = [
     "LanguageFeature",
     "MemoryHandler",
     "Uri",
-]
+)
