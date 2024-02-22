@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
 import sys
 import typing
 import uuid
@@ -12,6 +11,7 @@ from typing import Optional
 import lsprotocol.types as lsp
 
 import esbonio.sphinx_agent.types as types
+from esbonio.server import EventSource
 from esbonio.server import LanguageFeature
 from esbonio.server import Uri
 
@@ -36,8 +36,8 @@ class SphinxManager(LanguageFeature):
         self.clients: Dict[Uri, SphinxClient] = {}
         """Holds currently active Sphinx clients."""
 
-        self.handlers: Dict[str, set] = {}
-        """Collection of handlers for various events."""
+        self._events = EventSource(self.logger)
+        """The SphinxManager can emit events."""
 
         self._pending_builds: Dict[str, asyncio.Task] = {}
         """Holds tasks that will trigger a build after a given delay if not cancelled."""
@@ -49,7 +49,7 @@ class SphinxManager(LanguageFeature):
         """Holds work done progress tokens."""
 
     def add_listener(self, event: str, handler):
-        self.handlers.setdefault(event, set()).add(handler)
+        self._events.add_listener(event, handler)
 
     async def document_change(self, params: lsp.DidChangeTextDocumentParams):
         if (uri := Uri.parse(params.text_document.uri)) is None:
@@ -144,15 +144,7 @@ class SphinxManager(LanguageFeature):
             self.stop_progress(client)
 
         # Notify listeners.
-        for listener in self.handlers.get("build", set()):
-            try:
-                # TODO: Concurrent awaiting?
-                res = listener(client, result)
-                if inspect.isawaitable(res):
-                    await res
-            except Exception:
-                name = f"{listener}"
-                self.logger.error("Error in build handler '%s'", name, exc_info=True)
+        self._events.trigger("build", client, result)
 
     async def get_client(self, uri: Uri) -> Optional[SphinxClient]:
         """Given a uri, return the relevant sphinx client instance for it."""
