@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 import inspect
 import json
 import pathlib
+import traceback
 import typing
+from functools import partial
 from typing import Generic
 from typing import TypeVar
 
@@ -111,6 +114,9 @@ class Configuration:
         self._subscriptions: Dict[Subscription, Any] = {}
         """Subscriptions and their last known value"""
 
+        self._tasks: Set[asyncio.Task] = set()
+        """Holds tasks that are currently executing an async config handler."""
+
     @property
     def initialization_options(self):
         return self._initialization_options
@@ -141,7 +147,7 @@ class Configuration:
             self.server.client_capabilities, "workspace.configuration", False
         )
 
-    async def subscribe(
+    def subscribe(
         self,
         section: str,
         spec: Type[T],
@@ -174,27 +180,12 @@ class Configuration:
             self.logger.debug("Ignoring duplicate subscription: %s", subscription)
             return
 
-        # Wait until the server is ready before fetching the initial configuration
-        await self.server.ready
+        self._subscriptions[subscription] = None
 
-        result = self.get(section, spec, scope)
-        self._subscriptions[subscription] = result
+        # Once the server is ready, update all the subscriptions
+        self.server.ready.add_done_callback(self._notify_subscriptions)
 
-        change_event = ConfigChangeEvent(
-            scope=max([file_scope, workspace_scope], key=len), value=result
-        )
-        self.logger.info("%s", change_event)
-
-        try:
-            ret = callback(change_event)
-            if inspect.isawaitable(ret):
-                await ret
-        except Exception:
-            self.logger.error(
-                "Error in configuration callback: %s", callback, exc_info=True
-            )
-
-    async def _notify_subscriptions(self):
+    def _notify_subscriptions(self, *args):
         """Notify subscriptions about configuration changes, if necessary."""
 
         for subscription, previous_value in self._subscriptions.items():
@@ -211,6 +202,7 @@ class Configuration:
             if previous_value == value:
                 continue
 
+            self._subscriptions[subscription] = value
             change_event = ConfigChangeEvent(
                 scope=max(
                     [subscription.file_scope, subscription.workspace_scope], key=len
@@ -222,16 +214,27 @@ class Configuration:
 
             try:
                 ret = subscription.callback(change_event)
-                if inspect.isawaitable(ret):
-                    await ret
+                if inspect.iscoroutine(ret):
+                    task = asyncio.create_task(ret)
+                    task.add_done_callback(partial(self._finish_task, subscription))
 
-                self._subscriptions[subscription] = value
             except Exception:
                 self.logger.error(
                     "Error in configuration callback: %s",
                     subscription.callback,
                     exc_info=True,
                 )
+
+    def _finish_task(self, subscription: Subscription, task: asyncio.Task[None]):
+        """Cleanup a finished task."""
+        self._tasks.discard(task)
+
+        if (exc := task.exception()) is not None:
+            self.logger.error(
+                "Error in async configuration handler '%s'\n%s",
+                subscription.callback,
+                traceback.format_exception(type(exc), exc, exc.__traceback__),
+            )
 
     def get(self, section: str, spec: Type[T], scope: Optional[Uri] = None) -> T:
         """Get the requested configuration section.
@@ -346,9 +349,7 @@ class Configuration:
 
         return paths
 
-    async def update_file_configuration(
-        self, paths: Optional[List[pathlib.Path]] = None
-    ):
+    def update_file_configuration(self, paths: Optional[List[pathlib.Path]] = None):
         """Update the internal cache of configuration coming from files.
 
         Parameters
@@ -375,7 +376,7 @@ class Configuration:
                     "Unable to read configuration file: '%s'", exc_info=True
                 )
 
-        await self._notify_subscriptions()
+        self._notify_subscriptions()
 
     async def update_workspace_configuration(self):
         """Update the internal cache of the client's workspace configuration."""
@@ -416,7 +417,7 @@ class Configuration:
 
             self._workspace_config[scope or ""] = result
 
-        await self._notify_subscriptions()
+        self._notify_subscriptions()
 
 
 def _uri_to_scope(known_scopes: List[str], uri: Optional[Uri]) -> str:
