@@ -9,6 +9,7 @@ from .feature import CompletionContext
 from .feature import LanguageFeature
 from .server import EsbonioLanguageServer
 from .server import EsbonioWorkspace
+from .setup import create_language_server
 
 __all__ = (
     "LOG_NAMESPACE",
@@ -21,4 +22,5 @@ __all__ = (
     "LanguageFeature",
     "MemoryHandler",
     "Uri",
+    "create_language_server",
 )
