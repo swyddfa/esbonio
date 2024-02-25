@@ -257,6 +257,25 @@ class Configuration:
 
         return self._get_config(section, spec, workspace_scope, file_scope)
 
+    def scope_for(self, uri: Uri) -> str:
+        """Return the configuration scope that corresponds to the given uri.
+
+        Parameters
+        ----------
+        uri
+           The uri to return the scope for
+
+        Returns
+        -------
+        str
+           The scope corresponding with the given uri
+        """
+
+        file_scope = self._uri_to_file_scope(uri)
+        workspace_scope = self._uri_to_workspace_scope(uri)
+
+        return max([file_scope, workspace_scope], key=len)
+
     def _get_config(
         self, section: str, spec: Type[T], workspace_scope: str, file_scope: str
     ) -> T:
