@@ -185,9 +185,9 @@ class LogManager(server.LanguageFeature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    async def initialized(self, params: types.InitializedParams):
+    def initialized(self, params: types.InitializedParams):
         """Setup logging."""
-        await self.server.configuration.subscribe(
+        self.server.configuration.subscribe(
             "esbonio.server", ServerLogConfig, self.setup_logging
         )
 

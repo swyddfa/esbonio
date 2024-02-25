@@ -63,9 +63,9 @@ class DirectiveFeature(server.LanguageFeature):
 
     completion_triggers = [RST_DIRECTIVE, MYST_DIRECTIVE]
 
-    async def initialized(self, params: types.InitializedParams):
+    def initialized(self, params: types.InitializedParams):
         """Called once the initial handshake between client and server has finished."""
-        await self.configuration.subscribe(
+        self.configuration.subscribe(
             "esbonio.server.completion",
             server.CompletionConfig,
             self.update_configuration,

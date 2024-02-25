@@ -115,9 +115,10 @@ class EsbonioLanguageServer(LanguageServer):
         self.configuration.initialization_options = params.initialization_options
 
     async def initialized(self, params: types.InitializedParams):
+        self.configuration.update_file_configuration()
+
         await asyncio.gather(
             self.configuration.update_workspace_configuration(),
-            self.configuration.update_file_configuration(),
             self._register_did_change_configuration_handler(),
             self._register_did_change_watched_files_handler(),
         )
