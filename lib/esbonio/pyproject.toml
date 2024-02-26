@@ -67,10 +67,6 @@ profile = "black"
 [tool.pytest.ini_options]
 addopts = "--doctest-glob='*.txt'"
 asyncio_mode = "auto"
-filterwarnings = [
-    "ignore:'contextfunction' is renamed to 'pass_context',*:DeprecationWarning",
-    "ignore:'environmentfilter' is renamed to 'pass_environment',*:DeprecationWarning",
-]
 
 [tool.mypy]
 mypy_path = "$MYPY_CONFIG_FILE_DIR"

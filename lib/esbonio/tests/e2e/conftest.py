@@ -67,7 +67,7 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
         )
     )
 
-    await lsp_client.wait_for_notification("sphinx/appCreated")
+    await lsp_client.wait_for_notification("sphinx/clientCreated")
 
     # Save the document to trigger a build
     lsp_client.text_document_did_save(
