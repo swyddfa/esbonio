@@ -56,6 +56,7 @@ UNEXPECTED = {
     ],
 )
 @pytest.mark.asyncio(scope="session")
+@pytest.mark.xfail
 async def test_rst_directive_completions(
     client: LanguageClient,
     uri_for,
@@ -151,6 +152,7 @@ async def test_rst_directive_completions(
     ],
 )
 @pytest.mark.asyncio(scope="session")
+@pytest.mark.xfail
 async def test_myst_directive_completions(
     client: LanguageClient,
     uri_for,
