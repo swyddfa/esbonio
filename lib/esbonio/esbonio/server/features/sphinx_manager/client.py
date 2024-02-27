@@ -5,14 +5,12 @@ import typing
 from typing import Protocol
 
 if typing.TYPE_CHECKING:
+    import pathlib
     from typing import Any
     from typing import Dict
     from typing import Generator
     from typing import List
     from typing import Optional
-    from typing import Tuple
-
-    import aiosqlite
 
     from esbonio.server import Uri
     from esbonio.sphinx_agent import types
@@ -50,7 +48,7 @@ class SphinxClient(Protocol):
         ...
 
     @property
-    def db(self) -> Optional[aiosqlite.Connection]:
+    def db(self) -> pathlib.Path:
         """Connection to the associated database."""
 
     @property
