@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
 import subprocess
@@ -26,7 +25,6 @@ if typing.TYPE_CHECKING:
     from typing import Dict
     from typing import List
     from typing import Optional
-    from typing import Tuple
 
     from .client import SphinxClient
     from .manager import SphinxManager
@@ -249,131 +247,6 @@ class SubprocessSphinxClient(JsonRPCClient):
             self._building = False
 
         return result
-
-    async def get_src_uris(self) -> List[Uri]:
-        """Return all known source uris."""
-
-        if self.db is None:
-            return []
-
-        query = "SELECT uri FROM files"
-        async with self.db.execute(query) as cursor:
-            results = await cursor.fetchall()
-            return [Uri.parse(s[0]) for s in results]
-
-    async def get_build_path(self, src_uri: Uri) -> Optional[str]:
-        """Get the build path associated with the given ``src_uri``."""
-
-        if self.db is None:
-            return None
-
-        query = "SELECT urlpath FROM files WHERE uri = ?"
-        async with self.db.execute(query, (str(src_uri.resolve()),)) as cursor:
-            if (result := await cursor.fetchone()) is None:
-                return None
-
-            return result[0]
-
-    async def get_config_value(self, name: str) -> Optional[Any]:
-        """Return the requested configuration value, if available."""
-        if self.db is None:
-            return None
-
-        query = "SELECT value FROM config WHERE name = ?"
-        cursor = await self.db.execute(query, (name,))
-
-        if (row := await cursor.fetchone()) is None:
-            return None
-
-        (value,) = row
-        return json.loads(value)
-
-    async def get_directives(self) -> List[Tuple[str, Optional[str]]]:
-        """Get the directives known to Sphinx."""
-        if self.db is None:
-            return []
-
-        query = "SELECT name, implementation FROM directives"
-        cursor = await self.db.execute(query)
-        return await cursor.fetchall()  # type: ignore[return-value]
-
-    async def get_document_symbols(self, src_uri: Uri) -> List[types.Symbol]:
-        """Get the symbols for the given file."""
-        if self.db is None:
-            return []
-
-        query = (
-            "SELECT id, name, kind, detail, range, parent_id, order_id "
-            "FROM symbols WHERE uri = ?"
-        )
-        cursor = await self.db.execute(query, (str(src_uri.resolve()),))
-        return await cursor.fetchall()  # type: ignore[return-value]
-
-    async def find_symbols(self, **kwargs) -> List[types.Symbol]:
-        """Find symbols which match the given criteria."""
-        if self.db is None:
-            return []
-
-        base_query = (
-            "SELECT id, name, kind, detail, range, parent_id, order_id FROM symbols"
-        )
-        where: List[str] = []
-        parameters: List[Any] = []
-
-        for param, value in kwargs.items():
-            where.append(f"{param} = ?")
-            parameters.append(value)
-
-        if where:
-            conditions = " AND ".join(where)
-            query = " ".join([base_query, "WHERE", conditions])
-        else:
-            query = base_query
-
-        cursor = await self.db.execute(query, tuple(parameters))
-        return await cursor.fetchall()  # type: ignore[return-value]
-
-    async def get_workspace_symbols(
-        self, query: str
-    ) -> List[Tuple[str, str, int, str, str, str]]:
-        """Return all the workspace symbols matching the given query string"""
-
-        if self.db is None:
-            return []
-
-        sql_query = """\
-SELECT
-    child.uri,
-    child.name,
-    child.kind,
-    child.detail,
-    child.range,
-    COALESCE(parent.name, '') AS container_name
-FROM
-    symbols child
-LEFT JOIN
-    symbols parent ON (child.parent_id = parent.id AND child.uri = parent.uri)
-WHERE
-    child.name like ? or child.detail like ?;"""
-
-        query_str = f"%{query}%"
-        cursor = await self.db.execute(sql_query, (query_str, query_str))
-        return await cursor.fetchall()  # type: ignore[return-value]
-
-    async def get_diagnostics(self) -> Dict[Uri, List[Dict[str, Any]]]:
-        """Get diagnostics for the project."""
-        if self.db is None:
-            return {}
-
-        cursor = await self.db.execute("SELECT * FROM diagnostics")
-        results: Dict[Uri, List[Dict[str, Any]]] = {}
-
-        for uri_str, item in await cursor.fetchall():
-            uri = Uri.parse(uri_str)
-            diagnostic = json.loads(item)
-            results.setdefault(uri, []).append(diagnostic)
-
-        return results
 
 
 def make_subprocess_sphinx_client(

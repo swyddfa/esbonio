@@ -93,37 +93,5 @@ class SphinxClient(Protocol):
         """Trigger a Sphinx build."""
         ...
 
-    async def get_src_uris(self) -> List[Uri]:
-        """Return all known source files."""
-        ...
-
-    async def get_build_path(self, src_uri: Uri) -> Optional[str]:
-        """Get the build path associated with the given ``src_uri``."""
-
-    async def get_config_value(self, name: str) -> Optional[Any]:
-        """Return the requested configuration value, if available."""
-
-    async def get_diagnostics(self) -> Dict[Uri, List[Dict[str, Any]]]:
-        """Get the diagnostics for the project."""
-        ...
-
-    async def get_directives(self) -> List[Tuple[str, Optional[str]]]:
-        """Get all the directives known to Sphinx."""
-        ...
-
-    async def get_document_symbols(self, src_uri: Uri) -> List[types.Symbol]:
-        """Get the symbols for the given file."""
-        ...
-
-    async def find_symbols(self, **kwargs) -> List[types.Symbol]:
-        """Find symbols which match the given criteria."""
-        ...
-
-    async def get_workspace_symbols(
-        self, query: str
-    ) -> List[Tuple[str, str, int, str, str, str]]:
-        """Return all the workspace symbols matching the given query string"""
-        ...
-
     async def stop(self):
         """Stop the client."""

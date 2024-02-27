@@ -60,16 +60,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[Sequence[str]] = None):
-    """Standard main function for each of the default language servers."""
-
-    # Put these here to avoid circular import issues.
-
     cli = build_parser()
     args = cli.parse_args(argv)
 
     # Order matters!
     modules = [
         "esbonio.server.features.log",
+        "esbonio.server.features.project_manager",
         "esbonio.server.features.sphinx_manager",
         "esbonio.server.features.preview_manager",
         "esbonio.server.features.directives",
