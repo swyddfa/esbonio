@@ -5,11 +5,11 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import pathlib
 import subprocess
 import sys
 import typing
 
-import aiosqlite
 from pygls.client import JsonRPCClient
 from pygls.protocol import JsonRPCProtocol
 
@@ -133,9 +133,12 @@ class SubprocessSphinxClient(JsonRPCClient):
         return Uri.for_file(self.sphinx_info.conf_dir)
 
     @property
-    def db(self) -> Optional[aiosqlite.Connection]:
+    def db(self) -> pathlib.Path:
         """Connection to the associated database."""
-        return None
+        if self.sphinx_info is None:
+            raise RuntimeError("sphinx_info is None, has the client been started?")
+
+        return pathlib.Path(self.sphinx_info.dbpath)
 
     @property
     def build_uri(self) -> Uri:

@@ -3,12 +3,13 @@ from __future__ import annotations
 import asyncio
 import typing
 import uuid
+from functools import partial
 
 import lsprotocol.types as lsp
 
-import esbonio.sphinx_agent.types as types
 from esbonio import server
 from esbonio.server import Uri
+from esbonio.sphinx_agent import types
 
 from .client import ClientState
 from .config import SphinxConfig
@@ -18,6 +19,8 @@ if typing.TYPE_CHECKING:
     from typing import Dict
     from typing import Optional
 
+    from esbonio.server.features.project_manager import ProjectManager
+
     from .client import SphinxClient
 
     SphinxClientFactory = Callable[["SphinxManager", "SphinxConfig"], "SphinxClient"]
@@ -26,11 +29,20 @@ if typing.TYPE_CHECKING:
 class SphinxManager(server.LanguageFeature):
     """Responsible for managing Sphinx application instances."""
 
-    def __init__(self, client_factory: SphinxClientFactory, *args, **kwargs):
+    def __init__(
+        self,
+        client_factory: SphinxClientFactory,
+        project_manager: ProjectManager,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         self.client_factory = client_factory
         """Used to create new Sphinx client instances."""
+
+        self.project_manager = project_manager
+        """The project manager instance to use."""
 
         self.clients: Dict[str, Optional[SphinxClient]] = {
             # Prevent any clients from being created in the global scope.
@@ -108,13 +120,17 @@ class SphinxManager(server.LanguageFeature):
 
     async def trigger_build(self, uri: Uri):
         """Trigger a build for the relevant Sphinx application for the given uri."""
+
         client = await self.get_client(uri)
         if client is None or client.state != ClientState.Running:
             return
 
+        if (project := self.project_manager.get_project(uri)) is None:
+            return
+
         # Pass through any unsaved content to the Sphinx agent.
         content_overrides: Dict[str, str] = {}
-        known_src_uris = await client.get_src_uris()
+        known_src_uris = await project.get_src_uris()
 
         for src_uri in known_src_uris:
             doc = self.server.workspace.get_document(str(src_uri))
@@ -179,18 +195,24 @@ class SphinxManager(server.LanguageFeature):
             return
 
         self.clients[event.scope] = client = self.client_factory(self, resolved)
-        client.add_listener("state-change", self._on_state_change)
+        client.add_listener("state-change", partial(self._on_state_change, event.scope))
 
         self.server.lsp.notify("sphinx/clientCreated", resolved)
         self.logger.debug("Client created for scope %s", event.scope)
 
     def _on_state_change(
-        self, client: SphinxClient, old_state: ClientState, new_state: ClientState
+        self,
+        scope: str,
+        client: SphinxClient,
+        old_state: ClientState,
+        new_state: ClientState,
     ):
         """React to state changes in the client."""
 
         if old_state == ClientState.Starting and new_state == ClientState.Running:
-            self.server.lsp.notify("sphinx/appCreated", client.sphinx_info)
+            if (sphinx_info := client.sphinx_info) is not None:
+                self.project_manager.register_project(scope, client.db)
+                self.server.lsp.notify("sphinx/appCreated", sphinx_info)
 
     async def start_progress(self, client: SphinxClient):
         """Start reporting work done progress for the given client."""

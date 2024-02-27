@@ -25,6 +25,10 @@ class Project:
         self.dbpath = dbpath
         self._connection: Optional[aiosqlite.Connection] = None
 
+    async def close(self):
+        if self._connection is not None:
+            await self._connection.close()
+
     async def get_db(self) -> aiosqlite.Connection:
         if self._connection is None:
             self._connection = await aiosqlite.connect(self.dbpath)
