@@ -1,5 +1,6 @@
 import pytest
 
+from esbonio.server.features.project_manager import Project
 from esbonio.server.features.sphinx_manager.client_subprocess import (
     SubprocessSphinxClient,
 )
@@ -14,15 +15,13 @@ def anuri(base, *args):
 
 
 @pytest.mark.asyncio
-@pytest.mark.xfail
-async def test_files_table(client: SubprocessSphinxClient):
+async def test_files_table(client: SubprocessSphinxClient, project: Project):
     """Ensure that we can correctly index all the files in the Sphinx project."""
 
     src = client.src_uri
-    assert src is not None
 
-    assert client.db is not None
-    cursor = await client.db.execute("SELECT * FROM files")
+    db = await project.get_db()
+    cursor = await db.execute("SELECT * FROM files")
     results = await cursor.fetchall()
     actual = {r for r in results if "badfile" not in r[1]}
 

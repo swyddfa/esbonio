@@ -5,7 +5,11 @@ import pytest_asyncio
 from lsprotocol.types import WorkspaceFolder
 from pygls.workspace import Workspace
 
+from esbonio.server.features.project_manager import Project
 from esbonio.server.features.sphinx_manager.client import ClientState
+from esbonio.server.features.sphinx_manager.client_subprocess import (
+    SubprocessSphinxClient,
+)
 from esbonio.server.features.sphinx_manager.client_subprocess import (
     make_test_sphinx_client,
 )
@@ -46,3 +50,11 @@ async def client(uri_for, tmp_path_factory):
     yield sphinx_client
 
     await sphinx_client.stop()
+
+
+@pytest_asyncio.fixture
+async def project(client: SubprocessSphinxClient):
+    project = Project(client.db)
+
+    yield project
+    await project.close()

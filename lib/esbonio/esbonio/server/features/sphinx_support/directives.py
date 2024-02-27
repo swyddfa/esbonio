@@ -6,7 +6,7 @@ from lsprotocol import types
 
 from esbonio import server
 from esbonio.server.features import directives
-from esbonio.server.features.sphinx_manager import SphinxManager
+from esbonio.server.features.project_manager import ProjectManager
 
 if typing.TYPE_CHECKING:
     from typing import List
@@ -16,7 +16,7 @@ if typing.TYPE_CHECKING:
 class SphinxDirectives(directives.DirectiveProvider):
     """Support for directives in a sphinx project."""
 
-    def __init__(self, manager: SphinxManager):
+    def __init__(self, manager: ProjectManager):
         self.manager = manager
 
     async def suggest_directives(
@@ -24,11 +24,11 @@ class SphinxDirectives(directives.DirectiveProvider):
     ) -> Optional[List[directives.Directive]]:
         """Given a completion context, suggest directives that may be used."""
 
-        if (client := await self.manager.get_client(context.uri)) is None:
+        if (project := self.manager.get_project(context.uri)) is None:
             return None
 
         # Does the document have a default domain set?
-        results = await client.find_symbols(
+        results = await project.find_symbols(
             uri=str(context.uri.resolve()),
             kind=types.SymbolKind.Class.value,
             detail="default-domain",
@@ -38,11 +38,11 @@ class SphinxDirectives(directives.DirectiveProvider):
         else:
             default_domain = None
 
-        primary_domain = await client.get_config_value("primary_domain")
+        primary_domain = await project.get_config_value("primary_domain")
         active_domain = default_domain or primary_domain or "py"
 
         result: List[directives.Directive] = []
-        for name, implementation in await client.get_directives():
+        for name, implementation in await project.get_directives():
             # std: directives can be used unqualified
             if name.startswith("std:"):
                 short_name = name.replace("std:", "")
@@ -65,8 +65,8 @@ class SphinxDirectives(directives.DirectiveProvider):
 
 
 def esbonio_setup(
-    sphinx_manager: SphinxManager,
+    project_manager: ProjectManager,
     directive_feature: directives.DirectiveFeature,
 ):
-    provider = SphinxDirectives(sphinx_manager)
+    provider = SphinxDirectives(project_manager)
     directive_feature.add_provider(provider)
