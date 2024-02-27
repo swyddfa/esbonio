@@ -17,6 +17,7 @@ from pygls.server import StdOutTransportAdapter
 from esbonio.server import EsbonioLanguageServer
 from esbonio.server import Uri
 from esbonio.server import create_language_server
+from esbonio.server.features.project_manager import ProjectManager
 from esbonio.server.features.sphinx_manager import ClientState
 from esbonio.server.features.sphinx_manager import SphinxManager
 from esbonio.server.features.sphinx_manager import make_subprocess_sphinx_client
@@ -48,8 +49,13 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
     esbonio = create_language_server(EsbonioLanguageServer, [], loop=loop)
     esbonio.lsp.transport = StdOutTransportAdapter(io.BytesIO(), sys.stderr.buffer)
 
-    manager = SphinxManager(make_subprocess_sphinx_client, esbonio)
-    esbonio.add_feature(manager)
+    project_manager = ProjectManager(esbonio)
+    esbonio.add_feature(project_manager)
+
+    sphinx_manager = SphinxManager(
+        make_subprocess_sphinx_client, project_manager, esbonio
+    )
+    esbonio.add_feature(sphinx_manager)
 
     def initialize(init_options):
         # Initialize the server.
@@ -70,11 +76,11 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
         esbonio.lsp._procedure_handler(
             lsp.InitializedNotification(params=lsp.InitializedParams())
         )
-        return esbonio, manager
+        return esbonio, sphinx_manager
 
     yield initialize
 
-    await manager.shutdown(None)
+    await sphinx_manager.shutdown(None)
 
 
 @pytest.mark.asyncio
