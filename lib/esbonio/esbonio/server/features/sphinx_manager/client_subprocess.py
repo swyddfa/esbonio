@@ -30,6 +30,9 @@ if typing.TYPE_CHECKING:
     from .manager import SphinxManager
 
 
+sphinx_logger = logging.getLogger("sphinx")
+
+
 class SphinxAgentProtocol(JsonRPCProtocol):
     """Describes the protocol spoken between the client below and the sphinx agent."""
 
@@ -274,7 +277,7 @@ def make_subprocess_sphinx_client(
 
     @client.feature("window/logMessage")
     def _on_msg(ls: SubprocessSphinxClient, params):
-        manager.server.show_message_log(params.message)
+        sphinx_logger.info(params.message)
 
     @client.feature("$/progress")
     def _on_progress(ls: SubprocessSphinxClient, params):
