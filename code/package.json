@@ -298,6 +298,22 @@
                         "default": false,
                         "description": "Enable lsp-devtools integration for the language server"
                     },
+                    "esbonio.trace.server": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "off",
+                        "enum": [
+                            "off",
+                            "messages",
+                            "verbose"
+                        ],
+                        "description": "Controls if LSP messages sent to/from the server should be logged.",
+                        "enumDescriptions": [
+                            "do not log any lsp messages",
+                            "log all lsp messages sent to/from the server",
+                            "log all lsp messages sent to/from the server, including their contents"
+                        ]
+                    },
                     "esbonio.server.debug": {
                         "scope": "window",
                         "type": "boolean",
