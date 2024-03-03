@@ -12,7 +12,7 @@ let logger: OutputChannelLogger
 
 export async function activate(context: vscode.ExtensionContext) {
   let channel = vscode.window.createOutputChannel("Esbonio", "esbonio-log-output")
-  let logLevel = vscode.workspace.getConfiguration('esbonio').get<string>('server.logLevel')
+  let logLevel = vscode.workspace.getConfiguration('esbonio').get<string>('logging.level')
 
   logger = new OutputChannelLogger(channel, logLevel)
 
