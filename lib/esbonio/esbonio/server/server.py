@@ -4,6 +4,7 @@ import asyncio
 import collections
 import inspect
 import logging
+import platform
 import typing
 from typing import TypeVar
 from uuid import uuid4
@@ -101,7 +102,12 @@ class EsbonioLanguageServer(LanguageServer):
         return self.lsp._converter
 
     def initialize(self, params: types.InitializeParams):
-        self.logger.info("Initialising esbonio v%s", __version__)
+        self.logger.info(
+            "Initialising esbonio v%s, using Python v%s on %s",
+            __version__,
+            platform.python_version(),
+            platform.platform(aliased=True, terse=True),
+        )
         if (client := params.client_info) is not None:
             self.logger.info("Language client: %s %s", client.name, client.version)
 
