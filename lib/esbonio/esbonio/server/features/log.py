@@ -3,6 +3,7 @@ import json
 import logging
 import logging.config
 import textwrap
+from logging.handlers import MemoryHandler
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -318,8 +319,22 @@ class LogManager(server.LanguageFeature):
         event
            The configuration change event
         """
+
+        records = []
+        if event.previous is None:
+            # Messages received during initial startup are cached in a MemoryHandler
+            # instance, let's resuce them so they can be replayed against the new config.
+            for handler in logging.getLogger().handlers:
+                if isinstance(handler, MemoryHandler):
+                    records = handler.buffer
+
         config = event.value.to_logging_config(self.server)
         logging.config.dictConfig(config)
+
+        # Replay any captured messages against the new config.
+        for record in records:
+            logger = logging.getLogger(record.name)
+            logger.handle(record)
 
 
 def dump(obj) -> str:
