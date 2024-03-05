@@ -111,12 +111,11 @@ async def test_get_client(
     # Give the async tasks chance to complete.
     await asyncio.sleep(0.5)
 
-    # The system should be "primed" meaning there is a client created, but not
-    # running.
+    # A client should have been created and started
     client = manager.clients[str(demo_workspace)]
 
     assert client is not None
-    assert client.state is None
+    assert client.state in {ClientState.Starting, ClientState.Running}
 
     # Now when we ask for the client, the client should be started and we should
     # get back the same instance
@@ -151,12 +150,11 @@ async def test_get_client_with_error(
     # Give the async tasks chance to complete.
     await asyncio.sleep(0.5)
 
-    # The system should be "primed" meaning there is a client created, but not
-    # running.
+    # A client should have been created and started
     client = manager.clients[str(demo_workspace)]
 
     assert client is not None
-    assert client.state is None
+    assert client.state in {ClientState.Starting, ClientState.Errored}
 
     # Now when we ask for the client, the client should be started and we should
     # get back the same instance
@@ -274,3 +272,71 @@ async def test_get_client_with_many_uris_in_many_projects(
 
     # When run in CI, the docs won't have all the required dependencies available.
     assert docs_client.state in {ClientState.Running, ClientState.Errored}
+
+
+@pytest.mark.asyncio
+async def test_updated_config(
+    server_manager: ServerManager, demo_workspace: Uri, tmp_path: pathlib.Path
+):
+    """Ensure that when the configuration affecting a Sphinx configuration is changed,
+    the SphinxClient is recreated."""
+
+    server, manager = server_manager(
+        dict(
+            esbonio=dict(
+                sphinx=dict(
+                    pythonCommand=[sys.executable],
+                    buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                ),
+            ),
+        ),
+    )
+    # Ensure that the server is ready
+    await server.ready
+
+    result = await manager.get_client(demo_workspace / "index.rst")
+    # At least for now, the first call to get_client will not return a client
+    # but will instead "prime the system" ready to return a client the next
+    # time it is called.
+    assert result is None
+
+    # Give the async tasks chance to complete.
+    await asyncio.sleep(0.5)
+
+    # A client should have been created and started
+    client = manager.clients[str(demo_workspace)]
+
+    assert client is not None
+    assert client.state in {ClientState.Starting, ClientState.Running}
+
+    # Now when we ask for the client, the client should be started and we should
+    # get back the same instance
+    result = await manager.get_client(demo_workspace / "index.rst")
+
+    assert result is client
+    assert client.state == ClientState.Running
+
+    # And that the client initialized correctly
+    assert client.builder == "dirhtml"
+
+    # Now update the configuration
+    server.configuration._initialization_options["esbonio"]["sphinx"][
+        "buildCommand"
+    ] = ["sphinx-build", "-M", "html", ".", str(tmp_path)]
+    server.configuration._notify_subscriptions()
+
+    # Give the async tasks chance to complete.
+    await asyncio.sleep(0.5)
+
+    # A new client should have been created, started and be using the new config
+    new_client = manager.clients[str(demo_workspace)]
+
+    assert new_client is not client
+    assert new_client.state in {ClientState.Starting, ClientState.Running}
+
+    # Ensure that the client has finished starting
+    await new_client
+    assert new_client.builder == "html"
+
+    # The old client should have been stopped
+    assert client.state == ClientState.Exited
