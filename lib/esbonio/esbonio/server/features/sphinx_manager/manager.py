@@ -180,12 +180,15 @@ class SphinxManager(server.LanguageFeature):
     ):
         """Create or replace thesphinx client instance for the given config."""
 
-        # TODO: Handle replacement!
         config = event.value
 
         # Do not try and create clients in the global scope
         if event.scope == "":
             return
+
+        # If there was a previous client, stop it.
+        if (previous_client := self.clients.pop(event.scope, None)) is not None:
+            await previous_client.stop()
 
         resolved = config.resolve(
             Uri.parse(event.scope), self.server.workspace, self.logger
@@ -199,6 +202,9 @@ class SphinxManager(server.LanguageFeature):
 
         self.server.lsp.notify("sphinx/clientCreated", resolved)
         self.logger.debug("Client created for scope %s", event.scope)
+
+        # Start the client
+        await client
 
     def _on_state_change(
         self,
