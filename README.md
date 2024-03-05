@@ -9,7 +9,10 @@
 
 Esbonio aims to make it easier to work with [reStructuredText](https://docutils.sourceforge.io/rst.html) tools such as [Sphinx](https://www.sphinx-doc.org/en/master/) by providing a [Language Server](https://langserver.org/) to enhance your editing experience.
 The Esbonio project is made up from a number of sub-projects
+
+
 ## `lib/esbonio/` - A Language Server for Sphinx projects.
+
 [![PyPI](https://img.shields.io/pypi/v/esbonio?style=flat-square)![PyPI - Downloads](https://img.shields.io/pypi/dm/esbonio?style=flat-square)](https://pypistats.org/packages/esbonio)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/lib/esbonio/LICENSE)
 
 The language server provides the following features.
@@ -59,6 +62,7 @@ The language server provides the following features.
 
 
 ## `code/` - A VSCode extension for editing Sphinx projects
+
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/swyddfa.esbonio?style=flat-square)![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/swyddfa.esbonio?style=flat-square)![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/swyddfa.esbonio?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/code/LICENSE)
 
 <p align="center">
@@ -90,5 +94,7 @@ Try the Esbonio extension if
 - You want to make use of the newer features available in recent VSCode versions
 - You are only interested in the features provided by the language server
 
+
 ## `lib/esbonio-extensions/` - A collection of Sphinx extensions
+
 [![PyPI](https://img.shields.io/pypi/v/esbonio-extensions?style=flat-square)![PyPI - Downloads](https://img.shields.io/pypi/dm/esbonio-extensions?style=flat-square)](https://pypistats.org/packages/esbonio-extensions)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/lib/esbonio-extensions/LICENSE)
