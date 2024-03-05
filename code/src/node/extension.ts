@@ -1,5 +1,5 @@
-// PYTHONPATH="$(pwd)/bundled/libs" python -S -c "import sys;print('\n'.join(sys.path))"
 import * as vscode from 'vscode'
+import { PythonExtension } from '@vscode/python-extension';
 
 import { OutputChannelLogger } from '../common/log'
 import { PythonManager } from './python'
@@ -16,8 +16,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
   logger = new OutputChannelLogger(channel, logLevel)
 
-  let python = new PythonManager(logger)
-  esbonio = new EsbonioClient(logger, python, context, channel)
+  let python = await getPythonExtension()
+  let pythonManager = new PythonManager(python, logger, context)
+  esbonio = new EsbonioClient(logger, pythonManager, context, channel)
 
   let previewManager = new PreviewManager(logger, context, esbonio)
   let statusManager = new StatusManager(logger, context, esbonio)
@@ -25,6 +26,18 @@ export async function activate(context: vscode.ExtensionContext) {
   let config = vscode.workspace.getConfiguration("esbonio.server")
   if (config.get("enabled")) {
     await esbonio.start()
+  }
+}
+
+/**
+ * Return the python extension's API, if available.
+ */
+async function getPythonExtension(): Promise<PythonExtension | undefined> {
+  try {
+    return await PythonExtension.api()
+  } catch (err) {
+    logger.error(`Unable to load python extension: ${err}`)
+    return undefined
   }
 }
 
