@@ -2,13 +2,31 @@ import * as vscode from 'vscode'
 import { PythonExtension } from '@vscode/python-extension';
 
 import { OutputChannelLogger } from "../common/log";
+import { Events } from '../common/constants';
 
 
 export class PythonManager {
-  constructor(private logger: OutputChannelLogger) { }
+  private handlers: Map<string, any[]>
+
+  constructor(
+    private python: PythonExtension | undefined,
+    private logger: OutputChannelLogger,
+    context: vscode.ExtensionContext
+  ) {
+    this.handlers = new Map()
+
+    if (python) {
+      context.subscriptions.push(
+        python.environments.onDidChangeActiveEnvironmentPath((event) => {
+          logger.debug(`Changed active Python env: ${JSON.stringify(event, undefined, 2)}`)
+          this.callHandlers(Events.PYTHON_ENV_CHANGE, event)
+        })
+      )
+    }
+  }
 
   async getCmd(scopeUri?: vscode.Uri): Promise<string[] | undefined> {
-    let userPython = vscode.workspace.getConfiguration("esbonio").get<string>("server.pythonPath")
+    let userPython = vscode.workspace.getConfiguration("esbonio", scopeUri).get<string>("server.pythonPath")
     if (userPython) {
 
       // Support for ${workspaceRoot}/...
@@ -28,15 +46,14 @@ export class PythonManager {
       return [userPython]
     }
 
-    let python = await this.getPythonExtension()
-    if (!python) {
+    if (!this.python) {
       return
     }
 
-    let activeEnvPath = python.environments.getActiveEnvironmentPath(scopeUri)
+    let activeEnvPath = this.python.environments.getActiveEnvironmentPath(scopeUri)
     this.logger.debug(`Using environment ${activeEnvPath.id}: ${activeEnvPath.path}`)
 
-    let activeEnv = await python.environments.resolveEnvironment(activeEnvPath)
+    let activeEnv = await this.python.environments.resolveEnvironment(activeEnvPath)
     if (!activeEnv) {
       this.logger.debug("Unable to resolve environment")
       return
@@ -52,33 +69,38 @@ export class PythonManager {
   }
 
   async getDebugerCommand(): Promise<string[]> {
-    let python = await this.getPythonExtension()
-    if (!python) {
+    if (!this.python) {
       return []
     }
 
-    return await python.debug.getRemoteLauncherCommand('localhost', 5678, true)
+    return await this.python.debug.getRemoteLauncherCommand('localhost', 5678, true)
   }
 
   async getDebugerPath(): Promise<string> {
-    let python = await this.getPythonExtension()
-    if (!python) {
+    if (!this.python) {
       return ''
     }
 
-    let path = await python.debug.getDebuggerPackagePath()
+    let path = await this.python.debug.getDebuggerPackagePath()
     return path || ''
   }
-  /**
-   * Ensures that if the Python extension is available
-   */
-  private async getPythonExtension(): Promise<PythonExtension | undefined> {
-    try {
-      return await PythonExtension.api()
-    } catch (err) {
-      this.logger.error(`Unable to load python extension: ${err}`)
-      return undefined
+
+  public addHandler(event: string, handler: any) {
+    if (this.handlers.has(event)) {
+      this.handlers.get(event)?.push(handler)
+    } else {
+      this.handlers.set(event, [handler])
     }
+  }
+
+  private callHandlers(method: string, params: any) {
+    this.handlers.get(method)?.forEach(handler => {
+      try {
+        handler(params)
+      } catch (err) {
+        this.logger.error(`Error in '${method}' notification handler: ${err}`)
+      }
+    })
   }
 
 }

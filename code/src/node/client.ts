@@ -1,5 +1,6 @@
 import { execSync } from "child_process";
 import * as vscode from 'vscode';
+import { ActiveEnvironmentPathChangeEvent } from '@vscode/python-extension';
 import { join } from "path";
 import {
   CancellationToken,
@@ -81,6 +82,11 @@ export class EsbonioClient {
         }
       })
     )
+
+    // React to environment changes in the Python extension
+    python.addHandler(Events.PYTHON_ENV_CHANGE, (_event: ActiveEnvironmentPathChangeEvent) => {
+      this.client?.sendNotification("workspace/didChangeConfiguration", { settings: null })
+    })
   }
 
   public addHandler(event: string, handler: any) {

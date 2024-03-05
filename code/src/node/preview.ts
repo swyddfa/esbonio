@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 import { OutputChannelLogger } from '../common/log'
 import { EsbonioClient } from './client'
-import { Commands, Events, Notifications, Server } from '../common/constants'
+import { Commands, Events, Notifications } from '../common/constants'
 
 interface PreviewFileParams {
   uri: string
