@@ -7,7 +7,11 @@
 
 **esbonio - (v.) to explain**
 
-Esbonio aims to make it easier to work with [reStructuredText](https://docutils.sourceforge.io/rst.html) tools such as [Sphinx](https://www.sphinx-doc.org/en/master/) by providing a [Language Server](https://langserver.org/) to enhance your editing experience.
+[reStructuredText]: https://docutils.sourceforge.io/rst.html
+[Sphinx]: https://www.sphinx-doc.org/en/master/
+[Language Server]: https://langserver.org/
+
+Esbonio aims to make it easier to work with [reStructuredText] tools such as [Sphinx] by providing a [Language Server] to enhance your editing experience.
 The Esbonio project is made up from a number of sub-projects
 
 
@@ -73,8 +77,13 @@ This extension is purely focused on bringing the `esbonio` language server into 
 
 ### You're probably looking for the reStructuredText Extension
 
-You may already be familiar with the [reStructuredText](https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext) extension which, as of [v171.0.0](https://github.com/vscode-restructuredtext/vscode-restructuredtext/releases/tag/171.0.0) now also integrates the `esbonio` language server into VSCode.
-It also integrates other tools such as the linters [`doc8`](https://pypi.org/project/doc8/) and [`rstcheck`](https://pypi.org/project/rstcheck/) and provides additional editor functionality making it easier to work with reStructuredText in general.
+[reStructuredText extension]: https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext
+[v171.0.0]: https://github.com/vscode-restructuredtext/vscode-restructuredtext/releases/tag/171.0.0
+[`doc8`]: https://pypi.org/project/doc8/
+[`rstcheck`]: https://pypi.org/project/rstcheck/
+
+You may already be familiar with the [reStructuredText extension] which, as of [v171.0.0] now also integrates the `esbonio` language server into VSCode.
+It also integrates other tools such as the linters [`doc8`] and [`rstcheck`] and provides additional editor functionality making it easier to work with reStructuredText in general.
 
 **Wait.. so why does the Esbonio VSCode extension still exist?**
 
