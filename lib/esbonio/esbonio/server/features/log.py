@@ -334,7 +334,8 @@ class LogManager(server.LanguageFeature):
         # Replay any captured messages against the new config.
         for record in records:
             logger = logging.getLogger(record.name)
-            logger.handle(record)
+            if logger.isEnabledFor(record.levelno):
+                logger.handle(record)
 
 
 def dump(obj) -> str:
