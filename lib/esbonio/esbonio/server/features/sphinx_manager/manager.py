@@ -188,7 +188,7 @@ class SphinxManager(server.LanguageFeature):
 
         # If there was a previous client, stop it.
         if (previous_client := self.clients.pop(event.scope, None)) is not None:
-            await previous_client.stop()
+            self.server.run_task(previous_client.stop())
 
         resolved = config.resolve(
             Uri.parse(event.scope), self.server.workspace, self.logger
