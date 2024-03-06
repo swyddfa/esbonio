@@ -227,7 +227,8 @@ class SubprocessSphinxClient(JsonRPCClient):
             self.protocol.notify("exit", None)
 
         # Give the agent a little time to close.
-        # await asyncio.sleep(0.5)
+        await asyncio.sleep(0.5)
+
         self.logger.debug(self._async_tasks)
         await super().stop()
 

@@ -5,6 +5,7 @@ import collections
 import inspect
 import logging
 import platform
+import traceback
 import typing
 from typing import TypeVar
 from uuid import uuid4
@@ -22,9 +23,11 @@ from ._configuration import Configuration
 if typing.TYPE_CHECKING:
     from typing import Any
     from typing import Callable
+    from typing import Coroutine
     from typing import Dict
     from typing import List
     from typing import Optional
+    from typing import Set
     from typing import Tuple
     from typing import Type
 
@@ -83,6 +86,9 @@ class EsbonioLanguageServer(LanguageServer):
         self._ready: asyncio.Future[bool] = asyncio.Future()
         """Indicates if the server is ready."""
 
+        self._tasks: Set[asyncio.Task] = set()
+        """Used to hold running tasks"""
+
         self.logger = logger or logging.getLogger(__name__)
         """The logger instance to use."""
 
@@ -100,6 +106,27 @@ class EsbonioLanguageServer(LanguageServer):
     def converter(self) -> cattrs.Converter:
         """The cattrs converter instance we should use."""
         return self.lsp._converter
+
+    def _finish_task(self, task: asyncio.Task[Any]):
+        """Cleanup a finished task."""
+        self.logger.debug("Task finished: %s", task)
+        self._tasks.discard(task)
+
+        if (exc := task.exception()) is not None:
+            self.logger.error(
+                "Error in async task\n%s",
+                traceback.format_exception(type(exc), exc, exc.__traceback__),
+            )
+
+    def run_task(self, coro: Coroutine, *, name: Optional[str] = None) -> asyncio.Task:
+        """Convert a given coroutine into a task and ensure it is executed."""
+
+        task = asyncio.create_task(coro, name=name)
+        self.logger.debug("Scheduled task: %s", task)
+        task.add_done_callback(self._finish_task)
+
+        self._tasks.add(task)
+        return task
 
     def initialize(self, params: types.InitializeParams):
         self.logger.info(
