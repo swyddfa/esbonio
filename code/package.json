@@ -88,11 +88,28 @@
                         "default": true,
                         "description": "Enable/Disable the language server"
                     },
-                    "esbonio.server.enabledInPyFiles": {
+                    "esbonio.server.documentSelector": {
                         "scope": "window",
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Enable/Disable the language server in Python files."
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "scheme": {
+                                    "type": "string",
+                                    "description": "The URI scheme that this selector applies to"
+                                },
+                                "language": {
+                                    "type": "string",
+                                    "description": "The language id this selector will select"
+                                },
+                                "pattern": {
+                                    "type": "string",
+                                    "description": "Only select uris that match the given pattern"
+                                }
+                            }
+                        },
+                        "default": [],
+                        "description": "Override the extension's default document selector"
                     },
                     "esbonio.server.startupModule": {
                         "scope": "window",
