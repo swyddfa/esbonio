@@ -9,7 +9,8 @@ import {
   LanguageClientOptions,
   ResponseError,
   ServerOptions,
-  State
+  State,
+  TextDocumentFilter
 } from "vscode-languageclient/node";
 
 import { OutputChannelLogger } from "../common/log";
@@ -258,15 +259,15 @@ export class EsbonioClient {
    */
   private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
 
-    let documentSelector = [
+    let defaultDocumentSelector: TextDocumentFilter[] = [
       { scheme: 'file', language: 'restructuredtext' },
       { scheme: 'file', language: 'markdown' },
+      // { scheme: 'file', language: 'python' }
     ]
 
-    if (config.get<boolean>('server.enabledInPyFiles')) {
-      documentSelector.push(
-        { scheme: 'file', language: 'python' }
-      )
+    let documentSelector = config.get<TextDocumentFilter[]>("server.documentSelector")
+    if (!documentSelector || documentSelector.length === 0) {
+      documentSelector = defaultDocumentSelector
     }
 
     let clientOptions: LanguageClientOptions = {
