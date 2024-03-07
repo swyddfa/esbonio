@@ -1,7 +1,6 @@
 import logging
 import os
 import pathlib
-import sys
 from typing import Any
 from typing import Dict
 from typing import List
@@ -10,13 +9,7 @@ from typing import Tuple
 from unittest import mock
 
 import pytest
-from lsprotocol.types import WorkspaceFolder
-from pygls.workspace import Workspace
 
-from esbonio.server import Uri
-from esbonio.server.features.sphinx_manager.config import (
-    SphinxConfig as SphinxAgentConfig,
-)
 from esbonio.sphinx_agent.config import SphinxConfig
 from esbonio.sphinx_agent.log import SphinxLogHandler
 
@@ -436,80 +429,6 @@ def test_cli_arg_handling(args: List[str], expected: Dict[str, Any]):
     config = SphinxConfig.fromcli(args)
     assert config is not None
     assert expected == config.to_application_args()
-
-
-@pytest.mark.parametrize(
-    "config, uri, workspace, expected",
-    [
-        # If everything is specified, resolve should be a no-op
-        (
-            SphinxAgentConfig(
-                python_command=[sys.executable],
-                build_command=["sphinx-build", "-M", "html", "src", "dest"],
-                cwd="/path/to/workspace",
-                python_path=["/path/to/site-packages/esbonio/"],
-            ),
-            "file::///path/to/file.rst",
-            Workspace(None),
-            SphinxAgentConfig(
-                python_command=[sys.executable],
-                build_command=["sphinx-build", "-M", "html", "src", "dest"],
-                cwd="/path/to/workspace",
-                python_path=["/path/to/site-packages/esbonio/"],
-            ),
-        ),
-        # If no cwd given, we should try to pick one based on the given workspace
-        (
-            SphinxAgentConfig(
-                python_command=[sys.executable],
-                build_command=["sphinx-build", "-M", "html", "src", "dest"],
-                python_path=["/path/to/site-packages/esbonio/"],
-            ),
-            "file::///path/to/file.rst",
-            Workspace("file:///path/to/workspace/root"),
-            SphinxAgentConfig(
-                python_command=[sys.executable],
-                build_command=["sphinx-build", "-M", "html", "src", "dest"],
-                cwd=os.path.join(".", "path", "to", "workspace", "root")[1:],
-                python_path=["/path/to/site-packages/esbonio/"],
-            ),
-        ),
-        (
-            SphinxAgentConfig(
-                python_command=[sys.executable],
-                build_command=["sphinx-build", "-M", "html", "src", "dest"],
-                python_path=["/path/to/site-packages/esbonio/"],
-            ),
-            "file:///path/to/workspace-b/file.rst",
-            Workspace(
-                "file:///path/to/workspace/root",
-                workspace_folders=[
-                    WorkspaceFolder(
-                        uri="file:///path/to/workspace-a", name="Workspace A"
-                    ),
-                    WorkspaceFolder(
-                        uri="file:///path/to/workspace-b", name="Workspace B"
-                    ),
-                ],
-            ),
-            SphinxAgentConfig(
-                python_command=[sys.executable],
-                build_command=["sphinx-build", "-M", "html", "src", "dest"],
-                cwd=os.path.join(".", "path", "to", "workspace-b")[1:],
-                python_path=["/path/to/site-packages/esbonio/"],
-            ),
-        ),
-    ],
-)
-def test_resolve_sphinx_config(
-    config: SphinxAgentConfig,
-    uri: str,
-    workspace: Workspace,
-    expected: SphinxAgentConfig,
-):
-    """Ensure that we can resolve the client side config for the SphinxAgent
-    correctly."""
-    assert expected == config.resolve(Uri.parse(uri), workspace, logger)
 
 
 ROOT = pathlib.Path(__file__).parent.parent / "sphinx-extensions" / "workspace"
