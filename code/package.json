@@ -38,7 +38,7 @@
         "@types/vscode": "1.78.0",
         "@vscode/vsce": "^2.24.0",
         "esbuild": "^0.20.1",
-        "typescript": "^5.3.3"
+        "typescript": "^5.4.2"
     },
     "engines": {
         "vscode": "^1.82.0"
