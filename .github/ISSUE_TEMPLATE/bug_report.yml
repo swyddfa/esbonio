@@ -27,7 +27,7 @@ body:
     attributes:
       label: Log output
       description: |
-        Copy and paste any relevant log output here (most issues will be difficult to diagnose without this!). 
+        Copy and paste any relevant log output here (most issues will be difficult to diagnose without this!).
         For best results please make sure that debug logging is enabled (`esbonio.logging.level = debug`)
         This will be automatically formatted as code, so no need for backticks.
       render: shell
