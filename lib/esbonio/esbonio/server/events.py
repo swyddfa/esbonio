@@ -44,7 +44,7 @@ class EventSource:
                 "Error in '%s' async handler '%s'\n%s",
                 event,
                 listener_name,
-                traceback.format_exception(type(exc), exc, exc.__traceback__),
+                "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
             )
 
     def trigger(self, event: str, *args, **kwargs):

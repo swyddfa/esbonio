@@ -233,7 +233,7 @@ class Configuration:
             self.logger.error(
                 "Error in async configuration handler '%s'\n%s",
                 subscription.callback,
-                traceback.format_exception(type(exc), exc, exc.__traceback__),
+                "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
             )
 
     def get(self, section: str, spec: Type[T], scope: Optional[Uri] = None) -> T:
