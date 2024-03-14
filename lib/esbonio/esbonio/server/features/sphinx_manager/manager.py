@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+import traceback
 import typing
 import uuid
 from functools import partial
 
+import attrs
 import lsprotocol.types as lsp
 
 from esbonio import server
@@ -24,6 +26,53 @@ if typing.TYPE_CHECKING:
     from .client import SphinxClient
 
     SphinxClientFactory = Callable[["SphinxManager", "SphinxConfig"], "SphinxClient"]
+
+
+@attrs.define
+class ClientCreatedNotification:
+    """The payload of a ``sphinx/clientCreated`` notification"""
+
+    id: str
+    """The client's id"""
+
+    scope: str
+    """The scope at which the client was created."""
+
+    config: SphinxConfig
+    """The final configuration."""
+
+
+@attrs.define
+class AppCreatedNotification:
+    """The payload of a ``sphinx/appCreated`` notification"""
+
+    id: str
+    """The client's id"""
+
+    application: types.SphinxInfo
+    """Details about the created application."""
+
+
+@attrs.define
+class ClientErroredNotification:
+    """The payload of a ``sphinx/clientErrored`` notification"""
+
+    id: str
+    """The client's id"""
+
+    error: str
+    """Short description of the error."""
+
+    detail: str
+    """Detailed description of the error."""
+
+
+@attrs.define
+class ClientDestroyedNotification:
+    """The payload of ``sphinx/clientDestroyed`` notification."""
+
+    id: str
+    """The client's id"""
 
 
 class SphinxManager(server.LanguageFeature):
@@ -188,6 +237,10 @@ class SphinxManager(server.LanguageFeature):
 
         # If there was a previous client, stop it.
         if (previous_client := self.clients.pop(event.scope, None)) is not None:
+            self.server.lsp.notify(
+                "sphinx/clientDestroyed",
+                ClientDestroyedNotification(id=previous_client.id),
+            )
             self.server.run_task(previous_client.stop())
 
         resolved = config.resolve(
@@ -200,7 +253,10 @@ class SphinxManager(server.LanguageFeature):
         self.clients[event.scope] = client = self.client_factory(self, resolved)
         client.add_listener("state-change", partial(self._on_state_change, event.scope))
 
-        self.server.lsp.notify("sphinx/clientCreated", resolved)
+        self.server.lsp.notify(
+            "sphinx/clientCreated",
+            ClientCreatedNotification(id=client.id, scope=event.scope, config=resolved),
+        )
         self.logger.debug("Client created for scope %s", event.scope)
 
         # Start the client
@@ -218,7 +274,25 @@ class SphinxManager(server.LanguageFeature):
         if old_state == ClientState.Starting and new_state == ClientState.Running:
             if (sphinx_info := client.sphinx_info) is not None:
                 self.project_manager.register_project(scope, client.db)
-                self.server.lsp.notify("sphinx/appCreated", sphinx_info)
+                self.server.lsp.notify(
+                    "sphinx/appCreated",
+                    AppCreatedNotification(id=client.id, application=sphinx_info),
+                )
+
+        if new_state == ClientState.Errored:
+            error = ""
+            detail = ""
+
+            if (exc := getattr(client, "exception", None)) is not None:
+                error = f"{type(exc).__name__}: {exc}"
+                detail = "".join(
+                    traceback.format_exception(type(exc), exc, exc.__traceback__)
+                )
+
+            self.server.lsp.notify(
+                "sphinx/clientErrored",
+                ClientErroredNotification(id=client.id, error=error, detail=detail),
+            )
 
     async def start_progress(self, client: SphinxClient):
         """Start reporting work done progress for the given client."""
