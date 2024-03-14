@@ -93,9 +93,8 @@ html_theme_options = {
     "announcement": (
         "This is the documentation for the in-development 1.0 release of the language server. "
         '<a href="../esbonio-language-server-v0.16.4">Click here</a> to view the documentation for the current stable version'
-    )
+    ),
 }
-
 
 
 class LspMethod(TargetCompletion):
