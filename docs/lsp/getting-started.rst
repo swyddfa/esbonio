@@ -1,4 +1,4 @@
-.. _lsp_getting_started:
+.. _lsp-getting-started:
 
 Getting Started
 ===============
