@@ -214,6 +214,8 @@ class SubprocessSphinxClient(JsonRPCClient):
     def _set_state(self, new_state: ClientState):
         """Change the state of the client."""
         old_state, self.state = self.state, new_state
+
+        self.logger.debug("SphinxClient[%s]: %s -> %s", self.id, old_state, new_state)
         self._events.trigger("state-change", self, old_state, new_state)
 
     async def stop(self):
