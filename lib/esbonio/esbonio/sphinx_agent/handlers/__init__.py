@@ -13,7 +13,6 @@ from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Type
-from uuid import uuid4
 
 import sphinx.application
 from sphinx import __version__ as __sphinx_version__
@@ -138,7 +137,6 @@ class SphinxHandler:
         response = types.CreateApplicationResponse(
             id=request.id,
             result=types.SphinxInfo(
-                id=str(uuid4()),
                 version=__sphinx_version__,
                 conf_dir=str(self.app.confdir),
                 build_dir=str(self.app.outdir),
