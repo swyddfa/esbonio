@@ -534,9 +534,6 @@ class CreateApplicationRequest:
 class SphinxInfo:
     """Represents information about an instance of the Sphinx application."""
 
-    id: str
-    """A unique id representing a particular Sphinx application instance."""
-
     version: str
     """The version of Sphinx being used."""
 

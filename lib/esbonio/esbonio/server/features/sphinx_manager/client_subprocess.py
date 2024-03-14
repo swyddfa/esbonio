@@ -9,6 +9,7 @@ import pathlib
 import subprocess
 import sys
 import typing
+from uuid import uuid4
 
 from pygls.client import JsonRPCClient
 from pygls.protocol import JsonRPCProtocol
@@ -60,6 +61,9 @@ class SubprocessSphinxClient(JsonRPCClient):
     ):
         super().__init__(protocol_cls=protocol_cls, *args, **kwargs)  # type: ignore[misc]
 
+        self.id = str(uuid4())
+        """The client's id."""
+
         self.config = config
         """Configuration values."""
 
@@ -102,14 +106,6 @@ class SubprocessSphinxClient(JsonRPCClient):
     @property
     def converter(self):
         return self.protocol._converter
-
-    @property
-    def id(self) -> str:
-        """The id of the Sphinx instance."""
-        if self.sphinx_info is None:
-            raise RuntimeError("sphinx_info is None, has the client been started?")
-
-        return self.sphinx_info.id
 
     @property
     def builder(self) -> str:
