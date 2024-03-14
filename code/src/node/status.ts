@@ -1,9 +1,16 @@
-import * as vscode from 'vscode';
 import * as path from 'path';
+import * as vscode from 'vscode';
 
+import { TextDocumentFilter } from 'vscode-languageclient';
+import { Events, Notifications, Server } from '../common/constants';
 import { OutputChannelLogger } from "../common/log";
-import { EsbonioClient, SphinxInfo } from './client';
-import { Events, Notifications } from '../common/constants';
+import {
+  AppCreatedNotification,
+  ClientCreatedNotification,
+  ClientDestroyedNotification,
+  ClientErroredNotification,
+  EsbonioClient
+} from './client';
 
 interface StatusItemFields {
   busy?: boolean
@@ -31,35 +38,107 @@ export class StatusManager {
 
     client.addHandler(
       Notifications.SPHINX_APP_CREATED,
-      (params: SphinxInfo) => { this.createApp(params) }
+      (params: AppCreatedNotification) => { this.appCreated(params) }
+    )
+
+    client.addHandler(
+      Notifications.SPHINX_CLIENT_CREATED,
+      (params: ClientCreatedNotification) => { this.clientCreated(params) }
+    )
+
+    client.addHandler(
+      Notifications.SPHINX_CLIENT_ERRORED,
+      (params: ClientErroredNotification) => { this.clientErrored(params) }
+    )
+
+    client.addHandler(
+      Notifications.SPHINX_CLIENT_DESTROYED,
+      (params: ClientDestroyedNotification) => { this.clientDestroyed(params) }
     )
   }
 
-  private createApp(info: SphinxInfo) {
+  private clientCreated(params: ClientCreatedNotification) {
+    this.logger.debug(`${Notifications.SPHINX_CLIENT_CREATED}: ${JSON.stringify(params, undefined, 2)}`)
+    let sphinxConfig = params.config
 
-    let confUri = vscode.Uri.file(info.conf_dir)
-    let workspaceFolder = vscode.workspace.getWorkspaceFolder(confUri)
-    if (!workspaceFolder) {
-      this.logger.error(`Unable to find workspace containing: ${info.conf_dir}`)
-      return
+    let config = vscode.workspace.getConfiguration("esbonio.server")
+    let documentSelector = config.get<TextDocumentFilter[]>("documentSelector")
+    if (!documentSelector || documentSelector.length === 0) {
+      documentSelector = Server.DEFAULT_SELECTOR
     }
 
     let selector: vscode.DocumentFilter[] = []
+    let defaultPattern = path.join(sphinxConfig.cwd, "**", "*")
+    for (let docSelector of documentSelector) {
+      selector.push({
+        scheme: docSelector.scheme,
+        language: docSelector.language,
+        pattern: docSelector.pattern || defaultPattern
+      })
+    }
 
-    let confPattern = uriToPattern(confUri)
-    selector.push({ language: "python", pattern: confPattern })
+    this.setStatusItem(
+      params.id,
+      "sphinx",
+      "Sphinx[starting]",
+      {
+        selector: selector,
+        busy: true,
+        detail: sphinxConfig.buildCommand.join(" "),
+        severity: vscode.LanguageStatusSeverity.Information
+      }
+    )
+    this.setStatusItem(
+      params.id,
+      "python",
+      "Python",
+      {
+        selector: selector,
+        detail: sphinxConfig.pythonCommand.join(" "),
+        command: { title: "Change Interpreter", command: "python.setInterpreter" },
+        severity: vscode.LanguageStatusSeverity.Information
+      }
+    )
+  }
 
-    let srcUri = vscode.Uri.file(info.src_dir)
-    let srcPattern = uriToPattern(srcUri);
-    selector.push({ language: 'restructuredtext', pattern: srcPattern })
+  private clientErrored(params: ClientErroredNotification) {
+    this.logger.debug(`${Notifications.SPHINX_CLIENT_ERRORED}: ${JSON.stringify(params, undefined, 2)}`)
 
-    let itemId = `${workspaceFolder.uri}`
-    let buildUri = vscode.Uri.file(info.build_dir)
-    this.setStatusItem(itemId, "sphinx", `Sphinx v${info.version}`, { selector: selector })
-    this.setStatusItem(itemId, "builder", `Builder - ${info.builder_name}`, { selector: selector })
-    this.setStatusItem(itemId, "srcdir", `Source - ${renderPath(workspaceFolder, srcUri)}`, { selector: selector })
-    this.setStatusItem(itemId, "confdir", `Config - ${renderPath(workspaceFolder, confUri)}`, { selector: selector })
-    this.setStatusItem(itemId, "builddir", `Build - ${renderPath(workspaceFolder, buildUri)}`, { selector: selector })
+    this.setStatusItem(
+      params.id,
+      "sphinx",
+      "Sphinx[failed]",
+      {
+        busy: false,
+        detail: params.error,
+        severity: vscode.LanguageStatusSeverity.Error
+      }
+    )
+  }
+
+  private clientDestroyed(params: ClientDestroyedNotification) {
+    this.logger.debug(`${Notifications.SPHINX_CLIENT_DESTROYED}: ${JSON.stringify(params, undefined, 2)}`)
+
+    for (let [key, item] of this.statusItems.entries()) {
+      if (key.startsWith(params.id)) {
+        item.dispose()
+        this.statusItems.delete(key)
+      }
+    }
+  }
+
+  private appCreated(params: AppCreatedNotification) {
+    this.logger.debug(`${Notifications.SPHINX_APP_CREATED}: ${JSON.stringify(params, undefined, 2)}`)
+    let sphinx = params.application
+
+    this.setStatusItem(
+      params.id,
+      "sphinx",
+      `Sphinx[${sphinx.builder_name}] v${sphinx.version}`,
+      {
+        busy: false,
+      }
+    )
   }
 
   private serverStop(_params: any) {
@@ -70,12 +149,12 @@ export class StatusManager {
   }
 
   private setStatusItem(
-    sphinxId: string,
+    id: string,
     name: string,
     value: string,
     params?: StatusItemFields,
   ) {
-    let key = `${sphinxId}-${name.toLocaleLowerCase().replace(' ', '-')}`
+    let key = `${id}-${name.toLocaleLowerCase().replace(' ', '-')}`
     let statusItem = this.statusItems.get(key)
 
     if (!statusItem) {
@@ -107,25 +186,4 @@ export class StatusManager {
       statusItem.selector = params.selector
     }
   }
-}
-
-function renderPath(workspace: vscode.WorkspaceFolder, uri: vscode.Uri): string {
-  let workspacePath = workspace.uri.fsPath
-  let uriPath = uri.fsPath
-
-  let result = uriPath
-
-  if (uriPath.startsWith(workspacePath)) {
-    result = path.join('.', result.replace(workspacePath, ''))
-  }
-
-  if (result.length > 50) {
-    result = '...' + result.slice(result.length - 47)
-  }
-
-  return result
-}
-
-function uriToPattern(uri: vscode.Uri) {
-  return path.join(uri.fsPath, "**", "*").replace(/\\/g, '/');
 }

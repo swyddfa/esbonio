@@ -1,5 +1,11 @@
 export namespace Server {
   export const REQUIRED_PYTHON = "3.8.0"
+
+  export const DEFAULT_SELECTOR = [
+    { scheme: 'file', language: 'restructuredtext' },
+    { scheme: 'file', language: 'markdown' },
+    // { scheme: 'file', language: 'python' }
+  ]
 }
 
 export namespace Commands {
@@ -27,5 +33,8 @@ export namespace Notifications {
   export const SCROLL_EDITOR = "editor/scroll"
   export const VIEW_SCROLL = "view/scroll"
 
+  export const SPHINX_CLIENT_CREATED = "sphinx/clientCreated"
+  export const SPHINX_CLIENT_ERRORED = "sphinx/clientErrored"
+  export const SPHINX_CLIENT_DESTROYED = "sphinx/clientDestroyed"
   export const SPHINX_APP_CREATED = "sphinx/appCreated"
 }
