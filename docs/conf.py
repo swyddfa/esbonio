@@ -90,13 +90,11 @@ html_theme_options = {
     "source_repository": "https://github.com/swyddfa/esbonio/",
     "source_branch": BRANCH,
     "source_directory": "docs/",
+    "announcement": (
+        "This is the documentation for the in-development 1.0 release of the language server. "
+        '<a href="../esbonio-language-server-v0.16.4">Click here</a> to view the documentation for the current stable version'
+    ),
 }
-
-if DEV_BUILD:
-    html_theme_options["announcement"] = (
-        "This is the unstable version of the documentation, features may change or be removed without warning. "
-        '<a href="/esbonio/docs/stable/en/">Click here</a> to view the released version'
-    )
 
 
 class LspMethod(TargetCompletion):
