@@ -37,7 +37,7 @@
         "@types/node": "^18",
         "@types/vscode": "1.78.0",
         "@vscode/vsce": "^2.24.0",
-        "esbuild": "^0.20.1",
+        "esbuild": "^0.20.2",
         "typescript": "^5.4.2"
     },
     "engines": {
