@@ -1,24 +1,25 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import os
 import pathlib
 import sys
-from types import ModuleType
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Union
-
-from sphinx.util.logging import OnceFilter
-from sphinx.util.logging import SphinxLogRecord
-from sphinx.util.logging import WarningLogRecordTranslator
+import typing
 
 from . import types
 from .util import logger
-from .util import send_message
+
+if typing.TYPE_CHECKING:
+    from types import ModuleType
+    from typing import Any
+    from typing import Dict
+    from typing import List
+    from typing import Optional
+    from typing import Set
+    from typing import Tuple
+    from typing import Union
+
 
 DIAGNOSTIC_SEVERITY = {
     logging.ERROR: types.DiagnosticSeverity.Error,
@@ -27,15 +28,13 @@ DIAGNOSTIC_SEVERITY = {
 }
 
 
-class SphinxLogHandler(logging.Handler):
+class DiagnosticFilter(logging.Filter):
     """A logging handler that can extract errors from Sphinx's build output."""
 
     def __init__(self, app, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.app = app
-        self.translator = WarningLogRecordTranslator(app)
-        self.only_once = OnceFilter()
         self.diagnostics: Dict[str, Set[types.Diagnostic]] = {}
 
     def get_location(self, location: str) -> Tuple[str, Optional[int]]:
@@ -105,27 +104,16 @@ class SphinxLogHandler(logging.Handler):
             logger.debug("Unable to determine diagnostic location\n%s", exc_info=True)
             return None
 
-    def emit(self, record: logging.LogRecord) -> None:
+    def filter(self, record: logging.LogRecord) -> bool:
         conditions = [
             "sphinx" not in record.name,
             record.levelno not in {logging.WARNING, logging.ERROR},
         ]
 
         if any(conditions):
-            # Log the record as normal
-            self.do_emit(record)
-            return
+            return True
 
-        # Let sphinx extract location info for warning/error messages
-        self.translator.filter(record)  # type: ignore
-
-        # Only process errors/warnings once.
-        # Note: This isn't a silver bullet as it only catches messages that are explicitly
-        #       marked as to be logged only once e.g. logger.warning(..., once=True).
-        if not self.only_once.filter(record):
-            return
-
-        loc = record.location if isinstance(record, SphinxLogRecord) else ""
+        loc = getattr(record, "location", "")
         doc, lineno = self.get_location(loc)
         line = lineno or 1
 
@@ -156,8 +144,4 @@ class SphinxLogHandler(logging.Handler):
         )
 
         self.diagnostics.setdefault(doc, set()).add(diagnostic)
-        self.do_emit(record)
-
-    def do_emit(self, record):
-        params = types.LogMessageParams(message=self.format(record).strip(), type=4)
-        send_message(types.LogMessage(params=params))
+        return True
