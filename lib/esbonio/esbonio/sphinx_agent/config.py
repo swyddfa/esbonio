@@ -1,6 +1,7 @@
 import dataclasses
 import inspect
 import pathlib
+import sys
 from typing import Any
 from typing import Dict
 from typing import List
@@ -152,9 +153,9 @@ class SphinxConfig:
             "outdir": str(build_dir),
             "parallel": self.parallel,
             "srcdir": str(src_dir),
-            "status": None,
+            "status": sys.stderr,
             "tags": self.tags,
             "verbosity": self.verbosity,
-            "warning": None,
+            "warning": sys.stderr,
             "warningiserror": self.warning_is_error,
         }

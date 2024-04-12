@@ -1,17 +1,24 @@
+from __future__ import annotations
+
 import logging
 import os
 import pathlib
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Optional
-from typing import Tuple
+import sys
+import typing
 from unittest import mock
 
 import pytest
 
 from esbonio.sphinx_agent.config import SphinxConfig
-from esbonio.sphinx_agent.log import SphinxLogHandler
+from esbonio.sphinx_agent.log import DiagnosticFilter
+
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Dict
+    from typing import List
+    from typing import Optional
+    from typing import Tuple
+
 
 logger = logging.getLogger(__name__)
 
@@ -22,10 +29,8 @@ def application_args(**kwargs) -> Dict[str, Any]:
         "freshenv": False,
         "keep_going": False,
         "parallel": 1,
-        "status": None,
         "tags": [],
         "verbosity": 0,
-        "warning": None,
         "warningiserror": False,
     }
 
@@ -425,10 +430,20 @@ def application_args(**kwargs) -> Dict[str, Any]:
 def test_cli_arg_handling(args: List[str], expected: Dict[str, Any]):
     """Ensure that we can convert ``sphinx-build`` to the correct Sphinx application
     options."""
-
     config = SphinxConfig.fromcli(args)
     assert config is not None
-    assert expected == config.to_application_args()
+
+    actual = config.to_application_args()
+
+    # pytest overrides stderr on windows, so if we were to put `sys.stderr` in the
+    # `expected` dict this test would fail as `sys.stderr` inside a test function has a
+    # different value.
+    #
+    # So, let's test for it here instead
+    assert actual.pop("status") == sys.stderr
+    assert actual.pop("warning") == sys.stderr
+
+    assert expected == actual
 
 
 ROOT = pathlib.Path(__file__).parent.parent / "sphinx-extensions" / "workspace"
@@ -448,7 +463,7 @@ REL_INC_PATH = os.path.relpath(INC_PATH)
         (f"{RST_PATH}:3", (str(RST_PATH), 3)),
         (f"{REL_INC_PATH}:12", (str(INC_PATH), 12)),
         (
-            f"{PY_PATH}:docstring of esbonio.sphinx_agent.log.SphinxLogHandler:3",
+            f"{PY_PATH}:docstring of esbonio.sphinx_agent.log.DiagnosticFilter:3",
             (str(PY_PATH), 22),
         ),
         (f"internal padding after {RST_PATH}:34", (str(RST_PATH), 34)),
@@ -462,9 +477,9 @@ def test_get_diagnostic_location(location: str, expected: Tuple[str, Optional[in
     app = mock.Mock()
     app.confdir = str(ROOT / "sphinx-extensions")
 
-    handler = SphinxLogHandler(app)
+    handler = DiagnosticFilter(app)
 
-    mockpath = f"{SphinxLogHandler.__module__}.inspect.getsourcelines"
+    mockpath = f"{DiagnosticFilter.__module__}.inspect.getsourcelines"
     with mock.patch(mockpath, return_value=([""], 20)):
         actual = handler.get_location(location)
 

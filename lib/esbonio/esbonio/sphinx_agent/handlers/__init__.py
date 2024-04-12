@@ -5,8 +5,6 @@ import pathlib
 import sys
 import traceback
 import typing
-from functools import partial
-from typing import IO
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -16,15 +14,11 @@ from typing import Type
 
 import sphinx.application
 from sphinx import __version__ as __sphinx_version__
-from sphinx.util import console
-from sphinx.util import logging as sphinx_logging_module
 from sphinx.util.logging import NAMESPACE as SPHINX_LOG_NAMESPACE
-from sphinx.util.logging import VERBOSITY_MAP
 
 from .. import types
 from ..app import Sphinx
 from ..config import SphinxConfig
-from ..log import SphinxLogHandler
 from ..transforms import LineNumberTransform
 from ..util import send_error
 from ..util import send_message
@@ -119,9 +113,6 @@ class SphinxHandler:
             raise ValueError("Invalid build command")
 
         sphinx_args = sphinx_config.to_application_args()
-
-        # Override Sphinx's logging setup with our own.
-        sphinx_logging_module.setup = partial(self.setup_logging, sphinx_config)
         self.app = Sphinx(**sphinx_args)
 
         # Connect event handlers.
@@ -167,34 +158,6 @@ class SphinxHandler:
         path = pathlib.Path(filepath)
         if (content := self._content_overrides.get(path)) is not None:
             source[0] = content
-
-    def setup_logging(self, config: SphinxConfig, app: Sphinx, status: IO, warning: IO):
-        """Setup Sphinx's logging so that it integrates well with the parent language
-        server."""
-
-        # Disable color escape codes in Sphinx's log messages
-        console.nocolor()
-
-        if not config.silent:
-            # Be sure to remove any old handlers
-            for handler in sphinx_logger.handlers:
-                if isinstance(handler, SphinxLogHandler):
-                    sphinx_logger.handlers.remove(handler)
-                    self.log_handler = None
-
-            app.esbonio.log = SphinxLogHandler(app)
-            sphinx_logger.addHandler(app.esbonio.log)
-
-            if config.quiet:
-                level = logging.WARNING
-            else:
-                level = VERBOSITY_MAP[app.verbosity]
-
-            sphinx_logger.setLevel(level)
-            app.esbonio.log.setLevel(level)
-
-            formatter = logging.Formatter("%(message)s")
-            app.esbonio.log.setFormatter(formatter)
 
     def build_sphinx_app(self, request: types.BuildRequest):
         """Trigger a Sphinx build."""

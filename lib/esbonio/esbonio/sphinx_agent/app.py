@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import pathlib
-import typing
 
 from sphinx.application import Sphinx as _Sphinx
+from sphinx.util import console
 
 from .database import Database
-from .log import SphinxLogHandler
+from .log import DiagnosticFilter
 
 
 class Esbonio:
@@ -14,11 +14,11 @@ class Esbonio:
 
     db: Database
 
-    log: SphinxLogHandler
+    log: DiagnosticFilter
 
-    def __init__(self, dbpath: pathlib.Path):
+    def __init__(self, dbpath: pathlib.Path, app: _Sphinx):
         self.db = Database(dbpath)
-        self.log = typing.cast(SphinxLogHandler, None)
+        self.log = DiagnosticFilter(app)
 
 
 class Sphinx(_Sphinx):
@@ -27,7 +27,12 @@ class Sphinx(_Sphinx):
     esbonio: Esbonio
 
     def __init__(self, *args, **kwargs):
-        dbpath = pathlib.Path(kwargs["outdir"], "esbonio.db").resolve()
-        self.esbonio = Esbonio(dbpath)
+        # Disable color codes
+        console.nocolor()
+
+        self.esbonio = Esbonio(
+            dbpath=pathlib.Path(kwargs["outdir"], "esbonio.db").resolve(),
+            app=self,
+        )
 
         super().__init__(*args, **kwargs)
