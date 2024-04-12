@@ -187,6 +187,9 @@ class SphinxHandler:
                 id=request.id, code=-32603, message=f"sphinx-build failed: {message}"
             )
 
+        finally:
+            self.app._warncount = 0
+
     def notify_exit(self, request: types.ExitNotification):
         """Sent from the client to signal that the agent should exit."""
         sys.exit(0)
