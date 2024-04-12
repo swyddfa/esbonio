@@ -82,8 +82,11 @@ class SubprocessSphinxClient(JsonRPCClient):
         self._events = EventSource(self.logger)
         """The sphinx client can emit events."""
 
-        self._task: Optional[asyncio.Task] = None
+        self._startup_task: Optional[asyncio.Task] = None
         """The startup task."""
+
+        self._stderr_forwarder: Optional[asyncio.Task] = None
+        """A task that forwards the server's stderr to the test process."""
 
     def __repr__(self):
         if self.state is None:
@@ -98,10 +101,10 @@ class SubprocessSphinxClient(JsonRPCClient):
 
     def __await__(self):
         """Makes the client await-able"""
-        if self._task is None:
-            self._task = asyncio.create_task(self.start())
+        if self._startup_task is None:
+            self._startup_task = asyncio.create_task(self.start())
 
-        return self._task.__await__()
+        return self._startup_task.__await__()
 
     @property
     def converter(self):
@@ -177,6 +180,13 @@ class SubprocessSphinxClient(JsonRPCClient):
         if self.state != ClientState.Errored:
             self._set_state(ClientState.Exited)
 
+    async def start_io(self, cmd: str, *args, **kwargs):
+        await super().start_io(cmd, *args, **kwargs)
+
+        # Forward the server's stderr to this process' stderr
+        if self._server and self._server.stderr:
+            self._stderr_forwarder = asyncio.create_task(forward_stderr(self._server))
+
     async def start(self) -> SphinxClient:
         """Start the client."""
 
@@ -227,6 +237,9 @@ class SubprocessSphinxClient(JsonRPCClient):
         # Give the agent a little time to close.
         await asyncio.sleep(0.5)
 
+        if self._stderr_forwarder:
+            self._stderr_forwarder.cancel()
+
         self.logger.debug(self._async_tasks)
         await super().stop()
 
@@ -252,6 +265,16 @@ class SubprocessSphinxClient(JsonRPCClient):
             self._building = False
 
         return result
+
+
+async def forward_stderr(server: asyncio.subprocess.Process):
+    if server.stderr is None:
+        return
+
+    # EOF is signalled with an empty bytestring
+    while (line := await server.stderr.readline()) != b"":
+        sys.stderr.buffer.write(line)
+        sys.stderr.buffer.flush()
 
 
 def make_subprocess_sphinx_client(
@@ -308,6 +331,7 @@ def get_sphinx_env(config: SphinxConfig) -> Dict[str, str]:
     """Return the set of environment variables to use with the Sphinx process."""
 
     env = {
+        "PYTHONUNBUFFERED": "1",
         "PYTHONPATH": os.pathsep.join([str(p) for p in config.python_path]),
     }
     for envname, value in os.environ.items():
