@@ -89,8 +89,11 @@ async def test_create_application_error(uri_for, tmp_path_factory):
     resolved = config.resolve(test_uri, workspace, logger)
     assert resolved is not None
 
-    client = await SubprocessSphinxClient(resolved)
-    assert client.state == ClientState.Errored
+    try:
+        client = await SubprocessSphinxClient(resolved)
+        assert client.state == ClientState.Errored
 
-    message = "There is a programmable error in your configuration file:"
-    assert message in str(client.exception)
+        message = "There is a programmable error in your configuration file:"
+        assert message in str(client.exception)
+    finally:
+        await client.stop()
