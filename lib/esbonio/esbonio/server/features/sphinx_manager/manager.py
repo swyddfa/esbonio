@@ -289,6 +289,7 @@ class SphinxManager(server.LanguageFeature):
                     traceback.format_exception(type(exc), exc, exc.__traceback__)
                 )
 
+            self.server.lsp.show_message(error, lsp.MessageType.Error)
             self.server.lsp.notify(
                 "sphinx/clientErrored",
                 ClientErroredNotification(id=client.id, error=error, detail=detail),
