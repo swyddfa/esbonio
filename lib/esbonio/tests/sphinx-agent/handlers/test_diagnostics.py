@@ -4,9 +4,11 @@ from typing import Dict
 from typing import List
 
 import pytest
+from pygls import IS_WIN
 from pygls.protocol import default_converter
 
 from esbonio.server import Uri
+from esbonio.server.features.project_manager import Project
 from esbonio.server.features.sphinx_manager.client_subprocess import (
     SubprocessSphinxClient,
 )
@@ -19,7 +21,11 @@ def check_diagnostics(
 ):
     """Ensure that two sets of diagnostics are equal."""
     converter = default_converter()
-    assert set(actual.keys()) == set(expected.keys())
+
+    if IS_WIN:
+        assert {str(k).lower() for k in actual} == {str(k).lower() for k in expected}
+    else:
+        assert set(actual.keys()) == set(expected.keys())
 
     for k, ex_diags in expected.items():
         actual_diags = [converter.structure(d, types.Diagnostic) for d in actual[k]]
@@ -29,43 +35,26 @@ def check_diagnostics(
 
 
 @pytest.mark.asyncio
-@pytest.mark.skip
-async def test_diagnostics(client: SubprocessSphinxClient, uri_for):
+async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri_for):
     """Ensure that the sphinx agent reports diagnostics collected during the build, and
     that they are correctly reset when fixed."""
-    definitions_uri = uri_for("sphinx-default/workspace/definitions.rst")
-    options_uri = uri_for("sphinx-default/workspace/directive_options.rst")
+    rst_diagnostics_uri = uri_for("workspaces/demo/rst/diagnostics.rst")
+    myst_diagnostics_uri = uri_for("workspaces/demo/myst/diagnostics.md")
 
     expected = {
-        definitions_uri: [
+        rst_diagnostics_uri: [
             types.Diagnostic(
-                message="image file not readable: _static/bad.png",
+                message="image file not readable: not-an-image.png",
                 severity=types.DiagnosticSeverity.Warning,
                 range=types.Range(
-                    start=types.Position(line=28, character=0),
-                    end=types.Position(line=29, character=0),
-                ),
-            ),
-            types.Diagnostic(
-                message="unknown document: '/changelog'",
-                severity=types.DiagnosticSeverity.Warning,
-                range=types.Range(
-                    start=types.Position(line=13, character=0),
-                    end=types.Position(line=14, character=0),
+                    start=types.Position(line=5, character=0),
+                    end=types.Position(line=6, character=0),
                 ),
             ),
         ],
-        options_uri: [
+        myst_diagnostics_uri: [
             types.Diagnostic(
-                message="image file not readable: filename.png",
-                severity=types.DiagnosticSeverity.Warning,
-                range=types.Range(
-                    start=types.Position(line=0, character=0),
-                    end=types.Position(line=1, character=0),
-                ),
-            ),
-            types.Diagnostic(
-                message="document isn't included in any toctree",
+                message="image file not readable: not-an-image.png",
                 severity=types.DiagnosticSeverity.Warning,
                 range=types.Range(
                     start=types.Position(line=0, character=0),
@@ -75,15 +64,17 @@ async def test_diagnostics(client: SubprocessSphinxClient, uri_for):
         ],
     }
 
-    actual = await client.get_diagnostics()
+    actual = await project.get_diagnostics()
     check_diagnostics(expected, actual)
 
     await client.build(
-        content_overrides={definitions_uri.fs_path: "My Custom Title\n==============="}
+        content_overrides={
+            rst_diagnostics_uri.fs_path: "My Custom Title\n===============\n\nThere are no images here"
+        }
     )
 
-    actual = await client.get_diagnostics()
-    check_diagnostics({options_uri: expected[options_uri]}, actual)
+    actual = await project.get_diagnostics()
+    check_diagnostics({myst_diagnostics_uri: expected[myst_diagnostics_uri]}, actual)
 
     # The original diagnostics should be reported when the issues are re-introduced.
     #
@@ -91,8 +82,8 @@ async def test_diagnostics(client: SubprocessSphinxClient, uri_for):
     #       trick Sphinx into re-building the file.
     await client.build(
         content_overrides={
-            definitions_uri.fs_path: pathlib.Path(definitions_uri).read_text()
+            rst_diagnostics_uri.fs_path: pathlib.Path(rst_diagnostics_uri).read_text()
         }
     )
-    actual = await client.get_diagnostics()
+    actual = await project.get_diagnostics()
     check_diagnostics(expected, actual)
