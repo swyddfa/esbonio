@@ -35,7 +35,6 @@ html_theme_options = {
     "source_branch": "develop",
     "source_directory": "lib/esbonio/tests/workspaces/demo/",
 }
-html_static_path = ["_static"]
 
 
 def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):

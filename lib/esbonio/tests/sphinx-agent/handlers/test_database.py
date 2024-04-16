@@ -28,11 +28,21 @@ async def test_files_table(client: SubprocessSphinxClient, project: Project):
     expected = {
         (anuri(src, "index.rst"), "index", "index.html"),
         (anuri(src, "rst", "directives.rst"), "rst/directives", "rst/directives.html"),
+        (
+            anuri(src, "rst", "diagnostics.rst"),
+            "rst/diagnostics",
+            "rst/diagnostics.html",
+        ),
         (anuri(src, "rst", "symbols.rst"), "rst/symbols", "rst/symbols.html"),
         (
             anuri(src, "myst", "directives.md"),
             "myst/directives",
             "myst/directives.html",
+        ),
+        (
+            anuri(src, "myst", "diagnostics.md"),
+            "myst/diagnostics",
+            "myst/diagnostics.html",
         ),
         (anuri(src, "myst", "symbols.md"), "myst/symbols", "myst/symbols.html"),
         (anuri(src, "demo_rst.rst"), "demo_rst", "demo_rst.html"),

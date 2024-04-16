@@ -37,7 +37,7 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                 ),
             ),
             initialization_options={
-                "server": {"logLevel": "debug"},
+                "logging": {"level": "debug"},
                 "sphinx": {
                     "buildCommand": [
                         "sphinx-build",
@@ -67,7 +67,7 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
         )
     )
 
-    await lsp_client.wait_for_notification("sphinx/clientCreated")
+    await lsp_client.wait_for_notification("sphinx/appCreated")
 
     # Save the document to trigger a build
     lsp_client.text_document_did_save(
