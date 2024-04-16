@@ -85,8 +85,11 @@ lspconfig.esbonio.setup {
   -- VSCode style output window.
   cmd = { 'lsp-devtools', 'agent', '--port', LSP_DEVTOOLS_PORT, '--', 'esbonio' },
   init_options = {
-    server = {
-      logLevel = 'debug',
+    logging = {
+      level = 'debug',
+      -- Redirect logging output to window/logMessage notifications so that lsp-devtools can capture it.
+      stderr = false,
+      window = true,
     }
   },
   settings = {
