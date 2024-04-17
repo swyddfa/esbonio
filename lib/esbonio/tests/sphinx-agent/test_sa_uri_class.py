@@ -2,6 +2,7 @@
 # https://github.com/microsoft/vscode/blob/5653420433692dc4269ad39adbc143e3438af179/src/vs/base/test/common/uri.test.ts
 import os.path
 import pathlib
+from typing import Any
 from typing import Dict
 
 import pytest
@@ -28,6 +29,72 @@ def test_uri_hashable():
 
     uri = Uri.for_file("file.txt")
     assert hash(uri) != 0
+
+
+@pytest.mark.parametrize(
+    "a,b,expected",
+    [
+        (Uri.parse("file:///a.txt"), 1, False),
+        (Uri.create(scheme="file"), Uri.create(scheme="file"), True),
+        (Uri.create(scheme="file"), Uri.create(scheme="http"), False),
+        (
+            Uri.create(scheme="file", query="a"),
+            Uri.create(scheme="file", query="a"),
+            True,
+        ),
+        (
+            Uri.create(scheme="file", query="a"),
+            Uri.create(scheme="file", query="b"),
+            False,
+        ),
+        (
+            Uri.create(scheme="file", authority="a"),
+            Uri.create(scheme="file", authority="a"),
+            True,
+        ),
+        (
+            Uri.create(scheme="file", authority="a"),
+            Uri.create(scheme="file", authority="b"),
+            False,
+        ),
+        (
+            Uri.create(scheme="file", fragment="a"),
+            Uri.create(scheme="file", fragment="a"),
+            True,
+        ),
+        (
+            Uri.create(scheme="file", fragment="a"),
+            Uri.create(scheme="file", fragment="b"),
+            False,
+        ),
+        (
+            Uri.create(scheme="http", path="a/b"),
+            Uri.create(scheme="http", path="a/b"),
+            True,
+        ),
+        (
+            Uri.create(scheme="http", path="a/b"),
+            Uri.create(scheme="http", path="a/B"),
+            False,
+        ),
+        pytest.param(
+            Uri.create(scheme="file", path="a/b"),
+            Uri.create(scheme="file", path="a/B"),
+            False,
+            marks=pytest.mark.skipif(IS_WIN, reason="N/A for Windows"),
+        ),
+        pytest.param(
+            # Filepaths on Windows are case insensitive
+            Uri.create(scheme="file", path="a/b"),
+            Uri.create(scheme="file", path="a/B"),
+            True,
+            marks=pytest.mark.skipif(not IS_WIN, reason="Windows only"),
+        ),
+    ],
+)
+def test_uri_eq(a: Uri, b: Any, expected: bool):
+    """Ensure that we have implemented ``__eq__`` for Uris correctly."""
+    assert (a == b) is expected
 
 
 @pytest.mark.parametrize(
