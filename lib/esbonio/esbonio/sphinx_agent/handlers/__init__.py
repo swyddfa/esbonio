@@ -20,6 +20,7 @@ from .. import types
 from ..app import Sphinx
 from ..config import SphinxConfig
 from ..transforms import LineNumberTransform
+from ..types import Uri
 from ..util import send_error
 from ..util import send_message
 
@@ -42,7 +43,7 @@ class SphinxHandler:
         self.app: Optional[Sphinx] = None
         """The sphinx application instance"""
 
-        self._content_overrides: Dict[pathlib.Path, str] = {}
+        self._content_overrides: Dict[Uri, str] = {}
         """Holds any additional content to inject into a build."""
 
         self._handlers: Dict[str, Tuple[Type, Callable]] = self._register_handlers()
@@ -145,18 +146,15 @@ class SphinxHandler:
         is_building = set(docnames)
 
         for docname in env.found_docs - is_building:
-            filepath = pathlib.Path(env.doc2path(docname, base=True))
-            if filepath in self._content_overrides:
+            uri = Uri.for_file(env.doc2path(docname, base=True))
+            if uri in self._content_overrides:
                 docnames.append(docname)
 
     def _cb_source_read(self, app: Sphinx, docname: str, source):
         """Called whenever sphinx reads a file from disk."""
 
-        filepath = app.env.doc2path(docname, base=True)
-
-        # Override file contents if necessary
-        path = pathlib.Path(filepath)
-        if (content := self._content_overrides.get(path)) is not None:
+        uri = Uri.for_file(app.env.doc2path(docname, base=True))
+        if (content := self._content_overrides.get(uri, None)) is not None:
             source[0] = content
 
     def build_sphinx_app(self, request: types.BuildRequest):
@@ -167,7 +165,7 @@ class SphinxHandler:
             return
 
         self._content_overrides = {
-            pathlib.Path(p): content
+            Uri.parse(p): content
             for p, content in request.params.content_overrides.items()
         }
 

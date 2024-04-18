@@ -22,8 +22,8 @@ def init_db(app: Sphinx, config: Config):
 
 def clear_diagnostics(app: Sphinx, docname: str, source):
     """Clear the diagnostics assocated with the given file."""
-    filepath = app.env.doc2path(docname, base=True)
-    app.esbonio.log.diagnostics.pop(filepath, None)
+    uri = Uri.for_file(app.env.doc2path(docname, base=True))
+    app.esbonio.log.diagnostics.pop(uri, None)
 
 
 def sync_diagnostics(app: Sphinx, exc: Optional[Exception]):
@@ -32,10 +32,9 @@ def sync_diagnostics(app: Sphinx, exc: Optional[Exception]):
     results = []
     diagnostics = app.esbonio.log.diagnostics
 
-    for fpath, items in diagnostics.items():
-        uri = str(Uri.for_file(fpath).resolve())
+    for uri, items in diagnostics.items():
         for item in items:
-            results.append((uri, as_json(item)))
+            results.append((str(uri), as_json(item)))
 
     app.esbonio.db.insert_values(DIAGNOSTICS_TABLE, results)
 

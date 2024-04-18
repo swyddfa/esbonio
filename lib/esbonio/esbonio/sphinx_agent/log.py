@@ -8,6 +8,7 @@ import sys
 import typing
 
 from . import types
+from .types import Uri
 from .util import logger
 
 if typing.TYPE_CHECKING:
@@ -35,7 +36,7 @@ class DiagnosticFilter(logging.Filter):
         super().__init__(*args, **kwargs)
 
         self.app = app
-        self.diagnostics: Dict[str, Set[types.Diagnostic]] = {}
+        self.diagnostics: Dict[Uri, Set[types.Diagnostic]] = {}
 
     def get_location(self, location: str) -> Tuple[str, Optional[int]]:
         if not location:
@@ -143,5 +144,5 @@ class DiagnosticFilter(logging.Filter):
             ),
         )
 
-        self.diagnostics.setdefault(doc, set()).add(diagnostic)
+        self.diagnostics.setdefault(Uri.for_file(doc), set()).add(diagnostic)
         return True

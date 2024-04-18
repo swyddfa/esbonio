@@ -57,9 +57,7 @@ async def test_build_content_override(client: SubprocessSphinxClient, uri_for):
     assert expected in index_html.read_text()
 
     await client.build(
-        content_overrides={
-            (src / "index.rst").fs_path: "My Custom Title\n==============="
-        }
+        content_overrides={str(src / "index.rst"): "My Custom Title\n==============="}
     )
 
     # Ensure the override was applied
