@@ -186,8 +186,8 @@ class SphinxManager(server.LanguageFeature):
             doc_version = doc.version or 0
             saved_version = getattr(doc, "saved_version", 0)
 
-            if saved_version < doc_version and (fs_path := src_uri.fs_path) is not None:
-                content_overrides[fs_path] = doc.source
+            if saved_version < doc_version:
+                content_overrides[str(src_uri)] = doc.source
 
         await self.start_progress(client)
 

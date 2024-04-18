@@ -4,7 +4,6 @@ from typing import Dict
 from typing import List
 
 import pytest
-from pygls import IS_WIN
 from pygls.protocol import default_converter
 
 from esbonio.server import Uri
@@ -21,11 +20,7 @@ def check_diagnostics(
 ):
     """Ensure that two sets of diagnostics are equal."""
     converter = default_converter()
-
-    if IS_WIN:
-        assert {str(k).lower() for k in actual} == {str(k).lower() for k in expected}
-    else:
-        assert set(actual.keys()) == set(expected.keys())
+    assert set(actual.keys()) == set(expected.keys())
 
     for k, ex_diags in expected.items():
         actual_diags = [converter.structure(d, types.Diagnostic) for d in actual[k]]
@@ -69,7 +64,9 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
 
     await client.build(
         content_overrides={
-            rst_diagnostics_uri.fs_path: "My Custom Title\n===============\n\nThere are no images here"
+            str(
+                rst_diagnostics_uri
+            ): "My Custom Title\n===============\n\nThere are no images here"
         }
     )
 
@@ -82,7 +79,7 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
     #       trick Sphinx into re-building the file.
     await client.build(
         content_overrides={
-            rst_diagnostics_uri.fs_path: pathlib.Path(rst_diagnostics_uri).read_text()
+            str(rst_diagnostics_uri): pathlib.Path(rst_diagnostics_uri).read_text()
         }
     )
     actual = await project.get_diagnostics()
