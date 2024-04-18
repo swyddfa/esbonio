@@ -7,9 +7,11 @@ from .feature import CompletionContext
 from .feature import LanguageFeature
 from .server import EsbonioLanguageServer
 from .server import EsbonioWorkspace
+from .server import __version__
 from .setup import create_language_server
 
 __all__ = (
+    "__version__",
     "ConfigChangeEvent",
     "CompletionConfig",
     "CompletionContext",
