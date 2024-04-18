@@ -40,7 +40,6 @@ dependencies = [
 
 [project.scripts]
 esbonio = "esbonio.server.cli:main"
-esbonio-sphinx = "esbonio.lsp.sphinx.cli:main"
 
 [project.optional-dependencies]
 typecheck = ["mypy", "pytest-lsp>=0.3.1", "types-docutils", "types-pygments"]
