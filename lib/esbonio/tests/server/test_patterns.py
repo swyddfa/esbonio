@@ -251,9 +251,12 @@ def test_directive_option_regex(string, expected):
         ("::", None),
         (":", {"role": ":"}),
         (":ref", {"name": "ref", "role": ":ref"}),
+        # The pattern should still work if the user adds a role in the middle of a line
+        (":ref for more details", {"name": "ref", "role": ":ref"}),
+        (":ref: for more details", {"name": "ref", "role": ":ref:"}),
         (":code-block", {"name": "code-block", "role": ":code-block"}),
-        (":c:func:", {"name": "func", "domain": "c", "role": ":c:func:"}),
-        (":cpp:func:", {"name": "func", "domain": "cpp", "role": ":cpp:func:"}),
+        (":c:func:", {"name": "c:func", "role": ":c:func:"}),
+        (":cpp:func:", {"name": "cpp:func", "role": ":cpp:func:"}),
         (":ref:`", {"name": "ref", "role": ":ref:", "target": "`"}),
         (
             ":code-block:`",
@@ -261,7 +264,7 @@ def test_directive_option_regex(string, expected):
         ),
         (
             ":c:func:`",
-            {"name": "func", "domain": "c", "role": ":c:func:", "target": "`"},
+            {"name": "c:func", "role": ":c:func:", "target": "`"},
         ),
         (
             ":ref:`some_label",
@@ -304,8 +307,7 @@ def test_directive_option_regex(string, expected):
         (
             ":c:func:`some_label",
             {
-                "name": "func",
-                "domain": "c",
+                "name": "c:func",
                 "role": ":c:func:",
                 "label": "some_label",
                 "target": "`some_label",
@@ -332,8 +334,7 @@ def test_directive_option_regex(string, expected):
         (
             ":c:func:`some_label`",
             {
-                "name": "func",
-                "domain": "c",
+                "name": "c:func",
                 "role": ":c:func:",
                 "label": "some_label",
                 "target": "`some_label`",
@@ -360,8 +361,7 @@ def test_directive_option_regex(string, expected):
         (
             ":c:func:`see more <",
             {
-                "name": "func",
-                "domain": "c",
+                "name": "c:func",
                 "role": ":c:func:",
                 "alias": "see more ",
                 "target": "`see more <",
@@ -412,8 +412,7 @@ def test_directive_option_regex(string, expected):
         (
             ":c:func:`see more <some_label",
             {
-                "name": "func",
-                "domain": "c",
+                "name": "c:func",
                 "role": ":c:func:",
                 "alias": "see more ",
                 "label": "some_label",
@@ -443,8 +442,7 @@ def test_directive_option_regex(string, expected):
         (
             ":c:func:`see more <some_label>",
             {
-                "name": "func",
-                "domain": "c",
+                "name": "c:func",
                 "role": ":c:func:",
                 "alias": "see more ",
                 "label": "some_label",
@@ -474,8 +472,7 @@ def test_directive_option_regex(string, expected):
         (
             ":c:func:`see more <some_label>`",
             {
-                "name": "func",
-                "domain": "c",
+                "name": "c:func",
                 "role": ":c:func:",
                 "alias": "see more ",
                 "label": "some_label",

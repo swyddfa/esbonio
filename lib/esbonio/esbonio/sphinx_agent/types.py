@@ -114,8 +114,7 @@ RST_ROLE = re.compile(
     (?P<role>
       :                               # roles begin with a ':' character
       (?!:)                           # the next character cannot be a ':'
-      ((?P<domain>[\w]+):(?=\w))?     # roles may include a domain (that must be followed by a word character)
-      ((?P<name>[\w-]+):?)?           # roles have a name
+      ((?P<name>\w([:\w-]*\w)?):?)?   # roles have a name
     )
     (?P<target>
       `                               # targets begin with a '`' character
@@ -138,8 +137,7 @@ language server breaks a role down into a number of parts::
                vvvvvvvv target
    :c:function:`!malloc`
    ^^^^^^^^^^^^ role
-      ^^^^^^^^ name
-    ^ domain (optional)
+    ^^^^^^^^^^ name
 
 The language server sometimes refers to the above as a "plain" role, in that the
 role's target contains just the label of the object it is linking to. However it's
@@ -152,8 +150,7 @@ is overriden, for example::
                vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv target
    :c:function:`used to allocate memory <~malloc>`
    ^^^^^^^^^^^^ role
-      ^^^^^^^^ name
-    ^ domain (optional)
+    ^^^^^^^^^^ name
 
 """
 
