@@ -1,3 +1,35 @@
+## v1.0.0b2 - 2024-04-20
+
+
+### Breaking Changes
+
+- - Removed the `esbonio.server.logLevel` option, use `esbonio.logging.level` instead.
+  - Removed the `esbonio.server.logFilter` option, it has been made obselete by the other `esbonio.logging.*` options
+
+  ([#748](https://github.com/swyddfa/esbonio/issues/748))
+
+### Enhancements
+
+- Added the following configuration options
+
+  - `esbonio:config:: esbonio.logging.level`, set the default logging level of the server
+  - `esbonio:config:: esbonio.logging.format`, set the default format of server log messages
+  - `esbonio:config:: esbonio.logging.filepath`, enable logging to a file
+  - `esbonio:config:: esbonio.logging.stderr`, print log messages to stderr
+  - `esbonio:config:: esbonio.logging.window`, send log messages as `window/logMessage` notifications
+  - `esbonio:config:: esbonio.logging.config`, override logging configuration for individual loggers, see the [documentation](https://docs.esbon.io/en/latest/lsp/reference/configuration.html#lsp-configuration-logging) for details
+
+  ([#748](https://github.com/swyddfa/esbonio/issues/748))
+- The server will now automatically restart the underlying Sphinx process when it detects a change in its configuration ([#750](https://github.com/swyddfa/esbonio/issues/750))
+- The server now emits `sphinx/clientCreated`, `sphinx/clientErrored` and `sphinx/clientDestroyed` notifications that correspond to the lifecycle of the underlying Sphinx process ([#756](https://github.com/swyddfa/esbonio/issues/756))
+
+### Fixes
+
+- The server should no longer sometimes spawn duplicated Sphinx processes ([#660](https://github.com/swyddfa/esbonio/issues/660))
+- The server now respects Sphinx configuration values like `suppress_warnings` ([#695](https://github.com/swyddfa/esbonio/issues/695))
+- The server will no longer raise a `ValueError` when used in a situation where there is an empty workspace ([#718](https://github.com/swyddfa/esbonio/issues/718))
+
+
 ## v1.0.0b1 - 2024-01-15
 
 
