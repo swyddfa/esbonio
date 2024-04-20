@@ -7,11 +7,8 @@ on:
     - 'code/**'
 
 jobs:
-  release:
-    name: vscode release
+  build:
     runs-on: ubuntu-latest
-    environment:
-      name: vscode-marketplace
     steps:
     - uses: 'actions/checkout@v4'
 
@@ -63,13 +60,6 @@ jobs:
         path: code/*.vsix
         if-no-files-found: error
 
-    - name: 'Publish Extension'
-      run: |
-        cd code
-        npm run deploy
-      env:
-        VSCE_PAT: ${{ secrets.VSCODE_PAT }}
-
     - name: Create Release
       run: |
         gh release create "${RELEASE_TAG}" \
@@ -78,3 +68,61 @@ jobs:
           ./code/*.vsix
       env:
         GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  marketplace-release:
+    name: vscode release
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: vscode-marketplace
+    steps:
+    - uses: 'actions/checkout@v4'
+
+    - uses: 'actions/setup-node@v4'
+      with:
+        node-version: 18.x
+        cache: 'npm'
+        cache-dependency-path: 'code/package-lock.json'
+
+    - uses: actions/download-artifact@v4
+      name: 'Download Extension'
+      with:
+        name: 'vsix'
+        path: code
+
+    - name: 'Publish Extension'
+      run: |
+        cd code
+        npm ci --prefer-offline
+        npm run deploy-vsce
+      env:
+        VSCE_PAT: ${{ secrets.VSCODE_PAT }}
+
+  open-vsx-release:
+    name: open vsx release
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: open-vsx
+    steps:
+    - uses: 'actions/checkout@v4'
+
+    - uses: 'actions/setup-node@v4'
+      with:
+        node-version: 18.x
+        cache: 'npm'
+        cache-dependency-path: 'code/package-lock.json'
+
+    - uses: actions/download-artifact@v4
+      name: 'Download Extension'
+      with:
+        name: 'vsix'
+        path: code
+
+    - name: 'Publish Extension'
+      run: |
+        cd code
+        npm ci --prefer-offline
+        npm run deploy-ovsx
+      env:
+        OVSX_PAT: ${{ secrets.OVSX_PAT }}

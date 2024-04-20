@@ -19,7 +19,8 @@
     "scripts": {
         "compile": "node esbuild.mjs",
         "watch": "tsc -p . --watch",
-        "deploy": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
+        "deploy-vsce": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
+        "deploy-ovsx": "ovsx publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "vscode:prepublish": "npm run compile"
     },
