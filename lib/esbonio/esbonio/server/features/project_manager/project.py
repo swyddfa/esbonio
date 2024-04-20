@@ -76,6 +76,14 @@ class Project:
         cursor = await db.execute(query)
         return await cursor.fetchall()  # type: ignore[return-value]
 
+    async def get_roles(self) -> List[Tuple[str, Optional[str]]]:
+        """Get the roles known to Sphinx."""
+        db = await self.get_db()
+
+        query = "SELECT name, implementation FROM roles"
+        cursor = await db.execute(query)
+        return await cursor.fetchall()  # type: ignore[return-value]
+
     async def get_document_symbols(self, src_uri: Uri) -> List[types.Symbol]:
         """Get the symbols for the given file."""
         db = await self.get_db()
