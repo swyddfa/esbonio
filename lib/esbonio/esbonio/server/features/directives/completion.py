@@ -71,12 +71,13 @@ def render_rst_directive_with_insert_text(
     context
        The context in which the completion is being generated.
 
-    name
-       The name of the directive, as it appears in an rst file.
-
     directive
-       The class implementing the directive.
+       The directive.
 
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the directive should be skipped
     """
     insert_text = f".. {directive.name}::"
     user_text = context.match.group(0).strip()
@@ -153,7 +154,7 @@ def render_rst_directive_with_text_edit(
     Returns
     -------
     Optional[types.CompletionItem]
-       The rendered completion item
+       The rendered completion item, or ``None`` if the directive should be skipped
     """
     match = context.match
 
