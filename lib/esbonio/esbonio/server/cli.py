@@ -73,6 +73,7 @@ def main(argv: Optional[Sequence[str]] = None):
         "esbonio.server.features.sphinx_support.diagnostics",
         "esbonio.server.features.sphinx_support.symbols",
         "esbonio.server.features.sphinx_support.directives",
+        "esbonio.server.features.sphinx_support.roles",
     ]
 
     for mod in args.included_modules:
