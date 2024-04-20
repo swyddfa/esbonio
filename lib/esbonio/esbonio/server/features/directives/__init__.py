@@ -45,6 +45,8 @@ class DirectiveProvider:
 
 
 class DirectiveFeature(server.LanguageFeature):
+    """Support for directives."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -80,7 +82,7 @@ class DirectiveFeature(server.LanguageFeature):
     async def completion(
         self, context: server.CompletionContext
     ) -> Optional[List[types.CompletionItem]]:
-        """Provide auto-completion suggestions for directives."""
+        """Provide completion suggestions for directives."""
 
         groups = context.match.groupdict()
 
