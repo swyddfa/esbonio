@@ -1,3 +1,11 @@
+## v0.93.1 - 2024-04-20
+
+
+### Fixes
+
+- Rebuild extension to pull in the latest esbonio release ([#775](https://github.com/swyddfa/esbonio/issues/775))
+
+
 ## v0.93.0 - 2024-04-20
 
 
