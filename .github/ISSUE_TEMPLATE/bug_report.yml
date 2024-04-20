@@ -1,0 +1,41 @@
+name: Bug Report
+description: Report broken or unexpected behavior
+labels: [bug, triage]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to report this!
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Tell us what you expected to happen.
+      placeholder: Tell us what you expected to happen.
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Tell us what happened instead
+      placeholder: Tell us what happened instead
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log output
+      description: |
+        Copy and paste any relevant log output here (most issues will be difficult to diagnose without this!).
+        For best results please make sure that debug logging is enabled (`esbonio.logging.level = debug`)
+        This will be automatically formatted as code, so no need for backticks.
+      render: shell
+  - type: textarea
+    id: conf
+    attributes:
+      label: (Optional) Settings from conf.py
+      description: |
+        If you think any settings from your project's `conf.py` are applicable, feel free to include them here
+        This will be automatically formatted as code, so no need for backticks.
+      render: python

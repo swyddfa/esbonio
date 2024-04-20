@@ -40,7 +40,6 @@ dependencies = [
 
 [project.scripts]
 esbonio = "esbonio.server.cli:main"
-esbonio-sphinx = "esbonio.lsp.sphinx.cli:main"
 
 [project.optional-dependencies]
 typecheck = ["mypy", "pytest-lsp>=0.3.1", "types-docutils", "types-pygments"]
@@ -67,15 +66,18 @@ profile = "black"
 [tool.pytest.ini_options]
 addopts = "--doctest-glob='*.txt'"
 asyncio_mode = "auto"
-filterwarnings = [
-    "ignore:'contextfunction' is renamed to 'pass_context',*:DeprecationWarning",
-    "ignore:'environmentfilter' is renamed to 'pass_environment',*:DeprecationWarning",
-]
 
 [tool.mypy]
 mypy_path = "$MYPY_CONFIG_FILE_DIR"
 explicit_package_bases = true
 check_untyped_defs = true
+
+[tool.pyright]
+venv = ".env"
+include = ["esbonio"]
+
+pythonVersion = "3.8"
+pythonPlatform = "All"
 
 [tool.towncrier]
 filename = "CHANGES.md"

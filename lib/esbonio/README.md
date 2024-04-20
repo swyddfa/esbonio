@@ -42,7 +42,7 @@ The language server provides the following features
 
 It's recommended to install the language server with [`pipx`](https://pipx.pypa.io/stable/)
 
-Be sure to check out the [Getting Started](https://docs.esbon.io/latest/en/lsp/getting-started.html) guide for details on integrating the server with your editor of choice.
+Be sure to check out the [Getting Started](https://docs.esbon.io/en/latest/lsp/getting-started.html) guide for details on integrating the server with your editor of choice.
 
 ```
 $ pipx install esbonio

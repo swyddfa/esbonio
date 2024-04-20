@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import sys
 from http.server import HTTPServer
 from http.server import SimpleHTTPRequestHandler
 from typing import Any
@@ -12,6 +13,7 @@ import attrs
 from esbonio.server import EsbonioLanguageServer
 from esbonio.server import Uri
 from esbonio.server.feature import LanguageFeature
+from esbonio.server.features.project_manager import ProjectManager
 from esbonio.server.features.sphinx_manager import SphinxClient
 from esbonio.server.features.sphinx_manager import SphinxManager
 
@@ -79,10 +81,17 @@ class PreviewConfig:
 class PreviewManager(LanguageFeature):
     """Language feature for managing previews."""
 
-    def __init__(self, server: EsbonioLanguageServer, sphinx: SphinxManager):
+    def __init__(
+        self,
+        server: EsbonioLanguageServer,
+        sphinx: SphinxManager,
+        projects: ProjectManager,
+    ):
         super().__init__(server)
         self.sphinx = sphinx
         self.sphinx.add_listener("build", self.on_build)
+
+        self.projects = projects
 
         logger = server.logger.getChild("PreviewServer")
         self._request_handler_factory = RequestHandlerFactory(logger)
@@ -91,6 +100,20 @@ class PreviewManager(LanguageFeature):
 
         self._ws_server: Optional[WebviewServer] = None
         self._ws_task: Optional[asyncio.Task] = None
+
+    def shutdown(self, params: None):
+        """Called when the client instructs the server to ``shutdown``."""
+        args = {}
+        if sys.version_info.minor > 8:
+            args["msg"] = "Server is shutting down."
+
+        if self._http_server:
+            self.logger.debug("Shutting down preview HTTP server")
+            self._http_server.shutdown()
+
+        if self._ws_task:
+            self.logger.debug("Shutting down preview WebSocket server")
+            self._ws_task.cancel(**args)
 
     @property
     def preview_active(self) -> bool:
@@ -184,18 +207,13 @@ class PreviewManager(LanguageFeature):
         src_uri = Uri.parse(params["uri"]).resolve()
         self.logger.debug("Previewing file: '%s'", src_uri)
 
-        client = await self.sphinx.get_client(src_uri)
-        if client is None:
+        if (client := await self.sphinx.get_client(src_uri)) is None:
             return None
 
-        if client.builder not in {"html", "dirhtml"}:
-            self.logger.error(
-                "Previews for the '%s' builder are not currently supported",
-                client.builder,
-            )
+        if (project := self.projects.get_project(src_uri)) is None:
             return None
 
-        if (build_path := await client.get_build_path(src_uri)) is None:
+        if (build_path := await project.get_build_path(src_uri)) is None:
             self.logger.debug(
                 "Unable to preview file '%s', not included in build output.", src_uri
             )
@@ -222,8 +240,10 @@ class PreviewManager(LanguageFeature):
         return {"uri": uri.as_string(encode=False)}
 
 
-def esbonio_setup(server: EsbonioLanguageServer, sphinx: SphinxManager):
-    manager = PreviewManager(server, sphinx)
+def esbonio_setup(
+    server: EsbonioLanguageServer, sphinx: SphinxManager, projects: ProjectManager
+):
+    manager = PreviewManager(server, sphinx, projects)
     server.add_feature(manager)
 
     @server.feature("view/scroll")

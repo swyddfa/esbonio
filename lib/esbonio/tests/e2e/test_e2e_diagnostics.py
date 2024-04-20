@@ -11,13 +11,12 @@ SERVER_CMD = ["-m", "esbonio"]
 TEST_DIR = pathlib.Path(__file__).parent.parent
 
 
-@pytest.mark.asyncio
-@pytest.mark.skip
-async def test_document_diagnostic(pull_client: LanguageClient, uri_for):
-    """Ensure that we can get the diagnostics for a single document correctly."""
+@pytest.mark.asyncio(scope="session")
+async def test_rst_document_diagnostic(client: LanguageClient, uri_for):
+    """Ensure that we can get the diagnostics for a single rst document correctly."""
 
-    workspace_uri = uri_for("sphinx-default", "workspace")
-    test_uri = workspace_uri / "definitions.rst"
+    workspace_uri = uri_for("workspaces", "demo")
+    test_uri = workspace_uri / "rst" / "diagnostics.rst"
     report = await client.text_document_diagnostic_async(
         types.DocumentDiagnosticParams(
             text_document=types.TextDocumentIdentifier(uri=str(test_uri))
@@ -30,30 +29,50 @@ async def test_document_diagnostic(pull_client: LanguageClient, uri_for):
     # test cases.
     messages = {d.message for d in report.items}
     assert messages == {
-        "image file not readable: _static/bad.png",
-        "unknown document: '/changelog'",
+        "image file not readable: not-an-image.png",
     }
 
     assert len(client.diagnostics) == 0, "Server should not publish diagnostics"
 
 
-@pytest.mark.asyncio
-@pytest.mark.skip
-async def test_workspace_diagnostic(pull_client: LanguageClient, uri_for):
+@pytest.mark.asyncio(scope="session")
+async def test_myst_document_diagnostic(client: LanguageClient, uri_for):
+    """Ensure that we can get the diagnostics for a single myst document correctly."""
+
+    workspace_uri = uri_for("workspaces", "demo")
+    test_uri = workspace_uri / "myst" / "diagnostics.md"
+    report = await client.text_document_diagnostic_async(
+        types.DocumentDiagnosticParams(
+            text_document=types.TextDocumentIdentifier(uri=str(test_uri))
+        )
+    )
+
+    assert report.kind == "full"
+
+    # We will only check the diagnostic message, full details will be handled by other
+    # test cases.
+    messages = {d.message for d in report.items}
+    assert messages == {
+        "image file not readable: not-an-image.png",
+    }
+
+    assert len(client.diagnostics) == 0, "Server should not publish diagnostics"
+
+
+@pytest.mark.asyncio(scope="session")
+async def test_workspace_diagnostic(client: LanguageClient, uri_for):
     """Ensure that we can get diagnostics for the whole workspace correctly."""
     report = await client.workspace_diagnostic_async(
         types.WorkspaceDiagnosticParams(previous_result_ids=[])
     )
 
-    workspace_uri = uri_for("sphinx-default", "workspace")
+    workspace_uri = uri_for("workspaces", "demo")
     expected = {
-        str(workspace_uri / "definitions.rst"): {
-            "image file not readable: _static/bad.png",
-            "unknown document: '/changelog'",
+        str(workspace_uri / "rst" / "diagnostics.rst"): {
+            "image file not readable: not-an-image.png",
         },
-        str(workspace_uri / "directive_options.rst"): {
-            "image file not readable: filename.png",
-            "document isn't included in any toctree",
+        str(workspace_uri / "myst" / "diagnostics.md"): {
+            "image file not readable: not-an-image.png",
         },
     }
     assert len(report.items) == len(expected)
@@ -71,9 +90,10 @@ async def test_workspace_diagnostic(pull_client: LanguageClient, uri_for):
 )
 async def pub_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
     """A client that does **not** support the pull-diagnostics model."""
+
     build_dir = tmp_path_factory.mktemp("build")
-    workspace_uri = uri_for("sphinx-default", "workspace")
-    test_uri = workspace_uri / "definitions.rst"
+    workspace_uri = uri_for("workspaces", "demo")
+    test_uri = workspace_uri / "rst" / "diagnostics.rst"
 
     await lsp_client.initialize_session(
         types.InitializeParams(
@@ -84,7 +104,7 @@ async def pub_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                 ),
             ),
             initialization_options={
-                "server": {"logLevel": "debug"},
+                "logging": {"level": "debug"},
                 "sphinx": {
                     "buildCommand": [
                         "sphinx-build",
@@ -97,7 +117,7 @@ async def pub_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                 },
             },
             workspace_folders=[
-                types.WorkspaceFolder(uri=str(workspace_uri), name="sphinx-default"),
+                types.WorkspaceFolder(uri=str(workspace_uri), name="demo"),
             ],
         )
     )
@@ -135,19 +155,16 @@ async def pub_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
     await lsp_client.shutdown_session()
 
 
-@pytest.mark.asyncio
-@pytest.mark.skip
+@pytest.mark.asyncio(scope="module")
 async def test_publish_diagnostics(pub_client: LanguageClient, uri_for):
     """Ensure that the server publishes the diagnostics it finds"""
-    workspace_uri = uri_for("sphinx-default", "workspace")
+    workspace_uri = uri_for("workspaces", "demo")
     expected = {
-        str(workspace_uri / "definitions.rst"): {
-            "image file not readable: _static/bad.png",
-            "unknown document: '/changelog'",
+        str(workspace_uri / "rst" / "diagnostics.rst"): {
+            "image file not readable: not-an-image.png",
         },
-        str(workspace_uri / "directive_options.rst"): {
-            "image file not readable: filename.png",
-            "document isn't included in any toctree",
+        str(workspace_uri / "myst" / "diagnostics.md"): {
+            "image file not readable: not-an-image.png",
         },
     }
 

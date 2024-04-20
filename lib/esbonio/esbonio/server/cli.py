@@ -2,13 +2,12 @@ import argparse
 import logging
 import sys
 import warnings
+from logging.handlers import MemoryHandler
 from typing import Optional
 from typing import Sequence
 
 from pygls.protocol import default_converter
 
-from ._log import LOG_NAMESPACE
-from ._log import MemoryHandler
 from .server import EsbonioLanguageServer
 from .server import __version__
 from .setup import create_language_server
@@ -60,16 +59,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: Optional[Sequence[str]] = None):
-    """Standard main function for each of the default language servers."""
-
-    # Put these here to avoid circular import issues.
-
     cli = build_parser()
     args = cli.parse_args(argv)
 
     # Order matters!
     modules = [
         "esbonio.server.features.log",
+        "esbonio.server.features.project_manager",
         "esbonio.server.features.sphinx_manager",
         "esbonio.server.features.preview_manager",
         "esbonio.server.features.directives",
@@ -87,25 +83,21 @@ def main(argv: Optional[Sequence[str]] = None):
 
     # Ensure we can capture warnings.
     logging.captureWarnings(True)
-    warnlog = logging.getLogger("py.warnings")
 
     if not sys.warnoptions:
         warnings.simplefilter("default")  # Enable capture of DeprecationWarnings
 
     # Setup a temporary logging handler that can cache messages until the language server
     # is ready to forward them onto the client.
-    logger = logging.getLogger(LOG_NAMESPACE)
-    logger.setLevel(logging.DEBUG)
-
-    handler = MemoryHandler()
-    handler.setLevel(logging.DEBUG)
-    logger.addHandler(handler)
-    warnlog.addHandler(handler)
+    logging.basicConfig(
+        level=logging.DEBUG,
+        handlers=[MemoryHandler(999999, flushLevel=logging.CRITICAL)],
+    )
 
     server = create_language_server(
         EsbonioLanguageServer,
         modules,
-        logger=logger,
+        logger=logging.getLogger("esbonio"),
         converter_factory=default_converter,
     )
 

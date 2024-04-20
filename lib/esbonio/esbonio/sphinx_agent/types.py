@@ -3,6 +3,7 @@
 This is the *only* file shared between the agent itself and the parent language server.
 For this reason this file *cannot* import anything from Sphinx.
 """
+
 import dataclasses
 import enum
 import os
@@ -214,6 +215,41 @@ class Uri:
             raise ValueError(
                 "Paths without an authority cannot start with two slashes '//'"
             )
+
+    def __eq__(self, other):
+        if type(other) is not type(self):
+            return False
+
+        if self.scheme != other.scheme:
+            return False
+
+        if self.authority != other.authority:
+            return False
+
+        if self.query != other.query:
+            return False
+
+        if self.fragment != other.fragment:
+            return False
+
+        if IS_WIN and self.scheme == "file":
+            # Filepaths on windows are case in-sensitive
+            if self.path.lower() != other.path.lower():
+                return False
+
+        elif self.path != other.path:
+            return False
+
+        return True
+
+    def __hash__(self):
+        if IS_WIN and self.scheme == "file":
+            # Filepaths on windows are case in-sensitive
+            path = self.path.lower()
+        else:
+            path = self.path
+
+        return hash((self.scheme, self.authority, path, self.query, self.fragment))
 
     def __fspath__(self):
         """Return the file system representation of this uri.
@@ -532,9 +568,6 @@ class CreateApplicationRequest:
 @dataclasses.dataclass
 class SphinxInfo:
     """Represents information about an instance of the Sphinx application."""
-
-    id: str
-    """A unique id representing a particular Sphinx application instance."""
 
     version: str
     """The version of Sphinx being used."""

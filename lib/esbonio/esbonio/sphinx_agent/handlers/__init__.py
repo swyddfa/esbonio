@@ -5,28 +5,22 @@ import pathlib
 import sys
 import traceback
 import typing
-from functools import partial
-from typing import IO
 from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Optional
 from typing import Tuple
 from typing import Type
-from uuid import uuid4
 
 import sphinx.application
 from sphinx import __version__ as __sphinx_version__
-from sphinx.util import console
-from sphinx.util import logging as sphinx_logging_module
 from sphinx.util.logging import NAMESPACE as SPHINX_LOG_NAMESPACE
-from sphinx.util.logging import VERBOSITY_MAP
 
 from .. import types
 from ..app import Sphinx
 from ..config import SphinxConfig
-from ..log import SphinxLogHandler
 from ..transforms import LineNumberTransform
+from ..types import Uri
 from ..util import send_error
 from ..util import send_message
 
@@ -49,7 +43,7 @@ class SphinxHandler:
         self.app: Optional[Sphinx] = None
         """The sphinx application instance"""
 
-        self._content_overrides: Dict[pathlib.Path, str] = {}
+        self._content_overrides: Dict[Uri, str] = {}
         """Holds any additional content to inject into a build."""
 
         self._handlers: Dict[str, Tuple[Type, Callable]] = self._register_handlers()
@@ -120,9 +114,6 @@ class SphinxHandler:
             raise ValueError("Invalid build command")
 
         sphinx_args = sphinx_config.to_application_args()
-
-        # Override Sphinx's logging setup with our own.
-        sphinx_logging_module.setup = partial(self.setup_logging, sphinx_config)
         self.app = Sphinx(**sphinx_args)
 
         # Connect event handlers.
@@ -138,7 +129,6 @@ class SphinxHandler:
         response = types.CreateApplicationResponse(
             id=request.id,
             result=types.SphinxInfo(
-                id=str(uuid4()),
                 version=__sphinx_version__,
                 conf_dir=str(self.app.confdir),
                 build_dir=str(self.app.outdir),
@@ -156,47 +146,16 @@ class SphinxHandler:
         is_building = set(docnames)
 
         for docname in env.found_docs - is_building:
-            filepath = pathlib.Path(env.doc2path(docname, base=True))
-            if filepath in self._content_overrides:
+            uri = Uri.for_file(env.doc2path(docname, base=True))
+            if uri in self._content_overrides:
                 docnames.append(docname)
 
     def _cb_source_read(self, app: Sphinx, docname: str, source):
         """Called whenever sphinx reads a file from disk."""
 
-        filepath = app.env.doc2path(docname, base=True)
-
-        # Override file contents if necessary
-        path = pathlib.Path(filepath)
-        if (content := self._content_overrides.get(path)) is not None:
+        uri = Uri.for_file(app.env.doc2path(docname, base=True))
+        if (content := self._content_overrides.get(uri, None)) is not None:
             source[0] = content
-
-    def setup_logging(self, config: SphinxConfig, app: Sphinx, status: IO, warning: IO):
-        """Setup Sphinx's logging so that it integrates well with the parent language
-        server."""
-
-        # Disable color escape codes in Sphinx's log messages
-        console.nocolor()
-
-        if not config.silent:
-            # Be sure to remove any old handlers
-            for handler in sphinx_logger.handlers:
-                if isinstance(handler, SphinxLogHandler):
-                    sphinx_logger.handlers.remove(handler)
-                    self.log_handler = None
-
-            app.esbonio.log = SphinxLogHandler(app)
-            sphinx_logger.addHandler(app.esbonio.log)
-
-            if config.quiet:
-                level = logging.WARNING
-            else:
-                level = VERBOSITY_MAP[app.verbosity]
-
-            sphinx_logger.setLevel(level)
-            app.esbonio.log.setLevel(level)
-
-            formatter = logging.Formatter("%(message)s")
-            app.esbonio.log.setFormatter(formatter)
 
     def build_sphinx_app(self, request: types.BuildRequest):
         """Trigger a Sphinx build."""
@@ -206,7 +165,7 @@ class SphinxHandler:
             return
 
         self._content_overrides = {
-            pathlib.Path(p): content
+            Uri.parse(p): content
             for p, content in request.params.content_overrides.items()
         }
 
@@ -225,6 +184,9 @@ class SphinxHandler:
             send_error(
                 id=request.id, code=-32603, message=f"sphinx-build failed: {message}"
             )
+
+        finally:
+            self.app._warncount = 0
 
     def notify_exit(self, request: types.ExitNotification):
         """Sent from the client to signal that the agent should exit."""

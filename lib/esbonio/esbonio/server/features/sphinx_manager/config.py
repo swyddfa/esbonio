@@ -141,18 +141,23 @@ class SphinxConfig:
         if self.cwd:
             return self.cwd
 
-        for folder_uri in workspace.folders.keys():
-            folder_uri = Uri.parse(folder_uri)
-            if folder_uri and str(uri).startswith(str(folder_uri)):
-                break
-        else:
-            folder_uri = Uri.parse(workspace.root_uri)
+        candidates = [Uri.parse(f) for f in workspace.folders.keys()]
 
-        if folder_uri is None or (cwd := folder_uri.fs_path) is None:
-            logger.error("Unable to determine working directory from '%s'", folder_uri)
-            return None
+        if workspace.root_uri is not None:
+            if (root_uri := Uri.parse(workspace.root_uri)) not in candidates:
+                candidates.append(root_uri)
 
-        return cwd
+        for folder in candidates:
+            if str(uri).startswith(str(folder)):
+                if (cwd := folder.fs_path) is None:
+                    logger.error(
+                        "Unable to determine working directory from '%s'", folder
+                    )
+                    return None
+
+                return cwd
+
+        return None
 
     def _resolve_python_path(self, logger: logging.Logger) -> List[pathlib.Path]:
         """Return the list of paths to put on the sphinx agent's ``PYTHONPATH``
@@ -160,9 +165,6 @@ class SphinxConfig:
         Using the ``PYTHONPATH`` environment variable, we can inject additional Python
         packages into the user's Python environment. This method will locate the
         installation path of the sphinx agent and return it.
-
-        Additionally if the ``enable_dev_tools`` flag is set, this will attempt to
-        locate the ``lsp_devtools`` package
 
         Parameters
         ----------

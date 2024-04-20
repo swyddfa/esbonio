@@ -1,4 +1,5 @@
 """Helper functions for completion support"""
+
 from __future__ import annotations
 
 import re

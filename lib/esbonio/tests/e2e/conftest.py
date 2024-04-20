@@ -37,7 +37,7 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                 ),
             ),
             initialization_options={
-                "server": {"logLevel": "debug"},
+                "logging": {"level": "debug"},
                 "sphinx": {
                     "buildCommand": [
                         "sphinx-build",

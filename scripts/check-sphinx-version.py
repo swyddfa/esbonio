@@ -1,4 +1,5 @@
 """Check that we are testing the correct Sphinx version inside tox."""
+
 import os
 
 import sphinx

@@ -1,5 +1,6 @@
 import { execSync } from "child_process";
 import * as vscode from 'vscode';
+import { ActiveEnvironmentPathChangeEvent } from '@vscode/python-extension';
 import { join } from "path";
 import {
   CancellationToken,
@@ -8,20 +9,83 @@ import {
   LanguageClientOptions,
   ResponseError,
   ServerOptions,
-  State
+  State,
+  TextDocumentFilter
 } from "vscode-languageclient/node";
 
 import { OutputChannelLogger } from "../common/log";
 import { PythonManager } from "./python";
-import { Commands, Events, Notifications } from '../common/constants';
+import { Commands, Events, Notifications, Server } from '../common/constants';
 
+
+export interface SphinxClientConfig {
+
+  /**
+   * The python command used to launch the client
+   */
+  pythonCommand: string[]
+
+  /**
+   * The sphinx-build command in use
+   */
+  buildCommand: string[]
+
+  /**
+   * The working directory of the client
+   */
+  cwd: string
+
+}
+
+export interface ClientCreatedNotification {
+  /**
+   * A unique id for this client
+   */
+  id: string
+
+  /**
+   * The configuration scope at which the client was created
+   */
+  scope: string
+
+  /**
+   * The final configuration
+   */
+  config: SphinxClientConfig
+
+}
+
+/**
+ * The payload of a ``sphinx/clientErrored`` notification
+ */
+export interface ClientErroredNotification {
+
+  /**
+   * A unique id for the client
+   */
+  id: string
+
+  /**
+   * Short description of the error.
+   */
+  error: string
+
+  /**
+   * Detailed description of the error.
+   */
+  detail: string
+}
+
+
+export interface ClientDestroyedNotification {
+  /**
+   * A unique id for this client
+   */
+  id: string
+}
 
 export interface SphinxInfo {
 
-  /**
-   * A unique id used to refer to this Sphinx application instance.
-   */
-  id: string
 
   /**
    * Sphinx's version number
@@ -51,6 +115,18 @@ export interface SphinxInfo {
   src_dir: string
 }
 
+export interface AppCreatedNotification {
+
+  /**
+   * A unique id for this client
+   */
+  id: string
+
+  /**
+   * Details about the created application.
+   */
+  application: SphinxInfo
+}
 
 export class EsbonioClient {
 
@@ -81,6 +157,11 @@ export class EsbonioClient {
         }
       })
     )
+
+    // React to environment changes in the Python extension
+    python.addHandler(Events.PYTHON_ENV_CHANGE, (_event: ActiveEnvironmentPathChangeEvent) => {
+      this.client?.sendNotification("workspace/didChangeConfiguration", { settings: null })
+    })
   }
 
   public addHandler(event: string, handler: any) {
@@ -237,6 +318,9 @@ export class EsbonioClient {
     let methods = [
       Notifications.SCROLL_EDITOR,
       Notifications.SPHINX_APP_CREATED,
+      Notifications.SPHINX_CLIENT_CREATED,
+      Notifications.SPHINX_CLIENT_ERRORED,
+      Notifications.SPHINX_CLIENT_DESTROYED,
     ]
 
     for (let method of methods) {
@@ -252,15 +336,11 @@ export class EsbonioClient {
    */
   private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
 
-    let documentSelector = [
-      { scheme: 'file', language: 'restructuredtext' },
-      { scheme: 'file', language: 'markdown' },
-    ]
 
-    if (config.get<boolean>('server.enabledInPyFiles')) {
-      documentSelector.push(
-        { scheme: 'file', language: 'python' }
-      )
+
+    let documentSelector = config.get<TextDocumentFilter[]>("server.documentSelector")
+    if (!documentSelector || documentSelector.length === 0) {
+      documentSelector = Server.DEFAULT_SELECTOR
     }
 
     let clientOptions: LanguageClientOptions = {

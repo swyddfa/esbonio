@@ -9,13 +9,13 @@ from lsprotocol import types
 from esbonio.server import EsbonioLanguageServer
 from esbonio.server import LanguageFeature
 from esbonio.server import Uri
-from esbonio.server.features.sphinx_manager import SphinxManager
+from esbonio.server.features.project_manager import ProjectManager
 
 
 class SphinxSymbols(LanguageFeature):
     """Add support for ``textDocument/documentSymbol`` requests"""
 
-    def __init__(self, server: EsbonioLanguageServer, manager: SphinxManager):
+    def __init__(self, server: EsbonioLanguageServer, manager: ProjectManager):
         super().__init__(server)
         self.manager = manager
 
@@ -25,10 +25,10 @@ class SphinxSymbols(LanguageFeature):
         """Called when a document symbols request is received."""
 
         uri = Uri.parse(params.text_document.uri)
-        if (client := await self.manager.get_client(uri)) is None:
+        if (project := self.manager.get_project(uri)) is None:
             return None
 
-        symbols = await client.get_document_symbols(uri)
+        symbols = await project.get_document_symbols(uri)
         if len(symbols) == 0:
             return None
 
@@ -64,9 +64,9 @@ class SphinxSymbols(LanguageFeature):
         """Called when a workspace symbol request is received."""
 
         tasks = []
-        for client in self.manager.clients.values():
+        for project in self.manager.projects.values():
             tasks.append(
-                asyncio.create_task(client.get_workspace_symbols(params.query))
+                asyncio.create_task(project.get_workspace_symbols(params.query))
             )
 
         symbols = await asyncio.gather(*tasks)
@@ -94,6 +94,6 @@ class SphinxSymbols(LanguageFeature):
         return result
 
 
-def esbonio_setup(server: EsbonioLanguageServer, sphinx_manager: SphinxManager):
-    symbols = SphinxSymbols(server, sphinx_manager)
+def esbonio_setup(server: EsbonioLanguageServer, project_manager: ProjectManager):
+    symbols = SphinxSymbols(server, project_manager)
     server.add_feature(symbols)

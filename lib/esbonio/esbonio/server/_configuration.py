@@ -1,20 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import inspect
 import json
 import pathlib
+import traceback
 import typing
-from typing import Any
-from typing import Awaitable
-from typing import Callable
-from typing import Dict
+from functools import partial
 from typing import Generic
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Type
 from typing import TypeVar
-from typing import Union
 
 import attrs
 from lsprotocol import types
@@ -22,15 +16,30 @@ from pygls.capabilities import get_capability
 
 from . import Uri
 
+T = TypeVar("T")
+
 if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import Awaitable
+    from typing import Callable
+    from typing import Dict
+    from typing import List
+    from typing import Optional
+    from typing import Set
+    from typing import Type
+    from typing import Union
+
     from .server import EsbonioLanguageServer
+
+    ConfigurationCallback = Callable[
+        ["ConfigChangeEvent"], Union[Awaitable[None], None]
+    ]
+
 
 try:
     import tomllib as toml
 except ImportError:
     import tomli as toml  # type: ignore[no-redef]
-
-T = TypeVar("T")
 
 
 @attrs.define(frozen=True)
@@ -43,7 +52,7 @@ class Subscription(Generic[T]):
     spec: Type[T]
     """The subscription's class definition."""
 
-    callback: Callable[[T], Union[Awaitable[None], None]]
+    callback: ConfigurationCallback
     """The subscription's callback."""
 
     workspace_scope: str
@@ -51,6 +60,20 @@ class Subscription(Generic[T]):
 
     file_scope: str
     """The corresponding file scope for the subscription."""
+
+
+@attrs.define
+class ConfigChangeEvent(Generic[T]):
+    """Is sent to subscribers when a configuration change occurs."""
+
+    scope: str
+    """The scope at which this configuration change occured."""
+
+    value: T
+    """The latest configuration value."""
+
+    previous: Optional[T] = None
+    """The previous configuration value, (if any)."""
 
 
 class Configuration:
@@ -91,6 +114,9 @@ class Configuration:
         self._subscriptions: Dict[Subscription, Any] = {}
         """Subscriptions and their last known value"""
 
+        self._tasks: Set[asyncio.Task] = set()
+        """Holds tasks that are currently executing an async config handler."""
+
     @property
     def initialization_options(self):
         return self._initialization_options
@@ -121,11 +147,11 @@ class Configuration:
             self.server.client_capabilities, "workspace.configuration", False
         )
 
-    async def subscribe(
+    def subscribe(
         self,
         section: str,
         spec: Type[T],
-        callback: Callable[[T], Union[Awaitable[None], None]],
+        callback: ConfigurationCallback,
         scope: Optional[Uri] = None,
     ):
         """Subscribe to updates to the given configuration section.
@@ -154,22 +180,12 @@ class Configuration:
             self.logger.debug("Ignoring duplicate subscription: %s", subscription)
             return
 
-        # Wait until the server is ready before fetching the initial configuration
-        await self.server.ready
+        self._subscriptions[subscription] = None
 
-        result = self.get(section, spec, scope)
-        self._subscriptions[subscription] = result
+        # Once the server is ready, update all the subscriptions
+        self.server.ready.add_done_callback(self._notify_subscriptions)
 
-        try:
-            ret = callback(result)
-            if inspect.isawaitable(ret):
-                await ret
-        except Exception:
-            self.logger.error(
-                "Error in configuration callback: %s", callback, exc_info=True
-            )
-
-    async def _notify_subscriptions(self):
+    def _notify_subscriptions(self, *args):
         """Notify subscriptions about configuration changes, if necessary."""
 
         for subscription, previous_value in self._subscriptions.items():
@@ -186,18 +202,39 @@ class Configuration:
             if previous_value == value:
                 continue
 
-            try:
-                ret = subscription.callback(value)
-                if inspect.isawaitable(ret):
-                    await ret
+            self._subscriptions[subscription] = value
+            change_event = ConfigChangeEvent(
+                scope=max(
+                    [subscription.file_scope, subscription.workspace_scope], key=len
+                ),
+                value=value,
+                previous=previous_value,
+            )
+            self.logger.info("%s", change_event)
 
-                self._subscriptions[subscription] = value
+            try:
+                ret = subscription.callback(change_event)
+                if inspect.iscoroutine(ret):
+                    task = asyncio.create_task(ret)
+                    task.add_done_callback(partial(self._finish_task, subscription))
+
             except Exception:
                 self.logger.error(
                     "Error in configuration callback: %s",
                     subscription.callback,
                     exc_info=True,
                 )
+
+    def _finish_task(self, subscription: Subscription, task: asyncio.Task[None]):
+        """Cleanup a finished task."""
+        self._tasks.discard(task)
+
+        if (exc := task.exception()) is not None:
+            self.logger.error(
+                "Error in async configuration handler '%s'\n%s",
+                subscription.callback,
+                "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
+            )
 
     def get(self, section: str, spec: Type[T], scope: Optional[Uri] = None) -> T:
         """Get the requested configuration section.
@@ -222,6 +259,25 @@ class Configuration:
         workspace_scope = self._uri_to_workspace_scope(scope)
 
         return self._get_config(section, spec, workspace_scope, file_scope)
+
+    def scope_for(self, uri: Uri) -> str:
+        """Return the configuration scope that corresponds to the given uri.
+
+        Parameters
+        ----------
+        uri
+           The uri to return the scope for
+
+        Returns
+        -------
+        str
+           The scope corresponding with the given uri
+        """
+
+        file_scope = self._uri_to_file_scope(uri)
+        workspace_scope = self._uri_to_workspace_scope(uri)
+
+        return max([file_scope, workspace_scope], key=len)
 
     def _get_config(
         self, section: str, spec: Type[T], workspace_scope: str, file_scope: str
@@ -293,9 +349,7 @@ class Configuration:
 
         return paths
 
-    async def update_file_configuration(
-        self, paths: Optional[List[pathlib.Path]] = None
-    ):
+    def update_file_configuration(self, paths: Optional[List[pathlib.Path]] = None):
         """Update the internal cache of configuration coming from files.
 
         Parameters
@@ -322,7 +376,7 @@ class Configuration:
                     "Unable to read configuration file: '%s'", exc_info=True
                 )
 
-        await self._notify_subscriptions()
+        self._notify_subscriptions()
 
     async def update_workspace_configuration(self):
         """Update the internal cache of the client's workspace configuration."""
@@ -363,7 +417,7 @@ class Configuration:
 
             self._workspace_config[scope or ""] = result
 
-        await self._notify_subscriptions()
+        self._notify_subscriptions()
 
 
 def _uri_to_scope(known_scopes: List[str], uri: Optional[Uri]) -> str:

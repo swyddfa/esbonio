@@ -29,21 +29,27 @@ The HTML pages are in docs/_build.
 >>> app
 <sphinx.application.Sphinx object at 0x7f0ad0fdb5b0>
 """
+
 import inspect
 import pathlib
+import pdb
 import time
 
 from esbonio.sphinx_agent import types
 from esbonio.sphinx_agent.app import Sphinx
 
-root = pathlib.Path(__file__).parent.parent
-
-app = Sphinx(
-    srcdir=root / "docs",
-    confdir=root / "docs",
-    outdir=root / "docs" / "_build",
-    doctreedir=root / "docs" / "_build" / "doctrees",
-    buildername="html",
-    freshenv=True,  # Have Sphinx reload everything on first build.
-)
-app.build()
+try:
+    root = pathlib.Path(__file__).parent.parent
+    # project = root / "docs"
+    project = root / "lib" / "esbonio" / "tests" / "workspaces" / "demo"
+    app = Sphinx(
+        srcdir=project,
+        confdir=project,
+        outdir=project / "_build",
+        doctreedir=project / "_build" / "doctrees",
+        buildername="html",
+        freshenv=True,  # Have Sphinx reload everything on first build.
+    )
+    app.build()
+except Exception:
+    pdb.post_mortem()

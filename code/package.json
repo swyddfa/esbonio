@@ -19,7 +19,8 @@
     "scripts": {
         "compile": "node esbuild.mjs",
         "watch": "tsc -p . --watch",
-        "deploy": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
+        "deploy-vsce": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
+        "deploy-ovsx": "ovsx publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "vscode:prepublish": "npm run compile"
     },
@@ -28,7 +29,7 @@
         "ms-python.python"
     ],
     "dependencies": {
-        "semver": "^7.5.4",
+        "semver": "^7.6.0",
         "@vscode/python-extension": "^1.0.5",
         "vscode-languageclient": "^9.0.1"
     },
@@ -36,9 +37,9 @@
         "@types/glob": "^8.1.0",
         "@types/node": "^18",
         "@types/vscode": "1.78.0",
-        "@vscode/vsce": "^2.22.0",
-        "esbuild": "^0.19.11",
-        "typescript": "^5.3.3"
+        "@vscode/vsce": "^2.25.0",
+        "esbuild": "^0.20.2",
+        "typescript": "^5.4.5"
     },
     "engines": {
         "vscode": "^1.82.0"
@@ -88,11 +89,28 @@
                         "default": true,
                         "description": "Enable/Disable the language server"
                     },
-                    "esbonio.server.enabledInPyFiles": {
+                    "esbonio.server.documentSelector": {
                         "scope": "window",
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Enable/Disable the language server in Python files."
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "scheme": {
+                                    "type": "string",
+                                    "description": "The URI scheme that this selector applies to"
+                                },
+                                "language": {
+                                    "type": "string",
+                                    "description": "The language id this selector will select"
+                                },
+                                "pattern": {
+                                    "type": "string",
+                                    "description": "Only select uris that match the given pattern"
+                                }
+                            }
+                        },
+                        "default": [],
+                        "description": "Override the extension's default document selector"
                     },
                     "esbonio.server.startupModule": {
                         "scope": "window",
@@ -117,26 +135,6 @@
                             "type": "string"
                         },
                         "description": "A list of additional modules to include in the server's configuration"
-                    },
-                    "esbonio.server.logLevel": {
-                        "scope": "window",
-                        "type": "string",
-                        "default": null,
-                        "enum": [
-                            "debug",
-                            "info",
-                            "error"
-                        ],
-                        "description": "The level of log message to show in the log"
-                    },
-                    "esbonio.server.logFilter": {
-                        "scope": "window",
-                        "type": "array",
-                        "default": null,
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "If set, only messages from the named loggers will be shown"
                     },
                     "esbonio.server.pythonPath": {
                         "scope": "window",
@@ -230,6 +228,86 @@
                 }
             },
             {
+                "title": "Logging",
+                "properties": {
+                    "esbonio.logging.level": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "error",
+                        "enum": [
+                            "critical",
+                            "fatal",
+                            "error",
+                            "warning",
+                            "info",
+                            "debug"
+                        ],
+                        "description": "The default level of log message to show in the log"
+                    },
+                    "esbonio.logging.format": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": null,
+                        "description": "The default format string to apply to log messages"
+                    },
+                    "esbonio.logging.filepath": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": null,
+                        "description": "If set, record log messages in the given filepath (path is relative to the server's working directory)."
+                    },
+                    "esbonio.logging.stderr": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": true,
+                        "description": "If set, print log messages to stderr"
+                    },
+                    "esbonio.logging.window": {
+                        "scope": "window",
+                        "type": "boolean",
+                        "default": false,
+                        "description": "If set, send log messages as window/logMessage notifications"
+                    },
+                    "esbonio.logging.config": {
+                        "scope": "window",
+                        "type": "object",
+                        "patternProperties": {
+                            ".*": {
+                                "type": "object",
+                                "properties": {
+                                    "level": {
+                                        "type": "string",
+                                        "enum": [
+                                            "critical",
+                                            "fatal",
+                                            "error",
+                                            "warning",
+                                            "info",
+                                            "debug"
+                                        ],
+                                        "description": "The level of log message to show in the log for this logger"
+                                    },
+                                    "filepath": {
+                                        "type": "string",
+                                        "description": "If set, log messages from this logger to the given file (path is relative to server working directory)."
+                                    },
+                                    "stderr": {
+                                        "type": "boolean",
+                                        "description": "If set, print messages from this logger to stderr."
+                                    },
+                                    "window": {
+                                        "type": "boolean",
+                                        "description": "If set, send messages from this logger as window/logMessage notifications."
+                                    }
+                                }
+                            }
+                        },
+                        "default": {},
+                        "description": "Low level logging configuration settings to apply to individual loggers"
+                    }
+                }
+            },
+            {
                 "title": "Developer Options",
                 "properties": {
                     "esbonio.server.enableDevTools": {
@@ -237,6 +315,22 @@
                         "type": "boolean",
                         "default": false,
                         "description": "Enable lsp-devtools integration for the language server"
+                    },
+                    "esbonio.trace.server": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "off",
+                        "enum": [
+                            "off",
+                            "messages",
+                            "verbose"
+                        ],
+                        "description": "Controls if LSP messages sent to/from the server should be logged.",
+                        "enumDescriptions": [
+                            "do not log any lsp messages",
+                            "log all lsp messages sent to/from the server",
+                            "log all lsp messages sent to/from the server, including their contents"
+                        ]
                     },
                     "esbonio.server.debug": {
                         "scope": "window",

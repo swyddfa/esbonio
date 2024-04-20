@@ -1,61 +1,122 @@
 from __future__ import annotations
 
 import asyncio
-import inspect
+import traceback
 import typing
 import uuid
-from typing import Callable
-from typing import Dict
-from typing import Optional
+from functools import partial
 
+import attrs
 import lsprotocol.types as lsp
 
-import esbonio.sphinx_agent.types as types
-from esbonio.server import LanguageFeature
+from esbonio import server
 from esbonio.server import Uri
+from esbonio.sphinx_agent import types
 
+from .client import ClientState
 from .config import SphinxConfig
 
 if typing.TYPE_CHECKING:
+    from typing import Callable
+    from typing import Dict
+    from typing import Optional
+
+    from esbonio.server.features.project_manager import ProjectManager
+
     from .client import SphinxClient
 
+    SphinxClientFactory = Callable[["SphinxManager", "SphinxConfig"], "SphinxClient"]
 
-SphinxClientFactory = Callable[["SphinxManager"], "SphinxClient"]
+
+@attrs.define
+class ClientCreatedNotification:
+    """The payload of a ``sphinx/clientCreated`` notification"""
+
+    id: str
+    """The client's id"""
+
+    scope: str
+    """The scope at which the client was created."""
+
+    config: SphinxConfig
+    """The final configuration."""
 
 
-class SphinxManager(LanguageFeature):
+@attrs.define
+class AppCreatedNotification:
+    """The payload of a ``sphinx/appCreated`` notification"""
+
+    id: str
+    """The client's id"""
+
+    application: types.SphinxInfo
+    """Details about the created application."""
+
+
+@attrs.define
+class ClientErroredNotification:
+    """The payload of a ``sphinx/clientErrored`` notification"""
+
+    id: str
+    """The client's id"""
+
+    error: str
+    """Short description of the error."""
+
+    detail: str
+    """Detailed description of the error."""
+
+
+@attrs.define
+class ClientDestroyedNotification:
+    """The payload of ``sphinx/clientDestroyed`` notification."""
+
+    id: str
+    """The client's id"""
+
+
+class SphinxManager(server.LanguageFeature):
     """Responsible for managing Sphinx application instances."""
 
-    def __init__(self, client_factory: SphinxClientFactory, *args, **kwargs):
+    def __init__(
+        self,
+        client_factory: SphinxClientFactory,
+        project_manager: ProjectManager,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         self.client_factory = client_factory
         """Used to create new Sphinx client instances."""
 
-        self.clients: Dict[Uri, SphinxClient] = {}
+        self.project_manager = project_manager
+        """The project manager instance to use."""
+
+        self.clients: Dict[str, Optional[SphinxClient]] = {
+            # Prevent any clients from being created in the global scope.
+            "": None,
+        }
         """Holds currently active Sphinx clients."""
 
-        self.handlers: Dict[str, set] = {}
-        """Collection of handlers for various events."""
+        self._events = server.EventSource(self.logger)
+        """The SphinxManager can emit events."""
 
         self._pending_builds: Dict[str, asyncio.Task] = {}
         """Holds tasks that will trigger a build after a given delay if not cancelled."""
-
-        self._client_creating: Optional[asyncio.Task] = None
-        """If set, indicates we're in the process of setting up a new client."""
 
         self._progress_tokens: Dict[str, str] = {}
         """Holds work done progress tokens."""
 
     def add_listener(self, event: str, handler):
-        self.handlers.setdefault(event, set()).add(handler)
+        self._events.add_listener(event, handler)
 
     async def document_change(self, params: lsp.DidChangeTextDocumentParams):
         if (uri := Uri.parse(params.text_document.uri)) is None:
             return
 
         client = await self.get_client(uri)
-        if client is None or client.id is None:
+        if client is None:
             return
 
         # Cancel any existing pending builds
@@ -77,7 +138,7 @@ class SphinxManager(LanguageFeature):
             return
 
         client = await self.get_client(uri)
-        if client is None or client.id is None:
+        if client is None:
             return
 
         # Cancel any existing pending builds
@@ -85,6 +146,18 @@ class SphinxManager(LanguageFeature):
             task.cancel()
 
         await self.trigger_build(uri)
+
+    async def shutdown(self, params: None):
+        """Called when the server is instructed to ``shutdown``."""
+
+        # Stop any existing clients.
+        tasks = []
+        for client in self.clients.values():
+            if client:
+                self.logger.debug("Stopping SphinxClient: %s", client)
+                tasks.append(asyncio.create_task(client.stop()))
+
+        await asyncio.gather(*tasks)
 
     async def trigger_build_after(self, uri: Uri, app_id: str, delay: float):
         """Trigger a build for the given uri after the given delay."""
@@ -96,21 +169,25 @@ class SphinxManager(LanguageFeature):
 
     async def trigger_build(self, uri: Uri):
         """Trigger a build for the relevant Sphinx application for the given uri."""
+
         client = await self.get_client(uri)
-        if client is None or client.building:
+        if client is None or client.state != ClientState.Running:
+            return
+
+        if (project := self.project_manager.get_project(uri)) is None:
             return
 
         # Pass through any unsaved content to the Sphinx agent.
         content_overrides: Dict[str, str] = {}
-        known_src_uris = await client.get_src_uris()
+        known_src_uris = await project.get_src_uris()
 
         for src_uri in known_src_uris:
             doc = self.server.workspace.get_document(str(src_uri))
             doc_version = doc.version or 0
             saved_version = getattr(doc, "saved_version", 0)
 
-            if saved_version < doc_version and (fs_path := src_uri.fs_path) is not None:
-                content_overrides[fs_path] = doc.source
+            if saved_version < doc_version:
+                content_overrides[str(src_uri)] = doc.source
 
         await self.start_progress(client)
 
@@ -123,101 +200,106 @@ class SphinxManager(LanguageFeature):
             self.stop_progress(client)
 
         # Notify listeners.
-        for listener in self.handlers.get("build", set()):
-            try:
-                # TODO: Concurrent awaiting?
-                res = listener(client, result)
-                if inspect.isawaitable(res):
-                    await res
-            except Exception:
-                name = f"{listener}"
-                self.logger.error("Error in build handler '%s'", name, exc_info=True)
+        self._events.trigger("build", client, result)
 
     async def get_client(self, uri: Uri) -> Optional[SphinxClient]:
         """Given a uri, return the relevant sphinx client instance for it."""
 
-        # Wait until the new client is created - it might be the one we're looking for!
-        if self._client_creating:
-            await self._client_creating
+        scope = self.server.configuration.scope_for(uri)
+        if scope not in self.clients:
+            self.logger.debug("No client found, creating new subscription")
+            self.server.configuration.subscribe(
+                "esbonio.sphinx",
+                SphinxConfig,
+                self._create_or_replace_client,
+                scope=uri,
+            )
+            # The first few callers in a given scope will miss out, but that shouldn't matter
+            # too much
+            return None
 
-        # Always check the fully resolved uri.
-        resolved_uri = uri.resolve()
+        if (client := self.clients[scope]) is None:
+            self.logger.debug("No applicable client for uri: %s", uri)
+            return None
 
-        for src_uri, client in self.clients.items():
-            if resolved_uri in (await client.get_src_uris()):
-                return client
+        return await client
 
-            # For now assume a single client instance per srcdir.
-            # This *should* prevent us from spwaning endless client instances
-            # when given a file located near a valid Sphinx project - but not actually
-            # part of it.
-            in_src_dir = str(resolved_uri).startswith(str(src_uri))
-            if in_src_dir:
-                # Of course, we can only tell if a uri truly is not in a project
-                # when the build file map is populated!
-                # if len(client.build_file_map) == 0:
-                return client
+    async def _create_or_replace_client(
+        self, event: server.ConfigChangeEvent[SphinxConfig]
+    ):
+        """Create or replace thesphinx client instance for the given config."""
 
-        # Create a new client instance.
-        self._client_creating = asyncio.create_task(self._create_client(uri))
-        try:
-            return await self._client_creating
-        finally:
-            # Be sure to unset the task when it resolves
-            self._client_creating = None
+        config = event.value
 
-    async def _create_client(self, uri: Uri) -> Optional[SphinxClient]:
-        """Create a new sphinx client instance."""
-        # TODO: Replace with config subscription
-        await self.server.ready
-        config = self.server.configuration.get(
-            "esbonio.sphinx", SphinxConfig, scope=uri
+        # Do not try and create clients in the global scope
+        if event.scope == "":
+            return
+
+        # If there was a previous client, stop it.
+        if (previous_client := self.clients.pop(event.scope, None)) is not None:
+            self.server.lsp.notify(
+                "sphinx/clientDestroyed",
+                ClientDestroyedNotification(id=previous_client.id),
+            )
+            self.server.run_task(previous_client.stop())
+
+        resolved = config.resolve(
+            Uri.parse(event.scope), self.server.workspace, self.logger
         )
-        if config is None:
-            return None
-
-        resolved = config.resolve(uri, self.server.workspace, self.logger)
         if resolved is None:
-            return None
+            self.clients[event.scope] = None
+            return
 
-        client = self.client_factory(self)
+        self.clients[event.scope] = client = self.client_factory(self, resolved)
+        client.add_listener("state-change", partial(self._on_state_change, event.scope))
 
-        try:
-            await client.start(resolved)
-        except Exception as exc:
-            message = "Unable to start sphinx-agent"
-            self.logger.error(message, exc_info=True)
-            self.server.show_message(f"{message}: {exc}", lsp.MessageType.Error)
+        self.server.lsp.notify(
+            "sphinx/clientCreated",
+            ClientCreatedNotification(id=client.id, scope=event.scope, config=resolved),
+        )
+        self.logger.debug("Client created for scope %s", event.scope)
 
-            return None
+        # Start the client
+        await client
 
-        try:
-            sphinx_info = await client.create_application(resolved)
-        except Exception as exc:
-            message = "Unable to create sphinx application"
-            self.logger.error(message, exc_info=True)
-            self.server.show_message(f"{message}: {exc}", lsp.MessageType.Error)
+    def _on_state_change(
+        self,
+        scope: str,
+        client: SphinxClient,
+        old_state: ClientState,
+        new_state: ClientState,
+    ):
+        """React to state changes in the client."""
 
-            await client.stop()
-            return None
+        if old_state == ClientState.Starting and new_state == ClientState.Running:
+            if (sphinx_info := client.sphinx_info) is not None:
+                self.project_manager.register_project(scope, client.db)
+                self.server.lsp.notify(
+                    "sphinx/appCreated",
+                    AppCreatedNotification(id=client.id, application=sphinx_info),
+                )
 
-        if client.src_uri is None:
-            self.logger.error("No src uri!")
-            await client.stop()
-            return None
+        if new_state == ClientState.Errored:
+            error = ""
+            detail = ""
 
-        self.server.lsp.notify("sphinx/appCreated", sphinx_info)
-        self.clients[client.src_uri] = client
-        return client
+            if (exc := getattr(client, "exception", None)) is not None:
+                error = f"{type(exc).__name__}: {exc}"
+                detail = "".join(
+                    traceback.format_exception(type(exc), exc, exc.__traceback__)
+                )
+
+            self.server.lsp.show_message(error, lsp.MessageType.Error)
+            self.server.lsp.notify(
+                "sphinx/clientErrored",
+                ClientErroredNotification(id=client.id, error=error, detail=detail),
+            )
 
     async def start_progress(self, client: SphinxClient):
         """Start reporting work done progress for the given client."""
 
-        if client.id is None:
-            return
-
         token = str(uuid.uuid4())
-        self.logger.error("Starting progress: '%s'", token)
+        self.logger.debug("Starting progress: '%s'", token)
 
         try:
             await self.server.progress.create_async(token)
@@ -232,9 +314,6 @@ class SphinxManager(LanguageFeature):
         )
 
     def stop_progress(self, client: SphinxClient):
-        if client.id is None:
-            return
-
         if (token := self._progress_tokens.pop(client.id, None)) is None:
             return
 
@@ -243,7 +322,7 @@ class SphinxManager(LanguageFeature):
     def report_progress(self, client: SphinxClient, progress: types.ProgressParams):
         """Report progress done for the given client."""
 
-        if client.id is None:
+        if client.state not in {ClientState.Running, ClientState.Building}:
             return
 
         if (token := self._progress_tokens.get(client.id, None)) is None:

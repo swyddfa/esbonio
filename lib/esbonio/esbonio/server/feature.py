@@ -30,6 +30,11 @@ if typing.TYPE_CHECKING:
         Coroutine[Any, Any, Optional[List[types.DocumentSymbol]]],
     ]
 
+    MaybeAsyncNone = Union[
+        None,
+        Coroutine[Any, Any, None],
+    ]
+
     WorkspaceSymbolResult = Union[
         Optional[List[types.WorkspaceSymbol]],
         Coroutine[Any, Any, Optional[List[types.WorkspaceSymbol]]],
@@ -51,22 +56,29 @@ class LanguageFeature:
     def configuration(self):
         return self.server.configuration
 
-    def initialize(self, params: types.InitializeParams):
+    def initialize(self, params: types.InitializeParams) -> MaybeAsyncNone:
         """Called during ``initialize``."""
 
-    def initialized(self, params: types.InitializedParams):
+    def initialized(self, params: types.InitializedParams) -> MaybeAsyncNone:
         """Called when the ``initialized`` notification is received."""
 
-    def document_change(self, params: types.DidChangeTextDocumentParams):
+    def shutdown(self, params: None) -> MaybeAsyncNone:
+        """Called when the server is instructed to ``shutdown`` by the client."""
+
+    def document_change(
+        self, params: types.DidChangeTextDocumentParams
+    ) -> MaybeAsyncNone:
         """Called when a text document is changed."""
 
-    def document_close(self, params: types.DidCloseTextDocumentParams):
+    def document_close(
+        self, params: types.DidCloseTextDocumentParams
+    ) -> MaybeAsyncNone:
         """Called when a text document is closed."""
 
-    def document_open(self, params: types.DidOpenTextDocumentParams):
+    def document_open(self, params: types.DidOpenTextDocumentParams) -> MaybeAsyncNone:
         """Called when a text document is opened."""
 
-    def document_save(self, params: types.DidSaveTextDocumentParams):
+    def document_save(self, params: types.DidSaveTextDocumentParams) -> MaybeAsyncNone:
         """Called when a text document is saved."""
 
     completion_triggers: List["re.Pattern"] = []

@@ -10,27 +10,20 @@
 #
 import os
 import sys
-from typing import List
 
 sys.path.insert(0, os.path.abspath("../lib/esbonio"))
 sys.path.insert(0, os.path.abspath("./ext"))
 
 from docutils.parsers.rst import nodes
-from lsprotocol.types import METHOD_TO_TYPES
-from lsprotocol.types import CompletionItem
-from lsprotocol.types import CompletionItemKind
 from sphinx.application import Sphinx
 
-import esbonio.lsp
-from esbonio.lsp.roles import Roles
-from esbonio.lsp.roles import TargetCompletion
-from esbonio.lsp.rst import CompletionContext
+import esbonio.server
 
 # -- Project information -----------------------------------------------------
 project = "Esbonio"
-copyright = "2023"
+copyright = "2024"
 author = "the Esbonio project"
-release = esbonio.lsp.__version__
+release = esbonio.server.__version__
 
 DEV_BUILD = os.getenv("BUILDDIR", None) == "latest"
 BRANCH = "develop" if DEV_BUILD else "release"
@@ -62,8 +55,6 @@ autodoc_member_order = "groupwise"
 autodoc_typehints = "description"
 autodoc_typehints_description_target = "documented"
 
-autodoc_pydantic_model_show_json = True
-
 intersphinx_mapping = {
     "ipython": ("https://ipython.readthedocs.io/en/stable/", None),
     "python": ("https://docs.python.org/3/", None),
@@ -90,36 +81,11 @@ html_theme_options = {
     "source_repository": "https://github.com/swyddfa/esbonio/",
     "source_branch": BRANCH,
     "source_directory": "docs/",
+    "announcement": (
+        "This is the documentation for the in-development 1.0 release of the language server. "
+        '<a href="/en/esbonio-language-server-v0.16.4">Click here</a> to view the documentation for the current stable version'
+    ),
 }
-
-if DEV_BUILD:
-    html_theme_options["announcement"] = (
-        "This is the unstable version of the documentation, features may change or be removed without warning. "
-        '<a href="/esbonio/docs/stable/en/">Click here</a> to view the released version'
-    )
-
-
-class LspMethod(TargetCompletion):
-    """Provides completion suggestions for the custom ``:lsp:`` role."""
-
-    def __init__(self) -> None:
-        super().__init__()
-        self._index_methods()
-
-    def _index_methods(self):
-        self.items = []
-
-        for method in METHOD_TO_TYPES.keys():
-            item = CompletionItem(label=method, kind=CompletionItemKind.Constant)
-            self.items.append(item)
-
-    def complete_targets(
-        self, context: CompletionContext, name: str, domain: str
-    ) -> List[CompletionItem]:
-        if name == "lsp":
-            return self.items
-
-        return []
 
 
 def lsp_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
@@ -167,7 +133,3 @@ def setup(app: Sphinx):
         objname="IPython magic",
         indextemplate="pair: %s; IPython magic",
     )
-
-
-def esbonio_setup(roles: Roles):
-    roles.add_target_completion_provider(LspMethod())

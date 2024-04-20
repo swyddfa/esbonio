@@ -1,241 +1,341 @@
 import enum
 import json
 import logging
-import pathlib
-import re
+import logging.config
 import textwrap
-import traceback
-from typing import List
-from typing import Tuple
+from logging.handlers import MemoryHandler
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 import attrs
 from lsprotocol import types
 
-from esbonio.server import LOG_NAMESPACE
-from esbonio.server import EsbonioLanguageServer
-from esbonio.server import LanguageFeature
-from esbonio.server import MemoryHandler
-from esbonio.server import Uri
+from esbonio import server
 
-LOG_LEVELS = {
-    "debug": logging.DEBUG,
-    "error": logging.ERROR,
-    "info": logging.INFO,
-}
+LOG_LEVELS = {"CRITICAL", "FATAL", "ERROR", "WARN", "WARNING", "INFO", "DEBUG"}
 
 
-# e.g. /.../filename.rst:54: (ERROR/3) Unexpected indentation.
-#      c:\...\filename.rst:54: (ERROR/3) Unexpected indentation.
-DOCUTILS_ERROR = re.compile(
-    r"""
-    ^\s*(?P<filepath>.+?):
-    (?P<linum>\d+):
-    \s*\((?P<levelname>\w+)/(?P<levelnum>\d)\)
-    (?P<message>.*)$
-    """,
-    re.VERBOSE,
-)
-
-DOCUTILS_SEVERITY = {
-    0: types.DiagnosticSeverity.Hint,
-    1: types.DiagnosticSeverity.Information,
-    2: types.DiagnosticSeverity.Warning,
-    3: types.DiagnosticSeverity.Error,
-    4: types.DiagnosticSeverity.Error,
-}
-
-
-class LogFilter(logging.Filter):
-    """A log filter that accepts message from any of the listed logger names."""
-
-    def __init__(self, names):
-        self.names = names
-
-    def filter(self, record):
-        return any(record.name == name for name in self.names)
-
-
-class LspHandler(logging.Handler):
-    """A logging handler that will send log records to an LSP client."""
+class WindowLogMessageHandler(logging.Handler):
+    """A logging handler that will send log records to an LSP client as
+    ``window/logMessage`` notifications."""
 
     def __init__(
-        self, server: EsbonioLanguageServer, show_deprecation_warnings: bool = False
+        self,
+        server: server.EsbonioLanguageServer,
     ):
         super().__init__()
         self.server = server
-        self.show_deprecation_warnings = show_deprecation_warnings
-
-    def get_warning_path(self, warning: str) -> Tuple[str, List[str]]:
-        """Determine the filepath that the warning was emitted from."""
-
-        path, *parts = warning.split(":")
-
-        # On windows the rest of the path will be in the first element of parts.
-        if pathlib.Path(warning).drive:
-            path += f":{parts.pop(0)}"
-
-        return path, parts
-
-    def handle_warning(self, record: logging.LogRecord):
-        """Publish warnings to the client as diagnostics."""
-
-        if not isinstance(record.args, tuple):
-            self.server.logger.debug(
-                "Unable to handle warning, expected tuple got: %s", record.args
-            )
-            return
-
-        # The way warnings are logged is different in Python 3.11+
-        if len(record.args) == 0:
-            argument = record.msg
-        else:
-            argument = record.args[0]  # type: ignore
-
-        if not isinstance(argument, str):
-            self.server.logger.debug(
-                "Unable to handle warning, expected string got: %s", argument
-            )
-            return
-
-        warning, *_ = argument.split("\n")
-        path, (linenum, category, *msg) = self.get_warning_path(warning)
-
-        category = category.strip()
-        message = ":".join(msg).strip()
-
-        try:
-            line = int(linenum)
-        except ValueError:
-            line = 1
-            self.server.logger.debug(
-                "Unable to parse line number: '%s'\n%s", linenum, traceback.format_exc()
-            )
-
-        tags = []
-        if category == "DeprecationWarning":
-            tags.append(types.DiagnosticTag.Deprecated)
-
-        diagnostic = types.Diagnostic(
-            range=types.Range(
-                start=types.Position(line=line - 1, character=0),
-                end=types.Position(line=line, character=0),
-            ),
-            message=message,
-            severity=types.DiagnosticSeverity.Warning,
-            tags=tags,
-        )
-
-        self.server.add_diagnostics("esbonio", Uri.for_file(path), diagnostic)
-        self.server.sync_diagnostics()
-
-    def handle_diagnostic(self, record: logging.LogRecord):
-        """Look for any diagnostics to report in the log message."""
-
-        if (match := DOCUTILS_ERROR.match(record.msg)) is not None:
-            uri = Uri.for_file(match.group("filepath"))
-            line = int(match.group("linum"))
-            severity = int(match.group("levelnum"))
-
-            diagnostic = types.Diagnostic(
-                message=match.group("message").strip(),
-                severity=DOCUTILS_SEVERITY.get(severity),
-                range=types.Range(
-                    start=types.Position(line=line - 1, character=0),
-                    end=types.Position(line=line, character=0),
-                ),
-            )
-            self.server.add_diagnostics("docutils", uri, diagnostic)
 
     def emit(self, record: logging.LogRecord) -> None:
         """Sends the record to the client."""
 
-        # To avoid infinite recursions, it's simpler to just ignore all log records
-        # coming from pygls...
+        # To avoid infinite recursions, we can't process records coming from pygls.
         if "pygls" in record.name:
             return
-
-        if record.name == "py.warnings":
-            if not self.show_deprecation_warnings:
-                return
-
-            self.handle_warning(record)
-        else:
-            self.handle_diagnostic(record)
 
         log = self.format(record).strip()
         self.server.show_message_log(log)
 
 
 @attrs.define
-class ServerLogConfig:
+class LoggerConfiguration:
+    """Configuration options for a given logger."""
+
+    level: Optional[str] = attrs.field(default=None)
+    """The logging level to use, if not set the default logging level will be used."""
+
+    format: Optional[str] = attrs.field(default=None)
+    """The log format to use, if not set the default logging level will be used."""
+
+    filepath: Optional[str] = attrs.field(default=None)
+    """If set log to a file"""
+
+    stderr: Optional[bool] = attrs.field(default=None)
+    """If True, log to stderr, if not set the default value will be used."""
+
+    window: Optional[bool] = attrs.field(default=None)
+    """If True, send message as a ``window/logMessage`` notification, if not set the
+    default value will be used"""
+
+
+class LoggingConfigBuilder:
+    """Helper class for converting the user's config into the logging config."""
+
+    def __init__(self):
+        self.formatters = {}
+        self.handlers = {}
+        self.loggers = {}
+
+    def _get_formatter(self, format: str) -> str:
+        """Return the name of the formatter with the given format string.
+
+        If no such formatter exists, it will be created.
+        """
+        for key, config in self.formatters.items():
+            if config["format"] == format:
+                return key
+
+        key = f"fmt{len(self.formatters) + 1:02d}"
+        self.formatters[key] = dict(format=format)
+        return key
+
+    def _get_file_handler(self, filepath: str, formatter: str) -> str:
+        """Return the name of the handler that will log to the given filepath using the
+        given formatter name.
+
+        If no such handler exists, it will be created.
+        """
+        for key, config in self.handlers.items():
+            if config.get("class", None) != "logging.FileHandler":
+                continue
+
+            if (
+                config.get("formatter", None) == formatter
+                and config.get("filename", None) == filepath
+            ):
+                return key
+
+        key = f"file{len(self.handlers) + 1:02d}"
+        self.handlers[key] = {
+            "class": "logging.FileHandler",
+            "level": "DEBUG",  # this way we can handle logs from loggers at any level
+            "formatter": formatter,
+            "filename": filepath,
+        }
+
+        return key
+
+    def _get_stderr_handler(self, formatter: str) -> str:
+        """Return the name of the handler that will log to stderr using the given
+        formatter name.
+
+        If no such handler exists, it will be created.
+        """
+        for key, config in self.handlers.items():
+            if config.get("class", None) != "logging.StreamHandler":
+                continue
+
+            if config.get("formatter", None) == formatter:
+                return key
+
+        key = f"stderr{len(self.handlers) + 1:02d}"
+        self.handlers[key] = {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",  # this way we can handle logs from loggers at any level
+            "formatter": formatter,
+            "stream": "ext://sys.stderr",
+        }
+
+        return key
+
+    def _get_window_handler(
+        self, server: server.EsbonioLanguageServer, formatter: str
+    ) -> str:
+        """Return the name of the handler that will send messages as
+        ``window/logMessage`` notificaitions, using the given formatter name.
+
+        If no such formatter exists, it will be created.
+        """
+        handler_class = f"{__name__}.WindowLogMessageHandler"
+
+        for key, config in self.handlers.items():
+            if config.get("()", None) != handler_class:
+                continue
+
+            if config.get("formatter", None) == formatter:
+                return key
+
+        key = f"window{len(self.handlers) + 1:02d}"
+        self.handlers[key] = {
+            "()": handler_class,
+            "level": "DEBUG",  # this way we can handle logs from loggers at any level
+            "formatter": formatter,
+            "server": server,
+        }
+
+        return key
+
+    def add_logger(
+        self,
+        name: str,
+        level: str,
+        format: str,
+        filepath: Optional[str],
+        stderr: bool,
+        window: Optional[server.EsbonioLanguageServer],
+    ):
+        """Add a configuration for the given logger
+
+        Parameters
+        ----------
+        name
+           The logger name to add a configuration for
+
+        level
+           The level at which to log messages
+
+        format
+           The format string to apply to messages
+
+        filepath
+           If set, record log messages in the given filepath
+
+        stderr
+           If ``True``, print messages from this logger to stderr
+
+        window
+           If set, send messages from this logger to the client as
+           ``window/logMessage`` notifications via the given server instance
+        """
+        fmt = self._get_formatter(format)
+        handlers = []
+
+        if filepath:
+            handlers.append(self._get_file_handler(filepath, fmt))
+
+        if stderr:
+            handlers.append(self._get_stderr_handler(fmt))
+
+        if window:
+            handlers.append(self._get_window_handler(window, fmt))
+
+        if (level := level.upper()) not in LOG_LEVELS:
+            level = "DEBUG"
+
+        self.loggers[name] = dict(level=level, propagate=False, handlers=handlers)
+
+    def finish(self) -> Dict[str, Any]:
+        """Return the final configuration."""
+        return dict(
+            version=1,
+            disable_existing_loggers=True,
+            formatters=self.formatters,
+            handlers=self.handlers,
+            loggers=self.loggers,
+        )
+
+
+@attrs.define
+class LoggingConfig:
     """Configuration options for server logging."""
 
-    log_filter: List[str] = attrs.field(factory=list)
-    """A list of logger names to restrict output to."""
+    level: str = attrs.field(default="error")
+    """The default logging level."""
 
-    log_level: str = attrs.field(default="error")
-    """The logging level of server messages to display."""
+    format: str = attrs.field(default="[%(name)s] %(message)s")
+    """The log format string to use."""
+
+    filepath: Optional[str] = attrs.field(default=None)
+    """If set, log to a file by default"""
+
+    stderr: bool = attrs.field(default=True)
+    """If set, log to stderr by default"""
+
+    window: bool = attrs.field(default=False)
+    """If set, send message as a ``window/logMessage`` notification"""
+
+    config: Dict[str, LoggerConfiguration] = attrs.field(factory=dict)
+    """Configuration of individual loggers"""
 
     show_deprecation_warnings: bool = attrs.field(default=False)
     """Developer flag to enable deprecation warnings."""
 
-
-class LogManager(LanguageFeature):
-    """Manages the logging setup for the server."""
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    async def initialized(self, params: types.InitializedParams):
-        """Setup logging."""
-        await self.server.configuration.subscribe(
-            "esbonio.server", ServerLogConfig, self.setup_logging
-        )
-
-    def setup_logging(self, config: ServerLogConfig):
-        """Setup logging to route log messages to the language client as
-        ``window/logMessage`` messages.
+    def to_logging_config(self, server: server.EsbonioLanguageServer) -> Dict[str, Any]:
+        """Convert the user's config into a config dict that can be passed to the
+        ``logging.config.dictConfig()`` function.
 
         Parameters
         ----------
         server
-           The server to use to send messages
-
-        config
-           The configuration to use
+           The language server instance (required for ``window/logMessages``)
         """
 
-        level = LOG_LEVELS[config.log_level]
+        builder = LoggingConfigBuilder()
 
-        # warnlog = logging.getLogger("py.warnings")
-        logger = logging.getLogger(LOG_NAMESPACE)
-        logger.setLevel(level)
+        # Ensure that there is at least an esbonio logger and a sphinx logger present in
+        # the config.
+        if "esbonio" not in self.config:
+            builder.add_logger(
+                "esbonio",
+                self.level,
+                self.format,
+                filepath=self.filepath,
+                stderr=self.stderr,
+                window=server if self.window else None,
+            )
 
-        lsp_handler = LspHandler(self.server, config.show_deprecation_warnings)
-        lsp_handler.setLevel(level)
+        if "sphinx" not in self.config:
+            builder.add_logger(
+                "sphinx",
+                "info",
+                "%(message)s",
+                filepath=self.filepath,
+                stderr=self.stderr,
+                window=server if self.window else None,
+            )
 
-        if len(config.log_filter) > 0:
-            lsp_handler.addFilter(LogFilter(config.log_filter))
+        # Process any custom logger configuration
+        for name, logger_config in self.config.items():
+            window = (
+                logger_config.window
+                if logger_config.window is not None
+                else self.window
+            )
+            builder.add_logger(
+                name,
+                logger_config.level or self.level,
+                logger_config.format or self.format,
+                filepath=(
+                    logger_config.filepath
+                    if logger_config.filepath is not None
+                    else self.filepath
+                ),
+                stderr=(
+                    logger_config.stderr
+                    if logger_config.stderr is not None
+                    else self.stderr
+                ),
+                window=server if window else None,
+            )
 
-        formatter = logging.Formatter("[%(name)s] %(message)s")
-        lsp_handler.setFormatter(formatter)
+        return builder.finish()
 
-        # Look to see if there are any cached messages we should forward to the client.
-        for handler in logger.handlers:
-            # Remove any previous instances of the LspHandler
-            if isinstance(handler, LspHandler):
-                logger.removeHandler(handler)
 
-            # Forward any cached messages to the client
-            if isinstance(handler, MemoryHandler):
-                for record in handler.records:
-                    if logger.isEnabledFor(record.levelno):
-                        lsp_handler.emit(record)
+class LogManager(server.LanguageFeature):
+    """Manages the logging setup for the server."""
 
-                logger.removeHandler(handler)
+    def initialized(self, params: types.InitializedParams):
+        """Setup logging."""
+        self.server.configuration.subscribe(
+            "esbonio.logging", LoggingConfig, self.setup_logging
+        )
 
-        logger.addHandler(lsp_handler)
-        # warnlog.addHandler(lsp_handler)
+    def setup_logging(self, event: server.ConfigChangeEvent[LoggingConfig]):
+        """Setup logging according to the given config.
+
+        Parameters
+        ----------
+        event
+           The configuration change event
+        """
+
+        records = []
+        if event.previous is None:
+            # Messages received during initial startup are cached in a MemoryHandler
+            # instance, let's resuce them so they can be replayed against the new config.
+            for handler in logging.getLogger().handlers:
+                if isinstance(handler, MemoryHandler):
+                    records = handler.buffer
+
+        config = event.value.to_logging_config(self.server)
+        logging.config.dictConfig(config)
+
+        # Replay any captured messages against the new config.
+        for record in records:
+            logger = logging.getLogger(record.name)
+            if logger.isEnabledFor(record.levelno):
+                logger.handle(record)
 
 
 def dump(obj) -> str:
@@ -261,6 +361,6 @@ def dump(obj) -> str:
     return json.dumps(obj, default=default, indent=2)
 
 
-def esbonio_setup(server: EsbonioLanguageServer):
+def esbonio_setup(server: server.EsbonioLanguageServer):
     manager = LogManager(server)
     server.add_feature(manager)

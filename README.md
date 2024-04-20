@@ -7,9 +7,16 @@
 
 **esbonio - (v.) to explain**
 
-Esbonio aims to make it easier to work with [reStructuredText](https://docutils.sourceforge.io/rst.html) tools such as [Sphinx](https://www.sphinx-doc.org/en/master/) by providing a [Language Server](https://langserver.org/) to enhance your editing experience.
+[reStructuredText]: https://docutils.sourceforge.io/rst.html
+[Sphinx]: https://www.sphinx-doc.org/en/master/
+[Language Server]: https://langserver.org/
+
+Esbonio aims to make it easier to work with [reStructuredText] tools such as [Sphinx] by providing a [Language Server] to enhance your editing experience.
 The Esbonio project is made up from a number of sub-projects
+
+
 ## `lib/esbonio/` - A Language Server for Sphinx projects.
+
 [![PyPI](https://img.shields.io/pypi/v/esbonio?style=flat-square)![PyPI - Downloads](https://img.shields.io/pypi/dm/esbonio?style=flat-square)](https://pypistats.org/packages/esbonio)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/lib/esbonio/LICENSE)
 
 The language server provides the following features.
@@ -59,6 +66,7 @@ The language server provides the following features.
 
 
 ## `code/` - A VSCode extension for editing Sphinx projects
+
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/swyddfa.esbonio?style=flat-square)![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/swyddfa.esbonio?style=flat-square)![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/swyddfa.esbonio?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/code/LICENSE)
 
 <p align="center">
@@ -69,8 +77,13 @@ This extension is purely focused on bringing the `esbonio` language server into 
 
 ### You're probably looking for the reStructuredText Extension
 
-You may already be familiar with the [reStructuredText](https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext) extension which, as of [v171.0.0](https://github.com/vscode-restructuredtext/vscode-restructuredtext/releases/tag/171.0.0) now also integrates the `esbonio` language server into VSCode.
-It also integrates other tools such as the linters [`doc8`](https://pypi.org/project/doc8/) and [`rstcheck`](https://pypi.org/project/rstcheck/) and provides additional editor functionality making it easier to work with reStructuredText in general.
+[reStructuredText extension]: https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext
+[v171.0.0]: https://github.com/vscode-restructuredtext/vscode-restructuredtext/releases/tag/171.0.0
+[`doc8`]: https://pypi.org/project/doc8/
+[`rstcheck`]: https://pypi.org/project/rstcheck/
+
+You may already be familiar with the [reStructuredText extension] which, as of [v171.0.0] now also integrates the `esbonio` language server into VSCode.
+It also integrates other tools such as the linters [`doc8`] and [`rstcheck`] and provides additional editor functionality making it easier to work with reStructuredText in general.
 
 **Wait.. so why does the Esbonio VSCode extension still exist?**
 
@@ -90,5 +103,7 @@ Try the Esbonio extension if
 - You want to make use of the newer features available in recent VSCode versions
 - You are only interested in the features provided by the language server
 
+
 ## `lib/esbonio-extensions/` - A collection of Sphinx extensions
+
 [![PyPI](https://img.shields.io/pypi/v/esbonio-extensions?style=flat-square)![PyPI - Downloads](https://img.shields.io/pypi/dm/esbonio-extensions?style=flat-square)](https://pypistats.org/packages/esbonio-extensions)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/lib/esbonio-extensions/LICENSE)
