@@ -1,3 +1,11 @@
+## v0.93.2 - 2024-04-22
+
+
+### Fixes
+
+- Fix pipeline to publish to Open VSX ([#777](https://github.com/swyddfa/esbonio/issues/777))
+
+
 ## v0.93.1 - 2024-04-20
 
 
