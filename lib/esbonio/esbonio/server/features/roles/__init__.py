@@ -7,6 +7,7 @@ import attrs
 from lsprotocol import types
 
 from esbonio import server
+from esbonio.sphinx_agent.types import MYST_ROLE
 from esbonio.sphinx_agent.types import RST_DIRECTIVE
 from esbonio.sphinx_agent.types import RST_ROLE
 
@@ -75,13 +76,14 @@ class RolesFeature(server.LanguageFeature):
         """Called when the user's configuration is updated."""
         self._insert_behavior = event.value.preferred_insert_behavior
 
-    completion_triggers = [RST_ROLE]
+    completion_triggers = [MYST_ROLE, RST_ROLE]
 
     async def completion(
         self, context: server.CompletionContext
     ) -> Optional[List[types.CompletionItem]]:
         """Provide completion suggestions for roles."""
 
+        language = self.server.get_language_at(context.doc, context.position)
         groups = context.match.groupdict()
         target = groups["target"]
 
@@ -97,9 +99,10 @@ class RolesFeature(server.LanguageFeature):
             if target_index <= context.position.character <= end:
                 return await self.complete_targets(context)
 
-        # If there's no indent, then this can only be a role definition
+        # If there's no indent, or this is a markdown document, then this can only be a
+        # role definition
         indent = context.match.group(1)
-        if indent == "":
+        if indent == "" or language == "markdown":
             return await self.complete_roles(context)
 
         # Otherwise, search backwards until we find a blank line or an unindent

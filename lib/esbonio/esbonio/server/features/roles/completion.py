@@ -104,6 +104,54 @@ def render_rst_role_with_insert_text(
     return item
 
 
+@renderer(language="markdown", insert_behavior="insert")
+def render_myst_role_with_insert_text(
+    context: server.CompletionContext, role: Role
+) -> Optional[types.CompletionItem]:
+    """Render a ``CompletionItem`` using ``insertText``.
+
+    This implements the ``insert`` insert behavior for roles.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    role
+       The role.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the directive should be skipped
+    """
+
+    insert_text = "".join(["{", role.name, "}"])
+    user_text = context.match.group(0).strip()
+
+    # Since we can't replace any existing text, it only makes sense
+    # to offer completions that align with what the user has already written.
+    if not insert_text.startswith(user_text):
+        return None
+
+    # If the existing text ends with a delimiter, then we should simply remove the
+    # entire prefix
+    if user_text.endswith((":", "-", "{", "}", "`", " ")):
+        start_index = len(user_text)
+
+    # Look for groups of word chars, replace text until the start of the final group
+    else:
+        start_indices = [m.start() for m in WORD.finditer(user_text)] or [
+            len(user_text)
+        ]
+        start_index = max(start_indices)
+
+    item = _render_role_common(role)
+    item.insert_text = insert_text[start_index:]
+    item.insert_text_format = types.InsertTextFormat.PlainText
+    return item
+
+
 @renderer(language="rst", insert_behavior="replace")
 def render_rst_role_with_text_edit(
     context: server.CompletionContext, role: Role
@@ -138,6 +186,49 @@ def render_rst_role_with_text_edit(
     )
 
     insert_text = f":{role.name}:"
+
+    item = _render_role_common(role)
+    item.filter_text = insert_text
+    item.insert_text_format = types.InsertTextFormat.PlainText
+    item.text_edit = types.TextEdit(range=range_, new_text=insert_text)
+
+    return item
+
+
+@renderer(language="markdown", insert_behavior="replace")
+def render_myst_role_with_text_edit(
+    context: server.CompletionContext, role: Role
+) -> Optional[types.CompletionItem]:
+    """Render a role's ``CompletionItem`` using ``textEdit``.
+
+    This implements the ``replace`` insert behavior for roles.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    role
+       The role.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the directive should be skipped
+    """
+    match = context.match
+    groups = match.groupdict()
+
+    # Insert text starting from the starting '{' character of the role.
+    start = match.span()[0] + match.group(0).find("{")
+    end = start + len(groups["role"])
+
+    range_ = types.Range(
+        start=types.Position(line=context.position.line, character=start),
+        end=types.Position(line=context.position.line, character=end),
+    )
+
+    insert_text = "".join(["{", role.name, "}"])
 
     item = _render_role_common(role)
     item.filter_text = insert_text
