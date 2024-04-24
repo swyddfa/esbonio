@@ -23,6 +23,8 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
 
    .. grid-item-card:: How-To Guides
       :text-align: center
+      :link: lsp-howto
+      :link-type: ref
 
       Step-by-step guides on integrating Esbonio with other text editors.
 
