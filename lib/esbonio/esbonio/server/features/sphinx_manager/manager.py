@@ -211,7 +211,7 @@ class SphinxManager(server.LanguageFeature):
             self.server.configuration.subscribe(
                 "esbonio.sphinx",
                 SphinxConfig,
-                self._create_or_replace_client,
+                partial(self._create_or_replace_client, uri),
                 scope=uri,
             )
             # The first few callers in a given scope will miss out, but that shouldn't matter
@@ -225,9 +225,18 @@ class SphinxManager(server.LanguageFeature):
         return await client
 
     async def _create_or_replace_client(
-        self, event: server.ConfigChangeEvent[SphinxConfig]
+        self, uri: Uri, event: server.ConfigChangeEvent[SphinxConfig]
     ):
-        """Create or replace thesphinx client instance for the given config."""
+        """Create or replace thesphinx client instance for the given config.
+
+        Parameters
+        ----------
+        uri
+           The uri for which the sphinx client was originally created for
+
+        event
+           The configuration change event
+        """
 
         config = event.value
 
@@ -243,9 +252,7 @@ class SphinxManager(server.LanguageFeature):
             )
             self.server.run_task(previous_client.stop())
 
-        resolved = config.resolve(
-            Uri.parse(event.scope), self.server.workspace, self.logger
-        )
+        resolved = config.resolve(uri, self.server.workspace, self.logger)
         if resolved is None:
             self.clients[event.scope] = None
             return
