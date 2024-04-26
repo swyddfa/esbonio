@@ -1,11 +1,10 @@
-"""This module implements the websocket server used to communicate with preivew
- windows."""
+from __future__ import annotations
 
 import asyncio
 import json
 import logging
 import socket
-from typing import Optional
+import typing
 
 from pygls.protocol import JsonRPCProtocol
 from pygls.protocol import default_converter
@@ -13,7 +12,12 @@ from pygls.server import Server
 from pygls.server import WebSocketTransportAdapter
 from websockets.server import serve
 
-from esbonio.server import EsbonioLanguageServer
+from esbonio import server
+
+if typing.TYPE_CHECKING:
+    from typing import Optional
+
+    from .config import PreviewConfig
 
 
 class WebviewServer(Server):
@@ -24,15 +28,34 @@ class WebviewServer(Server):
 
     lsp: JsonRPCProtocol
 
-    def __init__(self, logger: logging.Logger, *args, **kwargs):
+    def __init__(self, logger: logging.Logger, config: PreviewConfig, *args, **kwargs):
         super().__init__(JsonRPCProtocol, default_converter, *args, **kwargs)
-        self.logger = logger
-        self.lsp._send_only_body = True
+
+        self.config = config
         self.port = None
+        self.logger = logger.getChild("WebviewServer")
+        self.lsp._send_only_body = True
 
         self._connected = False
+
+        self._startup_task: Optional[asyncio.Task] = None
+        """The task that resolves once startup is complete."""
+
+        self._server_task: Optional[asyncio.Task] = None
+        """The task hosting the server itself."""
+
         self._editor_in_control: Optional[asyncio.Task] = None
+        """If set, the editor is in control and the view should not emit scroll events"""
+
         self._view_in_control: Optional[asyncio.Task] = None
+        """If set, the view is in control and the editor should not emit scroll events"""
+
+    def __await__(self):
+        """Makes the server await-able"""
+        if self._startup_task is None:
+            self._startup_task = asyncio.create_task(self.start())
+
+        return self._startup_task.__await__()
 
     @property
     def connected(self) -> bool:
@@ -67,8 +90,26 @@ class WebviewServer(Server):
         self.logger.debug("%s cooldown ended", name)
         setattr(self, f"_{name}_in_control", None)
 
-    async def start_ws(self, host: str, port: int) -> None:  # type: ignore[override]
-        """Start the server."""
+    async def start(self):
+        """Start the server and wrap the server coroutine in a task."""
+        self._server_task = asyncio.create_task(
+            self._start_ws(self.config.bind, self.config.ws_port)
+        )
+
+        # HACK: we need to yield control to the event loop to give the ws_server time to
+        #       spin up and allocate a port number.
+        await asyncio.sleep(1)
+        return self
+
+    def stop(self):
+        """Stop the server."""
+        self.logger.debug("Shutting down preview WebSocket server")
+
+        if self._server_task is not None:
+            self._server_task.cancel()
+
+    async def _start_ws(self, host: str, port: int) -> None:
+        """Actually, start the server."""
 
         async def connection(websocket):
             loop = asyncio.get_running_loop()
@@ -99,9 +140,9 @@ class WebviewServer(Server):
 
 
 def make_ws_server(
-    esbonio: EsbonioLanguageServer, logger: logging.Logger
+    esbonio: server.EsbonioLanguageServer, config: PreviewConfig
 ) -> WebviewServer:
-    server = WebviewServer(logger)
+    server = WebviewServer(esbonio.logger, config)
 
     @server.feature("editor/scroll")
     def on_scroll(ls: WebviewServer, params):

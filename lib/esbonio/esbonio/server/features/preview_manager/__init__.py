@@ -8,15 +8,15 @@ from typing import Dict
 from typing import Optional
 from urllib.parse import urlencode
 
-import attrs
+from lsprotocol import types
 
-from esbonio.server import EsbonioLanguageServer
+from esbonio import server
 from esbonio.server import Uri
-from esbonio.server.feature import LanguageFeature
 from esbonio.server.features.project_manager import ProjectManager
 from esbonio.server.features.sphinx_manager import SphinxClient
 from esbonio.server.features.sphinx_manager import SphinxManager
 
+from .config import PreviewConfig
 from .webview import WebviewServer
 from .webview import make_ws_server
 
@@ -57,33 +57,12 @@ class RequestHandlerFactory:
             )
 
         return RequestHandler(*args, logger=self.logger, directory=build_dir, **kwargs)
-
-
-@attrs.define
-class PreviewConfig:
-    """Configuration settings for previews."""
-
-    bind: str = attrs.field(default="localhost")
-    """The network interface to bind to, defaults to ``localhost``"""
-
-    http_port: int = attrs.field(default=0)
-    """The port to host the HTTP server on. If ``0`` a random port number will be
-    chosen"""
-
-    ws_port: int = attrs.field(default=0)
-    """The port to host the WebSocket server on. If ``0`` a random port number will be
-    chosen"""
-
-    show_line_markers: bool = attrs.field(default=False)
-    """If set, render the source line markers in the preview"""
-
-
-class PreviewManager(LanguageFeature):
+class PreviewManager(server.LanguageFeature):
     """Language feature for managing previews."""
 
     def __init__(
         self,
-        server: EsbonioLanguageServer,
+        server: server.EsbonioLanguageServer,
         sphinx: SphinxManager,
         projects: ProjectManager,
     ):
@@ -92,14 +71,21 @@ class PreviewManager(LanguageFeature):
         self.sphinx.add_listener("build", self.on_build)
 
         self.projects = projects
+        self.config = PreviewConfig()
 
         logger = server.logger.getChild("PreviewServer")
         self._request_handler_factory = RequestHandlerFactory(logger)
         self._http_server: Optional[HTTPServer] = None
         self._http_future: Optional[asyncio.Future] = None
 
-        self._ws_server: Optional[WebviewServer] = None
-        self._ws_task: Optional[asyncio.Task] = None
+        self.webview: Optional[WebviewServer] = None
+        """The server for controlling the webview."""
+
+    def initialized(self, params: types.InitializedParams):
+        """Called once the initial handshake between client and server has finished."""
+        self.configuration.subscribe(
+            "esbonio.preview", PreviewConfig, self.update_configuration
+        )
 
     def shutdown(self, params: None):
         """Called when the client instructs the server to ``shutdown``."""
@@ -111,9 +97,8 @@ class PreviewManager(LanguageFeature):
             self.logger.debug("Shutting down preview HTTP server")
             self._http_server.shutdown()
 
-        if self._ws_task:
-            self.logger.debug("Shutting down preview WebSocket server")
-            self._ws_task.cancel(**args)
+        if self.webview is not None:
+            self.webview.stop()
 
     @property
     def preview_active(self) -> bool:
@@ -128,18 +113,24 @@ class PreviewManager(LanguageFeature):
 
         i.e. there is a web socket server available to control the webview.
         """
-        return self._ws_server is not None
+        return self.webview is not None
 
-    async def get_preview_config(self) -> PreviewConfig:
-        """Return the user's preview server configuration."""
-        config = self.server.configuration.get("esbonio.preview", PreviewConfig)
-        if config is None:
-            self.logger.info(
-                "Unable to obtain preview configuration, proceeding with defaults"
-            )
-            config = PreviewConfig()
+    def update_configuration(self, event: server.ConfigChangeEvent[PreviewConfig]):
+        """Called when the user's configuration is updated."""
+        config = event.value
 
-        return config
+        # (Re)create the websocket server
+        if self.webview is None:
+            self.webview = make_ws_server(self.server, config)
+
+        elif (
+            config.bind != self.webview.config.bind
+            or config.ws_port != self.webview.config.ws_port
+        ):
+            self.webview.stop()
+            self.webview = make_ws_server(self.server, config)
+
+        self.config = config
 
     async def get_http_server(self, config: PreviewConfig) -> HTTPServer:
         """Return the http server instance hosting the previews.
@@ -162,29 +153,10 @@ class PreviewManager(LanguageFeature):
 
         return self._http_server
 
-    async def get_webview_server(self, config: PreviewConfig) -> WebviewServer:
-        """Return the websocket server used to communicate with the webview."""
-
-        # TODO: Recreate the server if the configuration changes?
-        if self._ws_server is not None:
-            return self._ws_server
-
-        logger = self.server.logger.getChild("WebviewServer")
-        self._ws_server = make_ws_server(self.server, logger)
-        self._ws_task = asyncio.create_task(
-            self._ws_server.start_ws(config.bind, config.ws_port)
-        )
-
-        # HACK: we need to yield control to the event loop to give the ws_server time to
-        #       spin up and allocate a port number.
-        await asyncio.sleep(1)
-
-        return self._ws_server
-
     async def on_build(self, client: SphinxClient, result):
         """Called whenever a sphinx build completes."""
 
-        if self._ws_server is None:
+        if self.webview is None:
             return
 
         # Only refresh the view if the project we are previewing was built.
@@ -192,18 +164,21 @@ class PreviewManager(LanguageFeature):
             return
 
         self.logger.debug("Refreshing preview")
-        self._ws_server.reload()
+        self.webview.reload()
 
     async def scroll_view(self, line: int):
         """Scroll the webview to the given line number."""
 
-        if self._ws_server is None:
+        if self.webview is None:
             return
 
-        self._ws_server.scroll(line)
+        self.webview.scroll(line)
 
     async def preview_file(self, params):
         # Always check the fully resolved uri.
+        if self.webview is None:
+            return None
+
         src_uri = Uri.parse(params["uri"]).resolve()
         self.logger.debug("Previewing file: '%s'", src_uri)
 
@@ -219,14 +194,13 @@ class PreviewManager(LanguageFeature):
             )
             return None
 
-        config = await self.get_preview_config()
-        server = await self.get_http_server(config)
-        webview = await self.get_webview_server(config)
+        server = await self.get_http_server(self.config)
+        webview = await self.webview
 
         self._request_handler_factory.build_uri = client.build_uri
         query_params: Dict[str, Any] = dict(ws=webview.port)
 
-        if config.show_line_markers:
+        if self.config.show_line_markers:
             query_params["show-markers"] = True
 
         uri = Uri.create(
@@ -241,15 +215,17 @@ class PreviewManager(LanguageFeature):
 
 
 def esbonio_setup(
-    server: EsbonioLanguageServer, sphinx: SphinxManager, projects: ProjectManager
+    esbonio: server.EsbonioLanguageServer,
+    sphinx: SphinxManager,
+    projects: ProjectManager,
 ):
-    manager = PreviewManager(server, sphinx, projects)
-    server.add_feature(manager)
+    manager = PreviewManager(esbonio, sphinx, projects)
+    esbonio.add_feature(manager)
 
-    @server.feature("view/scroll")
-    async def on_scroll(ls: EsbonioLanguageServer, params):
+    @esbonio.feature("view/scroll")
+    async def on_scroll(ls: server.EsbonioLanguageServer, params):
         await manager.scroll_view(params.line)
 
-    @server.command("esbonio.server.previewFile")
-    async def preview_file(ls: EsbonioLanguageServer, *args):
+    @esbonio.command("esbonio.server.previewFile")
+    async def preview_file(ls: server.EsbonioLanguageServer, *args):
         return await manager.preview_file(args[0][0])
