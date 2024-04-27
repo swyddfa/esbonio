@@ -5,6 +5,7 @@ from typing import Set
 from urllib.parse import urlencode
 
 from lsprotocol import types
+from pygls.capabilities import get_capability
 
 from esbonio import server
 from esbonio.server import Uri
@@ -36,6 +37,12 @@ class PreviewManager(server.LanguageFeature):
         self.built_clients: Set[str] = set()
         """Keeps track of which clients run a build at least once."""
 
+        self.build_path: Optional[str] = None
+        """The filepath we are currently displaying."""
+
+        self.build_uri: Optional[Uri] = None
+        """The uri of the build dir we are currently serving from."""
+
         self.config = PreviewConfig()
         """The current configuration."""
 
@@ -47,6 +54,13 @@ class PreviewManager(server.LanguageFeature):
 
         self.webview: Optional[WebviewServer] = None
         """The server for controlling the webview."""
+
+    @property
+    def supports_show_document(self):
+        """Indicates if the client supports the `window/showDocument` request."""
+        return get_capability(
+            self.server.client_capabilities, "window.show_document.support", False
+        )
 
     def initialized(self, params: types.InitializedParams):
         """Called once the initial handshake between client and server has finished."""
@@ -81,30 +95,40 @@ class PreviewManager(server.LanguageFeature):
     def update_configuration(self, event: server.ConfigChangeEvent[PreviewConfig]):
         """Called when the user's configuration is updated."""
         config = event.value
+        show_result = False
 
         # (Re)create the websocket server
         if self.webview is None:
             self.webview = make_ws_server(self.server, config)
+            show_result = True
 
         elif (
             config.bind != self.webview.config.bind
             or config.ws_port != self.webview.config.ws_port
         ):
             self.webview.stop()
+            show_result = True
             self.webview = make_ws_server(self.server, config)
 
         # (Re)create the http server
         if self.preview is None:
+            show_result = True
             self.preview = make_http_server(self.server, config)
+            self.preview.build_uri = self.build_uri
 
         elif (
             config.bind != self.preview.config.bind
             or config.http_port != self.preview.config.http_port
         ):
+            show_result = True
             self.preview.stop()
             self.preview = make_http_server(self.server, config)
+            self.preview.build_uri = self.build_uri
 
         self.config = config
+
+        if show_result:
+            self.server.run_task(self.show_preview_uri())
 
     async def on_build(self, client: SphinxClient, result):
         """Called whenever a sphinx build completes."""
@@ -129,7 +153,8 @@ class PreviewManager(server.LanguageFeature):
         self.webview.scroll(line)
 
     async def preview_file(self, params, retry=True):
-        if self.webview is None or self.preview is None:
+
+        if self.preview is None:
             return None
 
         # Always check the fully resolved uri.
@@ -158,10 +183,24 @@ class PreviewManager(server.LanguageFeature):
                 )
                 return None
 
+        self.build_path = build_path
+        self.build_uri = self.preview.build_uri = client.build_uri
+
+        if (uri := await self.show_preview_uri()) is None:
+            return None
+
+        return {"uri": uri.as_string(encode=False)}
+
+    async def show_preview_uri(self) -> Optional[Uri]:
+        """Show the preview uri in the client using a ``window/showDocument`` request.
+        Also return the final uri."""
+
+        if self.webview is None or self.preview is None or self.build_path is None:
+            return None
+
         server = await self.preview
         webview = await self.webview
 
-        self.preview.build_uri = client.build_uri
         query_params: Dict[str, Any] = dict(ws=webview.port)
 
         if self.config.show_line_markers:
@@ -170,12 +209,20 @@ class PreviewManager(server.LanguageFeature):
         uri = Uri.create(
             scheme="http",
             authority=f"localhost:{server.port}",
-            path=build_path,
+            path=self.build_path,
             query=urlencode(query_params),
         )
-
         self.logger.info("Preview available at: %s", uri.as_string(encode=False))
-        return {"uri": uri.as_string(encode=False)}
+
+        if self.supports_show_document:
+            result = await self.server.show_document_async(
+                types.ShowDocumentParams(
+                    uri=uri.as_string(encode=False), external=True, take_focus=False
+                )
+            )
+            self.logger.debug("window/showDocument: %s", result)
+
+        return uri
 
 
 def esbonio_setup(
