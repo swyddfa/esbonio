@@ -17,6 +17,8 @@ from esbonio import server
 if typing.TYPE_CHECKING:
     from typing import Optional
 
+    from websockets import WebSocketServer
+
     from .config import PreviewConfig
 
 
@@ -32,11 +34,11 @@ class WebviewServer(Server):
         super().__init__(JsonRPCProtocol, default_converter, *args, **kwargs)
 
         self.config = config
-        self.port = None
         self.logger = logger.getChild("WebviewServer")
         self.lsp._send_only_body = True
 
         self._connected = False
+        self._ws_server: Optional[WebSocketServer] = None
 
         self._startup_task: Optional[asyncio.Task] = None
         """The task that resolves once startup is complete."""
@@ -56,6 +58,14 @@ class WebviewServer(Server):
             self._startup_task = asyncio.create_task(self.start())
 
         return self._startup_task.__await__()
+
+    @property
+    def port(self):
+        if self._ws_server is None:
+            return None
+
+        sock = list(self._ws_server.sockets)[0]
+        return sock.getsockname()[1]
 
     @property
     def connected(self) -> bool:
@@ -134,8 +144,7 @@ class WebviewServer(Server):
             # logger=self.logger.getChild("ws"),
             family=socket.AF_INET,  # Use IPv4 only.
         ) as ws_server:
-            sock = list(ws_server.sockets)[0]
-            self.port = sock.getsockname()[1]
+            self._ws_server = ws_server
             await asyncio.Future()  # run forever
 
 
