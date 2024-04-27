@@ -95,24 +95,20 @@ class PreviewManager(server.LanguageFeature):
     def update_configuration(self, event: server.ConfigChangeEvent[PreviewConfig]):
         """Called when the user's configuration is updated."""
         config = event.value
-        show_result = False
 
         # (Re)create the websocket server
         if self.webview is None:
             self.webview = make_ws_server(self.server, config)
-            show_result = True
 
         elif (
             config.bind != self.webview.config.bind
             or config.ws_port != self.webview.config.ws_port
         ):
             self.webview.stop()
-            show_result = True
             self.webview = make_ws_server(self.server, config)
 
         # (Re)create the http server
         if self.preview is None:
-            show_result = True
             self.preview = make_http_server(self.server, config)
             self.preview.build_uri = self.build_uri
 
@@ -120,15 +116,12 @@ class PreviewManager(server.LanguageFeature):
             config.bind != self.preview.config.bind
             or config.http_port != self.preview.config.http_port
         ):
-            show_result = True
             self.preview.stop()
             self.preview = make_http_server(self.server, config)
             self.preview.build_uri = self.build_uri
 
         self.config = config
-
-        if show_result:
-            self.server.run_task(self.show_preview_uri())
+        self.server.run_task(self.show_preview_uri())
 
     async def on_build(self, client: SphinxClient, result):
         """Called whenever a sphinx build completes."""
