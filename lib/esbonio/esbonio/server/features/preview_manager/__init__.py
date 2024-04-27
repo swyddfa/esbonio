@@ -1,6 +1,7 @@
 from typing import Any
 from typing import Dict
 from typing import Optional
+from typing import Set
 from urllib.parse import urlencode
 
 from lsprotocol import types
@@ -31,6 +32,9 @@ class PreviewManager(server.LanguageFeature):
         self.sphinx = sphinx
         self.sphinx.add_listener("build", self.on_build)
         """The sphinx manager."""
+
+        self.built_clients: Set[str] = set()
+        """Keeps track of which clients run a build at least once."""
 
         self.config = PreviewConfig()
         """The current configuration."""
@@ -104,6 +108,7 @@ class PreviewManager(server.LanguageFeature):
 
     async def on_build(self, client: SphinxClient, result):
         """Called whenever a sphinx build completes."""
+        self.built_clients.add(client.id)
 
         if self.webview is None or self.preview is None:
             return
@@ -123,7 +128,7 @@ class PreviewManager(server.LanguageFeature):
 
         self.webview.scroll(line)
 
-    async def preview_file(self, params):
+    async def preview_file(self, params, retry=True):
         if self.webview is None or self.preview is None:
             return None
 
@@ -138,10 +143,20 @@ class PreviewManager(server.LanguageFeature):
             return None
 
         if (build_path := await project.get_build_path(src_uri)) is None:
-            self.logger.debug(
-                "Unable to preview file '%s', not included in build output.", src_uri
-            )
-            return None
+
+            # The client might not have built the project yet.
+            if client.id not in self.built_clients and retry is True:
+
+                # Only retry this once.
+                await self.sphinx.trigger_build(src_uri)
+                return await self.preview_file(params, retry=False)
+            else:
+
+                self.logger.debug(
+                    "Unable to preview file '%s', not included in build output.",
+                    src_uri,
+                )
+                return None
 
         server = await self.preview
         webview = await self.webview
