@@ -14,6 +14,8 @@ interface PreviewFileResult {
 
 export class PreviewManager {
 
+  private static readonly rstPreviewActiveContextKey =
+        'restructuredtextPreviewFocus';
   private panel?: vscode.WebviewPanel
 
   // The uri of the document currently shown in the preview pane
@@ -29,6 +31,9 @@ export class PreviewManager {
     )
     context.subscriptions.push(
       vscode.commands.registerTextEditorCommand(Commands.OPEN_PREVIEW_TO_SIDE, this.openPreviewToSide, this)
+    )
+    context.subscriptions.push(
+      vscode.commands.registerTextEditorCommand(Commands.SHOW_SOURCE, this.showSource, this)
     )
     context.subscriptions.push(
       vscode.window.onDidChangeActiveTextEditor(this.onDidChangeEditor, this)
@@ -72,6 +77,19 @@ export class PreviewManager {
 
   async openPreviewToSide(editor: vscode.TextEditor) {
     return await this.previewEditor(editor, vscode.ViewColumn.Beside)
+  }
+
+  async showSource() {
+    if (!this.currentUri) {
+      return
+    }
+
+    let editor = findEditorFor(this.currentUri)
+    if (!editor) {
+      return
+    }
+
+    await vscode.window.showTextDocument(editor.document, { preview: false })
   }
 
   private scrollEditor(params: { line: number }) {
@@ -133,6 +151,7 @@ export class PreviewManager {
 
     this.currentUri = editor.document.uri
     panel.webview.postMessage({ 'show': result.uri })
+    this.setPreviewActiveContext(true)
   }
 
   private getPanel(placement: vscode.ViewColumn): vscode.WebviewPanel {
@@ -267,9 +286,18 @@ export class PreviewManager {
     this.panel.onDidDispose(() => {
       this.panel = undefined
       this.currentUri = undefined
+      this.setPreviewActiveContext(false)
     })
 
     return this.panel
+  }
+
+  private setPreviewActiveContext(value: boolean) {
+    vscode.commands.executeCommand(
+        'setContext',
+        PreviewManager.rstPreviewActiveContextKey,
+        value
+    )
   }
 }
 
