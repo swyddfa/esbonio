@@ -2,6 +2,7 @@ import * as vscode from 'vscode'
 import { OutputChannelLogger } from '../common/log'
 import { EsbonioClient } from './client'
 import { Commands, Events, Notifications } from '../common/constants'
+import { ShowDocumentParams } from 'vscode-languageclient'
 
 interface PreviewFileParams {
   uri: string
@@ -35,6 +36,11 @@ export class PreviewManager {
     )
     context.subscriptions.push(
       vscode.window.onDidChangeTextEditorVisibleRanges(params => this.scrollView(params.textEditor))
+    )
+
+    client.addHandler(
+      "window/showDocument",
+      (params: { params: ShowDocumentParams, default: any }) => this.showDocument(params)
     )
 
     // View -> editor sync scrolling implementation
@@ -126,13 +132,21 @@ export class PreviewManager {
     }
 
     let result: PreviewFileResult | undefined = await vscode.commands.executeCommand(Commands.PREVIEW_FILE, params)
-    this.logger.debug(`Result: ${JSON.stringify(result)}`)
     if (!result || !result.uri) {
+      // Nothing to show.
+      panel.webview.postMessage({ 'show': '<nothing>' })
       return
     }
 
     this.currentUri = editor.document.uri
-    panel.webview.postMessage({ 'show': result.uri })
+  }
+
+  private showDocument(params: { params: ShowDocumentParams, default: any }) {
+    if (!this.panel) {
+      return
+    }
+
+    this.panel.webview.postMessage({ 'show': params.params.uri })
   }
 
   private getPanel(placement: vscode.ViewColumn): vscode.WebviewPanel {
@@ -198,6 +212,40 @@ export class PreviewManager {
 </head>
 
 <body>
+  <div id="no-content" style="display: none">
+    <h1>No Content Found</h1>
+    <p>The Esbonio extension was unable to locate the built version of the document you are trying to preview.
+        The most likely explanation for this is that the document is not part of your documentation project.</p>
+    <h3>Troubleshooting</h3>
+    <p>However, if you are seeing this message for a document you know to be part of your project, please check the following.</p>
+    <ul>
+        <li>
+          You have the correct Python environment configured, either by running the <code>Python: Select Interpreter</code> command,
+          or by setting the <code>esbonio.sphinx.pythonCommand</code> configuration option.
+        </li>
+        <li>
+          The Esbonio extension is using the correct <code>sphinx-build</code> command for your project.
+          You can override the default command by setting the <code>esbonio.sphinx.buildCommand</code> option
+        </li>
+        <li>
+          Make sure that Esbonio has built your documentation at least once.
+        </li>
+        <li>
+          Check that there are no errors in the Esbonio output log channel.
+          You can open this channel by running the <code>Output: Show Output Channels...</code> command and choosing "Esbonio" from the dropdown
+        </li>
+        <li>
+          If there are no messages or obvious errors in the output channel, you can try setting the <code>esbonio.logging.level</code> to
+          <code>debug</code> and restarting the server to get more information.
+        </li>
+    </ul>
+    <p>
+      You can find more information in Esbonio's <a href="https://docs.esbon.io/en/latest/">documentation</a>.
+      If you have tried all of the steps above and are still seeing this message then please
+      <a href="https://github.com/swyddfa/esbonio/issues/new?assignees=&labels=bug%2Ctriage&projects=&template=bug_report.yml">open an issue</a>
+      - be sure to include any relevant messages from the output channel!
+    </p>
+  </div>
   <div id="status">
     <p>Loading...</p>
     <div id="progress-bar">
@@ -229,6 +277,7 @@ export class PreviewManager {
       if (event.origin.startsWith("vscode-webview://")) {
         if (message.show) {
           status.style.display = "flex"
+          noContent.style.display = "none"
           viewer.src = message.show
 
           // Persist the url so we can recover if the webview gets hidden.
