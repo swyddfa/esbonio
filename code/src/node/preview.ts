@@ -175,7 +175,8 @@ export class PreviewManager {
         content="default-src 'none'; style-src 'nonce-${cssNonce}'; script-src 'nonce-${scriptNonce}'; frame-src http://localhost:*/" />
 
   <style nonce="${cssNonce}">
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box;}
+    :not(progress) { border: none;}
 
     body {
       height: 100vh;
@@ -198,6 +199,14 @@ export class PreviewManager {
       display: flex;
       align-items: center;
       gap: 1rem;
+      padding: 0.5rem;
+    }
+
+    #no-content {
+      font-size: 1.2em;
+      line-height: 1.5;
+      height: 100%;
+      overflow-y: auto;
       padding: 0.5rem;
     }
 
@@ -259,6 +268,7 @@ export class PreviewManager {
     const vscode = acquireVsCodeApi()
 
     const viewer = document.getElementById("viewer")
+    const noContent = document.getElementById("no-content")
     const status = document.getElementById("status")
 
     console.debug(window.location)
@@ -275,7 +285,15 @@ export class PreviewManager {
 
       // Control messages coming from the webview hosting this page
       if (event.origin.startsWith("vscode-webview://")) {
-        if (message.show) {
+
+        if (message.show === "<nothing>") {
+          status.style.display = "none"
+
+          // Only show the "no content" message if there is not a previous page already being shown
+          if (!viewer.src) {
+            noContent.style.display = "block"
+          }
+        } else if (message.show) {
           status.style.display = "flex"
           noContent.style.display = "none"
           viewer.src = message.show
@@ -289,6 +307,7 @@ export class PreviewManager {
       if (event.origin.startsWith("http://localhost:")) {
         if (message.ready) {
           status.style.display = "none"
+          noContent.style.display = "none"
           vscode.postMessage({ ready: true })
         }
       }
