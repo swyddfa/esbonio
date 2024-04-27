@@ -119,9 +119,12 @@ class PreviewServer:
 
     def stop(self):
         """Stop the server."""
-        if self._server:
+        if self._server is not None:
             self.logger.debug("Shutting down preview HTTP server")
             self._server.shutdown()
+
+        if self._future is not None:
+            self.logger.debug("Cancelling HTTP future: %s", self._future.cancel())
 
 
 def make_http_server(
