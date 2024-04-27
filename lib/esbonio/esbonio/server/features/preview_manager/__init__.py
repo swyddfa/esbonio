@@ -1,8 +1,3 @@
-import asyncio
-import logging
-import sys
-from http.server import HTTPServer
-from http.server import SimpleHTTPRequestHandler
 from typing import Any
 from typing import Dict
 from typing import Optional
@@ -17,46 +12,12 @@ from esbonio.server.features.sphinx_manager import SphinxClient
 from esbonio.server.features.sphinx_manager import SphinxManager
 
 from .config import PreviewConfig
+from .preview import PreviewServer
+from .preview import make_http_server
 from .webview import WebviewServer
 from .webview import make_ws_server
 
 
-class RequestHandler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, logger: logging.Logger, directory: str, **kwargs) -> None:
-        self.logger = logger
-        super().__init__(*args, directory=directory, **kwargs)
-
-    def translate_path(self, path: str) -> str:
-        result = super().translate_path(path)
-        # self.logger.debug("Translate: '%s' -> '%s'", path, result)
-        return result
-
-    def log_message(self, format: str, *args: Any) -> None:
-        self.logger.debug(format, *args)
-
-
-class RequestHandlerFactory:
-    """Class for dynamically producing request handlers.
-
-    ``HTTPServer`` works by taking a "request handler" class and creating an instance of
-    it for every request it receives. By making this class callable, we can dynamically
-    produce a request handler based on the current situation.
-    """
-
-    def __init__(self, logger: logging.Logger, build_uri: Optional[Uri] = None):
-        self.logger = logger
-        self.build_uri = build_uri
-
-    def __call__(self, *args, **kwargs):
-        if self.build_uri is None:
-            raise ValueError("No build directory set")
-
-        if (build_dir := self.build_uri.fs_path) is None:
-            raise ValueError(
-                "Unable to determine build dir from uri: '%s'", self.build_uri
-            )
-
-        return RequestHandler(*args, logger=self.logger, directory=build_dir, **kwargs)
 class PreviewManager(server.LanguageFeature):
     """Language feature for managing previews."""
 
@@ -69,14 +30,16 @@ class PreviewManager(server.LanguageFeature):
         super().__init__(server)
         self.sphinx = sphinx
         self.sphinx.add_listener("build", self.on_build)
+        """The sphinx manager."""
+
+        self.config = PreviewConfig()
+        """The current configuration."""
 
         self.projects = projects
-        self.config = PreviewConfig()
+        """The project manager."""
 
-        logger = server.logger.getChild("PreviewServer")
-        self._request_handler_factory = RequestHandlerFactory(logger)
-        self._http_server: Optional[HTTPServer] = None
-        self._http_future: Optional[asyncio.Future] = None
+        self.preview: Optional[PreviewServer] = None
+        """The http server for serving the built files"""
 
         self.webview: Optional[WebviewServer] = None
         """The server for controlling the webview."""
@@ -89,13 +52,9 @@ class PreviewManager(server.LanguageFeature):
 
     def shutdown(self, params: None):
         """Called when the client instructs the server to ``shutdown``."""
-        args = {}
-        if sys.version_info.minor > 8:
-            args["msg"] = "Server is shutting down."
 
-        if self._http_server:
-            self.logger.debug("Shutting down preview HTTP server")
-            self._http_server.shutdown()
+        if self.preview is not None:
+            self.preview.stop()
 
         if self.webview is not None:
             self.webview.stop()
@@ -105,7 +64,7 @@ class PreviewManager(server.LanguageFeature):
         """Return true if the preview is active.
 
         i.e. there is a HTTP server hosting the build result."""
-        return self._http_server is not None
+        return self.preview is not None
 
     @property
     def preview_controllable(self) -> bool:
@@ -130,37 +89,27 @@ class PreviewManager(server.LanguageFeature):
             self.webview.stop()
             self.webview = make_ws_server(self.server, config)
 
+        # (Re)create the http server
+        if self.preview is None:
+            self.preview = make_http_server(self.server, config)
+
+        elif (
+            config.bind != self.preview.config.bind
+            or config.http_port != self.preview.config.http_port
+        ):
+            self.preview.stop()
+            self.preview = make_http_server(self.server, config)
+
         self.config = config
-
-    async def get_http_server(self, config: PreviewConfig) -> HTTPServer:
-        """Return the http server instance hosting the previews.
-
-        This will also handle the creation of the server the first time it is called.
-        """
-        # TODO: Recreate the server if the configuration changes?
-        if self._http_server is not None:
-            return self._http_server
-
-        self._http_server = HTTPServer(
-            (config.bind, config.http_port), self._request_handler_factory
-        )
-
-        loop = asyncio.get_running_loop()
-        self._http_future = loop.run_in_executor(
-            self.server.thread_pool_executor,
-            self._http_server.serve_forever,
-        )
-
-        return self._http_server
 
     async def on_build(self, client: SphinxClient, result):
         """Called whenever a sphinx build completes."""
 
-        if self.webview is None:
+        if self.webview is None or self.preview is None:
             return
 
         # Only refresh the view if the project we are previewing was built.
-        if client.build_uri != self._request_handler_factory.build_uri:
+        if client.build_uri != self.preview.build_uri:
             return
 
         self.logger.debug("Refreshing preview")
@@ -175,10 +124,10 @@ class PreviewManager(server.LanguageFeature):
         self.webview.scroll(line)
 
     async def preview_file(self, params):
-        # Always check the fully resolved uri.
-        if self.webview is None:
+        if self.webview is None or self.preview is None:
             return None
 
+        # Always check the fully resolved uri.
         src_uri = Uri.parse(params["uri"]).resolve()
         self.logger.debug("Previewing file: '%s'", src_uri)
 
@@ -194,10 +143,10 @@ class PreviewManager(server.LanguageFeature):
             )
             return None
 
-        server = await self.get_http_server(self.config)
+        server = await self.preview
         webview = await self.webview
 
-        self._request_handler_factory.build_uri = client.build_uri
+        self.preview.build_uri = client.build_uri
         query_params: Dict[str, Any] = dict(ws=webview.port)
 
         if self.config.show_line_markers:
@@ -205,7 +154,7 @@ class PreviewManager(server.LanguageFeature):
 
         uri = Uri.create(
             scheme="http",
-            authority=f"localhost:{server.server_port}",
+            authority=f"localhost:{server.port}",
             path=build_path,
             query=urlencode(query_params),
         )
