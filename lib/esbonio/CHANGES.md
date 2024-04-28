@@ -1,3 +1,22 @@
+## v1.0.0b3 - 2024-04-28
+
+
+### Features
+
+- Add support for role completions in MyST documents ([#775](https://github.com/swyddfa/esbonio/issues/775))
+
+### Enhancements
+
+- If the client supports it, the server will now send `window/showDocument` requests when previewing a file.
+
+  The server will automatically react to changes to ``esbonio.preview.*`` configuration options. ([#793](https://github.com/swyddfa/esbonio/issues/793))
+
+### Fixes
+
+- The server should once again, correctly guess a reasonable basic `sphinx-build` build command for projects located in a sub-folder of the workspace ([#779](https://github.com/swyddfa/esbonio/issues/779))
+- The server should once again automatically trigger a build when previewing a file, when necessary ([#783](https://github.com/swyddfa/esbonio/issues/783))
+
+
 ## v1.0.0b2 - 2024-04-20
 
 
