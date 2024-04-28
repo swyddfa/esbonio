@@ -64,14 +64,14 @@
         "commands": [
             {
                 "command": "esbonio.preview.open",
-                "title": "Open Preview",
-                "icon": "$(preview)",
+                "title": "Preview Documentation",
+                "icon": "$(open-preview)",
                 "category": "Esbonio"
             },
             {
                 "command": "esbonio.preview.openSide",
-                "title": "Open Preview to the Side",
-                "icon": "$(open-preview)",
+                "title": "Preview Documentation in Split Window",
+                "icon": "$(book)",
                 "category": "Esbonio"
             },
             {
@@ -418,7 +418,7 @@
                     "command": "esbonio.preview.openSide",
                     "alt": "esbonio.preview.open",
                     "group": "navigation",
-                    "when": "resourceLangId == restructuredtext"
+                    "when": "resourceLangId == restructuredtext || resourceLangId == markdown"
                 }
             ]
         },
