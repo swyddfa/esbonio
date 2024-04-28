@@ -129,7 +129,7 @@ jobs:
 
   marketplace-release:
     name: vscode release
-    needs: build
+    needs: build-vsix
     runs-on: ubuntu-latest
     environment:
       name: vscode-marketplace
@@ -158,7 +158,7 @@ jobs:
 
   open-vsx-release:
     name: open vsx release
-    needs: build
+    needs: build-vsix
     runs-on: ubuntu-latest
     environment:
       name: open-vsx
