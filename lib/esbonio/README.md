@@ -17,7 +17,6 @@ The language server provides the following features
 
 ![Definition Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/definition-demo.gif)
 
-
 ## Diagnostics
 
 ![Diagnostics Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/diagnostic-sphinx-errors-demo.png)

@@ -26,8 +26,7 @@ The language server can provide completion suggestions in various contexts
 
 ### Goto Definition
 
-Goto definition is currently implemented for objects linked to by
-`:ref:` and `:doc:` roles
+Goto definition is currently implemented for objects linked to by `:ref:` and `:doc:` roles
 
 ![Goto Definition Demo](../resources/images/definition-demo.gif)
 
