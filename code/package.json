@@ -26,7 +26,8 @@
     },
     "main": "dist/node/extension",
     "extensionDependencies": [
-        "ms-python.python"
+        "ms-python.python",
+        "chrisjsewell.myst-tml-syntax"
     ],
     "dependencies": {
         "@vscode/python-extension": "^1.0.5",

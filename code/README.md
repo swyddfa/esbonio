@@ -71,11 +71,19 @@ However, the server will need access the Python environment you use to build you
 
 1. Sphinx build output will be available in Esbonio's `Output` view in VSCode's panel.
 
+## Dependent Extensions
+
+Esbonio relies on the following extensions
+
+- By default, Esbonio relies on the offical [Python Extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) to configure the environment in which it builds your documentation.
+
+- The [MyST Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=chrisjsewell.myst-tml-syntax) extension provides syntax highlighting rules for MyST flavoured markdown.
+
 ## Supplementry Extensions
 
-The [reStructuredText](https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext) extension as of [v190.1.17](https://github.com/vscode-restructuredtext/vscode-restructuredtext/releases/tag/190.1.17) integrates many other useful tools such as the traditional linters like [`doc8`](https://pypi.org/project/doc8/) and [`rstcheck`](https://pypi.org/project/rstcheck/).
-It also provides additional editor functionality for working with reStructuredText in general.
-More details can be found on the [extension's page](https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext).
+The the following extensions are not required in order to use Esbonio, but you might find them useful
 
-The [reStructuredText Syntax highlighting](https://marketplace.visualstudio.com/items?itemName=trond-snekvik.simple-rst) extension provides syntax highlighting for reStructuredText files.
-More details can be found on the [extension's page](https://marketplace.visualstudio.com/items?itemName=trond-snekvik.simple-rst).
+- The [reStructuredText](https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext) integrates many other useful tools such as the traditional linters like [`doc8`](https://pypi.org/project/doc8/) and [`rstcheck`](https://pypi.org/project/rstcheck/).
+  It also provides additional editor functionality for working with reStructuredText in general.
+
+- While VSCode has included a vendored copy of the [reStructuredText Syntax highlighting](https://marketplace.visualstudio.com/items?itemName=trond-snekvik.simple-rst) extension since `v1.66`, installing the extension from the marketplace will provide you with the latest version of the syntax definition.
