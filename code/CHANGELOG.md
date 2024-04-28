@@ -1,3 +1,21 @@
+## v0.94.0 - 2024-04-28
+
+
+### Breaking Changes
+
+- The `Open Preview to the Side` and `Open Preview` commands have been renamed to `Preview Documentation in Split Window` and `Preview Documentation` respectively. ([#780](https://github.com/swyddfa/esbonio/issues/780))
+
+### Enhancements
+
+- Esbonio now adds an icon to the editor toolbar that opens the preview in markdown files. ([#780](https://github.com/swyddfa/esbonio/issues/780))
+- The preview pane will now show a "No Content Found" message if the file could not be previewed.
+  The message contains troubleshooting steps on how the preview might be fixed. ([#793](https://github.com/swyddfa/esbonio/issues/793))
+
+### Misc
+
+- Esbonio now depends on the [MyST Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=chrisjsewell.myst-tml-syntax) extension. ([#794](https://github.com/swyddfa/esbonio/issues/794))
+
+
 ## v0.93.2 - 2024-04-22
 
 
