@@ -9,6 +9,7 @@ import {
   LanguageClientOptions,
   ResponseError,
   ServerOptions,
+  ShowDocumentParams,
   State,
   TextDocumentFilter
 } from "vscode-languageclient/node";
@@ -363,6 +364,13 @@ export class EsbonioClient {
               this.stripNulls(config)
             })
             return result
+          }
+        },
+        window: {
+          showDocument: async (params: ShowDocumentParams, next) => {
+            this.logger.debug(`window/showDocument: ${JSON.stringify(params, undefined, 2)}`)
+            this.callHandlers("window/showDocument", { params: params, default: next })
+            return { success: true }
           }
         }
       },

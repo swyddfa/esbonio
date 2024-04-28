@@ -26,7 +26,8 @@
     },
     "main": "dist/node/extension",
     "extensionDependencies": [
-        "ms-python.python"
+        "ms-python.python",
+        "chrisjsewell.myst-tml-syntax"
     ],
     "dependencies": {
         "@vscode/python-extension": "^1.0.5",
@@ -37,7 +38,7 @@
         "@types/glob": "^8.1.0",
         "@types/node": "^18",
         "@types/vscode": "1.78.0",
-        "@vscode/vsce": "^2.25.0",
+        "@vscode/vsce": "^2.26.0",
         "esbuild": "^0.20.2",
         "ovsx": "^0.9.1",
         "typescript": "^5.4.5"
@@ -64,14 +65,14 @@
         "commands": [
             {
                 "command": "esbonio.preview.open",
-                "title": "Open Preview",
-                "icon": "$(preview)",
+                "title": "Preview Documentation",
+                "icon": "$(open-preview)",
                 "category": "Esbonio"
             },
             {
                 "command": "esbonio.preview.openSide",
-                "title": "Open Preview to the Side",
-                "icon": "$(open-preview)",
+                "title": "Preview Documentation in Split Window",
+                "icon": "$(book)",
                 "category": "Esbonio"
             },
             {
@@ -418,7 +419,7 @@
                     "command": "esbonio.preview.openSide",
                     "alt": "esbonio.preview.open",
                     "group": "navigation",
-                    "when": "resourceLangId == restructuredtext"
+                    "when": "resourceLangId == restructuredtext || resourceLangId == markdown"
                 }
             ]
         },

@@ -73,36 +73,27 @@ The language server provides the following features.
    <img src="./resources/images/vscode-preview-demo.gif" alt="HTML Preview Demo"></img>
 </p>
 
-This extension is purely focused on bringing the `esbonio` language server into VSCode to help with development and testing new ideas.
+This extension integrates the `esbonio` language server into VSCode, it's primary goal is to expose all of the features provided by the language server and serve as a reference for integrating `esbonio` into other editors.
+Features that cannot be implemented primarily within the language server itself are out of scope for this extension.
 
-### You're probably looking for the reStructuredText Extension
+For that reason, the Esbonio extension tries to integrate into the wider VSCode ecosystem where possible.
 
-[reStructuredText extension]: https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext
-[v171.0.0]: https://github.com/vscode-restructuredtext/vscode-restructuredtext/releases/tag/171.0.0
-[`doc8`]: https://pypi.org/project/doc8/
-[`rstcheck`]: https://pypi.org/project/rstcheck/
+### Dependent Extensions
 
-You may already be familiar with the [reStructuredText extension] which, as of [v171.0.0] now also integrates the `esbonio` language server into VSCode.
-It also integrates other tools such as the linters [`doc8`] and [`rstcheck`] and provides additional editor functionality making it easier to work with reStructuredText in general.
+Esbonio depends on the following extensions
 
-**Wait.. so why does the Esbonio VSCode extension still exist?**
+- By default, Esbonio relies on the offical [Python Extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) to configure the environment in which it builds your documentation.
 
-The reStructuredText extension takes a more conservative approach to adopting new VSCode features and APIs leaving the Esbonio extension free to more aggressively follow new developments.
-The Esbonio extension is developed alongside the language server itself, which allows for easy testing of new features without waiting for downstream projects to catch up.
-Finally, the Esbonio extension serves as an up to date reference for projects that integrate `esbonio` into other editors.
+- The [MyST Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=chrisjsewell.myst-tml-syntax) extension provides syntax highlighting rules for MyST flavoured markdown.
 
-**That sounds great... but which extension is right for me?**
+### Supplementry Extensions
 
-Try the reStructuredText extension if
+The the following extensions are not required in order to use Esbonio, but you might find them useful
 
-- You need an extension compatible with older versions of VSCode
-- You are looking for a more rounded editing experience.
+- The [reStructuredText](https://marketplace.visualstudio.com/items?itemName=lextudio.restructuredtext) integrates many other useful tools such as the traditional linters like [`doc8`](https://pypi.org/project/doc8/) and [`rstcheck`](https://pypi.org/project/rstcheck/).
+  It also provides additional editor functionality for working with reStructuredText in general.
 
-Try the Esbonio extension if
-
-- You want to make use of the newer features available in recent VSCode versions
-- You are only interested in the features provided by the language server
-
+- While VSCode has included a vendored copy of the [reStructuredText Syntax highlighting](https://marketplace.visualstudio.com/items?itemName=trond-snekvik.simple-rst) extension since `v1.66`, installing the extension from the marketplace will provide you with the latest version of the syntax definition.
 
 ## `lib/esbonio-extensions/` - A collection of Sphinx extensions
 

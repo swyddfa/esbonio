@@ -17,7 +17,7 @@
   - `esbonio.logging.filepath`, enable logging to a file
   - `esbonio.logging.stderr`, print log messages to stderr
   - `esbonio.logging.window`, send log messages as `window/logMessage` notifications
-  - `esbonio:config:: esbonio.logging.config`, override logging configuration for individual loggers, see the [documentation](https://docs.esbon.io/en/latest/lsp/reference/configuration.html#lsp-configuration-logging) for details
+  - `esbonio.logging.config`, override logging configuration for individual loggers, see the [documentation](https://docs.esbon.io/en/latest/lsp/reference/configuration.html#lsp-configuration-logging) for details
 
   ([#748](https://github.com/swyddfa/esbonio/issues/748))
 - The server will now automatically restart the underlying Sphinx process when it detects a change in its configuration ([#750](https://github.com/swyddfa/esbonio/issues/750))

@@ -93,7 +93,8 @@ def _configure_lsp_methods(server: EsbonioLanguageServer) -> EsbonioLanguageServ
     @server.feature(
         types.TEXT_DOCUMENT_COMPLETION,
         types.CompletionOptions(
-            trigger_characters=[">", ".", ":", "`", "<", "/"], resolve_provider=True
+            trigger_characters=[">", ".", ":", "`", "<", "/", "{", "}"],
+            resolve_provider=True,
         ),
     )
     async def on_completion(ls: EsbonioLanguageServer, params: types.CompletionParams):
