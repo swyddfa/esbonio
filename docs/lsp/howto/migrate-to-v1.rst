@@ -15,13 +15,15 @@ This guide covers the breaking changes between the ``v0.x`` and ``v1.x`` version
 Installation Changes
 --------------------
 
-Previously, you would have had to install ``esbonio`` as a development dependency for every project you wished to use it in.
-In ``v1.x`` this is no longer necessary, in fact, it's recommended you remove it from all of your project specific environments::
+Previously, it was recommended to install ``esbonio`` as a development dependency for each project you wished to use with.
+This was because ``esbonio`` would run Sphinx as part of its own process and therefore need access to your project's dependencies.
+
+In ``v1.x`` Sphinx is now run in a separate process so this is no longer necessary, in fact, it's recommended you remove it from your project specific environments::
 
    (env) $ pip uninstall esbonio
 
-Instead, you should now have a single, global installation that can be reused across projects.
-We recommend that you use `pipx <https://pipx.pypa.io/stable/>`__ to manage this installation for you::
+Instead, you can now have a single, global installation that is reused across projects.
+It's recommended that you use `pipx <https://pipx.pypa.io/stable/>`__ to manage this installation for you::
 
    $ pipx install esbonio   # Installs esbonio globally in an isolated environment
    $ pipx upgrade esbonio   # Upgrade esbonio and its dependencies
@@ -37,7 +39,7 @@ Configuration Changes
 
    With the release of ``v1.x``, Esbonio's configuration system has been overhauled, see :ref:`lsp-configuration` for all of the available configuration options and methods.
 
-While ``esbonio`` can now be installed globally, it still needs access to your project's development environment in order to properly understand it.
+While ``esbonio`` can now be installed globally, it still needs access to your project's development environment in order launch Sphinx correctly.
 This means the two most imporant configuration values are
 
 - :esbonio:conf:`esbonio.sphinx.pythonCommand`: For telling ``esbonio`` the command it needs to run in order to use the correct Python environment.
@@ -45,32 +47,44 @@ This means the two most imporant configuration values are
 
 The following table outlines the configuration options that have been removed in ``v1.x`` and what their correpsonding replacement is
 
-+-----------------------------------------+-------------------------------------------------+-------------+
-| Removed Option                          | Replacement                                     | Notes       |
-+=========================================+=================================================+=============+
-| - ``esbonio.server.hideSphinxOutput``   | :esbonio:conf:`esbonio.sphinx.buildCommand`     |             |
-| - ``esbonio.sphinx.buildDir``           |                                                 |             |
-| - ``esbonio.sphinx.builderName``        |                                                 |             |
-| - ``esbonio.sphinx.confDir``            |                                                 |             |
-| - ``esbonio.sphinx.doctreeDir``         |                                                 |             |
-| - ``esbonio.sphinx.forceFullBuild``     |                                                 |             |
-| - ``esbonio.sphinx.keepGoing``          |                                                 |             |
-| - ``esbonio.sphinx.makeMode``           |                                                 |             |
-| - ``esbonio.sphinx.numJobs``            |                                                 |             |
-| - ``esbonio.sphinx.quiet``              |                                                 |             |
-| - ``esbonio.sphinx.silent``             |                                                 |             |
-| - ``esbonio.sphinx.srcDir``             |                                                 |             |
-| - ``esbonio.sphinx.tags``               |                                                 |             |
-| - ``esbonio.sphinx.verbosity``          |                                                 |             |
-| - ``esbonio.sphinx.warningIsError``     |                                                 |             |
-+-----------------------------------------+-------------------------------------------------+-------------+
-| ``esbonio.server.logLevel``             | :esbonio:conf:`esbonio.logging.level`           |             |
-+-----------------------------------------+-------------------------------------------------+-------------+
-| ``esbonio.server.logFilter``            | :esbonio:conf:`esbonio.logging.config`          |             |
-+-----------------------------------------+-------------------------------------------------+-------------+
-| ``esbonio.server.enabledInPyFiles``     | :esbonio:conf:`esbonio.server.documentSelector` | VSCode only |
-+-----------------------------------------+-------------------------------------------------+-------------+
-| - ``esbonio.server.installBehavior``    | N/A                                             | VSCode only,|
-| - ``esbonio.server.updateBehavior``     |                                                 | no longer   |
-| - ``esbonio.server.updateFrequency``    |                                                 | required.   |
-+-----------------------------------------+-------------------------------------------------+-------------+
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| Removed Option                          | Replacement                                     | Notes                                                        |
++=========================================+=================================================+==============================================================+
+| - ``esbonio.sphinx.builderName``        | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Pass ``-b <builderName> <srcDir> <buildDir>`` to             |
+| - ``esbonio.sphinx.srcDir``             |                                                 | ``sphinx-build``                                             |
+| - ``esbonio.sphinx.buildDir``           |                                                 |                                                              |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.sphinx.confDir``              | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Use ``-c <confDir>``                                         |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.sphinx.doctreeDir``           | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Use ``-d <doctreeDir>``                                      |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.sphinx.forceFullBuild``       | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Use ``-E``                                                   |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.sphinx.keepGoing``            | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Use ``--keep-going``                                         |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.sphinx.makeMode``             | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Pass ``-M <builderName> <srcDir> <buildDir>`` to             |
+|                                         |                                                 | ``sphinx-build``                                             |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.sphinx.numJobs``              | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Use ``-j <numJobs>``                                         |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.sphinx.quiet``                | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Use ``-q``                                                   |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.sphinx.tags``                 | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Use ``-t``                                                   |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.sphinx.verbosity``            | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Use ``-v``                                                   |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.sphinx.warningIsError``       | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Use ``-W``                                                   |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| - ``esbonio.server.hideSphinxOutput``   | :esbonio:conf:`esbonio.sphinx.buildCommand`     | Use ``-Q``                                                   |
+| - ``esbonio.sphinx.silent``             |                                                 |                                                              |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.server.logLevel``             | :esbonio:conf:`esbonio.logging.level`           |                                                              |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.server.logFilter``            | :esbonio:conf:`esbonio.logging.config`          |                                                              |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| ``esbonio.server.enabledInPyFiles``     | :esbonio:conf:`esbonio.server.documentSelector` | VSCode only                                                  |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+| - ``esbonio.server.installBehavior``    | N/A                                             | VSCode only, no longer required.                             |
+| - ``esbonio.server.updateBehavior``     |                                                 |                                                              |
+| - ``esbonio.server.updateFrequency``    |                                                 |                                                              |
++-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
