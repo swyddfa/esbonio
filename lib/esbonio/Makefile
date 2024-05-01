@@ -1,9 +1,6 @@
-PY ?= 310
+include ../../.devcontainer/tools.mk
 
-.PHONY: develop test
+.PHONY: dist
 
-develop:
-	nix develop .#py$(PY)
-
-test:
-	nix develop .#py$(PY) --command pytest
+dist: $(HATCH)
+	$(HATCH) build
