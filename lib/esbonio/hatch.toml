@@ -7,3 +7,28 @@ include = ["esbonio", "tests", "CHANGES.rst"]
 
 [build.targets.wheel]
 packages = ["esbonio"]
+
+[envs.unit]
+dependencies = ["pytest", "pytest-cov", "pytest-lsp>=0.3.1,<1"]
+
+[[envs.unit.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+
+[envs.unit.scripts]
+test = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=esbonio.server tests/server"
+
+[envs.e2e]
+template = "unit"
+extra-dependencies = [
+    "furo",
+    "sphinx-design",
+    "myst-parser",
+    "sphinx~={matrix:sphinx}.0",
+]
+
+[[envs.e2e.matrix]]
+python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+sphinx = ["5", "6", "7"]
+
+[envs.e2e.scripts]
+test = "pytest --cov-report=term-missing --cov-config=pyproject.toml --cov=esbonio tests/sphinx-agent tests/e2e"
