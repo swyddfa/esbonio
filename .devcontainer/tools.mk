@@ -1,8 +1,5 @@
 BIN:=$(HOME)/.local/bin
 
-HATCH := $(BIN)/hatch
-HATCH_VERSION = 1.9.7
-
 PY38 := $(BIN)/python3.8
 PY39 := $(BIN)/python3.9
 PY310 := $(BIN)/python3.10
@@ -11,22 +8,23 @@ PY312 := $(BIN)/python3.12
 
 # Set a default python
 PY := $(BIN)/python
+PY_INTERPRETERS := $(PY) $(PY38) $(PY39) $(PY310) $(PY311) $(PY312)
 
+HATCH := $(BIN)/hatch
+HATCH_VERSION = 1.9.7
+PRE_COMMIT := $(BIN)/pre-commit
+TOWNCRIER := $(BIN)/towncrier
+
+PY_TOOLS := $(HATCH) $(PRE_COMMIT) $(TOWNCRIER)
+
+# Node JS
 NPM := $(BIN)/npm
 NODE := $(BIN)/node
 NODE_VERSION := 18.20.2
 NODE_DIR := $(HOME)/.local/node
 
-tools: $(HATCH) $(PY38) $(PY39) $(PY310) $(PY311) $(PY312) $(PY) $(NPM) $(NODE)
-	$(HATCH) --version
-	$(PY38) --version
-	$(PY39) --version
-	$(PY310) --version
-	$(PY311) --version
-	$(PY312) --version
-	$(PY) --version
-	$(NODE) --version
-	PATH=$(BIN) $(NPM) --version
+tools: $(PY_INTERPRETERS) $(PY_TOOLS) $(NPM) $(NODE)
+	for prog in $^ ; do echo -n "$${prog}\t" ; $${prog} --version; done
 
 $(HATCH):
 	curl -L --output /tmp/hatch.tar.gz https://github.com/pypa/hatch/releases/download/hatch-v$(HATCH_VERSION)/hatch-$(HATCH_VERSION)-x86_64-unknown-linux-gnu.tar.gz
@@ -76,6 +74,16 @@ $(PY312): $(HATCH)
 
 $(PY): $(PY312)
 	ln -s $< $@
+	$@ --version
+	touch $@
+
+$(PRE_COMMIT): $(PY)
+	$(PY) -m pip install --user pre-commit
+	$@ --version
+	touch $@
+
+$(TOWNCRIER): $(PY)
+	$(PY) -m pip install --user towncrier
 	$@ --version
 	touch $@
 
