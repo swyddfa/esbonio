@@ -35,7 +35,7 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade hatch tox towncrier 'importlib-resources<6'
+        python -m pip install --upgrade hatch towncrier
       name: Install Build Tools
 
     - run: |
@@ -57,10 +57,7 @@ jobs:
 
         # Use in-repo version of esbonio for dev builds
         echo "whl=${ESBONIO_WHL}"
-        ESBONIO_WHL=${ESBONIO_WHL} tox run -e bundle-deps
-
-        npm ci --prefer-offline
-        npm run package
+        ESBONIO=${ESBONIO_WHL} make dist
       id: assets
       name: Package Extension
 
