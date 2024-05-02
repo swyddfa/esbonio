@@ -2,7 +2,7 @@ include ../.devcontainer/tools.mk
 
 ESBONIO ?= --pre esbonio
 
-.PHONY: dist dev-deps release-deps
+.PHONY: dist dev-deps release-deps release
 
 watch: dev-deps $(NPM)
 	-test -d dist && rm -r dist
@@ -15,6 +15,10 @@ compile: dev-deps $(NPM)
 dist: release-deps $(NPM)
 	-test -d dist && rm -r dist
 	$(NPM) run package
+
+release: $(TOWNCRIER) $(HATCH) $(PY)
+	$(PY) ../scripts/make_release.py lsp
+	$(PY) ../scripts/make_release.py vscode
 
 # Ensures the version of esbonio in ../lib/esbonio is used.
 dev-deps: node_modules/.installed bundled/libs/.installed

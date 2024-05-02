@@ -6,6 +6,7 @@ This script will
 - Commit, tag and push the new version (if it's a release)
 - Export the tag name and release date for use later on in the pipeline.
 """
+
 import argparse
 import io
 import json
@@ -26,6 +27,8 @@ IS_RELEASE = os.environ.get("GITHUB_REF", "") == "refs/heads/release"
 
 ENV = os.environ.get("GITHUB_ENV", "")
 STEP_SUMMARY = os.environ.get("GITHUB_STEP_SUMMARY", "")
+
+REPO = pathlib.Path(__file__).parent.parent.resolve()
 
 
 class Output:
@@ -78,7 +81,7 @@ class Component(TypedDict):
     """The prefix to give to version bump commit messages for this component."""
 
     src: str
-    """The directory containing the component, relative to repo root."""
+    """The directory containing the component."""
 
     tag_prefix: str
     """The prefix to give to tagged versions of this component."""
@@ -93,7 +96,7 @@ COMPONENTS: Dict[str, Component] = {
             bump_minor="minor",
             bump_patch="patch",
             commit_prefix="Esbonio Extensions Release v",
-            src="lib/esbonio-extensions",
+            src=str(REPO / "lib/esbonio-extensions"),
             tag_prefix="esbonio-extensions-v",
         ),
         Component(
@@ -103,7 +106,7 @@ COMPONENTS: Dict[str, Component] = {
             bump_minor="b",
             bump_patch="b",
             commit_prefix="Esbonio Language Server Release v",
-            src="lib/esbonio",
+            src=str(REPO / "lib/esbonio"),
             tag_prefix="esbonio-language-server-v",
         ),
         Component(
@@ -113,7 +116,7 @@ COMPONENTS: Dict[str, Component] = {
             bump_minor="minor",
             bump_patch="patch",
             commit_prefix="Esbonio VSCode Extension Release v",
-            src="code",
+            src=str(REPO / "code"),
             tag_prefix="esbonio-vscode-extension-v",
         ),
     ]
