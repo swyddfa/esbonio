@@ -1,25 +1,25 @@
-BIN:=$(HOME)/.local/bin
+BIN ?= $(HOME)/.local/bin
 
-PY38 := $(BIN)/python3.8
-PY39 := $(BIN)/python3.9
-PY310 := $(BIN)/python3.10
-PY311 := $(BIN)/python3.11
-PY312 := $(BIN)/python3.12
+PY38 ?= $(or $(shell command -v python3.8), $(BIN)/python3.8)
+PY39 ?= $(or $(shell command -v python3.9), $(BIN)/python3.9)
+PY310 ?= $(or $(shell command -v python3.10), $(BIN)/python3.10)
+PY311 ?= $(or $(shell command -v python3.11), $(BIN)/python3.11)
+PY312 ?= $(or $(shell command -v python3.12), $(BIN)/python3.12)
 
 # Set a default python
-PY := $(BIN)/python
+PY ?= $(or $(shell command -v python), $(BIN)/python)
 PY_INTERPRETERS := $(PY) $(PY38) $(PY39) $(PY310) $(PY311) $(PY312)
 
-HATCH := $(BIN)/hatch
+HATCH ?= $(or $(shell command -v hatch), $(BIN)/hatch)
 HATCH_VERSION = 1.9.7
-PRE_COMMIT := $(BIN)/pre-commit
-TOWNCRIER := $(BIN)/towncrier
+PRE_COMMIT ?= $(or $(shell command -v pre-commit), $(BIN)/pre-commit)
+TOWNCRIER ?= $(or $(shell command -v towncrier), $(BIN)/towncrier)
 
 PY_TOOLS := $(HATCH) $(PRE_COMMIT) $(TOWNCRIER)
 
 # Node JS
-NPM := $(BIN)/npm
-NODE := $(BIN)/node
+NPM ?= $(or $(shell command -v npm), $(BIN)/npm)
+NODE ?= $(or $(shell command -v node), $(BIN)/node)
 NODE_VERSION := 18.20.2
 NODE_DIR := $(HOME)/.local/node
 
