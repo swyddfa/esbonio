@@ -4,3 +4,6 @@ include ../../.devcontainer/tools.mk
 
 dist: $(HATCH)
 	$(HATCH) build
+
+release: $(TOWNCRIER) $(HATCH) $(PY)
+	$(PY) ../scripts/make_release.py lsp
