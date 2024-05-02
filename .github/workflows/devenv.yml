@@ -53,5 +53,5 @@ jobs:
         with:
           context: .devcontainer/
           push: ${{ github.event_name != 'pull_request' }}
-          tags: latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           labels: ${{ steps.meta.outputs.labels }}
