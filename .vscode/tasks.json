@@ -2,9 +2,13 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "type": "npm",
-            "script": "watch",
+            "label": "npm: watch",
+            "type": "process",
             "isBackground": true,
+            "command": "make",
+            "args": [
+                "watch"
+            ],
             "options": {
                 "cwd": "${workspaceRoot}/code"
             },
@@ -14,17 +18,10 @@
             },
             "presentation": {
                 "panel": "dedicated",
-                "reveal": "never"
+                "reveal": "always"
             },
             "problemMatcher": [
-                {
-                    "base": "$tsc-watch",
-                    "background": {
-                        "activeOnStart": true,
-                        "beginsPattern": "asset .*",
-                        "endsPattern": "webpack .* compiled .*"
-                    }
-                }
+                "$tsc-watch"
             ]
         },
         {
