@@ -64,14 +64,11 @@ jobs:
 
     - run: |
         python --version
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade tox
+        python -m pip install --upgrade hatch
       name: Setup Environment
 
     - run: |
         cd lib/esbonio
 
-        version=$(echo ${{ matrix.python-version }} | tr -d .)
-        python -m tox run -e `tox -l | grep $version | tr '\n' ','`
-      shell: bash
+        hatch test -i py=${{ matrix.python-version }}
       name: Run Tests
