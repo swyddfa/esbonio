@@ -1,4 +1,9 @@
+ARCH ?= $(shell arch)
 BIN ?= $(HOME)/.local/bin
+
+ifeq ($(strip $(ARCH)),)
+$(error Unable to determine platform architecture)
+endif
 
 HATCH_VERSION = 1.10.0
 NODE_VERSION := 18.20.2
@@ -12,12 +17,12 @@ PY_INTERPRETERS =
 HATCH ?= $(or $(shell command -v hatch), $(BIN)/hatch)
 
 $(HATCH):
-	curl -L --output /tmp/hatch.tar.gz https://github.com/pypa/hatch/releases/download/hatch-v$(HATCH_VERSION)/hatch-$(HATCH_VERSION)-x86_64-unknown-linux-gnu.tar.gz
+	curl -L --output /tmp/hatch.tar.gz https://github.com/pypa/hatch/releases/download/hatch-v$(HATCH_VERSION)/hatch-$(HATCH_VERSION)-$(ARCH)-unknown-linux-gnu.tar.gz
 	tar -xf /tmp/hatch.tar.gz -C /tmp
 	rm /tmp/hatch.tar.gz
 
 	test -d $(BIN) || mkdir -p $(BIN)
-	mv /tmp/hatch-$(HATCH_VERSION)-x86_64-unknown-linux-gnu $(HATCH)
+	mv /tmp/hatch-$(HATCH_VERSION)-$(ARCH)-unknown-linux-gnu $(HATCH)
 
 	$@ --version
 	touch $@
