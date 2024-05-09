@@ -70,7 +70,7 @@ endef
 $(foreach version,$(PYXX_versions),$(eval $(call PYXX,$(version))))
 
 # Set a default `python` command if there is not one already
-PY ?= $(shell command -v python)
+PY ?= $(shell command -v python3)
 
 ifeq ($(strip $(PY)),)
 PY := $(BIN)/python
