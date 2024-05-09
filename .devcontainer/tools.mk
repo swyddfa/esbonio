@@ -84,18 +84,33 @@ endif
 PY_INTERPRETERS += $(PY)
 #$(info $(PY_INTERPRETERS))
 
+PIPX ?= $(shell command -v pipx)
+
+ifeq ($(strip $(PIPX)),)
+PIPX := $(BIN)/pipx
+PIPX_VERSION := 1.5.0
+
+$(PIPX):
+	curl -L -o $(BIN)/pipx.pyz https://github.com/pypa/pipx/releases/download/$(PIPX_VERSION)/pipx.pyz
+	echo '#!/bin/bash\nexec $(PY) $(BIN)/pipx.pyz "$$@"' > $(PIPX)
+
+	chmod +x $(PIPX)
+	$@ --version
+	touch $@
+endif
+
 PRE_COMMIT ?= $(shell command -v pre-commit)
 
 ifeq ($(strip $(PRE_COMMIT)),)
 PRE_COMMIT := $(BIN)/pre-commit
 
-$(PRE_COMMIT): $(PY)
-	$(PY) -m pip install --user pre-commit
+$(PRE_COMMIT): $(PIPX)
+	$(PIPX) install pre-commit
 	$@ --version
 	touch $@
 endif
 
-PY_TOOLS := $(HATCH) $(PRE_COMMIT)
+PY_TOOLS := $(HATCH) $(PIPX) $(PRE_COMMIT)
 
 # Node JS
 NPM ?= $(shell command -v npm)
