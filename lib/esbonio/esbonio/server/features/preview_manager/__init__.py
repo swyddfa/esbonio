@@ -146,7 +146,6 @@ class PreviewManager(server.LanguageFeature):
         self.webview.scroll(line)
 
     async def preview_file(self, params, retry=True):
-
         if self.preview is None:
             return None
 
@@ -161,15 +160,12 @@ class PreviewManager(server.LanguageFeature):
             return None
 
         if (build_path := await project.get_build_path(src_uri)) is None:
-
             # The client might not have built the project yet.
             if client.id not in self.built_clients and retry is True:
-
                 # Only retry this once.
                 await self.sphinx.trigger_build(src_uri)
                 return await self.preview_file(params, retry=False)
             else:
-
                 self.logger.debug(
                     "Unable to preview file '%s', not included in build output.",
                     src_uri,

@@ -17,7 +17,6 @@ sphinx_log_setup = sphinx_logging_module.setup
 
 
 def setup_logging(app: Sphinx, status: IO, warning: IO):
-
     # Run the usual setup
     sphinx_log_setup(app, status, warning)
 
