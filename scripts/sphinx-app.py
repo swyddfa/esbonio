@@ -29,6 +29,7 @@ The HTML pages are in docs/_build.
 >>> app
 <sphinx.application.Sphinx object at 0x7f0ad0fdb5b0>
 """
+# ruff: noqa: F401
 
 import inspect
 import pathlib

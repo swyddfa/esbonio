@@ -14,9 +14,9 @@ from uuid import uuid4
 from pygls.client import JsonRPCClient
 from pygls.protocol import JsonRPCProtocol
 
-import esbonio.sphinx_agent.types as types
 from esbonio.server import EventSource
 from esbonio.server import Uri
+from esbonio.sphinx_agent import types
 
 from .client import ClientState
 from .config import SphinxConfig
@@ -59,7 +59,7 @@ class SubprocessSphinxClient(JsonRPCClient):
         *args,
         **kwargs,
     ):
-        super().__init__(protocol_cls=protocol_cls, *args, **kwargs)  # type: ignore[misc]
+        super().__init__(*args, protocol_cls=protocol_cls, **kwargs)  # type: ignore[misc]
 
         self.id = str(uuid4())
         """The client's id."""
@@ -317,7 +317,7 @@ def make_test_sphinx_client(config: SphinxConfig) -> SubprocessSphinxClient:
 
     @client.feature("window/logMessage")
     def _(params):
-        print(params.message, file=sys.stderr)
+        print(params.message, file=sys.stderr)  # noqa: T201
 
     @client.feature("$/progress")
     def _on_progress(params):
@@ -354,14 +354,17 @@ def get_start_command(config: SphinxConfig, logger: logging.Logger):
     if config.enable_dev_tools:
         # Assumes that the user has `lsp-devtools` available on their PATH
         # TODO: Windows support
-        result = subprocess.run(["command", "-v", "lsp-devtools"], capture_output=True)
+        result = subprocess.run(
+            ["command", "-v", "lsp-devtools"], capture_output=True, check=False # noqa: S607
+        )
+
         if result.returncode == 0:
             lsp_devtools = result.stdout.decode("utf8").strip()
             command.extend([lsp_devtools, "agent", "--"])
 
         else:
             stderr = result.stderr.decode("utf8").strip()
-            logger.debug("Unable to locate lsp-devtools command", stderr)
+            logger.debug("Unable to locate lsp-devtools command\n%s", stderr)
 
     command.extend([*config.python_command, "-m", "sphinx_agent"])
     return command

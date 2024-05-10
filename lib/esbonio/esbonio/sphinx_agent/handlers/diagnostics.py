@@ -43,7 +43,7 @@ def setup(app: Sphinx):
     app.connect("config-inited", init_db)
     app.connect("source-read", clear_diagnostics)
 
-    # TODO
+    # TODO: Support for Sphinx v7+
     # app.connect("include-read")
 
     app.connect("build-finished", sync_diagnostics)

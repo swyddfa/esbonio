@@ -81,7 +81,7 @@ class LanguageFeature:
     def document_save(self, params: types.DidSaveTextDocumentParams) -> MaybeAsyncNone:
         """Called when a text document is saved."""
 
-    completion_triggers: List["re.Pattern"] = []
+    completion_triggers: List[re.Pattern] = []
 
     def completion(self, context: CompletionContext) -> CompletionResult:
         """Called when a completion request matches one of the specified triggers."""
@@ -90,13 +90,11 @@ class LanguageFeature:
         self, params: types.DocumentSymbolParams
     ) -> DocumentSymbolResult:
         """Called when a document symbols request is received."""
-        ...
 
     def workspace_symbol(
         self, params: types.WorkspaceSymbolParams
     ) -> WorkspaceSymbolResult:
         """Called when a workspace symbols request is received."""
-        ...
 
 
 @attrs.define
@@ -120,7 +118,7 @@ class CompletionContext:
     doc: TextDocument
     """The document within which the completion request was made."""
 
-    match: "re.Match"
+    match: re.Match
     """The match object describing the site of the completion request."""
 
     position: types.Position

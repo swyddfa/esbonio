@@ -107,7 +107,7 @@ class a_role(nodes.Element):
         return self["text"]
 
 
-def dummy_role(name, rawtext, text, lineno, inliner, options={}, content=[]):
+def dummy_role(name, rawtext, text, lineno, inliner, options=None, content=None):
     node = a_role()
     node.line = lineno
 
