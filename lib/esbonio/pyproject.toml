@@ -58,11 +58,6 @@ exclude_also = [
     "if typing.TYPE_CHECKING:",
 ]
 
-[tool.isort]
-force_single_line = true
-known_first_party = ["esbonio"]
-profile = "black"
-
 [tool.pytest.ini_options]
 addopts = "--doctest-glob='*.txt'"
 asyncio_mode = "auto"

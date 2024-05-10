@@ -1,0 +1,78 @@
+extend = "ruff_defaults.toml"
+extend-exclude = ["tests/workspaces/**/conf.py"]
+line-length = 88
+indent-width = 4
+
+[format]
+# Be like black where possible
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
+
+[lint]
+ignore = [
+  "BLE001", # catch Exception:
+  "INP001",  # Complains about namespace packages
+  "PT018", # Assertion should be broken down into multiple parts
+  "TRY003", # Exception message defined outside of class
+
+  # The following were added when migrating to ruff, we might want to consider
+  # enabling some of these again at some point.
+  "A002", # argument shadowing
+  "ARG001", # unused function argument
+  "ARG002", # unused method argument
+  "C405", # rewrite as set literal
+  "C408", # dict(x=y)
+  "C416", # Unecessary dict comprehension
+  "C419", # Unecessary list comprehension
+  "E402", # module import not at top of file
+  "EM101", # raise ValueError("Literal string, not variable")
+  "EM102", # raise ValueError(f"-string, not variable")
+  "FBT001", # boolean arguments
+  "FBT002", # boolean arguments
+  "FLY002", # f-string alternative available
+  "G003", # logging statement uses f-string
+  "G004", # logging statement uses +
+  "G201", # logging.error(.., exc_info=True)
+  "N801", # naming conventions
+  "N802", # naming conventions
+  "N806", # naming conventions
+  "PERF401", # use list comprehension
+  "PERF402", # use list or list.copy
+  "PLR2004", # magic values
+  "PLW2901", # overwriting for-loop variable
+  "PT006", # Complains about how `pytest.mark.parametrize` parameters are passed
+  "PT011", # pytest.raises(ValueError)
+  "RET503", # Missing return
+  "RET504", # Unecessary assignment before return
+  "RET505", # Unecessary elif after return
+  "RUF001", # ambiguous characters
+  "RUF012", # Mutable ClassVar annotation...
+  "RUF015", # Prefer next(iter(...))
+  "SIM102", # Use single if
+  "SIM105", # Use contextlib.suppress(...)
+  "SIM108", # Use ternary operator
+  "SIM115", # Use key in dict
+  "SIM118", # Use key in dict
+  "SLF001", # private member access
+  "TCH001", # move import to type checking block
+  "TCH002", # move import to type checking block
+  "TCH003", # move import to type checking block
+  "TID252", # Absolute vs relative imports
+  "TRY300", # Move statement to else block
+]
+
+[lint.per-file-ignores]
+"**/tests/**/*" = [
+  "S",
+  "SLF001",  # private member accessed
+  "T201",  # print found
+]
+
+[lint.isort]
+force-single-line = true
+
+[lint.pyupgrade]
+# At least for now...
+keep-runtime-typing = true
