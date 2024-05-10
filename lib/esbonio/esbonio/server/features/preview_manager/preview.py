@@ -58,7 +58,6 @@ class PreviewServer:
     """The http server that serves the built content."""
 
     def __init__(self, logger: logging.Logger, config: PreviewConfig, executor: Any):
-
         self.config = config
         """The current configuration."""
 

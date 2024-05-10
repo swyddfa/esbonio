@@ -355,7 +355,9 @@ def get_start_command(config: SphinxConfig, logger: logging.Logger):
         # Assumes that the user has `lsp-devtools` available on their PATH
         # TODO: Windows support
         result = subprocess.run(
-            ["command", "-v", "lsp-devtools"], capture_output=True, check=False # noqa: S607
+            ["command", "-v", "lsp-devtools"],  # noqa: S607
+            capture_output=True,
+            check=False,
         )
 
         if result.returncode == 0:

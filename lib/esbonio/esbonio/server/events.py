@@ -21,7 +21,6 @@ class EventSource:
     # etc know which events are possible etc.
 
     def __init__(self, logger: Optional[logging.Logger] = None):
-
         self.logger = logger or logging.getLogger(__name__)
         """The logging instance to use."""
 
