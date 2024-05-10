@@ -88,7 +88,7 @@ class Database:
         """
 
         # TODO: Is there a way to pass the table name as a '?' parameter?
-        base_query = f"DELETE FROM {table.name}"
+        base_query = f"DELETE FROM {table.name}"  # noqa: S608
         where: List[str] = []
         parameters: List[Any] = []
 
@@ -140,5 +140,5 @@ class Database:
         cursor = self.db.cursor()
 
         placeholder = "(" + ",".join(["?" for _ in range(len(values[0]))]) + ")"
-        cursor.executemany(f"INSERT INTO {table.name} VALUES {placeholder}", values)
+        cursor.executemany(f"INSERT INTO {table.name} VALUES {placeholder}", values)  # noqa: S608
         self.db.commit()

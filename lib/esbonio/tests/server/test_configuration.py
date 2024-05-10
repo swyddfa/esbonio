@@ -26,7 +26,7 @@ class ExampleConfig:
     log_names: List[str] = attrs.field(factory=list)
 
 
-@pytest.fixture()
+@pytest.fixture
 def server(event_loop):
     """Return a server instance for testing."""
     _server = EsbonioLanguageServer(loop=event_loop)

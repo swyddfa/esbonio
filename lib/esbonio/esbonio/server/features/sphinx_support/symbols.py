@@ -77,7 +77,7 @@ class SphinxSymbols(LanguageFeature):
                 uri = Uri.parse(uri_str)
                 range_ = self.converter.structure(json.loads(range_json), types.Range)
 
-                if detail != "" and name != detail:
+                if detail not in {"", name}:
                     display_name = f"{name} {detail}"
                 else:
                     display_name = name
