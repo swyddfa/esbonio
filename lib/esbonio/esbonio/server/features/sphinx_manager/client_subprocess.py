@@ -273,7 +273,7 @@ async def forward_stderr(server: asyncio.subprocess.Process):
 
     # EOF is signalled with an empty bytestring
     while (line := await server.stderr.readline()) != b"":
-        sphinx_logger.info(line.decode().strip())
+        sphinx_logger.info(line.decode().rstrip())
 
 
 def make_subprocess_sphinx_client(
