@@ -31,7 +31,7 @@
     ],
     "dependencies": {
         "@vscode/python-extension": "^1.0.5",
-        "semver": "^7.6.0",
+        "semver": "^7.6.2",
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
