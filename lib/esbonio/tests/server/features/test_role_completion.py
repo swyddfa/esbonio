@@ -8,10 +8,10 @@ from pygls.workspace import TextDocument
 from pytest_lsp import client_capabilities
 
 from esbonio import server
-from esbonio.server.features.roles import Role
 from esbonio.server.features.roles import completion
 from esbonio.server.testing import range_from_str
 from esbonio.sphinx_agent.types import RST_ROLE
+from esbonio.sphinx_agent.types import Role
 
 if typing.TYPE_CHECKING:
     from typing import Literal

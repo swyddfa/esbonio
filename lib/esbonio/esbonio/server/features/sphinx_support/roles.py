@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import typing
 
-from lsprotocol import types
+from lsprotocol import types as lsp
 
 from esbonio import server
 from esbonio.server.features import roles
 from esbonio.server.features.project_manager import ProjectManager
+from esbonio.sphinx_agent import types
 
 if typing.TYPE_CHECKING:
     from typing import List
@@ -21,7 +22,7 @@ class SphinxRoles(roles.RoleProvider):
 
     async def suggest_roles(
         self, context: server.CompletionContext
-    ) -> Optional[List[roles.Role]]:
+    ) -> Optional[List[types.Role]]:
         """Given a completion context, suggest roles that may be used."""
 
         if (project := self.manager.get_project(context.uri)) is None:
@@ -30,7 +31,7 @@ class SphinxRoles(roles.RoleProvider):
         # Does the document have a default domain set?
         results = await project.find_symbols(
             uri=str(context.uri.resolve()),
-            kind=types.SymbolKind.Class.value,
+            kind=lsp.SymbolKind.Class.value,
             detail="default-domain",
         )
         if len(results) > 0:
@@ -41,23 +42,23 @@ class SphinxRoles(roles.RoleProvider):
         primary_domain = await project.get_config_value("primary_domain")
         active_domain = default_domain or primary_domain or "py"
 
-        result: List[roles.Role] = []
+        result: List[types.Role] = []
         for name, implementation in await project.get_roles():
             # std: directives can be used unqualified
             if name.startswith("std:"):
                 short_name = name.replace("std:", "")
                 result.append(
-                    roles.Role(name=short_name, implementation=implementation)
+                    types.Role(name=short_name, implementation=implementation)
                 )
 
             # Also suggest unqualified versions of directives from the currently active domain.
             elif name.startswith(f"{active_domain}:"):
                 short_name = name.replace(f"{active_domain}:", "")
                 result.append(
-                    roles.Role(name=short_name, implementation=implementation)
+                    types.Role(name=short_name, implementation=implementation)
                 )
 
-            result.append(roles.Role(name=name, implementation=implementation))
+            result.append(types.Role(name=name, implementation=implementation))
 
         return result
 
