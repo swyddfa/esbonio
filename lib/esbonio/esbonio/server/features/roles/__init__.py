@@ -3,9 +3,8 @@ from __future__ import annotations
 import inspect
 import typing
 
-import attrs
-
 from esbonio import server
+from esbonio.sphinx_agent import types
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -16,23 +15,14 @@ if typing.TYPE_CHECKING:
     from typing import Union
 
 
-@attrs.define
-class Role:
-    """Represents a role."""
-
-    name: str
-    """The name of the role, as the user would type in an rst file."""
-
-    implementation: Optional[str]
-    """The dotted name of the role's implementation."""
-
-
 class RoleProvider:
     """Base class for role providers."""
 
     def suggest_roles(
         self, context: server.CompletionContext
-    ) -> Union[Optional[List[Role]], Coroutine[Any, Any, Optional[List[Role]]]]:
+    ) -> Union[
+        Optional[List[types.Role]], Coroutine[Any, Any, Optional[List[types.Role]]]
+    ]:
         """Givem a completion context, suggest roles that may be used."""
         return None
 
@@ -59,7 +49,9 @@ class RolesFeature(server.LanguageFeature):
         """
         self._providers[id(provider)] = provider
 
-    async def suggest_roles(self, context: server.CompletionContext) -> List[Role]:
+    async def suggest_roles(
+        self, context: server.CompletionContext
+    ) -> List[types.Role]:
         """Suggest roles that may be used, given a completion context.
 
         Parameters
@@ -67,11 +59,11 @@ class RolesFeature(server.LanguageFeature):
         context
            The completion context
         """
-        items: List[Role] = []
+        items: List[types.Role] = []
 
         for provider in self._providers.values():
             try:
-                result: Optional[List[Role]] = None
+                result: Optional[List[types.Role]] = None
 
                 aresult = provider.suggest_roles(context)
                 if inspect.isawaitable(aresult):

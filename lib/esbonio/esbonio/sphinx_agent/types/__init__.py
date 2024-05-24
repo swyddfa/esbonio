@@ -17,6 +17,10 @@ from typing import Tuple
 from typing import Union
 from urllib import parse
 
+from .roles import Role
+
+__all__ = ("Role",)
+
 MYST_DIRECTIVE: "re.Pattern" = re.compile(
     r"""
     (\s*)                             # directives can be indented
