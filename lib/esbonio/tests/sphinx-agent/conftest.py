@@ -1,9 +1,12 @@
 import logging
+import pathlib
 import sys
 
+import pytest
 import pytest_asyncio
 from lsprotocol.types import WorkspaceFolder
 from pygls.workspace import Workspace
+from sphinx.application import Sphinx
 
 from esbonio.server.features.project_manager import Project
 from esbonio.server.features.sphinx_manager.client import ClientState
@@ -18,9 +21,13 @@ from esbonio.server.features.sphinx_manager.config import SphinxConfig
 logger = logging.getLogger(__name__)
 
 
+@pytest.fixture
+def build_dir(tmp_path_factory):
+    return tmp_path_factory.mktemp("build")
+
+
 @pytest_asyncio.fixture
-async def client(uri_for, tmp_path_factory):
-    build_dir = tmp_path_factory.mktemp("build")
+async def client(uri_for, build_dir):
     demo_workspace = uri_for("workspaces", "demo")
     test_uri = demo_workspace / "index.rst"
 
@@ -50,6 +57,23 @@ async def client(uri_for, tmp_path_factory):
     yield sphinx_client
 
     await sphinx_client.stop()
+
+
+@pytest.fixture()
+def app(client, uri_for, build_dir):
+    """Sphinx application instance, used for validating results.
+
+    While we don't use it directly, depending on the ``client`` fixture ensures that the build has
+    completed and the ``environment.pickle`` file is there ready for us to use.
+    """
+    demo_workspace = uri_for("workspaces", "demo")
+    return Sphinx(
+        srcdir=demo_workspace.fs_path,
+        confdir=demo_workspace.fs_path,
+        outdir=str(pathlib.Path(build_dir, "html")),
+        doctreedir=str(pathlib.Path(build_dir, "doctrees")),
+        buildername="html",
+    )
 
 
 @pytest_asyncio.fixture
