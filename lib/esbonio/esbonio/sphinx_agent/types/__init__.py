@@ -5,7 +5,6 @@ For this reason this file *cannot* import anything from Sphinx.
 """
 
 import dataclasses
-import enum
 import os
 import pathlib
 import re
@@ -17,9 +16,27 @@ from typing import Tuple
 from typing import Union
 from urllib import parse
 
+from .lsp import Diagnostic
+from .lsp import DiagnosticSeverity
+from .lsp import Location
+from .lsp import Position
+from .lsp import Range
+from .roles import MYST_ROLE
+from .roles import RST_DEFAULT_ROLE
+from .roles import RST_ROLE
 from .roles import Role
 
-__all__ = ("Role",)
+__all__ = (
+    "Diagnostic",
+    "DiagnosticSeverity",
+    "Location",
+    "MYST_ROLE",
+    "Position",
+    "RST_DEFAULT_ROLE",
+    "RST_ROLE",
+    "Range",
+    "Role",
+)
 
 MYST_DIRECTIVE: "re.Pattern" = re.compile(
     r"""
@@ -39,52 +56,6 @@ MYST_DIRECTIVE: "re.Pattern" = re.compile(
 
 This does **not** include any options or content that may be included with the
 initial declaration.
-"""
-
-MYST_ROLE: "re.Pattern" = re.compile(
-    r"""
-    ([^\w`]|^\s*)                     # roles cannot be preceeded by letter chars
-    (?P<role>
-      {                               # roles start with a '{'
-      (?P<name>[:\w-]+)?              # roles have a name
-      }?                              # roles end with a '}'
-    )
-    (?P<target>
-      `                               # targets begin with a '`' character
-      ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
-      (?P<modifier>[!~])?             # targets may have a modifier
-      (?P<label>[^<`>]*)?             # targets contain a label
-      >?                              # labels end with a '>' when there's an alias
-      `?                              # targets end with a '`' character
-    )?
-    """,
-    re.VERBOSE,
-)
-"""A regular expression to detect and parse parial and complete roles.
-
-I'm not sure if there are offical names for the components of a role, but the
-language server breaks a role down into a number of parts::
-
-                 vvvvvv label
-                v modifier(optional)
-               vvvvvvvv target
-   {c:function}`!malloc`
-   ^^^^^^^^^^^^ role
-    ^^^^^^^^^^ name
-
-The language server sometimes refers to the above as a "plain" role, in that the
-role's target contains just the label of the object it is linking to. However it's
-also possible to define "aliased" roles, where the link text in the final document
-is overriden, for example::
-
-                vvvvvvvvvvvvvvvvvvvvvvvv alias
-                                          vvvvvv label
-                                         v modifier (optional)
-               vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv target
-   {c:function}`used to allocate memory <~malloc>`
-   ^^^^^^^^^^^^ role
-    ^^^^^^^^^^ name
-
 """
 
 
@@ -155,73 +126,6 @@ A number of named capture groups are available
 ``value``
    The value passed to the option
 
-"""
-
-
-RST_ROLE = re.compile(
-    r"""
-    ([^\w:]|^\s*)                     # roles cannot be preceeded by letter chars
-    (?P<role>
-      :                               # roles begin with a ':' character
-      (?!:)                           # the next character cannot be a ':'
-      ((?P<name>\w([:\w-]*\w)?):?)?   # roles have a name
-    )
-    (?P<target>
-      `                               # targets begin with a '`' character
-      ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
-      (?P<modifier>[!~])?             # targets may have a modifier
-      (?P<label>[^<`>]*)?             # targets contain a label
-      >?                              # labels end with a '>' when there's an alias
-      `?                              # targets end with a '`' character
-    )?
-    """,
-    re.VERBOSE,
-)
-"""A regular expression to detect and parse parial and complete roles.
-
-I'm not sure if there are offical names for the components of a role, but the
-language server breaks a role down into a number of parts::
-
-                 vvvvvv label
-                v modifier(optional)
-               vvvvvvvv target
-   :c:function:`!malloc`
-   ^^^^^^^^^^^^ role
-    ^^^^^^^^^^ name
-
-The language server sometimes refers to the above as a "plain" role, in that the
-role's target contains just the label of the object it is linking to. However it's
-also possible to define "aliased" roles, where the link text in the final document
-is overriden, for example::
-
-                vvvvvvvvvvvvvvvvvvvvvvvv alias
-                                          vvvvvv label
-                                         v modifier (optional)
-               vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv target
-   :c:function:`used to allocate memory <~malloc>`
-   ^^^^^^^^^^^^ role
-    ^^^^^^^^^^ name
-
-"""
-
-
-RST_DEFAULT_ROLE = re.compile(
-    r"""
-    (?<![:`])
-    (?P<target>
-      `                               # targets begin with a '`' character
-      ((?P<alias>[^<`>]*?)<)?         # targets may specify an alias
-      (?P<modifier>[!~])?             # targets may have a modifier
-      (?P<label>[^<`>]*)?             # targets contain a label
-      >?                              # labels end with a '>' when there's an alias
-      `?                              # targets end with a '`' character
-    )
-    """,
-    re.VERBOSE,
-)
-"""A regular expression to detect and parse parial and complete "default" roles.
-
-A "default" role is the target part of a normal role - but without the ``:name:`` part.
 """
 
 
@@ -554,38 +458,6 @@ Symbol = Tuple[  # Represents either a document symbol or workspace symbol depen
     Optional[int],  # parent_id
     int,  # order_id
 ]
-
-
-@dataclasses.dataclass(frozen=True)
-class Position:
-    line: int
-    character: int
-
-
-@dataclasses.dataclass(frozen=True)
-class Range:
-    start: Position
-    end: Position
-
-
-@dataclasses.dataclass(frozen=True)
-class Location:
-    uri: str
-    range: Range
-
-
-class DiagnosticSeverity(enum.IntEnum):
-    Error = 1
-    Warning = 2
-    Information = 3
-    Hint = 4
-
-
-@dataclasses.dataclass(frozen=True)
-class Diagnostic:
-    range: Range
-    message: str
-    severity: DiagnosticSeverity
 
 
 @dataclasses.dataclass
