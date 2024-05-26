@@ -4,16 +4,22 @@ import re
 import typing
 from dataclasses import dataclass
 from dataclasses import field
+from typing import Any
+from typing import Dict
+from typing import List
+
+from .lsp import Location
 
 if typing.TYPE_CHECKING:
-    from typing import Any
     from typing import Callable
-    from typing import Dict
-    from typing import List
     from typing import Optional
     from typing import Tuple
+    from typing import Type
+    from typing import TypeVar
 
-    from .lsp import Location
+    T = TypeVar("T")
+    JsonLoader = Callable[[str, Type[T]], T]
+
 
 MYST_ROLE: re.Pattern = re.compile(
     r"""
@@ -166,3 +172,28 @@ class Role:
 
         location = dumps(self.location) if self.location is not None else None
         return (self.name, self.implementation, location, providers)
+
+    @classmethod
+    def from_db(
+        cls,
+        load_as: JsonLoader,
+        name: str,
+        implementation: Optional[str],
+        location: Optional[str],
+        providers: Optional[str],
+    ) -> Role:
+        """Convert this role to its database representation."""
+
+        loc = load_as(location, Location) if location is not None else None
+        target_providers = (
+            load_as(providers, List[Role.TargetProvider])
+            if providers is not None
+            else []
+        )
+
+        return cls(
+            name=name,
+            implementation=implementation,
+            location=loc,
+            target_providers=target_providers,
+        )

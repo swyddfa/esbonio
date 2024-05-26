@@ -5,6 +5,7 @@ import sys
 import pytest
 import pytest_asyncio
 from lsprotocol.types import WorkspaceFolder
+from pygls.protocol import default_converter
 from pygls.workspace import Workspace
 from sphinx.application import Sphinx
 
@@ -59,7 +60,7 @@ async def client(uri_for, build_dir):
     await sphinx_client.stop()
 
 
-@pytest.fixture()
+@pytest.fixture
 def app(client, uri_for, build_dir):
     """Sphinx application instance, used for validating results.
 
@@ -78,7 +79,8 @@ def app(client, uri_for, build_dir):
 
 @pytest_asyncio.fixture
 async def project(client: SubprocessSphinxClient):
-    project = Project(client.db)
+    """The Sphinx project as captured by the database created by the Sphinx agent."""
+    project = Project(client.db, default_converter())
 
     yield project
     await project.close()
