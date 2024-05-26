@@ -34,6 +34,16 @@ async def test_files_table(client: SubprocessSphinxClient, project: Project):
             "rst/diagnostics",
             "rst/diagnostics.html",
         ),
+        (
+            anuri(src, "rst", "domains.rst"),
+            "rst/domains",
+            "rst/domains.html",
+        ),
+        (
+            anuri(src, "rst", "domains", "python.rst"),
+            "rst/domains/python",
+            "rst/domains/python.html",
+        ),
         (anuri(src, "rst", "symbols.rst"), "rst/symbols", "rst/symbols.html"),
         (anuri(src, "myst", "roles.md"), "myst/roles", "myst/roles.html"),
         (

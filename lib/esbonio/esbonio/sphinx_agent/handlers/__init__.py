@@ -34,6 +34,7 @@ sphinx.application.builtin_extensions += (
     f"{__name__}.symbols",
     f"{__name__}.directives",
     f"{__name__}.roles",
+    f"{__name__}.domains",
 )
 
 
