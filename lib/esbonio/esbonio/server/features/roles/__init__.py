@@ -14,9 +14,26 @@ if typing.TYPE_CHECKING:
     from typing import Optional
     from typing import Union
 
+    from esbonio.server import Uri
+
 
 class RoleProvider:
     """Base class for role providers."""
+
+    def get_role(
+        self, uri: Uri, name: str
+    ) -> Union[Optional[types.Role], Coroutine[Any, Any, Optional[types.Role]]]:
+        """Return the definition of the given role, if known.
+
+        Parameters
+        ----------
+        uri
+           The uri of the document in which the role name appears
+
+        name
+           The name of the role, as the user would type in a document
+        """
+        return None
 
     def suggest_roles(
         self, context: server.CompletionContext

@@ -26,7 +26,7 @@ class ProjectManager(server.LanguageFeature):
     def register_project(self, scope: str, dbpath: Union[str, pathlib.Path]):
         """Register a project."""
         self.logger.debug("Registered project for scope '%s': '%s'", scope, dbpath)
-        self.projects[scope] = Project(dbpath)
+        self.projects[scope] = Project(dbpath, self.converter)
 
     def get_project(self, uri: Uri) -> Optional[Project]:
         """Return the project instance for the given uri, if available"""
