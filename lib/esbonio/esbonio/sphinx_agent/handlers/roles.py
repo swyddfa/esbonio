@@ -16,6 +16,7 @@ ROLES_TABLE = Database.Table(
         Database.Column(name="name", dtype="TEXT"),
         Database.Column(name="implementation", dtype="TEXT"),
         Database.Column(name="location", dtype="JSON"),
+        Database.Column(name="target_providers", dtype="JSON"),
     ],
 )
 
@@ -27,8 +28,8 @@ def get_impl_name(role: Any) -> str:
         return f"{role.__module__}.{role.__class__.__name__}"
 
 
-def get_impl_location(impl: Any) -> Optional[str]:
-    """Get the implementation location of the given directive"""
+def get_impl_location(impl: Any) -> Optional[types.Location]:
+    """Get the implementation location of the given role"""
 
     try:
         if (filepath := inspect.getsourcefile(impl)) is None:
@@ -45,7 +46,7 @@ def get_impl_location(impl: Any) -> Optional[str]:
             ),
         )
 
-        return as_json(location)
+        return location
     except Exception:
         # TODO: Log the error somewhere..
         return None
@@ -57,8 +58,8 @@ def index_roles(app: Sphinx):
     roles: Dict[str, types.Role] = {}
 
     # Process the roles registered through Sphinx
-    for name, impl in app.esbonio._roles:
-        roles[name] = types.Role(name, get_impl_name(impl))
+    for name, impl, providers in app.esbonio._roles:
+        roles[name] = types.Role(name, get_impl_name(impl), target_providers=providers)
 
     # Look any remaining docutils provided roles
     found_roles = {
@@ -74,7 +75,9 @@ def index_roles(app: Sphinx):
 
     app.esbonio.db.ensure_table(ROLES_TABLE)
     app.esbonio.db.clear_table(ROLES_TABLE)
-    app.esbonio.db.insert_values(ROLES_TABLE, [r.to_db() for r in roles.values()])
+    app.esbonio.db.insert_values(
+        ROLES_TABLE, [r.to_db(as_json) for r in roles.values()]
+    )
 
 
 def setup(app: Sphinx):

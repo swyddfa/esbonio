@@ -9,18 +9,23 @@ from sphinx.util import console
 from sphinx.util import logging as sphinx_logging_module
 from sphinx.util.logging import NAMESPACE as SPHINX_LOG_NAMESPACE
 
+from . import types
 from .database import Database
 from .log import DiagnosticFilter
 
 if typing.TYPE_CHECKING:
     from typing import IO
     from typing import Any
+    from typing import Dict
     from typing import List
+    from typing import Optional
+    from typing import Set
     from typing import Tuple
     from typing import Type
 
     from sphinx.domains import Domain
 
+    RoleDefinition = Tuple[str, Any, List[types.Role.TargetProvider]]
 
 sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
 sphinx_log_setup = sphinx_logging_module.setup
@@ -47,10 +52,15 @@ class Esbonio:
         self.db = Database(dbpath)
         self.log = DiagnosticFilter(app)
 
-        self._roles: List[Tuple[str, Any]] = []
+        self._roles: List[RoleDefinition] = []
         """Roles captured during Sphinx startup."""
 
-    def add_role(self, name: str, role: Any):
+    def add_role(
+        self,
+        name: str,
+        role: Any,
+        target_providers: Optional[List[types.Role.TargetProvider]] = None,
+    ):
         """Register a role with esbonio.
 
         Parameters
@@ -60,8 +70,30 @@ class Esbonio:
 
         role
            The role's implementation
+
+        target_providers
+           A list of target providers for the role
         """
-        self._roles.append((name, role))
+        self._roles.append((name, role, target_providers or []))
+
+    @staticmethod
+    def create_role_target_provider(name: str, **kwargs) -> types.Role.TargetProvider:
+        """Create a new role target provider
+
+        Parameters
+        ----------
+        name
+           The name of the provider
+
+        kwargs
+           Additional arguments to pass to the provider instance
+
+        Returns
+        -------
+        types.Role.TargetProvider
+           The target provider
+        """
+        return types.Role.TargetProvider(name, kwargs)
 
 
 class Sphinx(_Sphinx):
@@ -90,6 +122,13 @@ class Sphinx(_Sphinx):
 
     def add_domain(self, domain: Type[Domain], override: bool = False) -> None:
         super().add_domain(domain, override)
+
+        target_types: Dict[str, Set[str]] = {}
+
+        for obj_name, item_type in domain.object_types.items():
+            for role_name in item_type.roles:
+                target_type = f"{domain.name}:{obj_name}"
+                target_types.setdefault(role_name, set()).add(target_type)
 
         for name, role in domain.roles.items():
             providers = []

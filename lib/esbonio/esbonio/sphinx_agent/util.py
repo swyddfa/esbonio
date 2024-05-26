@@ -1,6 +1,7 @@
 import dataclasses
 import json
 import logging
+import pathlib
 import sys
 from typing import Any
 from typing import Union
@@ -11,7 +12,10 @@ logger = logging.getLogger("esbonio.sphinx_agent")
 
 
 def _serialize_message(obj):
-    if isinstance(obj, _TranslationProxy):
+    if dataclasses.is_dataclass(obj):
+        return dataclasses.asdict(obj)
+
+    if isinstance(obj, (_TranslationProxy, pathlib.Path)):
         return str(obj)
 
     if isinstance(obj, set):
@@ -21,9 +25,6 @@ def _serialize_message(obj):
 
 
 def as_json(data: Any) -> str:
-    if dataclasses.is_dataclass(data):
-        data = dataclasses.asdict(data)
-
     return json.dumps(data, default=_serialize_message)
 
 
