@@ -125,6 +125,100 @@ async def test_rst_role_completions(
 @pytest.mark.parametrize(
     "text, expected, unexpected",
     [
+        (":ref:`", {"genindex", "modindex", "rst-roles-completion"}, set()),
+        (":std:ref:`", {"genindex", "modindex", "rst-roles-completion"}, set()),
+        (":doc:`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
+        (":std:doc:`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
+        (
+            ":class:`",
+            {"counters.pattern.PatternCounter", "counters.pattern.NoMatchesError"},
+            set(),
+        ),
+        (
+            ":py:class:`",
+            {"counters.pattern.PatternCounter", "counters.pattern.NoMatchesError"},
+            set(),
+        ),
+        (":func:`", {"counters.pattern.count_numbers"}, set()),
+        (":py:func:`", {"counters.pattern.count_numbers"}, set()),
+    ],
+)
+@pytest.mark.asyncio(scope="session")
+async def test_rst_role_target_completions(
+    client: LanguageClient,
+    uri_for,
+    text: str,
+    expected: Optional[Set[str]],
+    unexpected: Optional[Set[str]],
+):
+    """Ensure that the language server can offer role target completions in rst
+    documents."""
+    test_uri = uri_for("workspaces", "demo", "rst", "roles.rst")
+
+    uri = str(test_uri)
+    fpath = pathlib.Path(test_uri)
+    contents = fpath.read_text()
+    linum = contents.splitlines().index(".. Add your reference here...")
+
+    # Open the file
+    client.text_document_did_open(
+        types.DidOpenTextDocumentParams(
+            text_document=types.TextDocumentItem(
+                uri=uri,
+                language_id="restructuredtext",
+                version=1,
+                text=contents,
+            )
+        )
+    )
+
+    # Write some text
+    #
+    # This should replace the '.. Add your note here...' comment in
+    # 'demo/rst/directives.rst' with the provided text
+    client.text_document_did_change(
+        types.DidChangeTextDocumentParams(
+            text_document=types.VersionedTextDocumentIdentifier(uri=uri, version=2),
+            content_changes=[
+                types.TextDocumentContentChangeEvent_Type1(
+                    text=text,
+                    range=types.Range(
+                        start=types.Position(line=linum, character=0),
+                        end=types.Position(line=linum + 1, character=0),
+                    ),
+                )
+            ],
+        )
+    )
+
+    # Make the completion request
+    results = await client.text_document_completion_async(
+        types.CompletionParams(
+            text_document=types.TextDocumentIdentifier(uri=uri),
+            position=types.Position(line=linum, character=len(text)),
+        )
+    )
+
+    # Close the document - without saving!
+    client.text_document_did_close(
+        types.DidCloseTextDocumentParams(
+            text_document=types.TextDocumentIdentifier(uri=uri)
+        )
+    )
+
+    if expected is None:
+        assert results is None
+    else:
+        items = {item.label for item in results.items}
+        unexpected = unexpected or set()
+
+        assert expected == items & expected
+        assert set() == items & unexpected
+
+
+@pytest.mark.parametrize(
+    "text, expected, unexpected",
+    [
         ("{", EXPECTED, UNEXPECTED),
         ("{r", EXPECTED, UNEXPECTED),
         ("{c:func", EXPECTED, UNEXPECTED),
@@ -139,7 +233,100 @@ async def test_rst_role_completions(
     ],
 )
 @pytest.mark.asyncio(scope="session")
-async def test_myst_directive_completions(
+async def test_myst_role_completions(
+    client: LanguageClient,
+    uri_for,
+    text: str,
+    expected: Optional[Set[str]],
+    unexpected: Optional[Set[str]],
+):
+    """Ensure that the language server can offer completions in MyST documents."""
+    test_uri = uri_for("workspaces", "demo", "myst", "roles.md")
+
+    uri = str(test_uri)
+    fpath = pathlib.Path(test_uri)
+    contents = fpath.read_text()
+    linum = contents.splitlines().index("% Add your reference here...")
+
+    # Open the file
+    client.text_document_did_open(
+        types.DidOpenTextDocumentParams(
+            text_document=types.TextDocumentItem(
+                uri=uri,
+                language_id="markdown",
+                version=1,
+                text=contents,
+            )
+        )
+    )
+
+    # Write some text
+    #
+    # This should replace the '% Add your note here...' comment in
+    # 'demo/myst/directives.md' with the provided text
+    client.text_document_did_change(
+        types.DidChangeTextDocumentParams(
+            text_document=types.VersionedTextDocumentIdentifier(uri=uri, version=2),
+            content_changes=[
+                types.TextDocumentContentChangeEvent_Type1(
+                    text=text,
+                    range=types.Range(
+                        start=types.Position(line=linum, character=0),
+                        end=types.Position(line=linum + 1, character=0),
+                    ),
+                )
+            ],
+        )
+    )
+
+    # Make the completion request
+    results = await client.text_document_completion_async(
+        types.CompletionParams(
+            text_document=types.TextDocumentIdentifier(uri=uri),
+            position=types.Position(line=linum, character=len(text)),
+        )
+    )
+
+    # Close the document - without saving!
+    client.text_document_did_close(
+        types.DidCloseTextDocumentParams(
+            text_document=types.TextDocumentIdentifier(uri=uri)
+        )
+    )
+
+    if expected is None:
+        assert results is None
+    else:
+        items = {item.label for item in results.items}
+        unexpected = unexpected or set()
+
+        assert expected == items & expected
+        assert set() == items & unexpected
+
+
+@pytest.mark.parametrize(
+    "text, expected, unexpected",
+    [
+        ("{ref}`", {"genindex", "modindex", "rst-roles-completion"}, set()),
+        ("{std:ref}`", {"genindex", "modindex", "rst-roles-completion"}, set()),
+        ("{doc}`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
+        ("{std:doc}`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
+        (
+            "{class}`",
+            {"counters.pattern.PatternCounter", "counters.pattern.NoMatchesError"},
+            set(),
+        ),
+        (
+            "{py:class}`",
+            {"counters.pattern.PatternCounter", "counters.pattern.NoMatchesError"},
+            set(),
+        ),
+        ("{func}`", {"counters.pattern.count_numbers"}, set()),
+        ("{py:func}`", {"counters.pattern.count_numbers"}, set()),
+    ],
+)
+@pytest.mark.asyncio(scope="session")
+async def test_myst_role_target_completions(
     client: LanguageClient,
     uri_for,
     text: str,
