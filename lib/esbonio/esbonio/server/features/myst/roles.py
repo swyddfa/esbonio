@@ -62,7 +62,22 @@ class MystRoles(server.LanguageFeature):
         return await self.complete_roles(context)
 
     async def complete_targets(self, context: server.CompletionContext):
-        return None
+        """Provide completion suggestions for role targets."""
+
+        language = self.server.get_language_at(context.doc, context.position)
+        render_func = completion.get_role_target_renderer(
+            language, self._insert_behavior
+        )
+        if render_func is None:
+            return None
+
+        items = []
+        role_name = context.match.group("name")
+        for target in await self.roles.suggest_targets(context, role_name):
+            if (item := render_func(context, target)) is not None:
+                items.append(item)
+
+        return items if len(items) > 0 else None
 
     async def complete_roles(
         self, context: server.CompletionContext

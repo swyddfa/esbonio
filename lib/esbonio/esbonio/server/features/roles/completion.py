@@ -300,6 +300,30 @@ def render_myst_role_with_text_edit(
     return item
 
 
+@role_target_renderer(language="markdown", insert_behavior="replace")
+def render_myst_target_with_text_edit(
+    context: server.CompletionContext, item: types.CompletionItem
+) -> Optional[types.CompletionItem]:
+    """Render a ``CompletionItem`` using ``textEdit``.
+
+    This implements the ``replace`` insert behavior for role targets.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    item
+       The ``CompletionItem`` representing the role target.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the item should be skipped
+    """
+    return item
+
+
 def _render_role_common(role: Role) -> types.CompletionItem:
     """Render the common fields of a role's completion item."""
     return types.CompletionItem(
