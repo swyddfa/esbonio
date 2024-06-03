@@ -45,9 +45,6 @@ class SphinxConfig:
     enable_dev_tools: bool = attrs.field(default=False)
     """Flag to enable dev tools."""
 
-    enable_sync_scrolling: bool = attrs.field(default=True)
-    """Flag to enable sync scrolling."""
-
     python_command: List[str] = attrs.field(factory=list)
     """The command to use when launching the python interpreter."""
 
@@ -106,7 +103,6 @@ class SphinxConfig:
 
         return SphinxConfig(
             enable_dev_tools=self.enable_dev_tools,
-            enable_sync_scrolling=self.enable_sync_scrolling,
             cwd=cwd,
             env_passthrough=self.env_passthrough,
             python_command=self.python_command,

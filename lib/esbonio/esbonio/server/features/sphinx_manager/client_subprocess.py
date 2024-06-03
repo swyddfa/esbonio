@@ -204,7 +204,6 @@ class SubprocessSphinxClient(JsonRPCClient):
 
             params = types.CreateApplicationParams(
                 command=self.config.build_command,
-                enable_sync_scrolling=self.config.enable_sync_scrolling,
             )
 
             self.sphinx_info = await self.protocol.send_request_async(
