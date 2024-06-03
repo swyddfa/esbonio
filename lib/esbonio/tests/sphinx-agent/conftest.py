@@ -61,16 +61,11 @@ async def client(uri_for, build_dir):
 
 
 @pytest.fixture
-def app(client, uri_for, build_dir):
-    """Sphinx application instance, used for validating results.
-
-    While we don't use it directly, depending on the ``client`` fixture ensures that the build has
-    completed and the ``environment.pickle`` file is there ready for us to use.
-    """
-    demo_workspace = uri_for("workspaces", "demo")
+def app(client, build_dir):
+    """Sphinx application instance, used for validating results."""
     return Sphinx(
-        srcdir=demo_workspace.fs_path,
-        confdir=demo_workspace.fs_path,
+        srcdir=client.sphinx_info.src_dir,
+        confdir=client.sphinx_info.conf_dir,
         outdir=str(pathlib.Path(build_dir, "html")),
         doctreedir=str(pathlib.Path(build_dir, "doctrees")),
         buildername="html",
