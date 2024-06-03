@@ -286,17 +286,6 @@ Preview
 
 The following options control the behavior of the preview
 
-.. esbonio:config:: esbonio.sphinx.enableSyncScrolling
-   :scope: project
-   :type: boolean
-
-   Enable support for syncronsied scrolling between the editor and preview pane
-
-   .. note::
-
-      In order to use syncronised scrolling, dedicated support for it needs to be implemented by your language client.
-      See :ref:`lsp-feat-sync-scrolling` for details.
-
 .. esbonio:config:: esbonio.preview.bind
    :scope: project
    :type: string

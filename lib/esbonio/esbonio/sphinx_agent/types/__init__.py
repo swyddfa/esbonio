@@ -467,9 +467,6 @@ class CreateApplicationParams:
     command: List[str]
     """The ``sphinx-build`` command to base the app instance on."""
 
-    enable_sync_scrolling: bool
-    """Enable/disable sync scolling of previews."""
-
 
 @dataclasses.dataclass
 class CreateApplicationRequest:
