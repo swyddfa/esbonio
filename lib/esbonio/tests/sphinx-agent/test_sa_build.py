@@ -1,6 +1,5 @@
 import logging
 import pathlib
-import re
 import sys
 
 import pytest
@@ -19,6 +18,9 @@ from esbonio.server.features.sphinx_manager.client_subprocess import (
 from esbonio.server.features.sphinx_manager.config import SphinxConfig
 
 logger = logging.getLogger(__name__)
+STATIC_DIR = (
+    pathlib.Path(__file__).parent.parent.parent / "esbonio" / "sphinx_agent" / "static"
+).resolve()
 
 
 @pytest.mark.asyncio
@@ -26,18 +28,17 @@ async def test_build_includes_webview_js(client: SubprocessSphinxClient, uri_for
     """Ensure that builds include the ``webview.js`` script."""
 
     out = client.build_uri
-    src = client.src_uri
-    assert out is not None and src is not None
+    assert out is not None
 
-    # Ensure the script is included in the build output
-    webview_js = pathlib.Path(out / "_static" / "webview.js")
+    webview_js = STATIC_DIR / "webview.js"
     assert webview_js.exists()
-    assert "editor/scroll" in webview_js.read_text()
+
+    webview_script = webview_js.read_text()
+    assert "editor/scroll" in webview_script
 
     # Ensure the script is included in the page
     index_html = pathlib.Path(out / "index.html")
-    pattern = re.compile(r'<script src="_static/webview.js(\?v=[\w]+)?"></script>')
-    assert pattern.search(index_html.read_text()) is not None
+    assert webview_script in index_html.read_text()
 
 
 @pytest.mark.asyncio

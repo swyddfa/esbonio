@@ -1,6 +1,5 @@
 import inspect
 import logging
-import os.path
 import pathlib
 import sys
 import traceback
@@ -125,8 +124,7 @@ class SphinxHandler:
         # TODO: Sphinx 7.x has introduced a `include-read` event
         # See: https://github.com/sphinx-doc/sphinx/pull/11657
 
-        if request.params.enable_sync_scrolling:
-            _enable_sync_scrolling(self.app)
+        _enable_sync_scrolling(self.app)
 
         response = types.CreateApplicationResponse(
             id=request.id,
@@ -199,21 +197,11 @@ def _enable_sync_scrolling(app: Sphinx):
     """Given a Sphinx application, configure it so that we can support syncronised
     scrolling."""
 
-    # On OSes like Fedora Silverblue where `/home` is a symlink for `/var/home`
-    # we could have a situation where `STATIC_DIR` and `app.confdir` have
-    # different root dirs... which is enough to cause `os.path.relpath` to return
-    # the wrong path.
+    # Inline the JS code we need to enable sync scrolling.
     #
-    # Fully resolving both `STATIC_DIR` and `app.confdir` should be enough to
-    # mitigate this.
-    confdir = pathlib.Path(app.confdir).resolve()
+    # Yes this "bloats" every page in the generated docs, but is generally more robust
+    # see: https://github.com/swyddfa/esbonio/issues/810
+    webview_js = STATIC_DIR / "webview.js"
+    app.add_js_file(None, body=webview_js.read_text())
 
-    # Push our folder of static assets into the user's project.
-    # Path needs to be relative to their project's confdir.
-    reldir = os.path.relpath(str(STATIC_DIR), start=str(confdir))
-    app.config.html_static_path.append(reldir)
-
-    app.add_js_file("webview.js")
-
-    # Inject source line numbers into build output
     app.add_transform(LineNumberTransform)
