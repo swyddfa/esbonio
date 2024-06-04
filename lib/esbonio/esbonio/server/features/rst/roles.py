@@ -24,7 +24,11 @@ class RstRoles(server.LanguageFeature):
         self.roles = roles
         self._insert_behavior = "replace"
 
-    completion_triggers = [RST_ROLE]
+    completion_trigger = server.CompletionTrigger(
+        patterns=[RST_ROLE],
+        languages={"rst"},
+        characters={":", "`", "<", "/"},
+    )
 
     def initialized(self, params: types.InitializedParams):
         """Called once the initial handshake between client and server has finished."""
@@ -91,9 +95,8 @@ class RstRoles(server.LanguageFeature):
     ) -> Optional[List[types.CompletionItem]]:
         """Provide completion suggestions for role targets."""
 
-        language = self.server.get_language_at(context.doc, context.position)
         render_func = completion.get_role_target_renderer(
-            language, self._insert_behavior
+            context.language, self._insert_behavior
         )
         if render_func is None:
             return None
@@ -111,8 +114,9 @@ class RstRoles(server.LanguageFeature):
     ) -> Optional[List[types.CompletionItem]]:
         """Return completion suggestions for the available roles"""
 
-        language = self.server.get_language_at(context.doc, context.position)
-        render_func = completion.get_role_renderer(language, self._insert_behavior)
+        render_func = completion.get_role_renderer(
+            context.language, self._insert_behavior
+        )
         if render_func is None:
             return None
 
