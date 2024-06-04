@@ -16,6 +16,7 @@ if typing.TYPE_CHECKING:
     from typing import Coroutine
     from typing import List
     from typing import Optional
+    from typing import Set
     from typing import Union
 
     from .server import EsbonioLanguageServer
@@ -81,7 +82,7 @@ class LanguageFeature:
     def document_save(self, params: types.DidSaveTextDocumentParams) -> MaybeAsyncNone:
         """Called when a text document is saved."""
 
-    completion_triggers: List[re.Pattern] = []
+    completion_trigger: Optional[CompletionTrigger] = None
 
     def completion(self, context: CompletionContext) -> CompletionResult:
         """Called when a completion request matches one of the specified triggers."""
@@ -95,6 +96,105 @@ class LanguageFeature:
         self, params: types.WorkspaceSymbolParams
     ) -> WorkspaceSymbolResult:
         """Called when a workspace symbols request is received."""
+
+
+@attrs.define
+class CompletionTrigger:
+    """Define when the feature's completion method should be called."""
+
+    patterns: List[re.Pattern]
+    """A list of regular expressions to try"""
+
+    languages: Set[str] = attrs.field(factory=set)
+    """Languages in which the completion trigger should fire.
+
+    If empty, the document's language will be ignored.
+    """
+
+    characters: Set[str] = attrs.field(factory=set)
+    """Characters which, when typed, should trigger a completion request.
+
+    If empty, this trigger will ignore any trigger characters.
+    """
+
+    def __call__(
+        self,
+        uri: Uri,
+        params: types.CompletionParams,
+        document: TextDocument,
+        language: str,
+        client_capabilities: types.ClientCapabilities,
+    ) -> Optional[CompletionContext]:
+        """Determine if this completion trigger should fire.
+
+        Parameters
+        ----------
+        uri
+           The uri of the document in which the completion request was made
+
+        params
+           The completion params sent from the client
+
+        document
+           The document in which the completion request was made
+
+        language
+           The language at the point where the completion request was made
+
+        client_capabilities
+           The client's capabilities
+
+        Returns
+        -------
+        Optional[CompletionContext]
+           A completion context, if this trigger has fired
+        """
+
+        if len(self.languages) > 0 and language not in self.languages:
+            return None
+
+        if not self._trigger_characters_match(params):
+            return None
+
+        try:
+            line = document.lines[params.position.line]
+        except IndexError:
+            line = ""
+
+        for pattern in self.patterns:
+            for match in pattern.finditer(line):
+                # Only trigger completions if the position of the request is within the
+                # match.
+                start, stop = match.span()
+                if not (start <= params.position.character <= stop):
+                    continue
+
+                return CompletionContext(
+                    uri=uri,
+                    doc=document,
+                    match=match,
+                    position=params.position,
+                    language=language,
+                    capabilities=client_capabilities,
+                )
+
+        return None
+
+    def _trigger_characters_match(self, params: types.CompletionParams) -> bool:
+        """Determine if this trigger's completion characters align with the request."""
+
+        if (context := params.context) is None:
+            # No context available, assume a match
+            return True
+
+        if context.trigger_kind != types.CompletionTriggerKind.TriggerCharacter:
+            # Not a trigger character request, assume a match
+            return True
+
+        if (char := context.trigger_character) is None or len(self.characters) == 0:
+            return True
+
+        return char in self.characters
 
 
 @attrs.define
@@ -123,6 +223,9 @@ class CompletionContext:
 
     position: types.Position
     """The position at which the completion request was made."""
+
+    language: str
+    """The language where the completion request was made."""
 
     capabilities: types.ClientCapabilities
     """The client's capabilities."""

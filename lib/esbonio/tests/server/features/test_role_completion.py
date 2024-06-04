@@ -263,6 +263,7 @@ def test_render_role_completion(
         doc=TextDocument(uri=uri),
         match=match,
         position=types.Position(line=line, character=character),
+        language=language,
         capabilities=client_capabilities(client),
     )
 
