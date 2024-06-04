@@ -23,7 +23,11 @@ class RstDirectives(server.LanguageFeature):
         self.directives = directives
         self._insert_behavior = "replace"
 
-    completion_triggers = [RST_DIRECTIVE]
+    completion_trigger = server.CompletionTrigger(
+        patterns=[RST_DIRECTIVE],
+        languages={"rst"},
+        characters={".", "`"},
+    )
 
     def initialized(self, params: types.InitializedParams):
         """Called once the initial handshake between client and server has finished."""
@@ -74,8 +78,9 @@ class RstDirectives(server.LanguageFeature):
     ) -> Optional[List[types.CompletionItem]]:
         """Return completion suggestions for the available directives."""
 
-        language = self.server.get_language_at(context.doc, context.position)
-        render_func = completion.get_directive_renderer(language, self._insert_behavior)
+        render_func = completion.get_directive_renderer(
+            context.language, self._insert_behavior
+        )
         if render_func is None:
             return None
 

@@ -23,7 +23,11 @@ class MystDirectives(server.LanguageFeature):
         self.directives = directives
         self._insert_behavior = "replace"
 
-    completion_triggers = [MYST_DIRECTIVE]
+    completion_trigger = server.CompletionTrigger(
+        patterns=[MYST_DIRECTIVE],
+        languages={"markdown"},
+        characters={".", "`", "/"},
+    )
 
     def initialized(self, params: types.InitializedParams):
         """Called once the initial handshake between client and server has finished."""
@@ -74,8 +78,9 @@ class MystDirectives(server.LanguageFeature):
     ) -> Optional[List[types.CompletionItem]]:
         """Return completion suggestions for the available directives."""
 
-        language = self.server.get_language_at(context.doc, context.position)
-        render_func = completion.get_directive_renderer(language, self._insert_behavior)
+        render_func = completion.get_directive_renderer(
+            context.language, self._insert_behavior
+        )
         if render_func is None:
             return None
 
