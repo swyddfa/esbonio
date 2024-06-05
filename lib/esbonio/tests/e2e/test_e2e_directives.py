@@ -27,32 +27,38 @@ EXPECTED = {
     "std:option",
 }
 
+RST_EXPECTED = EXPECTED.copy()
+MYST_EXPECTED = {"eval-rst", *EXPECTED}
+
 UNEXPECTED = {
     "macro",
     "restructuredtext-test-directive",
 }
+
+RST_UNEXPECTED = {"eval-rst", *UNEXPECTED}
+MYST_UNEXPECTED = UNEXPECTED.copy()
 
 
 @pytest.mark.parametrize(
     "text, expected, unexpected",
     [
         (".", None, None),
-        ("..", EXPECTED, UNEXPECTED),
-        (".. ", EXPECTED, UNEXPECTED),
-        (".. d", EXPECTED, UNEXPECTED),
-        (".. code-b", EXPECTED, UNEXPECTED),
+        ("..", RST_EXPECTED, RST_UNEXPECTED),
+        (".. ", RST_EXPECTED, RST_UNEXPECTED),
+        (".. d", RST_EXPECTED, RST_UNEXPECTED),
+        (".. code-b", RST_EXPECTED, RST_UNEXPECTED),
         (".. codex-block:: ", None, None),
-        (".. c:", EXPECTED, UNEXPECTED),
+        (".. c:", RST_EXPECTED, RST_UNEXPECTED),
         (".. _some_label:", None, None),
         ("   .", None, None),
-        ("   ..", EXPECTED, UNEXPECTED),
-        ("   .. ", EXPECTED, UNEXPECTED),
-        ("   .. d", EXPECTED, UNEXPECTED),
+        ("   ..", RST_EXPECTED, RST_UNEXPECTED),
+        ("   .. ", RST_EXPECTED, RST_UNEXPECTED),
+        ("   .. d", RST_EXPECTED, RST_UNEXPECTED),
         ("   .. doctest:: ", None, None),
-        ("   .. code-b", EXPECTED, UNEXPECTED),
+        ("   .. code-b", RST_EXPECTED, RST_UNEXPECTED),
         ("   .. codex-block:: ", None, None),
         ("   .. _some_label:", None, None),
-        ("   .. c:", EXPECTED, UNEXPECTED),
+        ("   .. c:", RST_EXPECTED, RST_UNEXPECTED),
     ],
 )
 @pytest.mark.asyncio(scope="session")
@@ -133,21 +139,21 @@ async def test_rst_directive_completions(
     [
         ("`", None, None),
         ("``", None, None),
-        ("```", EXPECTED, UNEXPECTED),
-        ("```{", EXPECTED, UNEXPECTED),
-        ("```{d", EXPECTED, UNEXPECTED),
-        ("```{code-b", EXPECTED, UNEXPECTED),
+        ("```", MYST_EXPECTED, MYST_UNEXPECTED),
+        ("```{", MYST_EXPECTED, MYST_UNEXPECTED),
+        ("```{d", MYST_EXPECTED, MYST_UNEXPECTED),
+        ("```{code-b", MYST_EXPECTED, MYST_UNEXPECTED),
         ("```{codex-block} ", None, None),
-        ("```{c:", EXPECTED, UNEXPECTED),
+        ("```{c:", MYST_EXPECTED, MYST_UNEXPECTED),
         ("   `", None, None),
         ("   ``", None, None),
-        ("   ```", EXPECTED, UNEXPECTED),
-        ("   ```{", EXPECTED, UNEXPECTED),
-        ("   ```{d", EXPECTED, UNEXPECTED),
+        ("   ```", MYST_EXPECTED, MYST_UNEXPECTED),
+        ("   ```{", MYST_EXPECTED, MYST_UNEXPECTED),
+        ("   ```{d", MYST_EXPECTED, MYST_UNEXPECTED),
         ("   ```{doctest}", None, None),
-        ("   ```{code-b", EXPECTED, UNEXPECTED),
+        ("   ```{code-b", MYST_EXPECTED, MYST_UNEXPECTED),
         ("   ```{codex-block}", None, None),
-        ("   ```{c:", EXPECTED, UNEXPECTED),
+        ("   ```{c:", MYST_EXPECTED, MYST_UNEXPECTED),
     ],
 )
 @pytest.mark.asyncio(scope="session")
