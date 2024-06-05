@@ -5,6 +5,7 @@ import typing
 from lsprotocol import types
 
 from esbonio import server
+from esbonio.server.features.directives import Directive
 from esbonio.server.features.directives import DirectiveFeature
 from esbonio.server.features.directives import completion
 from esbonio.sphinx_agent.types import MYST_DIRECTIVE
@@ -85,6 +86,12 @@ class MystDirectives(server.LanguageFeature):
             return None
 
         items = []
+
+        # Include the special `eval-rst` directive
+        eval_rst = Directive("eval-rst", implementation=None)
+        if (item := render_func(context, eval_rst)) is not None:
+            items.append(item)
+
         for directive in await self.directives.suggest_directives(context):
             if (item := render_func(context, directive)) is not None:
                 items.append(item)
