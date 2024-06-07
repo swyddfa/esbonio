@@ -28,7 +28,7 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox hatch towncrier docutils
+        python -m pip install --upgrade hatch towncrier docutils
       name: Setup Environment
 
     - run: |
@@ -41,7 +41,7 @@ jobs:
     - name: Package
       run: |
         cd lib/esbonio
-        python -m tox -e pkg
+        hatch build
 
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v4
@@ -92,7 +92,7 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox hatch towncrier docutils
+        python -m pip install --upgrade hatch towncrier docutils
       name: Install Build Tools
 
     - run: |
@@ -105,10 +105,7 @@ jobs:
         cd code
 
         # Use version of esbonio on PyPi for release builds
-        ESBONIO_WHL="--pre esbonio" tox run -e bundle-deps
-
-        npm ci --prefer-offline
-        npm run package
+        ESBONIO_WHL="--pre esbonio" make dist
       name: Package Extension
 
     - name: 'Upload Artifact'
