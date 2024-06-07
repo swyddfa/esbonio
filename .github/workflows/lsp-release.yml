@@ -104,7 +104,10 @@ jobs:
 
   build-vsix:
     needs: [trigger, lsp-release]
-    if: needs.trigger.outputs.code
+    if: |
+      always() &&
+      needs.trigger.outputs.code &&
+      (needs.lsp-release.result == 'success' || needs.lsp-release.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - uses: 'actions/checkout@v4'
