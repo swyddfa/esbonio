@@ -1,3 +1,11 @@
+## v0.94.1 - 2024-06-07
+
+
+### Misc
+
+- Update bundled version of the language server to `v1.0.0b5` ([#831](https://github.com/swyddfa/esbonio/issues/831))
+
+
 ## v0.94.0 - 2024-04-28
 
 
