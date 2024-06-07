@@ -1,3 +1,11 @@
+## v1.0.0b5 - 2024-06-07
+
+
+### Misc
+
+- Fix release pipeline ([#831](https://github.com/swyddfa/esbonio/issues/831))
+
+
 ## v1.0.0b4 - 2024-06-07
 
 
