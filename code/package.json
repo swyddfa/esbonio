@@ -184,12 +184,6 @@
             {
                 "title": "Previews",
                 "properties": {
-                    "esbonio.sphinx.enableSyncScrolling": {
-                        "scope": "window",
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Enable syncronized scrolling between the editor and preview pane"
-                    },
                     "esbonio.preview.bind": {
                         "scope": "window",
                         "type": "string",
