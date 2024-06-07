@@ -8,7 +8,45 @@ on:
     - 'lib/esbonio/**'
 
 jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    outputs:
+      lsp: ${{steps.check-lsp.outputs.build}}
+      code: ${{steps.check-code.outputs.build}}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - run: |
+        if [ -z "${BASE_REF}" ]; then
+          echo "BASE=HEAD^" >> $GITHUB_ENV
+        else
+          echo "BASE=origin/${BASE_REF}" >> $GITHUB_ENV
+        fi
+      name: Determine base
+      env:
+        BASE_REF: ${{ github.base_ref }}
+
+    - id: check-code
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh vscode
+      name: "Build VSCode?"
+
+    - id: check-lsp
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh lsp
+      name: "Build LSP?"
+
   lsp-release:
+    needs: trigger
+    if: needs.trigger.outputs.lsp
     name: esbonio release
     runs-on: ubuntu-latest
     environment:
@@ -28,7 +66,7 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox hatch towncrier docutils
+        python -m pip install --upgrade hatch towncrier docutils
       name: Setup Environment
 
     - run: |
@@ -41,7 +79,7 @@ jobs:
     - name: Package
       run: |
         cd lib/esbonio
-        python -m tox -e pkg
+        hatch build
 
     - name: 'Upload Artifact'
       uses: actions/upload-artifact@v4
@@ -65,7 +103,11 @@ jobs:
 
 
   build-vsix:
-    needs: lsp-release
+    needs: [trigger, lsp-release]
+    if: |
+      always() &&
+      needs.trigger.outputs.code &&
+      (needs.lsp-release.result == 'success' || needs.lsp-release.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - uses: 'actions/checkout@v4'
@@ -92,7 +134,7 @@ jobs:
     - run: |
         python --version
         python -m pip install --upgrade pip
-        python -m pip install --upgrade tox hatch towncrier docutils
+        python -m pip install --upgrade hatch towncrier docutils
       name: Install Build Tools
 
     - run: |
@@ -105,10 +147,7 @@ jobs:
         cd code
 
         # Use version of esbonio on PyPi for release builds
-        ESBONIO_WHL="--pre esbonio" tox run -e bundle-deps
-
-        npm ci --prefer-offline
-        npm run package
+        ESBONIO_WHL="--pre esbonio" make dist
       name: Package Extension
 
     - name: 'Upload Artifact'
@@ -130,6 +169,7 @@ jobs:
   marketplace-release:
     name: vscode release
     needs: build-vsix
+    if: always() && needs.build-vsix.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: vscode-marketplace
@@ -159,6 +199,7 @@ jobs:
   open-vsx-release:
     name: open vsx release
     needs: build-vsix
+    if: always() && needs.build-vsix.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: open-vsx

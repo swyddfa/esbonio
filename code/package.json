@@ -8,7 +8,7 @@
     "author": "Esbonio Developers",
     "publisher": "swyddfa",
     "license": "MIT",
-    "version": "0.94.0",
+    "version": "0.94.2",
     "keywords": [
         "sphinx",
         "documentation"
@@ -184,12 +184,6 @@
             {
                 "title": "Previews",
                 "properties": {
-                    "esbonio.sphinx.enableSyncScrolling": {
-                        "scope": "window",
-                        "type": "boolean",
-                        "default": true,
-                        "description": "Enable syncronized scrolling between the editor and preview pane"
-                    },
                     "esbonio.preview.bind": {
                         "scope": "window",
                         "type": "string",

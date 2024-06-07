@@ -1,3 +1,35 @@
+## v1.0.0b5 - 2024-06-07
+
+
+### Misc
+
+- Fix release pipeline ([#831](https://github.com/swyddfa/esbonio/issues/831))
+
+
+## v1.0.0b4 - 2024-06-07
+
+
+### Features
+
+- Implement role target completions for MyST syntax ([#823](https://github.com/swyddfa/esbonio/issues/823))
+
+### Enhancements
+
+- The server now includes the `eval-rst` directive in its completion suggestions for MyST files ([#799](https://github.com/swyddfa/esbonio/issues/799))
+
+### API Changes
+
+- In the server's context `LanguageFeatures` can now define a `CompletionTrigger` which among other things, allows them to declare trigger characters ([#413](https://github.com/swyddfa/esbonio/issues/413))
+- In the Sphinx process, it is now possible for extensions to declare a role target provider through the `app.esbonio.create_role_target_provider` and `app.esbonio.add_role` methods.
+  **Note:** This does require an associated implementation of the target provider on the server side. ([#823](https://github.com/swyddfa/esbonio/issues/823))
+
+### Fixes
+
+- The language server should now launch the correct version of the sphinx agent, even if an installation of `esbonio` exists in the target environment ([#782](https://github.com/swyddfa/esbonio/issues/782))
+- The server no longer raises `ValueErrors` when typing `:` characters in markdown files. ([#800](https://github.com/swyddfa/esbonio/issues/800))
+- The server should no longer throw path mount errors when used across partitions on Windows ([#810](https://github.com/swyddfa/esbonio/issues/810))
+
+
 ## v1.0.0b3 - 2024-04-28
 
 
