@@ -169,6 +169,7 @@ jobs:
   marketplace-release:
     name: vscode release
     needs: build-vsix
+    if: always() && needs.build-vsix.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: vscode-marketplace
@@ -198,6 +199,7 @@ jobs:
   open-vsx-release:
     name: open vsx release
     needs: build-vsix
+    if: always() && needs.build-vsix.result == 'success'
     runs-on: ubuntu-latest
     environment:
       name: open-vsx
