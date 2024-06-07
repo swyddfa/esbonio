@@ -8,7 +8,45 @@ on:
     - 'lib/esbonio/**'
 
 jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    outputs:
+      lsp: ${{steps.check-lsp.outputs.build}}
+      code: ${{steps.check-code.outputs.build}}
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
+
+    - run: |
+        if [ -z "${BASE_REF}" ]; then
+          echo "BASE=HEAD^" >> $GITHUB_ENV
+        else
+          echo "BASE=origin/${BASE_REF}" >> $GITHUB_ENV
+        fi
+      name: Determine base
+      env:
+        BASE_REF: ${{ github.base_ref }}
+
+    - id: check-code
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh vscode
+      name: "Build VSCode?"
+
+    - id: check-lsp
+      run: |
+        set -e
+        echo ${BASE}
+
+        ./scripts/should-build.sh lsp
+      name: "Build LSP?"
+
   lsp-release:
+    needs: trigger
+    if: needs.trigger.outputs.lsp
     name: esbonio release
     runs-on: ubuntu-latest
     environment:
@@ -65,7 +103,8 @@ jobs:
 
 
   build-vsix:
-    needs: lsp-release
+    needs: [trigger, lsp-release]
+    if: needs.trigger.outputs.code
     runs-on: ubuntu-latest
     steps:
     - uses: 'actions/checkout@v4'
