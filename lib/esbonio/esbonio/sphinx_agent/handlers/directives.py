@@ -70,8 +70,8 @@ def index_directives(app: Sphinx):
 
     ignored_directives = {"restructuredtext-test-directive"}
     found_directives = {
-        **docutils_directives._directive_registry,
-        **docutils_directives._directives,
+        **docutils_directives._directive_registry,  # type: ignore[attr-defined]
+        **docutils_directives._directives,  # type: ignore[attr-defined]
     }
 
     for name, directive in found_directives.items():

@@ -29,13 +29,14 @@ The HTML pages are in docs/_build.
 >>> app
 <sphinx.application.Sphinx object at 0x7f0ad0fdb5b0>
 """
+# ruff: noqa: F401
 
 import inspect
 import pathlib
 import pdb
 import time
 
-from esbonio.sphinx_agent import types
+from esbonio.sphinx_agent import handlers, types
 from esbonio.sphinx_agent.app import Sphinx
 
 try:
@@ -45,9 +46,9 @@ try:
     app = Sphinx(
         srcdir=project,
         confdir=project,
-        outdir=project / "_build",
+        outdir=project / "_build" / "dirhtml",
         doctreedir=project / "_build" / "doctrees",
-        buildername="html",
+        buildername="dirhtml",
         freshenv=True,  # Have Sphinx reload everything on first build.
     )
     app.build()

@@ -36,10 +36,7 @@
             "outFiles": [
                 "${workspaceRoot}/code/dist/node/**/*.js"
             ],
-            // "preLaunchTask": "${defaultBuildTask}",
-            "env": {
-                // "VSCODE_LSP_DEBUG": "true"
-            }
+            "preLaunchTask": "${defaultBuildTask}",
         },
         {
             "name": "VSCode Web Extension",

@@ -3,15 +3,10 @@ from __future__ import annotations
 import inspect
 import typing
 
-import attrs
-from lsprotocol import types
+from lsprotocol import types as lsp
 
 from esbonio import server
-from esbonio.sphinx_agent.types import MYST_ROLE
-from esbonio.sphinx_agent.types import RST_DIRECTIVE
-from esbonio.sphinx_agent.types import RST_ROLE
-
-from . import completion
+from esbonio.sphinx_agent import types
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -21,38 +16,63 @@ if typing.TYPE_CHECKING:
     from typing import Optional
     from typing import Union
 
-
-@attrs.define
-class Role:
-    """Represents a role."""
-
-    name: str
-    """The name of the role, as the user would type in an rst file."""
-
-    implementation: Optional[str]
-    """The dotted name of the role's implementation."""
+    from esbonio.server import Uri
 
 
 class RoleProvider:
     """Base class for role providers."""
 
+    def get_role(
+        self, uri: Uri, name: str
+    ) -> Union[Optional[types.Role], Coroutine[Any, Any, Optional[types.Role]]]:
+        """Return the definition of the given role, if known.
+
+        Parameters
+        ----------
+        uri
+           The uri of the document in which the role name appears
+
+        name
+           The name of the role, as the user would type in a document
+        """
+        return None
+
     def suggest_roles(
         self, context: server.CompletionContext
-    ) -> Union[Optional[List[Role]], Coroutine[Any, Any, Optional[List[Role]]]]:
+    ) -> Union[
+        Optional[List[types.Role]], Coroutine[Any, Any, Optional[List[types.Role]]]
+    ]:
         """Givem a completion context, suggest roles that may be used."""
         return None
 
 
+class RoleTargetProvider:
+    """Base class for role target providers."""
+
+    def suggest_targets(
+        self, context: server.CompletionContext, **kwargs
+    ) -> Union[
+        Optional[List[lsp.CompletionItem]],
+        Coroutine[Any, Any, Optional[List[lsp.CompletionItem]]],
+    ]:
+        """Givem a completion context, suggest role targets that may be used."""
+        return None
+
+
 class RolesFeature(server.LanguageFeature):
-    """Support for roles."""
+    """Backend support for roles.
+
+    It's this language feature's responsibility to provide an API that exposes the
+    information a frontend feature may want.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._providers: Dict[int, RoleProvider] = {}
-        self._insert_behavior = "replace"
+        self._role_providers: Dict[int, RoleProvider] = {}
+        self._target_providers: Dict[str, RoleTargetProvider] = {}
 
-    def add_provider(self, provider: RoleProvider):
+    def add_role_provider(self, provider: RoleProvider):
         """Register a role provider.
 
         Parameters
@@ -60,95 +80,27 @@ class RolesFeature(server.LanguageFeature):
         provider
            The role provider
         """
-        self._providers[id(provider)] = provider
+        self._role_providers[id(provider)] = provider
 
-    def initialized(self, params: types.InitializedParams):
-        """Called once the initial handshake between client and server has finished."""
-        self.configuration.subscribe(
-            "esbonio.server.completion",
-            server.CompletionConfig,
-            self.update_configuration,
-        )
+    def add_target_provider(self, name: str, provider: RoleTargetProvider):
+        """Register a role target provider.
 
-    def update_configuration(
-        self, event: server.ConfigChangeEvent[server.CompletionConfig]
-    ):
-        """Called when the user's configuration is updated."""
-        self._insert_behavior = event.value.preferred_insert_behavior
+        Parameters
+        ----------
+        provider
+           The role target provider
+        """
+        if (existing := self._target_providers.get(name)) is not None:
+            raise ValueError(
+                f"RoleTargetProvider {provider!r} conflicts with existing "
+                f"provider: {existing!r}"
+            )
 
-    completion_triggers = [MYST_ROLE, RST_ROLE]
+        self._target_providers[name] = provider
 
-    async def completion(
+    async def suggest_roles(
         self, context: server.CompletionContext
-    ) -> Optional[List[types.CompletionItem]]:
-        """Provide completion suggestions for roles."""
-
-        language = self.server.get_language_at(context.doc, context.position)
-        groups = context.match.groupdict()
-        target = groups["target"]
-
-        # All text matched by the regex
-        text = context.match.group(0)
-        start, end = context.match.span()
-
-        if target:
-            target_index = start + text.find(target)
-
-            # Only trigger target completions if the request was made from within
-            # the target part of the role.
-            if target_index <= context.position.character <= end:
-                return await self.complete_targets(context)
-
-        # If there's no indent, or this is a markdown document, then this can only be a
-        # role definition
-        indent = context.match.group(1)
-        if indent == "" or language == "markdown":
-            return await self.complete_roles(context)
-
-        # Otherwise, search backwards until we find a blank line or an unindent
-        # so that we can determine the appropriate context.
-        linum = context.position.line - 1
-
-        try:
-            line = context.doc.lines[linum]
-        except IndexError:
-            return await self.complete_roles(context)
-
-        while linum >= 0 and line.startswith(indent):
-            linum -= 1
-            line = context.doc.lines[linum]
-
-        # Unless we are within a directive's options block, we should offer role
-        # suggestions
-        if RST_DIRECTIVE.match(line):
-            return []
-
-        return await self.complete_roles(context)
-
-    async def complete_targets(self, context: server.CompletionContext):
-        return None
-
-    async def complete_roles(
-        self, context: server.CompletionContext
-    ) -> Optional[List[types.CompletionItem]]:
-        """Return completion suggestions for the available roles"""
-
-        language = self.server.get_language_at(context.doc, context.position)
-        render_func = completion.get_role_renderer(language, self._insert_behavior)
-        if render_func is None:
-            return None
-
-        items = []
-        for role in await self.suggest_roles(context):
-            if (item := render_func(context, role)) is not None:
-                items.append(item)
-
-        if len(items) > 0:
-            return items
-
-        return None
-
-    async def suggest_roles(self, context: server.CompletionContext) -> List[Role]:
+    ) -> List[types.Role]:
         """Suggest roles that may be used, given a completion context.
 
         Parameters
@@ -156,11 +108,11 @@ class RolesFeature(server.LanguageFeature):
         context
            The completion context
         """
-        items: List[Role] = []
+        items: List[types.Role] = []
 
-        for provider in self._providers.values():
+        for provider in self._role_providers.values():
             try:
-                result: Optional[List[Role]] = None
+                result: Optional[List[types.Role]] = None
 
                 aresult = provider.suggest_roles(context)
                 if inspect.isawaitable(aresult):
@@ -173,6 +125,81 @@ class RolesFeature(server.LanguageFeature):
                 self.logger.error("Error in '%s.suggest_roles'", name, exc_info=True)
 
         return items
+
+    async def get_role(self, uri: Uri, name: str) -> Optional[types.Role]:
+        """Return the definition of the given role name.
+
+        Parameters
+        ----------
+        uri
+           The uri of the document in which the role name appears
+
+        name
+           The name of the role, as the user would type into a document.
+
+        Returns
+        -------
+        Optional[types.Role]
+           The role's definition, if known
+        """
+        for provider in self._role_providers.values():
+            try:
+                result: Optional[types.Role] = None
+
+                aresult = provider.get_role(uri, name)
+                if inspect.isawaitable(aresult):
+                    result = await aresult
+
+                if result is not None:
+                    return result
+            except Exception:
+                name = type(provider).__name__
+                self.logger.error("Error in '%s.get_role'", name, exc_info=True)
+
+        return None
+
+    async def suggest_targets(
+        self, context: server.CompletionContext, role_name: str
+    ) -> List[lsp.CompletionItem]:
+        """Suggest role targets that may be used, given a completion context.
+
+        Parameters
+        ----------
+        context
+           The completion context
+
+        role_name
+           The role to suggest targets for
+        """
+        if (role := await self.get_role(context.uri, role_name)) is None:
+            self.logger.debug("Unknown role '%s'", role_name)
+            return []
+
+        targets = []
+        self.logger.debug(
+            "Suggesting targets for role: '%s' (%s)", role.name, role.implementation
+        )
+
+        for spec in role.target_providers:
+            if (provider := self._target_providers.get(spec.name)) is None:
+                self.logger.error("Unknown target provider: '%s'", spec.name)
+                continue
+
+            try:
+                result: Optional[List[lsp.CompletionItem]] = None
+
+                aresult = provider.suggest_targets(context, **spec.kwargs)
+                if inspect.isawaitable(aresult):
+                    result = await aresult
+
+                if result is not None:
+                    targets.extend(result)
+
+            except Exception:
+                name = type(provider).__name__
+                self.logger.error("Error in '%s.suggest_targets'", name, exc_info=True)
+
+        return targets
 
 
 def esbonio_setup(server: server.EsbonioLanguageServer):

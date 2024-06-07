@@ -174,8 +174,8 @@ class EsbonioLanguageServer(LanguageServer):
            from esbonio.lsp.roles import Roles
            from esbonio.lsp.sphinx import SphinxLanguageServer
 
-           def esbonio_setup(rst: SphinxLanguageServer, roles: Roles):
-               ...
+
+           def esbonio_setup(rst: SphinxLanguageServer, roles: Roles): ...
 
         In this example the setup function is requesting instances of the
         :class:`~esbonio.lsp.sphinx.SphinxLanguageServer` and the
@@ -447,7 +447,7 @@ def _get_setup_arguments(
             args[name] = server
             continue
 
-        from .feature import LanguageFeature  # noqa: F402
+        from .feature import LanguageFeature
 
         if issubclass(type_, LanguageFeature):
             # Try and obtain an instance of the requested language feature.

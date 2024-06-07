@@ -4,13 +4,8 @@ import inspect
 import typing
 
 import attrs
-from lsprotocol import types
 
 from esbonio import server
-from esbonio.sphinx_agent.types import MYST_DIRECTIVE
-from esbonio.sphinx_agent.types import RST_DIRECTIVE
-
-from . import completion
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -45,13 +40,16 @@ class DirectiveProvider:
 
 
 class DirectiveFeature(server.LanguageFeature):
-    """Support for directives."""
+    """'Backend' support for directives.
+
+    It's this language feature's responsibility to provide an API that exposes the
+    information a "frontend" language feature may want.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self._providers: Dict[int, DirectiveProvider] = {}
-        self._insert_behavior = "replace"
 
     def add_provider(self, provider: DirectiveProvider):
         """Register a directive provider.
@@ -62,72 +60,6 @@ class DirectiveFeature(server.LanguageFeature):
            The directive provider
         """
         self._providers[id(provider)] = provider
-
-    completion_triggers = [RST_DIRECTIVE, MYST_DIRECTIVE]
-
-    def initialized(self, params: types.InitializedParams):
-        """Called once the initial handshake between client and server has finished."""
-        self.configuration.subscribe(
-            "esbonio.server.completion",
-            server.CompletionConfig,
-            self.update_configuration,
-        )
-
-    def update_configuration(
-        self, event: server.ConfigChangeEvent[server.CompletionConfig]
-    ):
-        """Called when the user's configuration is updated."""
-        self._insert_behavior = event.value.preferred_insert_behavior
-
-    async def completion(
-        self, context: server.CompletionContext
-    ) -> Optional[List[types.CompletionItem]]:
-        """Provide completion suggestions for directives."""
-
-        groups = context.match.groupdict()
-
-        # Are we completing a directive's options?
-        if "directive" not in groups:
-            return await self.complete_options(context)
-
-        # Don't offer completions for targets
-        if (groups["name"] or "").startswith("_"):
-            return None
-
-        # Are we completing the directive's argument?
-        directive_end = context.match.span()[0] + len(groups["directive"])
-        complete_directive = groups["directive"].endswith(("::", "}"))
-
-        if complete_directive and directive_end < context.position.character:
-            return await self.complete_arguments(context)
-
-        return await self.complete_directives(context)
-
-    async def complete_options(self, context: server.CompletionContext):
-        return None
-
-    async def complete_arguments(self, context: server.CompletionContext):
-        return None
-
-    async def complete_directives(
-        self, context: server.CompletionContext
-    ) -> Optional[List[types.CompletionItem]]:
-        """Return completion suggestions for the available directives."""
-
-        language = self.server.get_language_at(context.doc, context.position)
-        render_func = completion.get_directive_renderer(language, self._insert_behavior)
-        if render_func is None:
-            return None
-
-        items = []
-        for directive in await self.suggest_directives(context):
-            if (item := render_func(context, directive)) is not None:
-                items.append(item)
-
-        if len(items) > 0:
-            return items
-
-        return None
 
     async def suggest_directives(
         self, context: server.CompletionContext

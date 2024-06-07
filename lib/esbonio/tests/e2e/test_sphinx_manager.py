@@ -30,12 +30,12 @@ if typing.TYPE_CHECKING:
     ServerManager = Callable[[Any], Tuple[EsbonioLanguageServer, SphinxManager]]
 
 
-@pytest.fixture()
+@pytest.fixture
 def demo_workspace(uri_for):
     return uri_for("workspaces", "demo")
 
 
-@pytest.fixture()
+@pytest.fixture
 def docs_workspace(uri_for):
     return uri_for("..", "..", "..", "docs")
 

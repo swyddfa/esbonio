@@ -308,7 +308,7 @@ def test_myst_role_regex(string, expected):
 
     As with most test cases, this one is parameterized with the following arguments::
 
-        (":ref:", {"name": "ref"}),
+        ((":ref:", {"name": "ref"}),)
         (".. directive::", None)
 
     The first argument is the string to test the pattern against, the second a
@@ -767,7 +767,7 @@ def test_rst_role_regex(string, expected):
 
     As with most test cases, this one is parameterized with the following arguments::
 
-        (":ref:", {"name": "ref"}),
+        ((":ref:", {"name": "ref"}),)
         (".. directive::", None)
 
     The first argument is the string to test the pattern against, the second a
@@ -900,7 +900,7 @@ def test_default_role_regex(string, expected):
 
     As with most test cases, this one is parameterized with the following arguments::
 
-        (":ref:", {"name": "ref"}),
+        ((":ref:", {"name": "ref"}),)
         (".. directive::", None)
 
     The first argument is the string to test the pattern against, the second a

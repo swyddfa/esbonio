@@ -15,13 +15,20 @@ if typing.TYPE_CHECKING:
     from typing import List
     from typing import Optional
     from typing import Tuple
+    from typing import Type
+    from typing import TypeVar
     from typing import Union
+
+    import cattrs
+
+    T = TypeVar("T")
 
 
 class Project:
     """Represents a documentation project."""
 
-    def __init__(self, dbpath: Union[str, pathlib.Path]):
+    def __init__(self, dbpath: Union[str, pathlib.Path], converter: cattrs.Converter):
+        self.converter = converter
         self.dbpath = dbpath
         self._connection: Optional[aiosqlite.Connection] = None
 
@@ -34,6 +41,9 @@ class Project:
             self._connection = await aiosqlite.connect(self.dbpath)
 
         return self._connection
+
+    def load_as(self, o: str, t: Type[T]) -> T:
+        return self.converter.structure(json.loads(o), t)
 
     async def get_src_uris(self) -> List[Uri]:
         """Return all known source uris."""
@@ -75,6 +85,16 @@ class Project:
         query = "SELECT name, implementation FROM directives"
         cursor = await db.execute(query)
         return await cursor.fetchall()  # type: ignore[return-value]
+
+    async def get_role(self, name: str) -> Optional[types.Role]:
+        """Get the roles known to Sphinx."""
+        db = await self.get_db()
+
+        query = "SELECT * FROM roles WHERE name = ?"
+        cursor = await db.execute(query, (name,))
+        result = await cursor.fetchone()
+
+        return types.Role.from_db(self.load_as, *result) if result is not None else None
 
     async def get_roles(self) -> List[Tuple[str, Optional[str]]]:
         """Get the roles known to Sphinx."""
