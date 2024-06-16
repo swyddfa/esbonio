@@ -17,6 +17,7 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
+from typing import Union
 
 import pygls.uris as Uri
 from lsprotocol.types import DeleteFilesParams
@@ -52,9 +53,10 @@ from .line_number_transform import LineNumberTransform
 
 # Use a Thread as a preview server instead of Process for Python 3.12+
 # Usable since Thread and Process shares the same API
-PreviewExecutor = Process
+PreviewRunnableType = Union[Process, Thread]
+PreviewRunnable: PreviewRunnableType = Process
 if sys.version_info.major >= 3 and sys.version_info.minor >= 12:
-    PreviewExecutor = Thread
+    PreviewRunnable = Thread
 
 __all__ = [
     "InitializationOptions",
@@ -100,7 +102,7 @@ class SphinxLanguageServer(RstLanguageServer):
         self.sphinx_log: Optional[SphinxLogHandler] = None
         """Logging handler for sphinx messages."""
 
-        self.preview_process: Optional[Process] = None
+        self.preview_runnable: Optional[PreviewRunnableType] = None
         """The process hosting the preview server."""
 
         self.preview_port: Optional[int] = None
@@ -180,11 +182,11 @@ class SphinxLanguageServer(RstLanguageServer):
             )
 
     def on_shutdown(self, *args):
-        if self.preview_process:
-            if not hasattr(self.preview_process, "kill"):
-                self.preview_process.terminate()
+        if self.preview_runnable:
+            if not hasattr(self.preview_runnable, "kill"):
+                self.preview_runnable.terminate()
             else:
-                self.preview_process.kill()
+                self.preview_runnable.kill()
 
     def save(self, params: DidSaveTextDocumentParams):
         super().save(params)
@@ -437,24 +439,24 @@ class SphinxLanguageServer(RstLanguageServer):
 
             return {}
 
-        if not self.preview_process and IS_LINUX:
+        if not self.preview_runnable and IS_LINUX:
             self.logger.debug("Starting preview server.")
             server = make_preview_server(self.app.outdir)  # type: ignore[arg-type]
             self.preview_port = server.server_port
 
-            self.preview_process = PreviewExecutor(
+            self.preview_process = PreviewRunnable(
                 target=server.serve_forever, daemon=True
             )
             self.preview_process.start()
 
-        if not self.preview_process and not IS_LINUX:
+        if not self.preview_runnable and not IS_LINUX:
             self.logger.debug("Starting preview server")
 
             q: Queue = Queue()
-            self.preview_process = PreviewExecutor(
+            self.preview_runnable = PreviewRunnable(
                 target=start_preview_server, args=(q, self.app.outdir), daemon=True
             )
-            self.preview_process.start()
+            self.preview_runnable.start()
             self.preview_port = q.get()
 
         if options.get("show", True):
@@ -859,3 +861,4 @@ def exception_to_diagnostic(exc: BaseException):
 cli = setup_cli("esbonio.lsp.sphinx", "Esbonio's Sphinx language server.")
 cli.set_defaults(modules=DEFAULT_MODULES)
 cli.set_defaults(server_cls=SphinxLanguageServer)
+
