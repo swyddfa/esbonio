@@ -2,12 +2,14 @@ import json
 import logging
 import pathlib
 import platform
+import sys
 import traceback
 import typing
 import warnings
 from functools import partial
 from multiprocessing import Process
 from multiprocessing import Queue
+from threading import Thread
 from typing import IO
 from typing import Any
 from typing import Dict
@@ -47,6 +49,12 @@ from esbonio.lsp.sphinx.preview import make_preview_server
 from esbonio.lsp.sphinx.preview import start_preview_server
 
 from .line_number_transform import LineNumberTransform
+
+# Use a Thread as a preview server instead of Process for Python 3.12+
+# Usable since Thread and Process shares the same API
+PreviewExecutor = Process
+if sys.version_info.major >= 3 and sys.version_info.minor >= 12:
+    PreviewExecutor = Thread
 
 __all__ = [
     "InitializationOptions",
@@ -434,14 +442,14 @@ class SphinxLanguageServer(RstLanguageServer):
             server = make_preview_server(self.app.outdir)  # type: ignore[arg-type]
             self.preview_port = server.server_port
 
-            self.preview_process = Process(target=server.serve_forever, daemon=True)
+            self.preview_process = PreviewExecutor(target=server.serve_forever, daemon=True)
             self.preview_process.start()
 
         if not self.preview_process and not IS_LINUX:
             self.logger.debug("Starting preview server")
 
             q: Queue = Queue()
-            self.preview_process = Process(
+            self.preview_process = PreviewExecutor(
                 target=start_preview_server, args=(q, self.app.outdir), daemon=True
             )
             self.preview_process.start()
