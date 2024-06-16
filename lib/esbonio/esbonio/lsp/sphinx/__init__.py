@@ -861,4 +861,3 @@ def exception_to_diagnostic(exc: BaseException):
 cli = setup_cli("esbonio.lsp.sphinx", "Esbonio's Sphinx language server.")
 cli.set_defaults(modules=DEFAULT_MODULES)
 cli.set_defaults(server_cls=SphinxLanguageServer)
-
