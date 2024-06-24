@@ -38,7 +38,7 @@
         "@types/glob": "^8.1.0",
         "@types/node": "^18",
         "@types/vscode": "1.78.0",
-        "@vscode/vsce": "^2.27.0",
+        "@vscode/vsce": "^2.29.0",
         "esbuild": "^0.21.5",
         "ovsx": "^0.9.1",
         "typescript": "^5.4.5"
