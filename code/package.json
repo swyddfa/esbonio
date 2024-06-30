@@ -24,7 +24,7 @@
         "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "vscode:prepublish": "npm run compile"
     },
-    "main": "dist/node/extension",
+    "main": "dist/node/extension.js",
     "extensionDependencies": [
         "ms-python.python",
         "chrisjsewell.myst-tml-syntax"

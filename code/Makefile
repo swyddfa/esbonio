@@ -2,7 +2,7 @@ include ../.devcontainer/tools.mk
 
 ESBONIO ?= --pre esbonio
 
-.PHONY: dist dev-deps release-deps release
+.PHONY: dist dev-deps release-deps release install
 
 watch: dev-deps $(NPM)
 	-test -d dist && rm -r dist
@@ -11,6 +11,10 @@ watch: dev-deps $(NPM)
 compile: dev-deps $(NPM)
 	-test -d dist && rm -r dist
 	$(NPM) run compile
+
+install: compile
+	-test -d ../.vscode/extensions || mkdir -p ../.vscode/extensions
+	test -L ../.vscode/extensions/esbonio || ln -s $(PWD) ../.vscode/extensions/esbonio
 
 dist: release-deps $(NPM)
 	-test -d dist && rm -r dist
