@@ -1,6 +1,7 @@
 from esbonio.sphinx_agent.types import Uri
 
 from ._configuration import ConfigChangeEvent
+from ._configuration import ConfigurationContext
 from .events import EventSource
 from .feature import CompletionConfig
 from .feature import CompletionContext
@@ -14,6 +15,7 @@ from .setup import create_language_server
 __all__ = (
     "__version__",
     "ConfigChangeEvent",
+    "ConfigurationContext",
     "CompletionConfig",
     "CompletionContext",
     "CompletionTrigger",
