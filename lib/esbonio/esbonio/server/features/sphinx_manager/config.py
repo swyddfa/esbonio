@@ -54,7 +54,7 @@ class SphinxConfig:
     env_passthrough: List[str] = attrs.field(factory=list)
     """List of environment variables to pass through to the Sphinx subprocess"""
 
-    cwd: str = attrs.field(default="")
+    cwd: str = attrs.field(default="${scopeFsPath}")
     """The working directory to use."""
 
     python_path: List[pathlib.Path] = attrs.field(factory=list)
@@ -133,8 +133,7 @@ class SphinxConfig:
            The working directory to launch the sphinx agent in.
            If ``None``, the working directory could not be determined.
         """
-
-        if self.cwd:
+        if self.cwd and self.cwd != "${scopeFsPath}":
             return self.cwd
 
         candidates = [Uri.parse(f) for f in workspace.folders.keys()]

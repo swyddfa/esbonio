@@ -175,4 +175,5 @@ def test_resolve(
     expected
        The expected outcome
     """
-    assert config.resolve(Uri.parse(uri), workspace, logger) == expected
+    actual = config.resolve(Uri.parse(uri), workspace, logger)
+    assert actual == expected
