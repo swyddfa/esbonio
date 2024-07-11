@@ -6,6 +6,7 @@ import logging
 import socket
 import typing
 
+from lsprotocol import types
 from pygls.protocol import JsonRPCProtocol
 from pygls.protocol import default_converter
 from pygls.server import Server
@@ -52,6 +53,9 @@ class WebviewServer(Server):
         self._view_in_control: Optional[asyncio.Task] = None
         """If set, the view is in control and the editor should not emit scroll events"""
 
+        self._current_uri: Optional[str] = None
+        """If set, indicates the current uri the editor and view are scrolling."""
+
     def __await__(self):
         """Makes the server await-able"""
         if self._startup_task is None:
@@ -80,7 +84,7 @@ class WebviewServer(Server):
         if self.connected:
             self.lsp.notify("view/reload", {})
 
-    def scroll(self, line: int):
+    def scroll(self, uri: str, line: int):
         """Called by the editor to scroll the current webview."""
         if not self.connected or self._view_in_control:
             return
@@ -89,8 +93,9 @@ class WebviewServer(Server):
         if self._editor_in_control:
             self._editor_in_control.cancel()
 
+        self._current_uri = uri
         self._editor_in_control = asyncio.create_task(self.cooldown("editor"))
-        self.lsp.notify("view/scroll", {"line": line})
+        self.lsp.notify("view/scroll", {"uri": uri, "line": line})
 
     async def cooldown(self, name: str):
         """Create a cooldown."""
@@ -164,6 +169,16 @@ def make_ws_server(
             server._view_in_control.cancel()
 
         server._view_in_control = asyncio.create_task(server.cooldown("view"))
-        esbonio.lsp.notify("editor/scroll", dict(line=params.line))
+
+        esbonio.lsp.show_document(
+            types.ShowDocumentParams(
+                uri=params.uri,
+                external=False,
+                selection=types.Range(
+                    start=types.Position(line=params.line - 1, character=0),
+                    end=types.Position(line=params.line, character=0),
+                ),
+            )
+        )
 
     return server

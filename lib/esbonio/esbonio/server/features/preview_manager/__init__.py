@@ -137,13 +137,13 @@ class PreviewManager(server.LanguageFeature):
         self.logger.debug("Refreshing preview")
         self.webview.reload()
 
-    async def scroll_view(self, line: int):
+    async def scroll_view(self, uri: str, line: int):
         """Scroll the webview to the given line number."""
 
         if self.webview is None:
             return
 
-        self.webview.scroll(line)
+        self.webview.scroll(uri, line)
 
     async def preview_file(self, params, retry=True):
         if self.preview is None:
@@ -224,7 +224,7 @@ def esbonio_setup(
 
     @esbonio.feature("view/scroll")
     async def on_scroll(ls: server.EsbonioLanguageServer, params):
-        await manager.scroll_view(params.line)
+        await manager.scroll_view(params.uri, params.line)
 
     @esbonio.command("esbonio.server.previewFile")
     async def preview_file(ls: server.EsbonioLanguageServer, *args):
