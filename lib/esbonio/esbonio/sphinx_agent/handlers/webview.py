@@ -5,6 +5,8 @@ import typing
 
 from docutils import nodes
 from docutils.transforms import Transform
+from sphinx import addnodes
+from sphinx import version_info
 
 from ..log import source_to_uri_and_linum
 
@@ -20,6 +22,16 @@ STATIC_DIR = (pathlib.Path(__file__).parent.parent / "static").resolve()
 
 def has_source(node):
     if isinstance(node, nodes.Text):
+        return False
+
+    # For some reason, including `toctreenode` causes Sphinx 5.x and 6.x to crash with a
+    # cryptic error.
+    #
+    # AssertionError: Losing "classes" attribute
+    #
+    # Caused by this line:
+    # https://github.com/sphinx-doc/sphinx/blob/ec993dda3690f260345133c47a4a0f6ef0b18493/sphinx/environment/__init__.py#L630
+    if isinstance(node, addnodes.toctree) and version_info[0] < 7:
         return False
 
     return (node.line or 0) > 0 and node.source is not None
