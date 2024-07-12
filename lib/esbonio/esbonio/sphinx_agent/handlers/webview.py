@@ -75,7 +75,7 @@ class SourceLocationTransform(Transform):
             if node.line > current_line or node.source != current_source:
                 uri, linum = source_to_uri_and_linum(f"{node.source}:{node.line}")
 
-                if linum is None:
+                if uri is None or linum is None:
                     continue
 
                 source_index[idx] = (str(uri), linum)
