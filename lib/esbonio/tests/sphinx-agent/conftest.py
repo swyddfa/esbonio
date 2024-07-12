@@ -28,7 +28,7 @@ def build_dir(tmp_path_factory):
 
 
 @pytest_asyncio.fixture
-async def client(uri_for, build_dir):
+async def client(request, uri_for, build_dir):
     demo_workspace = uri_for("workspaces", "demo")
     test_uri = demo_workspace / "index.rst"
 
@@ -39,6 +39,7 @@ async def client(uri_for, build_dir):
         ],
     )
     config = SphinxConfig(
+        enable_dev_tools=request.config.getoption("enable_devtools"),
         python_command=[sys.executable],
         build_command=[
             "sphinx-build",
