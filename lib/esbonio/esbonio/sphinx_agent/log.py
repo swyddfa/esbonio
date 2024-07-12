@@ -86,7 +86,9 @@ class DiagnosticFilter(logging.Filter):
         return True
 
 
-def source_to_uri_and_linum(location: str) -> Tuple[Optional[Uri], Optional[int]]:
+def source_to_uri_and_linum(
+    location: Optional[str],
+) -> Tuple[Optional[Uri], Optional[int]]:
     """Convert the given source location to a uri and corresponding line number
 
     Parameters
@@ -99,6 +101,9 @@ def source_to_uri_and_linum(location: str) -> Tuple[Optional[Uri], Optional[int]
     Tuple[Optional[Uri], Optional[int]]
        The corresponding uri and line number, if known
     """
+    if location is None:
+        return None, None
+
     lineno = None
     path, parts = _get_location_path(location)
 
