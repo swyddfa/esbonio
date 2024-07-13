@@ -5,7 +5,7 @@ import { OutputChannelLogger } from '../common/log'
 import { PythonManager } from './python'
 import { PreviewManager } from "./preview";
 import { EsbonioClient } from './client'
-import { StatusManager } from './status';
+import { SphinxProcessProvider } from "./view";
 
 let esbonio: EsbonioClient
 let logger: OutputChannelLogger
@@ -21,7 +21,9 @@ export async function activate(context: vscode.ExtensionContext) {
   esbonio = new EsbonioClient(logger, pythonManager, context, channel)
 
   let previewManager = new PreviewManager(logger, context, esbonio)
-  let statusManager = new StatusManager(logger, context, esbonio)
+  context.subscriptions.push(vscode.window.registerTreeDataProvider(
+    'sphinxProcesses', new SphinxProcessProvider(esbonio)
+  ));
 
   let config = vscode.workspace.getConfiguration("esbonio.server")
   if (config.get("enabled")) {
