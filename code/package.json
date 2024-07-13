@@ -417,6 +417,14 @@
                 }
             ]
         },
+        "views": {
+            "explorer": [
+                {
+                    "id": "sphinxProcesses",
+                    "name": "Sphinx Processes"
+                }
+            ]
+        },
         "walkthroughs": [
             {
                 "id": "getting-started",
