@@ -5,7 +5,7 @@ import { OutputChannelLogger } from '../common/log'
 import { PythonManager } from './python'
 import { PreviewManager } from "./preview";
 import { EsbonioClient } from './client'
-import { SphinxProcessProvider } from "./view";
+import { SphinxProcessProvider } from "./processTreeView";
 
 let esbonio: EsbonioClient
 let logger: OutputChannelLogger

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
-import { Notifications } from "../common/constants";
-import { AppCreatedNotification, ClientCreatedNotification, ClientErroredNotification, EsbonioClient, SphinxClientConfig, SphinxInfo } from './client';
+import { Notifications, Events } from "../common/constants";
+import { AppCreatedNotification, ClientCreatedNotification, ClientDestroyedNotification, ClientErroredNotification, EsbonioClient, SphinxClientConfig, SphinxInfo } from './client';
 
 /**
  * Tree View provider that visualises the Sphinx processes currently
@@ -28,6 +28,16 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
       Notifications.SPHINX_CLIENT_ERRORED,
       (params: ClientErroredNotification) => this.clientErrored(params)
     )
+
+    client.addHandler(
+      Notifications.SPHINX_CLIENT_DESTROYED,
+      (params: ClientDestroyedNotification) => this.clientDestroyed(params)
+    )
+
+    client.addHandler(
+      Events.SERVER_STOP,
+      (_: any) => { this.serverStopped() }
+    )
   }
 
   /**
@@ -40,7 +50,7 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
 
     switch (element.kind) {
       case 'container':
-        return { label: element.name, collapsibleState: vscode.TreeItemCollapsibleState.Collapsed }
+        return { label: element.name, collapsibleState: vscode.TreeItemCollapsibleState.Expanded }
 
       case 'process':
         let label = 'Starting...'
@@ -62,7 +72,8 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
           label: label,
           iconPath: icon,
           tooltip: tooltip,
-          collapsibleState: vscode.TreeItemCollapsibleState.Collapsed
+          contextValue: element.kind,
+          collapsibleState: vscode.TreeItemCollapsibleState.None
         }
 
       case 'property':
@@ -144,6 +155,24 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
     client.setError(params.error, params.detail)
     this._onDidChangeTreeData.fire()
   }
+
+  /**
+   * Called when a SphinxClient is destroyed.
+   *
+   * @param params Information about the event.
+   */
+  private clientDestroyed(params: ClientDestroyedNotification) {
+    this.sphinxClients.delete(params.id)
+    this._onDidChangeTreeData.fire()
+  }
+
+  /**
+   * Called when the language server exits
+   */
+  private serverStopped() {
+    this.sphinxClients.clear()
+    this._onDidChangeTreeData.fire()
+  }
 }
 
 type ProcessTreeNode = ProcssContainerNode | SphinxProcessNode | ProcessPropertyNode
@@ -161,7 +190,6 @@ interface ProcessPropertyNode {
 interface SphinxProcessNode {
   kind: 'process'
   id: string
-
 }
 
 /**
