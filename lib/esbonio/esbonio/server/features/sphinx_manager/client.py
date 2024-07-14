@@ -22,6 +22,9 @@ class ClientState(enum.Enum):
     Starting = enum.auto()
     """The client is starting."""
 
+    Restarting = enum.auto()
+    """The client is restarting."""
+
     Running = enum.auto()
     """The client is running normally."""
 
@@ -79,6 +82,10 @@ class SphinxClient(Protocol):
 
     async def start(self) -> SphinxClient:
         """Start the client."""
+        ...
+
+    async def restart(self) -> SphinxClient:
+        """Restart the client."""
         ...
 
     async def build(

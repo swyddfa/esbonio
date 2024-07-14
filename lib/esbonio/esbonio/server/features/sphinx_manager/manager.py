@@ -164,17 +164,22 @@ class SphinxManager(server.LanguageFeature):
         await asyncio.sleep(delay)
 
         self._pending_builds.pop(app_id)
-        self.logger.debug("Triggering build")
         await self.trigger_build(uri)
 
     async def trigger_build(self, uri: Uri):
         """Trigger a build for the relevant Sphinx application for the given uri."""
+        self.logger.debug("Triggering build")
 
         client = await self.get_client(uri)
-        if client is None or client.state != ClientState.Running:
+        if client is None:
+            return
+
+        if client.state != ClientState.Running:
+            self.logger.debug("Skipping build, state is: %s", client.state)
             return
 
         if (project := self.project_manager.get_project(uri)) is None:
+            self.logger.debug("Skipping build, project is None")
             return
 
         # Pass through any unsaved content to the Sphinx agent.
@@ -201,6 +206,25 @@ class SphinxManager(server.LanguageFeature):
 
         # Notify listeners.
         self._events.trigger("build", client, result)
+
+    async def restart_client(self, client_id: str):
+        """Restart the client with the given id"""
+        for client in self.clients.values():
+            if client is None:
+                continue
+
+            if client.id != client_id:
+                continue
+
+            try:
+                await client.restart()
+            except Exception:
+                self.logger.exception("Unable to restart sphinx client")
+
+            break
+
+        else:
+            self.logger.error(f"No client with id {client_id!r} available to restart")
 
     async def get_client(self, uri: Uri) -> Optional[SphinxClient]:
         """Given a uri, return the relevant sphinx client instance for it."""
