@@ -78,7 +78,14 @@
             {
                 "command": "esbonio.server.restart",
                 "title": "Restart Language Server",
-                "category": "Esbonio"
+                "category": "Esbonio",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "esbonio.sphinx.restart",
+                "title": "Restart Sphinx Process",
+                "category": "Esbonio",
+                "icon": "$(refresh)"
             }
         ],
         "configuration": [
@@ -414,6 +421,20 @@
                     "alt": "esbonio.preview.open",
                     "group": "navigation",
                     "when": "resourceLangId == restructuredtext || resourceLangId == markdown"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "esbonio.server.restart",
+                    "when": "view == sphinxProcesses",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "esbonio.sphinx.restart",
+                    "when": "view == sphinxProcesses && viewItem == process",
+                    "group": "inline"
                 }
             ]
         },
