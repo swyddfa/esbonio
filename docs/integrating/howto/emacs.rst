@@ -1,5 +1,7 @@
-How To Use Esbonio in Emacs
-===========================
+.. _integrate-emacs:
+
+How To Integrate Esbonio with Emacs
+===================================
 
 There are two main language client implementations available in Emacs
 

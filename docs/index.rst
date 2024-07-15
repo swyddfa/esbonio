@@ -54,6 +54,13 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
    lsp/reference
    changelog
 
+
+.. toctree::
+   :caption: Integrating
+   :hidden:
+
+   Getting Started <integrating/getting-started>
+
 Sphinx Extensions
 -----------------
 
