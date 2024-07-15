@@ -68,7 +68,7 @@ def status_iterator(
 class progress_message:
     """Used to override Spinx's version of this, reports progress to the client."""
 
-    def __init__(self, message: str) -> None:
+    def __init__(self, message: str, *, nonl: bool = True) -> None:
         self.message = message
 
     def __enter__(self) -> None:
