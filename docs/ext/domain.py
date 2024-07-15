@@ -69,6 +69,25 @@ class ConfigValue(ObjectDescription[str]):
         domain.config_values[name] = (self.env.docname, node_id)
 
 
+class Command(ObjectDescription[str]):
+    """Description of a ``workspace/executeCommand`` command."""
+
+    option_spec: OptionSpec = {}
+
+    def handle_signature(self, sig: str, signode: addnodes.desc_signature) -> str:
+        signode += addnodes.desc_name(sig, sig)
+        return sig
+
+    def add_target_and_index(
+        self, name: str, sig: str, signode: addnodes.desc_signature
+    ) -> None:
+        node_id = make_id(self.env, self.state.document, term=name)
+        signode["ids"].append(node_id)
+
+        domain: EsbonioDomain = self.env.domains["esbonio"]
+        domain.commands[name] = (self.env.docname, node_id)
+
+
 class EsbonioDomain(Domain):
     """A domain dedicated to documenting the esbonio language server"""
 
@@ -77,23 +96,31 @@ class EsbonioDomain(Domain):
 
     object_types: Dict[str, ObjType] = {
         "config": ObjType("config", "conf"),
+        "command": ObjType("command", "cmd"),
     }
 
     directives = {
         "config": ConfigValue,
+        "command": Command,
     }
 
     roles = {
         "conf": XRefRole(),
+        "cmd": XRefRole(),
     }
 
     initial_data = {
         "config_values": {},
+        "commands": {},
     }
 
     @property
     def config_values(self) -> dict[str, Tuple[str, str]]:
         return self.data.setdefault("config_values", {})
+
+    @property
+    def commands(self) -> dict[str, Tuple[str, str]]:
+        return self.data.setdefault("commands", {})
 
     def resolve_xref(
         self,
@@ -108,6 +135,9 @@ class EsbonioDomain(Domain):
         """Resolve cross references"""
 
         if (entry := self.config_values.get(target, None)) is None:
+            return None
+
+        if (entry := self.commands.get(target, None)) is None:
             return None
 
         return make_refnode(
