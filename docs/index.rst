@@ -43,17 +43,19 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
       Documentation on extending the language server
 
 .. toctree::
-   :glob:
    :caption: Language Server
    :hidden:
-   :maxdepth: 2
 
    lsp/getting-started
-   lsp/extending
    lsp/howto
    lsp/reference
    changelog
 
+.. toctree::
+   :caption: Extending
+   :hidden:
+
+   Getting Started <extending/getting-started>
 
 .. toctree::
    :caption: Integrating

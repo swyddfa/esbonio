@@ -1,6 +1,6 @@
 .. _lsp-extending:
 
-Extending
-=========
+Extending Esbonio
+=================
 
 Coming soon\ :sup:`TM`
