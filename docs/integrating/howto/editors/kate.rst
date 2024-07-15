@@ -1,5 +1,7 @@
-Kate
-====
+.. _integrate-kate:
+
+How To Integrate Esbonio with Kate
+==================================
 
 .. figure:: /images/kate-screenshot.png
    :align: center
@@ -35,7 +37,7 @@ Installation
         "servers": {
           "rst": {
             "command": ["python", "-m", "esbonio"],
-            "initializationOptions": {
+            "settings": {
               "sphinx": { },
               "server": {
                 "completion": {
@@ -49,7 +51,7 @@ Installation
         }
       }
 
-   For best results, we recommend you set :confval:`server.completion.preferredInsertBehavior (string)` to ``insert``, see the section on :ref:`lsp-configuration` for details  on all the available options.
+   For best results, we recommend you set :esbonio:conf:`esbonio.server.completion.preferredInsertBehavior` to ``insert``, see the section on :ref:`lsp-configuration` for details  on all the available options.
 
    For more details on Kate's LSP client see the `project's <https://docs.kde.org/stable5/en/kate/kate/kate-application-plugin-lspclient.html>`__ documentation.
 

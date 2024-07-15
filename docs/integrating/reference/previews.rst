@@ -1,5 +1,5 @@
-Preview Implementation
-======================
+Previews
+========
 
 This page gives an overview of how the preview feature in ``esbonio`` is implemented.
 
@@ -31,3 +31,18 @@ At a high level the typical interaction between the components may look somethin
 #. Once the page loads in the webview, the WebSocket client embedded in the page connects to the WebSocket server running in the Language Server.
    Using the Language Server as an intermediary, it's now possible for the editor and webview to communicate with each other.
 #. When the user scrolls the editor, the editor informs the webview where it should scroll to (and vice versa).
+
+Commands
+--------
+
+The server offers the following commands for controlling the underlying Sphinx processes.
+They are invoked using an :lsp:`workspace/executeCommand` request
+
+.. esbonio:command:: esbonio.server.previewFile
+
+   Preview the output for the given file.
+   This command accepts an object of the following form
+
+   .. code-block:: json
+
+      {"uri": "a0a5a856-d4ec-4c45-8461-78748ddbd06f"}
