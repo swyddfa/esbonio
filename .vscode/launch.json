@@ -33,9 +33,6 @@
                 "--folder-uri=${workspaceRoot}/docs",
                 "--folder-uri=${workspaceRoot}/lib/esbonio/tests/workspaces/demo"
             ],
-            "env": {
-                "TZ": "UTC"
-            },
             "outFiles": [
                 "${workspaceRoot}/code/dist/node/**/*.js"
             ],
