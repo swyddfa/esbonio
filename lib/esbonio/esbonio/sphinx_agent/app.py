@@ -28,6 +28,7 @@ if typing.TYPE_CHECKING:
     RoleDefinition = Tuple[str, Any, List[types.Role.TargetProvider]]
 
 sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
+logger = sphinx_logger.getChild("esbonio")
 sphinx_log_setup = sphinx_logging_module.setup
 
 
