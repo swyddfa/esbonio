@@ -16,14 +16,9 @@ from .log import DiagnosticFilter
 if typing.TYPE_CHECKING:
     from typing import IO
     from typing import Any
-    from typing import Dict
     from typing import List
     from typing import Optional
-    from typing import Set
     from typing import Tuple
-    from typing import Type
-
-    from sphinx.domains import Domain
 
     RoleDefinition = Tuple[str, Any, List[types.Role.TargetProvider]]
 
@@ -120,24 +115,3 @@ class Sphinx(_Sphinx):
     def add_role(self, name: str, role: Any, override: bool = False):
         super().add_role(name, role, override)
         self.esbonio.add_role(name, role)
-
-    def add_domain(self, domain: Type[Domain], override: bool = False) -> None:
-        super().add_domain(domain, override)
-
-        target_types: Dict[str, Set[str]] = {}
-
-        for obj_name, item_type in domain.object_types.items():
-            for role_name in item_type.roles:
-                target_type = f"{domain.name}:{obj_name}"
-                target_types.setdefault(role_name, set()).add(target_type)
-
-        for name, role in domain.roles.items():
-            providers = []
-            if (item_types := target_types.get(name)) is not None:
-                providers.append(
-                    self.esbonio.create_role_target_provider(
-                        "objects", obj_types=list(item_types)
-                    )
-                )
-
-            self.esbonio.add_role(f"{domain.name}:{name}", role, providers)
