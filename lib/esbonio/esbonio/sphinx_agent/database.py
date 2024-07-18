@@ -93,8 +93,11 @@ class Database:
         parameters: List[Any] = []
 
         for param, value in kwargs.items():
-            where.append(f"{param} = ?")
-            parameters.append(value)
+            if value is None:
+                where.append(f"{param} is null")
+            else:
+                where.append(f"{param} = ?")
+                parameters.append(value)
 
         if where:
             conditions = " AND ".join(where)
