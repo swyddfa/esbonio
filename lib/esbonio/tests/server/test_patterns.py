@@ -73,6 +73,14 @@ def test_myst_directive_regex(string, expected):
         ("{code-block", {"name": "code-block", "role": "{code-block"}),
         ("{c:func}", {"name": "c:func", "role": "{c:func}"}),
         ("{cpp:func}", {"name": "cpp:func", "role": "{cpp:func}"}),
+        (
+            "{external:cpp:func}",
+            {"name": "external:cpp:func", "role": "{external:cpp:func}"},
+        ),
+        (
+            "{external+python:cpp:func}",
+            {"name": "external+python:cpp:func", "role": "{external+python:cpp:func}"},
+        ),
         ("{ref}`", {"name": "ref", "role": "{ref}", "target": "`"}),
         (
             "{code-block}`",
@@ -532,6 +540,14 @@ def test_directive_option_regex(string, expected):
         (":code-block", {"name": "code-block", "role": ":code-block"}),
         (":c:func:", {"name": "c:func", "role": ":c:func:"}),
         (":cpp:func:", {"name": "cpp:func", "role": ":cpp:func:"}),
+        (
+            ":external:cpp:func:",
+            {"name": "external:cpp:func", "role": ":external:cpp:func:"},
+        ),
+        (
+            ":external+python:cpp:func:",
+            {"name": "external+python:cpp:func", "role": ":external+python:cpp:func:"},
+        ),
         (":ref:`", {"name": "ref", "role": ":ref:", "target": "`"}),
         (
             ":code-block:`",
