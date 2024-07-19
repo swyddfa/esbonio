@@ -1,3 +1,19 @@
+## v0.95.0 - 2024-07-19
+
+
+### Features
+
+- Add a "Sphinx Processes" tree view
+
+  The tree view shows the current status of Sphinx sub-processes as well as providing a place from which to control them.
+  Currently there is just one command that can be used to restart a given process ([#854](https://github.com/swyddfa/esbonio/issues/854))
+
+### Misc
+
+- Removed Language Status Items ([#854](https://github.com/swyddfa/esbonio/issues/854))
+- Update bundled version of the language server to `v1.0.0b6` ([#857](https://github.com/swyddfa/esbonio/issues/857))
+
+
 ## v0.94.2 - 2024-06-07
 
 
