@@ -42,35 +42,62 @@ class ObjectsProvider(roles.RoleTargetProvider):
         context: server.CompletionContext,
         *,
         obj_types: List[str],
+        projects: Optional[List[str]],
     ) -> Optional[List[lsp.CompletionItem]]:
-        self.logger.debug("Suggesting targets for types: %s", obj_types)
+        #  TODO: Handle .. currentmodule
 
         if (project := self.manager.get_project(context.uri)) is None:
             return None
 
-        db = await project.get_db()
-        query = " ".join(
-            [
-                "SELECT name, display, objtype FROM objects",
-                "WHERE printf('%s:%s', domain, objtype) IN (",
-                ", ".join("?" for _ in range(len(obj_types))),
-                ");",
-            ]
-        )
-
         items = []
-        cursor = await db.execute(query, tuple(obj_types))
+        db = await project.get_db()
+
+        query, parameters = self._prepare_target_query(projects, obj_types)
+        cursor = await db.execute(query, parameters)
+
         for name, display, type_ in await cursor.fetchall():
             kind = TARGET_KINDS.get(type_, lsp.CompletionItemKind.Reference)
             items.append(
                 lsp.CompletionItem(
                     label=name,
-                    detail=display,
+                    detail=None if display == "-" else display,
                     kind=kind,
                 ),
             )
 
         return items
+
+    def _prepare_target_query(
+        self, projects: Optional[List[str]], obj_types: List[str]
+    ):
+        """Prepare the query to use when looking up targets."""
+
+        select = "SELECT name, display, objtype FROM objects"
+        where = []
+        parameters = []
+
+        if projects is None:
+            self.logger.debug(
+                "Suggesting targets from the local project for types: %s", obj_types
+            )
+            where.append("project IS NULL")
+
+        else:
+            self.logger.debug(
+                "Suggesting targets from projects %s for types: %s", projects, obj_types
+            )
+
+            placeholders = ", ".join("?" for _ in range(len(projects)))
+            where.append(f"project IN ({placeholders})")
+            parameters.extend(projects)
+
+        placeholders = ", ".join("?" for _ in range(len(obj_types)))
+        where.append(f"printf('%s:%s', domain, objtype) IN ({placeholders})")
+        parameters.extend(obj_types)
+
+        query = " ".join([select, "WHERE", " AND ".join(where)])
+
+        return query, tuple(parameters)
 
 
 class SphinxRoles(roles.RoleProvider):
