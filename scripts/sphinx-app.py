@@ -35,6 +35,7 @@ import inspect
 import pathlib
 import pdb
 import time
+import traceback
 
 from esbonio.sphinx_agent import handlers, types
 from esbonio.sphinx_agent.app import Sphinx
@@ -53,4 +54,5 @@ try:
     )
     app.build()
 except Exception:
+    traceback.print_exc()
     pdb.post_mortem()
