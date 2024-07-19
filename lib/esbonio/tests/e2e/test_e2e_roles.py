@@ -32,6 +32,14 @@ UNEXPECTED = {
 }
 
 
+LOCAL_PY_CLASSES = {
+    "counters.pattern.PatternCounter",
+    "counters.pattern.NoMatchesError",
+}
+PYTHON_PY_CLASSES = {"logging.Filter", "http.server.HTTPServer"}
+SPHINX_PY_CLASSES = {"sphinx.addnodes.desc"}
+
+
 @pytest.mark.parametrize(
     "text, expected, unexpected",
     [
@@ -131,13 +139,28 @@ async def test_rst_role_completions(
         (":std:doc:`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
         (
             ":class:`",
-            {"counters.pattern.PatternCounter", "counters.pattern.NoMatchesError"},
-            set(),
+            LOCAL_PY_CLASSES,
+            PYTHON_PY_CLASSES | SPHINX_PY_CLASSES,
         ),
         (
             ":py:class:`",
-            {"counters.pattern.PatternCounter", "counters.pattern.NoMatchesError"},
-            set(),
+            LOCAL_PY_CLASSES,
+            PYTHON_PY_CLASSES | SPHINX_PY_CLASSES,
+        ),
+        (
+            ":external:py:class:`",
+            PYTHON_PY_CLASSES | SPHINX_PY_CLASSES,
+            LOCAL_PY_CLASSES,
+        ),
+        (
+            ":external+python:py:class:`",
+            PYTHON_PY_CLASSES,
+            LOCAL_PY_CLASSES | SPHINX_PY_CLASSES,
+        ),
+        (
+            ":external+sphinx:py:class:`",
+            SPHINX_PY_CLASSES,
+            LOCAL_PY_CLASSES | PYTHON_PY_CLASSES,
         ),
         (":func:`", {"counters.pattern.count_numbers"}, set()),
         (":py:func:`", {"counters.pattern.count_numbers"}, set()),
@@ -313,13 +336,28 @@ async def test_myst_role_completions(
         ("{std:doc}`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
         (
             "{class}`",
-            {"counters.pattern.PatternCounter", "counters.pattern.NoMatchesError"},
-            set(),
+            LOCAL_PY_CLASSES,
+            PYTHON_PY_CLASSES | SPHINX_PY_CLASSES,
         ),
         (
             "{py:class}`",
-            {"counters.pattern.PatternCounter", "counters.pattern.NoMatchesError"},
-            set(),
+            LOCAL_PY_CLASSES,
+            PYTHON_PY_CLASSES | SPHINX_PY_CLASSES,
+        ),
+        (
+            "{external:py:class}`",
+            PYTHON_PY_CLASSES | SPHINX_PY_CLASSES,
+            LOCAL_PY_CLASSES,
+        ),
+        (
+            "{external+sphinx:py:class}`",
+            SPHINX_PY_CLASSES,
+            LOCAL_PY_CLASSES | PYTHON_PY_CLASSES,
+        ),
+        (
+            "{external+python:py:class}`",
+            PYTHON_PY_CLASSES,
+            LOCAL_PY_CLASSES | SPHINX_PY_CLASSES,
         ),
         ("{func}`", {"counters.pattern.count_numbers"}, set()),
         ("{py:func}`", {"counters.pattern.count_numbers"}, set()),
