@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { OutputChannelLogger } from '../common/log'
 import { EsbonioClient } from './client'
 import { Commands, Events, Notifications } from '../common/constants'
-import { ShowDocumentParams } from 'vscode-languageclient'
+import { ShowDocumentParams, Range } from 'vscode-languageclient'
 
 interface PreviewFileParams {
   uri: string
@@ -17,8 +17,11 @@ export class PreviewManager {
 
   private panel?: vscode.WebviewPanel
 
-  // The uri of the document currently shown in the preview pane
+  /** The uri of the document currently shown in the preview pane */
   private currentUri?: vscode.Uri
+
+  /** If `true`, indicates that we are currently changing the document being previewed */
+  private changingDocument = false
 
   constructor(
     private logger: OutputChannelLogger,
@@ -41,12 +44,6 @@ export class PreviewManager {
     client.addHandler(
       "window/showDocument",
       (params: { params: ShowDocumentParams, default: any }) => this.showDocument(params)
-    )
-
-    // View -> editor sync scrolling implementation
-    client.addHandler(
-      Notifications.SCROLL_EDITOR,
-      (params: { line: number }) => { this.scrollEditor(params) }
     )
 
     client.addHandler(
@@ -80,21 +77,6 @@ export class PreviewManager {
     return await this.previewEditor(editor, vscode.ViewColumn.Beside)
   }
 
-  private scrollEditor(params: { line: number }) {
-    let editor = findEditorFor(this.currentUri)
-    if (!editor) {
-      return
-    }
-    // this.logger.debug(`Scrolling: ${JSON.stringify(params)}`)
-
-    let target = new vscode.Range(
-      new vscode.Position(Math.max(0, params.line - 2), 0),
-      new vscode.Position(params.line + 2, 0)
-    )
-
-    editor.revealRange(target, vscode.TextEditorRevealType.AtTop)
-  }
-
   private scrollView(editor: vscode.TextEditor) {
     if (editor.document.uri !== this.currentUri) {
       return
@@ -103,7 +85,7 @@ export class PreviewManager {
     // More than one range here implies that some regions of code have been folded.
     // Though I doubt it matters too much for this use case?..
     let range = editor.visibleRanges[0]
-    this.client.scrollView(range.start.line + 1)
+    this.client.scrollView(editor.document.uri, range.start.line + 1)
   }
 
   private async onDidChangeEditor(editor?: vscode.TextEditor) {
@@ -120,6 +102,11 @@ export class PreviewManager {
   }
 
   private async previewEditor(editor: vscode.TextEditor, placement?: vscode.ViewColumn) {
+
+    if (this.changingDocument) {
+      return
+    }
+
     if (this.currentUri === editor.document.uri && this.panel) {
       // There is nothing to do.
       return
@@ -141,12 +128,40 @@ export class PreviewManager {
     this.currentUri = editor.document.uri
   }
 
-  private showDocument(params: { params: ShowDocumentParams, default: any }) {
+  private showDocument(req: { params: ShowDocumentParams, default: any }) {
+    let params = req.params
+    if (!params.external) {
+      return this.showInternalDocument(params)
+    }
+
     if (!this.panel) {
       return
     }
 
-    this.panel.webview.postMessage({ 'show': params.params.uri })
+    this.panel.webview.postMessage({ 'show': params.uri })
+  }
+
+  private showInternalDocument(params: ShowDocumentParams) {
+    this.changingDocument = true
+    this.currentUri = vscode.Uri.parse(params.uri)
+
+    vscode.window.showTextDocument(
+      this.currentUri,
+      {
+        preserveFocus: true,
+        // Force document to open in column one, otherwise VSCode may open editor over the
+        // preview pane.
+        viewColumn: vscode.ViewColumn.One
+      }
+    ).then(editor => {
+      const range = selectionToRange(params.selection)
+      if (range) {
+        editor.revealRange(range, vscode.TextEditorRevealType.AtTop)
+      }
+      this.changingDocument = false
+    })
+
+    return
   }
 
   private getPanel(placement: vscode.ViewColumn): vscode.WebviewPanel {
@@ -341,6 +356,17 @@ export class PreviewManager {
   }
 }
 
+
+function selectionToRange(selection?: Range): vscode.Range | undefined {
+  if (!selection) {
+    return
+  }
+
+  return new vscode.Range(
+    new vscode.Position(selection.start.line, selection.start.character),
+    new vscode.Position(selection.end.line, selection.end.character),
+  )
+}
 
 /**
  * Return the text editor showing the given uri.

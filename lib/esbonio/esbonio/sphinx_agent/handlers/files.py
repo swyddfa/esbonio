@@ -4,10 +4,12 @@ import typing
 
 from ..app import Database
 from ..app import Sphinx
+from ..app import logger
 from ..types import Uri
 from ..util import as_json
 
 if typing.TYPE_CHECKING:
+    from typing import Any
     from typing import List
     from typing import Optional
     from typing import Tuple
@@ -45,6 +47,16 @@ def init_db(app: Sphinx, config: Config):
     app.esbonio.db.ensure_table(CONFIG_TABLE)
 
 
+def value_to_db(name: str, item: Any) -> Tuple[str, str, Any]:
+    """Convert a single value to its DB representation"""
+
+    try:
+        (value, scope, _) = item
+        return (name, scope, as_json(value))
+    except Exception:
+        return (name, "", as_json(item))
+
+
 def dump_config(app: Sphinx, *args):
     """Dump the user's config into the db so that the parent language server can inspect
     it."""
@@ -61,20 +73,18 @@ def dump_config(app: Sphinx, *args):
             continue
 
         try:
-            (value, scope, _) = item
-            values.append((name, scope, as_json(value)))
-        except Exception:
-            values.append((name, "", as_json(item)))
+            values.append(value_to_db(name, item))
+        except Exception as exc:
+            logger.debug(f"Unable to dump config value: {name!r}: {exc}")
 
     for name, item in config.items():
         if name in IGNORED_CONFIG_NAMES:
             continue
 
         try:
-            (value, scope, _) = item
-            values.append((name, scope, as_json(value)))
-        except Exception:
-            values.append((name, "", as_json(item)))
+            values.append(value_to_db(name, item))
+        except Exception as exc:
+            logger.debug(f"Unable to dump config value: {name!r}: {exc}")
 
     app.esbonio.db.insert_values(CONFIG_TABLE, values)
 

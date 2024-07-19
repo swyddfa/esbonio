@@ -26,7 +26,7 @@ MYST_ROLE: re.Pattern = re.compile(
     ([^\w`]|^\s*)                     # roles cannot be preceeded by letter chars
     (?P<role>
       {                               # roles start with a '{'
-      (?P<name>[:\w-]+)?              # roles have a name
+      (?P<name>[:\w+-]+)?             # roles have a name
       }?                              # roles end with a '}'
     )
     (?P<target>
@@ -74,7 +74,7 @@ RST_ROLE = re.compile(
     (?P<role>
       :                               # roles begin with a ':' character
       (?!:)                           # the next character cannot be a ':'
-      ((?P<name>\w([:\w-]*\w)?):?)?   # roles have a name
+      ((?P<name>\w([:\w+-]*\w)?):?)?  # roles have a name
     )
     (?P<target>
       `                               # targets begin with a '`' character

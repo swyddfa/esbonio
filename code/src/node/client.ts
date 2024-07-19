@@ -306,8 +306,10 @@ export class EsbonioClient {
   }
 
 
-  public scrollView(line: number) {
-    this.client?.sendNotification(Notifications.VIEW_SCROLL, { line: line })
+  public scrollView(uri: vscode.Uri, line: number) {
+    this.client?.sendNotification(Notifications.VIEW_SCROLL, {
+      uri: uri.toString(), line: line
+    })
   }
 
 
@@ -368,7 +370,7 @@ export class EsbonioClient {
         },
         window: {
           showDocument: async (params: ShowDocumentParams, next) => {
-            this.logger.debug(`window/showDocument: ${JSON.stringify(params, undefined, 2)}`)
+            // this.logger.debug(`window/showDocument: ${JSON.stringify(params, undefined, 2)}`)
             this.callHandlers("window/showDocument", { params: params, default: next })
             return { success: true }
           }

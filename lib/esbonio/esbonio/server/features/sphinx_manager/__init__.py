@@ -20,3 +20,13 @@ __all__ = [
 def esbonio_setup(server: EsbonioLanguageServer, project_manager: ProjectManager):
     manager = SphinxManager(make_subprocess_sphinx_client, project_manager, server)
     server.add_feature(manager)
+
+    @server.command("esbonio.sphinx.restart")
+    async def restart_client(ls: EsbonioLanguageServer, params, *args):
+        ls.logger.debug("esbonio.sphinx.restart: %s", params)
+
+        for item in params:
+            if item is None:
+                continue
+
+            await manager.restart_client(item["id"])

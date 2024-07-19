@@ -187,11 +187,21 @@ class SubprocessSphinxClient(JsonRPCClient):
         if self._server and self._server.stderr:
             self._stderr_forwarder = asyncio.create_task(forward_stderr(self._server))
 
+    async def restart(self) -> SphinxClient:
+        """Restart the client."""
+        await self.stop()
+
+        # We need to reset the client's stop event.
+        self._stop_event.clear()
+
+        self._set_state(ClientState.Restarting)
+        return await self.start()
+
     async def start(self) -> SphinxClient:
         """Start the client."""
 
         # Only try starting once.
-        if self.state is not None:
+        if self.state not in {None, ClientState.Restarting}:
             return self
 
         try:
@@ -205,7 +215,6 @@ class SubprocessSphinxClient(JsonRPCClient):
             params = types.CreateApplicationParams(
                 command=self.config.build_command,
             )
-
             self.sphinx_info = await self.protocol.send_request_async(
                 "sphinx/createApp", params
             )

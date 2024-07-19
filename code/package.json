@@ -24,7 +24,7 @@
         "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "vscode:prepublish": "npm run compile"
     },
-    "main": "dist/node/extension",
+    "main": "dist/node/extension.js",
     "extensionDependencies": [
         "ms-python.python",
         "chrisjsewell.myst-tml-syntax"
@@ -38,10 +38,10 @@
         "@types/glob": "^8.1.0",
         "@types/node": "^18",
         "@types/vscode": "1.78.0",
-        "@vscode/vsce": "^2.26.1",
-        "esbuild": "^0.21.4",
+        "@vscode/vsce": "^2.30.0",
+        "esbuild": "^0.23.0",
         "ovsx": "^0.9.1",
-        "typescript": "^5.4.5"
+        "typescript": "^5.5.3"
     },
     "engines": {
         "vscode": "^1.82.0"
@@ -78,7 +78,14 @@
             {
                 "command": "esbonio.server.restart",
                 "title": "Restart Language Server",
-                "category": "Esbonio"
+                "category": "Esbonio",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "esbonio.sphinx.restart",
+                "title": "Restart Sphinx Process",
+                "category": "Esbonio",
+                "icon": "$(refresh)"
             }
         ],
         "configuration": [
@@ -414,6 +421,28 @@
                     "alt": "esbonio.preview.open",
                     "group": "navigation",
                     "when": "resourceLangId == restructuredtext || resourceLangId == markdown"
+                }
+            ],
+            "view/title": [
+                {
+                    "command": "esbonio.server.restart",
+                    "when": "view == sphinxProcesses",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "esbonio.sphinx.restart",
+                    "when": "view == sphinxProcesses && viewItem == process",
+                    "group": "inline"
+                }
+            ]
+        },
+        "views": {
+            "explorer": [
+                {
+                    "id": "sphinxProcesses",
+                    "name": "Sphinx Processes"
                 }
             ]
         },

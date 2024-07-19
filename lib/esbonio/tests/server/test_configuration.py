@@ -26,6 +26,12 @@ class ExampleConfig:
     log_names: List[str] = attrs.field(factory=list)
 
 
+@attrs.define
+class ColorConfig:
+    color: str
+    scope: str = attrs.field(default="${scope}")
+
+
 @pytest.fixture
 def server(event_loop):
     """Return a server instance for testing."""
@@ -232,6 +238,188 @@ def server(event_loop):
             "file:///c:/path/to/workspace/docs/file.txt",
             ExampleConfig(log_level="debug", log_names=["file"]),
             id="workspace-file-override[win]",
+            marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
+        ),
+        pytest.param(  # Check that we can expand config variables correctly
+            {},
+            {
+                "file:///path/to/workspace": dict(
+                    esbonio=dict(colors=dict(color="red"))
+                ),
+            },
+            {},
+            "esbonio.colors",
+            ColorConfig,
+            "file:///path/to/workspace/docs/file.txt",
+            ColorConfig(color="red", scope="file:///path/to/workspace"),
+            id="scope-variable[workspace][unix]",
+            marks=pytest.mark.skipif(IS_WIN, reason="windows"),
+        ),
+        pytest.param(  # Check that we can expand config variables correctly
+            {},
+            {
+                "file:///c%3A/path/to/workspace": dict(
+                    esbonio=dict(colors=dict(color="red"))
+                ),
+            },
+            {},
+            "esbonio.colors",
+            ColorConfig,
+            "file:///c:/path/to/workspace/docs/file.txt",
+            ColorConfig(color="red", scope="file:///c%3A/path/to/workspace"),
+            id="scope-variable[workspace][win]",
+            marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
+        ),
+        pytest.param(  # Check that we can expand config variables correctly
+            {},
+            {
+                "file:///path/to/workspace": dict(
+                    esbonio=dict(colors=dict(color="red"))
+                ),
+            },
+            {
+                "file:///path/to/workspace/docs": dict(
+                    esbonio=dict(colors=dict(color="blue"))
+                ),
+            },
+            "esbonio.colors",
+            ColorConfig,
+            "file:///path/to/workspace/docs/file.txt",
+            ColorConfig(color="red", scope="file:///path/to/workspace/docs"),
+            id="scope-variable[workspace+file][unix]",
+            marks=pytest.mark.skipif(IS_WIN, reason="windows"),
+        ),
+        pytest.param(  # Check that we can expand config variables correctly
+            {},
+            {
+                "file:///c%3A/path/to/workspace": dict(
+                    esbonio=dict(colors=dict(color="red"))
+                ),
+            },
+            {
+                "file:///c%3A/path/to/workspace/docs": dict(
+                    esbonio=dict(colors=dict(color="blue"))
+                ),
+            },
+            "esbonio.colors",
+            ColorConfig,
+            "file:///c:/path/to/workspace/docs/file.txt",
+            ColorConfig(color="red", scope="file:///c%3A/path/to/workspace/docs"),
+            id="scope-variable[workspace+file][win]",
+            marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
+        ),
+        pytest.param(  # The user should still be able to override them
+            {},
+            {
+                "file:///path/to/workspace": dict(
+                    esbonio=dict(colors=dict(color="red"))
+                ),
+            },
+            {
+                "file:///path/to/workspace/docs": dict(
+                    esbonio=dict(colors=dict(color="blue", scope="file:///my/scope"))
+                ),
+            },
+            "esbonio.colors",
+            ColorConfig,
+            "file:///path/to/workspace/docs/file.txt",
+            ColorConfig(color="red", scope="file:///my/scope"),
+            id="scope-variable-override[unix]",
+            marks=pytest.mark.skipif(IS_WIN, reason="windows"),
+        ),
+        pytest.param(  # The user should still be able to override them
+            {},
+            {
+                "file:///c%3A/path/to/workspace": dict(
+                    esbonio=dict(colors=dict(color="red"))
+                ),
+            },
+            {
+                "file:///c%3A/path/to/workspace/docs": dict(
+                    esbonio=dict(colors=dict(color="blue", scope="file:///my/scope"))
+                ),
+            },
+            "esbonio.colors",
+            ColorConfig,
+            "file:///c:/path/to/workspace/docs/file.txt",
+            ColorConfig(color="red", scope="file:///my/scope"),
+            id="scope-variable-override[win]",
+            marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
+        ),
+        pytest.param(
+            {},
+            {
+                "file:///path/to/workspace": dict(
+                    esbonio=dict(colors=dict(color="red"))
+                ),
+            },
+            {
+                "file:///path/to/workspace/docs": dict(
+                    esbonio=dict(colors=dict(color="blue", scope="${scopePath}"))
+                ),
+            },
+            "esbonio.colors",
+            ColorConfig,
+            "file:///path/to/workspace/docs/file.txt",
+            ColorConfig(color="red", scope="/path/to/workspace/docs"),
+            id="scope-path-variable[unix]",
+            marks=pytest.mark.skipif(IS_WIN, reason="windows"),
+        ),
+        pytest.param(
+            {},
+            {
+                "file:///c%3A/path/to/workspace": dict(
+                    esbonio=dict(colors=dict(color="red"))
+                ),
+            },
+            {
+                "file:///c%3A/path/to/workspace/docs": dict(
+                    esbonio=dict(colors=dict(color="blue", scope="${scopePath}"))
+                ),
+            },
+            "esbonio.colors",
+            ColorConfig,
+            "file:///c:/path/to/workspace/docs/file.txt",
+            ColorConfig(color="red", scope="/c:/path/to/workspace/docs"),
+            id="scope-path-variable[win]",
+            marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
+        ),
+        pytest.param(
+            {},
+            {
+                "file:///path/to/workspace": dict(
+                    esbonio=dict(colors=dict(color="red"))
+                ),
+            },
+            {
+                "file:///path/to/workspace/docs": dict(
+                    esbonio=dict(colors=dict(color="blue", scope="${scopeFsPath}"))
+                ),
+            },
+            "esbonio.colors",
+            ColorConfig,
+            "file:///path/to/workspace/docs/file.txt",
+            ColorConfig(color="red", scope="/path/to/workspace/docs"),
+            id="scope-fspath-variable[unix]",
+            marks=pytest.mark.skipif(IS_WIN, reason="windows"),
+        ),
+        pytest.param(
+            {},
+            {
+                "file:///c%3A/path/to/workspace": dict(
+                    esbonio=dict(colors=dict(color="red"))
+                ),
+            },
+            {
+                "file:///c%3A/path/to/workspace/docs": dict(
+                    esbonio=dict(colors=dict(color="blue", scope="${scopeFsPath}"))
+                ),
+            },
+            "esbonio.colors",
+            ColorConfig,
+            "file:///c:/path/to/workspace/docs/file.txt",
+            ColorConfig(color="red", scope="c:\\path\\to\\workspace\\docs"),
+            id="scope-fspath-variable[win]",
             marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
     ],

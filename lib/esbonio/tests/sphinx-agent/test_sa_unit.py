@@ -11,6 +11,8 @@ import pytest
 
 from esbonio.sphinx_agent.config import SphinxConfig
 from esbonio.sphinx_agent.log import DiagnosticFilter
+from esbonio.sphinx_agent.log import source_to_uri_and_linum
+from esbonio.sphinx_agent.types import Uri
 
 if typing.TYPE_CHECKING:
     from typing import Any
@@ -457,30 +459,24 @@ REL_INC_PATH = os.path.relpath(INC_PATH)
 @pytest.mark.parametrize(
     "location, expected",
     [
-        ("", (str(CONF_PATH), None)),
-        (f"{RST_PATH}", (str(RST_PATH), None)),
-        (f"{RST_PATH}:", (str(RST_PATH), None)),
-        (f"{RST_PATH}:3", (str(RST_PATH), 3)),
-        (f"{REL_INC_PATH}:12", (str(INC_PATH), 12)),
+        (f"{RST_PATH}", (Uri.for_file(RST_PATH), None)),
+        (f"{RST_PATH}:", (Uri.for_file(RST_PATH), None)),
+        (f"{RST_PATH}:3", (Uri.for_file(RST_PATH), 3)),
+        (f"{REL_INC_PATH}:12", (Uri.for_file(INC_PATH), 12)),
         (
             f"{PY_PATH}:docstring of esbonio.sphinx_agent.log.DiagnosticFilter:3",
-            (str(PY_PATH), 22),
+            (Uri.for_file(PY_PATH), 22),
         ),
-        (f"internal padding after {RST_PATH}:34", (str(RST_PATH), 34)),
-        (f"internal padding before {RST_PATH}:34", (str(RST_PATH), 34)),
+        (f"internal padding after {RST_PATH}:34", (Uri.for_file(RST_PATH), 34)),
+        (f"internal padding before {RST_PATH}:34", (Uri.for_file(RST_PATH), 34)),
     ],
 )
-def test_get_diagnostic_location(location: str, expected: Tuple[str, Optional[int]]):
+def test_source_to_uri_linum(location: str, expected: Tuple[str, Optional[int]]):
     """Ensure we can correctly determine a dianostic's location based on the string we
     get from sphinx."""
 
-    app = mock.Mock()
-    app.confdir = str(ROOT / "sphinx-extensions")
-
-    handler = DiagnosticFilter(app)
-
     mockpath = f"{DiagnosticFilter.__module__}.inspect.getsourcelines"
     with mock.patch(mockpath, return_value=([""], 20)):
-        actual = handler.get_location(location)
+        actual = source_to_uri_and_linum(location)
 
     assert actual == expected

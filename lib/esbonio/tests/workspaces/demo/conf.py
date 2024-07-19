@@ -17,6 +17,7 @@ release = "1.0"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "sphinx.ext.intersphinx",
     "sphinx_design",
     "myst_parser",
 ]
@@ -24,6 +25,16 @@ extensions = [
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "env", ".tox", "README.md"]
 
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3/", None),
+    "sphinx": ("https://www.sphinx-doc.org/en/master", None),
+}
+
+
+linkcheck_allowed_redirects = {
+    # All HTTP redirections from the source URI to the canonical URI will be treated as "working".
+    r"https://sphinx-doc\.org/.*": r"https://sphinx-doc\.org/en/master/.*"
+}
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

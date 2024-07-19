@@ -1,6 +1,5 @@
 import inspect
 import logging
-import pathlib
 import sys
 import traceback
 import typing
@@ -18,16 +17,15 @@ from sphinx.util.logging import NAMESPACE as SPHINX_LOG_NAMESPACE
 from .. import types
 from ..app import Sphinx
 from ..config import SphinxConfig
-from ..transforms import LineNumberTransform
 from ..types import Uri
 from ..util import send_error
 from ..util import send_message
 
-STATIC_DIR = (pathlib.Path(__file__).parent.parent / "static").resolve()
 sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
 
 # Inject our own 'core' extensions into Sphinx
 sphinx.application.builtin_extensions += (
+    f"{__name__}.webview",
     f"{__name__}.files",
     f"{__name__}.diagnostics",
     f"{__name__}.symbols",
@@ -118,13 +116,10 @@ class SphinxHandler:
         self.app = Sphinx(**sphinx_args)
 
         # Connect event handlers.
-        self.app.connect("env-before-read-docs", self._cb_env_before_read_docs)
-        self.app.connect("source-read", self._cb_source_read, priority=0)
-
         # TODO: Sphinx 7.x has introduced a `include-read` event
         # See: https://github.com/sphinx-doc/sphinx/pull/11657
-
-        _enable_sync_scrolling(self.app)
+        self.app.connect("env-before-read-docs", self._cb_env_before_read_docs)
+        self.app.connect("source-read", self._cb_source_read, priority=0)
 
         response = types.CreateApplicationResponse(
             id=request.id,
@@ -191,17 +186,3 @@ class SphinxHandler:
     def notify_exit(self, request: types.ExitNotification):
         """Sent from the client to signal that the agent should exit."""
         sys.exit(0)
-
-
-def _enable_sync_scrolling(app: Sphinx):
-    """Given a Sphinx application, configure it so that we can support syncronised
-    scrolling."""
-
-    # Inline the JS code we need to enable sync scrolling.
-    #
-    # Yes this "bloats" every page in the generated docs, but is generally more robust
-    # see: https://github.com/swyddfa/esbonio/issues/810
-    webview_js = STATIC_DIR / "webview.js"
-    app.add_js_file(None, body=webview_js.read_text())
-
-    app.add_transform(LineNumberTransform)

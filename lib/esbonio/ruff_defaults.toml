@@ -14,9 +14,11 @@ select = [
   "ARG003",
   "ARG004",
   "ARG005",
-  "ASYNC100",
-  "ASYNC101",
-  "ASYNC102",
+  "ASYNC210",
+  "ASYNC220",
+  "ASYNC221",
+  "ASYNC230",
+  "ASYNC251",
   "B002",
   "B003",
   "B004",
@@ -463,11 +465,6 @@ select = [
   "TID251",
   "TID252",
   "TID253",
-  "TRIO100",
-  "TRIO105",
-  "TRIO109",
-  "TRIO110",
-  "TRIO115",
   "TRY002",
   "TRY003",
   "TRY004",
@@ -534,17 +531,8 @@ select = [
 ]
 
 [lint.per-file-ignores]
-"**/scripts/*" = [
-  "INP001",
-  "T201",
-]
-"**/tests/**/*" = [
-  "PLC1901",
-  "PLR2004",
-  "PLR6301",
-  "S",
-  "TID252",
-]
+"**/scripts/*" = ["INP001", "T201"]
+"**/tests/**/*" = ["PLC1901", "PLR2004", "PLR6301", "S", "TID252"]
 
 [lint.flake8-tidy-imports]
 ban-relative-imports = "all"

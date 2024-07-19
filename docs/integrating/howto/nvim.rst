@@ -1,5 +1,7 @@
-How To use Esbonio in Neovim
-============================
+.. _integrate-nvim:
+
+How To Integrate Esbonio with Neovim
+====================================
 
 This guide covers how to setup ``esbonio`` with Neovim's built-in language client.
 
@@ -56,7 +58,7 @@ For example the ``find_venv`` function below implements the following discovery 
 - If ``nvim`` is launched with a virtual environment active, use it, otherwise
 - Look for a virtual environment located within the project's git repository
 
-.. literalinclude:: ../editors/nvim-lspconfig/init.vim
+.. literalinclude:: ./editors/nvim-lspconfig/init.vim
    :language: lua
    :start-at: function find_venv()
    :end-before: lspconfig
@@ -96,9 +98,9 @@ This configuration includes:
 
 .. dropdown:: Show Example Config
 
-   You can also :download:`download <../editors/nvim-lspconfig/init.vim>` this file
+   You can also :download:`download <./editors/nvim-lspconfig/init.vim>` this file
 
-   .. literalinclude:: ../editors/nvim-lspconfig/init.vim
+   .. literalinclude:: ./editors/nvim-lspconfig/init.vim
       :language: vim
 
 

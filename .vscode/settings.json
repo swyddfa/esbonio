@@ -1,6 +1,6 @@
 {
     "[python]": {
-        "editor.defaultFormatter": "ms-python.black-formatter",
+        "editor.defaultFormatter": "charliermarsh.ruff",
         "editor.codeActionsOnSave": {
             "source.organizeImports": "explicit"
         },
@@ -11,9 +11,6 @@
     },
     "[typescript]": {
         "editor.tabSize": 2
-    },
-    "files.associations": {
-        "setup.cfg": "ini",
     },
     "files.exclude": {
         "**/.git": true,
@@ -32,10 +29,6 @@
         "**/.mypy_cache": true
     },
     "esbonio.server.showDeprecationWarnings": true,
-    "isort.args": [
-        "--settings-file",
-        "./lib/esbonio/pyproject.toml"
-    ],
     "python.testing.pytestArgs": [
         "lib/esbonio/tests"
     ],

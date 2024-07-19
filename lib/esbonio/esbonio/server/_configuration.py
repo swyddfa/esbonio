@@ -1,12 +1,10 @@
 from __future__ import annotations
 
-import asyncio
 import inspect
 import json
 import pathlib
-import traceback
+import re
 import typing
-from functools import partial
 from typing import Generic
 from typing import TypeVar
 
@@ -55,11 +53,8 @@ class Subscription(Generic[T]):
     callback: ConfigurationCallback
     """The subscription's callback."""
 
-    workspace_scope: str
-    """The corresponding workspace scope for the subscription."""
-
-    file_scope: str
-    """The corresponding file scope for the subscription."""
+    context: ConfigurationContext
+    """The context for this subscription."""
 
 
 @attrs.define
@@ -74,6 +69,67 @@ class ConfigChangeEvent(Generic[T]):
 
     previous: Optional[T] = None
     """The previous configuration value, (if any)."""
+
+
+VARIABLE = re.compile(r"\$\{(\w+)\}")
+
+
+@attrs.define(frozen=True)
+class ConfigurationContext:
+    """The context in which configuration variables are evaluated."""
+
+    file_scope: str
+    """The uri of the file scope of this context."""
+
+    workspace_scope: str
+    """The uri of the workspace scope of this context."""
+
+    @property
+    def scope(self) -> str:
+        """The effective scope of the config context."""
+        return max([self.file_scope, self.workspace_scope], key=len)
+
+    @property
+    def scope_path(self) -> Optional[str]:
+        """The scope uri as a path."""
+        uri = Uri.parse(self.scope)
+        return uri.path
+
+    @property
+    def scope_fs_path(self) -> Optional[str]:
+        """The scope uri as an fs path."""
+        uri = Uri.parse(self.scope)
+        return uri.fs_path
+
+    def expand(self, config: attrs.AttrsInstance) -> attrs.AttrsInstance:
+        """Expand any configuration variables in the given config value."""
+        for name in attrs.fields_dict(type(config)):
+            value = getattr(config, name)
+
+            # For now, we only support variables that are a string.
+            if not isinstance(value, str):
+                continue
+
+            if (match := VARIABLE.match(value)) is None:
+                continue
+
+            setattr(config, name, self.expand_value(match.group(1)))
+
+        return config
+
+    def expand_value(self, variable: str) -> Any:
+        """Return the value for the given variable name."""
+
+        if variable == "scope":
+            return self.scope
+
+        if variable == "scopePath":
+            return self.scope_path
+
+        if variable == "scopeFsPath":
+            return self.scope_fs_path
+
+        raise ValueError(f"Undefined variable: {variable!r}")
 
 
 class Configuration:
@@ -113,9 +169,6 @@ class Configuration:
 
         self._subscriptions: Dict[Subscription, Any] = {}
         """Subscriptions and their last known value"""
-
-        self._tasks: Set[asyncio.Task] = set()
-        """Holds tasks that are currently executing an async config handler."""
 
     @property
     def initialization_options(self):
@@ -172,9 +225,11 @@ class Configuration:
         """
         file_scope = self._uri_to_file_scope(scope)
         workspace_scope = self._uri_to_workspace_scope(scope)
-        subscription = Subscription(
-            section, spec, callback, workspace_scope, file_scope
+
+        context = ConfigurationContext(
+            file_scope=file_scope, workspace_scope=workspace_scope
         )
+        subscription = Subscription(section, spec, callback, context)
 
         if subscription in self._subscriptions:
             self.logger.debug("Ignoring duplicate subscription: %s", subscription)
@@ -192,8 +247,7 @@ class Configuration:
             value = self._get_config(
                 subscription.section,
                 subscription.spec,
-                subscription.workspace_scope,
-                subscription.file_scope,
+                subscription.context,
             )
 
             # No need to notify if nothing has changed
@@ -204,9 +258,7 @@ class Configuration:
 
             self._subscriptions[subscription] = value
             change_event = ConfigChangeEvent(
-                scope=max(
-                    [subscription.file_scope, subscription.workspace_scope], key=len
-                ),
+                scope=subscription.context.scope,
                 value=value,
                 previous=previous_value,
             )
@@ -215,8 +267,7 @@ class Configuration:
             try:
                 ret = subscription.callback(change_event)
                 if inspect.iscoroutine(ret):
-                    task = asyncio.create_task(ret)
-                    task.add_done_callback(partial(self._finish_task, subscription))
+                    self.server.run_task(ret)
 
             except Exception:
                 self.logger.error(
@@ -224,17 +275,6 @@ class Configuration:
                     subscription.callback,
                     exc_info=True,
                 )
-
-    def _finish_task(self, subscription: Subscription, task: asyncio.Task[None]):
-        """Cleanup a finished task."""
-        self._tasks.discard(task)
-
-        if (exc := task.exception()) is not None:
-            self.logger.error(
-                "Error in async configuration handler '%s'\n%s",
-                subscription.callback,
-                "".join(traceback.format_exception(type(exc), exc, exc.__traceback__)),
-            )
 
     def get(self, section: str, spec: Type[T], scope: Optional[Uri] = None) -> T:
         """Get the requested configuration section.
@@ -255,10 +295,12 @@ class Configuration:
         T
            The requested configuration section parsed as an instance of ``T``.
         """
-        file_scope = self._uri_to_file_scope(scope)
-        workspace_scope = self._uri_to_workspace_scope(scope)
+        context = ConfigurationContext(
+            file_scope=self._uri_to_file_scope(scope),
+            workspace_scope=self._uri_to_workspace_scope(scope),
+        )
 
-        return self._get_config(section, spec, workspace_scope, file_scope)
+        return self._get_config(section, spec, context)
 
     def scope_for(self, uri: Uri) -> str:
         """Return the configuration scope that corresponds to the given uri.
@@ -273,24 +315,27 @@ class Configuration:
         str
            The scope corresponding with the given uri
         """
+        context = ConfigurationContext(
+            file_scope=self._uri_to_file_scope(uri),
+            workspace_scope=self._uri_to_workspace_scope(uri),
+        )
 
-        file_scope = self._uri_to_file_scope(uri)
-        workspace_scope = self._uri_to_workspace_scope(uri)
-
-        return max([file_scope, workspace_scope], key=len)
+        return context.scope
 
     def _get_config(
-        self, section: str, spec: Type[T], workspace_scope: str, file_scope: str
+        self,
+        section: str,
+        spec: Type[T],
+        context: ConfigurationContext,
     ) -> T:
         """Get the requested configuration section."""
 
-        self.logger.debug("File scope: '%s'", file_scope)
-        self.logger.debug("Workspace scope: '%s'", workspace_scope)
+        self.logger.debug("%s", context)
 
         # To keep things simple, this method assumes that all available config is already
         # cached locally. Populating the cache is handled elsewhere.
-        file_config = self._file_config.get(file_scope, {})
-        workspace_config = self._workspace_config.get(workspace_scope, {})
+        file_config = self._file_config.get(context.file_scope, {})
+        workspace_config = self._workspace_config.get(context.workspace_scope, {})
 
         # Combine and resolve all the config sources - order matters!
         config = _merge_configs(
@@ -303,10 +348,11 @@ class Configuration:
         for name in section.split("."):
             config_section = config_section.get(name, {})
 
-        self.logger.debug("Resolved config: %s", json.dumps(config_section, indent=2))
+        self.logger.debug("%s: %s", section, json.dumps(config_section, indent=2))
 
         try:
             value = self.converter.structure(config_section, spec)
+            value = context.expand(value)
             self.logger.debug("%s", value)
 
             return value
@@ -342,7 +388,7 @@ class Configuration:
             if (folder_path := Uri.parse(uri).fs_path) is None:
                 continue
 
-            self.logger.debug("Scanning workspace folder: '%s'", folder_path)
+            self.logger.debug("Looking for pyproject.toml files in: '%s'", folder_path)
             for p in pathlib.Path(folder_path).glob("**/pyproject.toml"):
                 self.logger.debug("Found '%s'", p)
                 paths.append(p)
