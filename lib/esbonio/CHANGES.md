@@ -1,3 +1,22 @@
+## v1.0.0b6 - 2024-07-19
+
+
+### Features
+
+- The language server now generates completions for `:external:` roles and their corresponding targets ([#464](https://github.com/swyddfa/esbonio/issues/464))
+- Add a `esbonio.sphinx.restart` command which, as the name suggests, allows a client to restart one or more Sphinx processes managed by the server ([#854](https://github.com/swyddfa/esbonio/issues/854))
+
+### Enhancements
+
+- Synchronised scrolling now works with files that have been `.. included::`, as well as autodoc docstrings ([#784](https://github.com/swyddfa/esbonio/issues/784))
+- The resolution of sync scrolling has been improved with the webview also better handling the case where the requested line does not exactly match a known source location ([#786](https://github.com/swyddfa/esbonio/issues/786))
+
+### Fixes
+
+- `esbonio.sphinx.buildCommand` settings provided in a `pyproject.toml` file are now resolved relative to the file's location ([#711](https://github.com/swyddfa/esbonio/issues/711))
+- The sphinx agent should no longer crash when encountering unexpected config values ([#843](https://github.com/swyddfa/esbonio/issues/843))
+
+
 ## v1.0.0b5 - 2024-06-07
 
 
