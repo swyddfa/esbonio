@@ -16,11 +16,8 @@ from .log import DiagnosticFilter
 if typing.TYPE_CHECKING:
     from typing import IO
     from typing import Any
-    from typing import List
-    from typing import Optional
-    from typing import Tuple
 
-    RoleDefinition = Tuple[str, Any, List[types.Role.TargetProvider]]
+    RoleDefinition = tuple[str, Any, list[types.Role.TargetProvider]]
 
 sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
 logger = sphinx_logger.getChild("esbonio")
@@ -48,14 +45,14 @@ class Esbonio:
         self.db = Database(dbpath)
         self.log = DiagnosticFilter(app)
 
-        self._roles: List[RoleDefinition] = []
+        self._roles: list[RoleDefinition] = []
         """Roles captured during Sphinx startup."""
 
     def add_role(
         self,
         name: str,
         role: Any,
-        target_providers: Optional[List[types.Role.TargetProvider]] = None,
+        target_providers: list[types.Role.TargetProvider] | None = None,
     ):
         """Register a role with esbonio.
 

@@ -21,15 +21,9 @@ from . import Uri
 from ._configuration import Configuration
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Coroutine
     from typing import Any
     from typing import Callable
-    from typing import Coroutine
-    from typing import Dict
-    from typing import List
-    from typing import Optional
-    from typing import Set
-    from typing import Tuple
-    from typing import Type
 
     from .feature import LanguageFeature
 
@@ -65,7 +59,7 @@ class EsbonioWorkspace(Workspace):
 class EsbonioLanguageServer(LanguageServer):
     """The Esbonio language server"""
 
-    def __init__(self, logger: Optional[logging.Logger] = None, *args, **kwargs):
+    def __init__(self, logger: logging.Logger | None = None, *args, **kwargs):
         if "name" not in kwargs:
             kwargs["name"] = "esbonio"
 
@@ -74,19 +68,19 @@ class EsbonioLanguageServer(LanguageServer):
 
         super().__init__(*args, **kwargs)
 
-        self._diagnostics: Dict[Tuple[str, Uri], List[types.Diagnostic]] = {}
+        self._diagnostics: dict[tuple[str, Uri], list[types.Diagnostic]] = {}
         """Where we store and manage diagnostics."""
 
-        self._loaded_extensions: Dict[str, Any] = {}
+        self._loaded_extensions: dict[str, Any] = {}
         """Record of server modules that have been loaded."""
 
-        self._features: Dict[Type[LanguageFeature], LanguageFeature] = {}
+        self._features: dict[type[LanguageFeature], LanguageFeature] = {}
         """The collection of language features registered with the server."""
 
         self._ready: asyncio.Future[bool] = asyncio.Future()
         """Indicates if the server is ready."""
 
-        self._tasks: Set[asyncio.Task] = set()
+        self._tasks: set[asyncio.Task] = set()
         """Used to hold running tasks"""
 
         self.logger = logger or logging.getLogger(__name__)
@@ -118,7 +112,7 @@ class EsbonioLanguageServer(LanguageServer):
                 traceback.format_exception(type(exc), exc, exc.__traceback__),
             )
 
-    def run_task(self, coro: Coroutine, *, name: Optional[str] = None) -> asyncio.Task:
+    def run_task(self, coro: Coroutine, *, name: str | None = None) -> asyncio.Task:
         """Convert a given coroutine into a task and ensure it is executed."""
 
         task = asyncio.create_task(coro, name=name)
@@ -221,7 +215,7 @@ class EsbonioLanguageServer(LanguageServer):
 
         self._features[feature_cls] = feature
 
-    def get_feature(self, feature_cls: Type[LF]) -> Optional[LF]:
+    def get_feature(self, feature_cls: type[LF]) -> LF | None:
         """Returns the requested language feature if it exists, otherwise it returns
         ``None``.
 
@@ -232,7 +226,7 @@ class EsbonioLanguageServer(LanguageServer):
         """
         return self._features.get(feature_cls, None)  # type: ignore
 
-    def clear_diagnostics(self, source: str, uri: Optional[Uri] = None) -> None:
+    def clear_diagnostics(self, source: str, uri: Uri | None = None) -> None:
         """Clear diagnostics from the given source.
 
         Parameters
@@ -267,7 +261,7 @@ class EsbonioLanguageServer(LanguageServer):
         self._diagnostics.setdefault(key, []).append(diagnostic)
 
     def set_diagnostics(
-        self, source: str, uri: Uri, diagnostics: List[types.Diagnostic]
+        self, source: str, uri: Uri, diagnostics: list[types.Diagnostic]
     ) -> None:
         """Set the diagnostics for the given source and uri.
 
@@ -431,7 +425,7 @@ class DiagnosticList(collections.UserList):
 
 def _get_setup_arguments(
     server: EsbonioLanguageServer, setup: Callable, modname: str
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """Given a setup function, try to construct the collection of arguments to pass to
     it.
     """

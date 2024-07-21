@@ -4,12 +4,8 @@ import importlib
 import inspect
 import pathlib
 import typing
+from collections.abc import Iterable
 from typing import Any
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Set
-from typing import Type
 
 from lsprotocol import types
 
@@ -20,7 +16,7 @@ if typing.TYPE_CHECKING:
 
 
 def create_language_server(
-    server_cls: Type[EsbonioLanguageServer], modules: Iterable[str], *args, **kwargs
+    server_cls: type[EsbonioLanguageServer], modules: Iterable[str], *args, **kwargs
 ) -> EsbonioLanguageServer:
     """Create a new language server instance.
 
@@ -123,7 +119,7 @@ def _configure_lsp_methods(server: EsbonioLanguageServer):
         ls: EsbonioLanguageServer, params: types.WorkspaceDiagnosticParams
     ):
         """Handle a ``workspace/diagnostic`` request."""
-        diagnostics: Dict[Uri, List[types.Diagnostic]] = {}
+        diagnostics: dict[Uri, list[types.Diagnostic]] = {}
 
         for (_, uri), diags in ls._diagnostics.items():
             diagnostics.setdefault(uri, []).extend(diags)
@@ -180,7 +176,7 @@ def _configure_lsp_methods(server: EsbonioLanguageServer):
 def _configure_completion(server: EsbonioLanguageServer):
     """Configuration completion handlers."""
 
-    trigger_characters: Set[str] = set()
+    trigger_characters: set[str] = set()
 
     for _, feature in server:
         if feature.completion_trigger is None:
@@ -271,7 +267,7 @@ async def call_features(ls: EsbonioLanguageServer, method: str, *args, **kwargs)
 
 async def gather_results(ls: EsbonioLanguageServer, method: str, *args, **kwargs):
     """Call all features, gathering all results into a list."""
-    results: List[Any] = []
+    results: list[Any] = []
     for cls, feature in ls:
         try:
             impl = getattr(feature, method)

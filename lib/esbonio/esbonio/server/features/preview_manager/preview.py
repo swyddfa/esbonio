@@ -11,7 +11,6 @@ from esbonio.server import Uri
 
 if typing.TYPE_CHECKING:
     from typing import Any
-    from typing import Optional
 
     from .config import PreviewConfig
 
@@ -38,7 +37,7 @@ class RequestHandlerFactory:
     produce a request handler based on the current situation.
     """
 
-    def __init__(self, logger: logging.Logger, build_uri: Optional[Uri] = None):
+    def __init__(self, logger: logging.Logger, build_uri: Uri | None = None):
         self.logger = logger
         self.build_uri = build_uri
 
@@ -67,16 +66,16 @@ class PreviewServer:
         self._handler_factory = RequestHandlerFactory(self.logger)
         """Factory for producing http request handlers."""
 
-        self._startup_task: Optional[asyncio.Task] = None
+        self._startup_task: asyncio.Task | None = None
         """Task that resolves once the server is ready."""
 
         self._executor: Any = executor
         """The executor in which to run the http server."""
 
-        self._future: Optional[asyncio.Future] = None
+        self._future: asyncio.Future | None = None
         """The future representing the http server's "task"."""
 
-        self._server: Optional[HTTPServer] = None
+        self._server: HTTPServer | None = None
         """The http server itself."""
 
     def __await__(self):

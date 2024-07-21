@@ -1,17 +1,12 @@
 from __future__ import annotations
 
 import re
-import typing
 
 import pytest
 from lsprotocol import types
 from pygls.workspace import TextDocument
 
 from esbonio import server
-
-if typing.TYPE_CHECKING:
-    from typing import Optional
-    from typing import Set
 
 
 @pytest.mark.parametrize(
@@ -24,7 +19,7 @@ if typing.TYPE_CHECKING:
     ],
 )
 def test_completion_trigger_languages(
-    language: str, languages: Set[str], expected: bool
+    language: str, languages: set[str], expected: bool
 ):
     """Ensure that ``CompletionTrigger`` responds to the given language correctly."""
 
@@ -105,7 +100,7 @@ def test_completion_trigger_languages(
     ],
 )
 def test_completion_trigger_characters(
-    context: Optional[types.CompletionContext], characters: Set[str], expected: bool
+    context: types.CompletionContext | None, characters: set[str], expected: bool
 ):
     """Ensure that ``CompletionTrigger`` responds to the trigger character correctly."""
 

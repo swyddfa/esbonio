@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import dataclasses
 import json
@@ -7,8 +9,7 @@ import sys
 import threading
 import traceback
 from concurrent.futures import ThreadPoolExecutor
-from typing import Dict
-from typing import Type
+from typing import Any
 from typing import TypeVar
 
 # This has to be called here before any imports from sphinx are made.
@@ -27,7 +28,7 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-def parse_message(obj: Dict, cls: Type[T]) -> T:
+def parse_message(obj: dict, cls: type[T]) -> T:
     """Convert a raw dict into the given type"""
 
     if dataclasses.is_dataclass(cls):
@@ -56,7 +57,7 @@ def handle_message(data: bytes):
         raise TypeError(f"Unknown method: '{method}'")
 
     type_, handler = result
-    obj = parse_message(message, type_)
+    obj: Any = parse_message(message, type_)
     try:
         handler(obj)
     except Exception as e:

@@ -4,15 +4,14 @@ This is the *only* file shared between the agent itself and the parent language 
 For this reason this file *cannot* import anything from Sphinx.
 """
 
+from __future__ import annotations
+
 import dataclasses
 import os
 import pathlib
 import re
 from typing import Callable
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Tuple
 from typing import Union
 from urllib import parse
 
@@ -38,7 +37,7 @@ __all__ = (
     "Role",
 )
 
-MYST_DIRECTIVE: "re.Pattern" = re.compile(
+MYST_DIRECTIVE: re.Pattern = re.compile(
     r"""
     (\s*)                             # directives can be indented
     (?P<directive>
@@ -59,7 +58,7 @@ initial declaration.
 """
 
 
-RST_DIRECTIVE: "re.Pattern" = re.compile(
+RST_DIRECTIVE: re.Pattern = re.compile(
     r"""
     (\s*)                             # directives can be indented
     (?P<directive>
@@ -96,7 +95,7 @@ the initial declaration. A number of named capture groups are available.
 """
 
 
-RST_DIRECTIVE_OPTION: "re.Pattern" = re.compile(
+RST_DIRECTIVE_OPTION: re.Pattern = re.compile(
     r"""
     (?P<indent>\s+)       # directive options must be indented
     (?P<option>
@@ -226,7 +225,7 @@ class Uri:
         path: str = "",
         query: str = "",
         fragment: str = "",
-    ) -> "Uri":
+    ) -> Uri:
         """Create a uri with the given attributes."""
 
         if scheme in {"http", "https", "file"}:
@@ -242,7 +241,7 @@ class Uri:
         )
 
     @classmethod
-    def parse(cls, uri: str) -> "Uri":
+    def parse(cls, uri: str) -> Uri:
         """Parse the given uri from its string representation."""
         scheme, authority, path, _, query, fragment = parse.urlparse(uri)
         return cls.create(
@@ -253,7 +252,7 @@ class Uri:
             fragment=parse.unquote(fragment),
         )
 
-    def resolve(self) -> "Uri":
+    def resolve(self) -> Uri:
         """Return the fully resolved version of this Uri."""
 
         # This operation only makes sense for file uris
@@ -263,7 +262,7 @@ class Uri:
         return Uri.for_file(pathlib.Path(self).resolve())
 
     @classmethod
-    def for_file(cls, filepath: Union[str, "os.PathLike[str]"]) -> "Uri":
+    def for_file(cls, filepath: Union[str, os.PathLike[str]]) -> Uri:
         """Create a uri based on the given filepath."""
 
         fpath = os.fspath(filepath)
@@ -283,7 +282,7 @@ class Uri:
         """Return the equivalent fs path."""
         return self.as_fs_path()
 
-    def where(self, **kwargs) -> "Uri":
+    def where(self, **kwargs) -> Uri:
         """Return an transformed version of this uri where certain components of the uri
         have been replace with the given arguments.
 
@@ -297,7 +296,7 @@ class Uri:
 
         return Uri.create(**{**current, **replacements})
 
-    def join(self, path: str) -> "Uri":
+    def join(self, path: str) -> Uri:
         """Join this Uri's path component with the given path and return the resulting
         uri.
 
@@ -448,8 +447,8 @@ def _normalize_path(path: str, preserve_case: bool = False) -> str:
 # -- DB Types
 #
 # These represent the structure of data as stored in the SQLite database
-Directive = Tuple[str, Optional[str], Optional[str]]
-Symbol = Tuple[  # Represents either a document symbol or workspace symbol depending on context.
+Directive = tuple[str, Optional[str], Optional[str]]
+Symbol = tuple[  # Represents either a document symbol or workspace symbol depending on context.
     int,  # id
     str,  # name
     int,  # kind
@@ -464,7 +463,7 @@ Symbol = Tuple[  # Represents either a document symbol or workspace symbol depen
 class CreateApplicationParams:
     """Parameters of a ``sphinx/createApp`` request."""
 
-    command: List[str]
+    command: list[str]
     """The ``sphinx-build`` command to base the app instance on."""
 
 
@@ -519,18 +518,18 @@ class CreateApplicationResponse:
 class BuildParams:
     """Parameters of a ``sphinx/build`` request."""
 
-    filenames: List[str] = dataclasses.field(default_factory=list)
+    filenames: list[str] = dataclasses.field(default_factory=list)
 
     force_all: bool = False
 
-    content_overrides: Dict[str, str] = dataclasses.field(default_factory=dict)
+    content_overrides: dict[str, str] = dataclasses.field(default_factory=dict)
 
 
 @dataclasses.dataclass
 class BuildResult:
     """Results from a ``sphinx/build`` request."""
 
-    diagnostics: Dict[str, List[Diagnostic]] = dataclasses.field(default_factory=dict)
+    diagnostics: dict[str, list[Diagnostic]] = dataclasses.field(default_factory=dict)
     """Any diagnostics associated with the project."""
 
 

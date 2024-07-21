@@ -5,20 +5,15 @@ import typing
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
-from typing import Dict
-from typing import List
 
 from .lsp import Location
 
 if typing.TYPE_CHECKING:
     from typing import Callable
-    from typing import Optional
-    from typing import Tuple
-    from typing import Type
     from typing import TypeVar
 
     T = TypeVar("T")
-    JsonLoader = Callable[[str, Type[T]], T]
+    JsonLoader = Callable[[str, type[T]], T]
 
 
 MYST_ROLE: re.Pattern = re.compile(
@@ -146,24 +141,24 @@ class Role:
         name: str
         """The name of the provider."""
 
-        kwargs: Dict[str, Any] = field(default_factory=dict)
+        kwargs: dict[str, Any] = field(default_factory=dict)
         """Arguments to pass to the target provider."""
 
     name: str
     """The name of the role, as the user would type in an rst file."""
 
-    implementation: Optional[str]
+    implementation: str | None
     """The dotted name of the role's implementation."""
 
-    location: Optional[Location] = field(default=None)
+    location: Location | None = field(default=None)
     """The location of the role's implementation, if known."""
 
-    target_providers: List[TargetProvider] = field(default_factory=list)
+    target_providers: list[TargetProvider] = field(default_factory=list)
     """The list of target providers that can be used with this role."""
 
     def to_db(
         self, dumps: Callable[[Any], str]
-    ) -> Tuple[str, Optional[str], Optional[str], Optional[str]]:
+    ) -> tuple[str, str | None, str | None, str | None]:
         """Convert this role to its database representation."""
         if len(self.target_providers) > 0:
             providers = dumps(self.target_providers)
@@ -178,15 +173,15 @@ class Role:
         cls,
         load_as: JsonLoader,
         name: str,
-        implementation: Optional[str],
-        location: Optional[str],
-        providers: Optional[str],
+        implementation: str | None,
+        location: str | None,
+        providers: str | None,
     ) -> Role:
         """Convert this role to its database representation."""
 
         loc = load_as(location, Location) if location is not None else None
         target_providers = (
-            load_as(providers, List[Role.TargetProvider])
+            load_as(providers, list[Role.TargetProvider])
             if providers is not None
             else []
         )

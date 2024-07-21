@@ -14,12 +14,6 @@ from .util import logger
 if typing.TYPE_CHECKING:
     from types import ModuleType
     from typing import Any
-    from typing import Dict
-    from typing import List
-    from typing import Optional
-    from typing import Set
-    from typing import Tuple
-    from typing import Union
 
 
 DIAGNOSTIC_SEVERITY = {
@@ -36,7 +30,7 @@ class DiagnosticFilter(logging.Filter):
         super().__init__(*args, **kwargs)
 
         self.app = app
-        self.diagnostics: Dict[Uri, Set[types.Diagnostic]] = {}
+        self.diagnostics: dict[Uri, set[types.Diagnostic]] = {}
 
     def filter(self, record: logging.LogRecord) -> bool:
         conditions = [
@@ -87,8 +81,8 @@ class DiagnosticFilter(logging.Filter):
 
 
 def source_to_uri_and_linum(
-    location: Optional[str],
-) -> Tuple[Optional[Uri], Optional[int]]:
+    location: str | None,
+) -> tuple[Uri | None, int | None]:
     """Convert the given source location to a uri and corresponding line number
 
     Parameters
@@ -120,7 +114,7 @@ def source_to_uri_and_linum(
     return Uri.for_file(path), lineno
 
 
-def _get_location_path(location: str) -> Tuple[str, List[str]]:
+def _get_location_path(location: str) -> tuple[str, list[str]]:
     """Determine the filepath from the given location."""
 
     if location.startswith("internal padding before "):
@@ -142,7 +136,7 @@ def _get_location_path(location: str) -> Tuple[str, List[str]]:
     return path, parts
 
 
-def _get_docstring_linum(target: str, offset: str) -> Optional[int]:
+def _get_docstring_linum(target: str, offset: str) -> int | None:
     # The containing module will be the longest substring we can find in target
     candidates = [m for m in sys.modules.keys() if target.startswith(m)] + [""]
     module = sys.modules.get(sorted(candidates, key=len, reverse=True)[0], None)
@@ -150,7 +144,7 @@ def _get_docstring_linum(target: str, offset: str) -> Optional[int]:
     if module is None:
         return None
 
-    obj: Union[ModuleType, Any, None] = module
+    obj: ModuleType | Any | None = module
     dotted_name = target.replace(module.__name__ + ".", "")
 
     for name in dotted_name.split("."):

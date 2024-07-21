@@ -17,14 +17,9 @@ from . import Uri
 T = TypeVar("T")
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Awaitable
     from typing import Any
-    from typing import Awaitable
     from typing import Callable
-    from typing import Dict
-    from typing import List
-    from typing import Optional
-    from typing import Set
-    from typing import Type
     from typing import Union
 
     from .server import EsbonioLanguageServer
@@ -47,7 +42,7 @@ class Subscription(Generic[T]):
     section: str
     """The configuration section."""
 
-    spec: Type[T]
+    spec: type[T]
     """The subscription's class definition."""
 
     callback: ConfigurationCallback
@@ -67,7 +62,7 @@ class ConfigChangeEvent(Generic[T]):
     value: T
     """The latest configuration value."""
 
-    previous: Optional[T] = None
+    previous: T | None = None
     """The previous configuration value, (if any)."""
 
 
@@ -90,13 +85,13 @@ class ConfigurationContext:
         return max([self.file_scope, self.workspace_scope], key=len)
 
     @property
-    def scope_path(self) -> Optional[str]:
+    def scope_path(self) -> str | None:
         """The scope uri as a path."""
         uri = Uri.parse(self.scope)
         return uri.path
 
     @property
-    def scope_fs_path(self) -> Optional[str]:
+    def scope_fs_path(self) -> str | None:
         """The scope uri as an fs path."""
         uri = Uri.parse(self.scope)
         return uri.fs_path
@@ -158,16 +153,16 @@ class Configuration:
         self.logger = server.logger.getChild("Configuration")
         """The logger instance to use"""
 
-        self._initialization_options: Dict[str, Any] = {}
+        self._initialization_options: dict[str, Any] = {}
         """The received initializaion options (if any)"""
 
-        self._workspace_config: Dict[str, Dict[str, Any]] = {}
+        self._workspace_config: dict[str, dict[str, Any]] = {}
         """The cached workspace configuration."""
 
-        self._file_config: Dict[str, Dict[str, Any]] = {}
+        self._file_config: dict[str, dict[str, Any]] = {}
         """The cached configuration coming from configuration files."""
 
-        self._subscriptions: Dict[Subscription, Any] = {}
+        self._subscriptions: dict[Subscription, Any] = {}
         """Subscriptions and their last known value"""
 
     @property
@@ -203,9 +198,9 @@ class Configuration:
     def subscribe(
         self,
         section: str,
-        spec: Type[T],
+        spec: type[T],
         callback: ConfigurationCallback,
-        scope: Optional[Uri] = None,
+        scope: Uri | None = None,
     ):
         """Subscribe to updates to the given configuration section.
 
@@ -276,7 +271,7 @@ class Configuration:
                     exc_info=True,
                 )
 
-    def get(self, section: str, spec: Type[T], scope: Optional[Uri] = None) -> T:
+    def get(self, section: str, spec: type[T], scope: Uri | None = None) -> T:
         """Get the requested configuration section.
 
         Parameters
@@ -325,7 +320,7 @@ class Configuration:
     def _get_config(
         self,
         section: str,
-        spec: Type[T],
+        spec: type[T],
         context: ConfigurationContext,
     ) -> T:
         """Get the requested configuration section."""
@@ -364,11 +359,11 @@ class Configuration:
             )
             return spec()
 
-    def _uri_to_file_scope(self, uri: Optional[Uri]) -> str:
+    def _uri_to_file_scope(self, uri: Uri | None) -> str:
         folder_uris = list(self._file_config.keys())
         return _uri_to_scope(folder_uris, uri)
 
-    def _uri_to_workspace_scope(self, uri: Optional[Uri]) -> str:
+    def _uri_to_workspace_scope(self, uri: Uri | None) -> str:
         folder_uris = [f.uri for f in self.workspace.folders.values()]
 
         if (root_uri := self.workspace.root_uri) is not None:
@@ -376,7 +371,7 @@ class Configuration:
 
         return _uri_to_scope(folder_uris, uri)
 
-    def _discover_config_files(self) -> List[pathlib.Path]:
+    def _discover_config_files(self) -> list[pathlib.Path]:
         """Scan the workspace for available configuration files."""
         folder_uris = {f.uri for f in self.workspace.folders.values()}
 
@@ -395,7 +390,7 @@ class Configuration:
 
         return paths
 
-    def update_file_configuration(self, paths: Optional[List[pathlib.Path]] = None):
+    def update_file_configuration(self, paths: list[pathlib.Path] | None = None):
         """Update the internal cache of configuration coming from files.
 
         Parameters
@@ -466,7 +461,7 @@ class Configuration:
         self._notify_subscriptions()
 
 
-def _uri_to_scope(known_scopes: List[str], uri: Optional[Uri]) -> str:
+def _uri_to_scope(known_scopes: list[str], uri: Uri | None) -> str:
     """Convert the given uri to a scope or the empty string if none could be found.
 
     Parameters
@@ -496,13 +491,13 @@ def _uri_to_scope(known_scopes: List[str], uri: Optional[Uri]) -> str:
     return sorted(candidates, key=len, reverse=True)[0]
 
 
-def _merge_configs(*configs: Dict[str, Any]):
+def _merge_configs(*configs: dict[str, Any]):
     """Recursively merge all the given configuration sources together.
 
     The last config given takes precedence.
     """
     final = {}
-    all_keys: Set[str] = set()
+    all_keys: set[str] = set()
 
     for c in configs:
         all_keys.update(c.keys())

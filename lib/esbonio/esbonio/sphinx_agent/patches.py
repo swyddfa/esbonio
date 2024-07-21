@@ -1,12 +1,13 @@
+from __future__ import annotations
+
 import functools
 import logging
+from collections.abc import Iterable
+from collections.abc import Iterator
 from types import TracebackType
 from typing import Any
 from typing import Callable
-from typing import Iterable
-from typing import Iterator
 from typing import Optional
-from typing import Type
 from typing import TypeVar
 
 from . import types
@@ -78,7 +79,7 @@ class progress_message:
 
     def __exit__(
         self,
-        typ: Optional[Type[BaseException]],
+        typ: Optional[type[BaseException]],
         val: Optional[BaseException],
         tb: Optional[TracebackType],
     ) -> bool:

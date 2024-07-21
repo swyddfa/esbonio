@@ -12,23 +12,21 @@ from . import Uri
 
 if typing.TYPE_CHECKING:
     import re
+    from collections.abc import Coroutine
     from typing import Any
-    from typing import Coroutine
-    from typing import List
     from typing import Optional
-    from typing import Set
     from typing import Union
 
     from .server import EsbonioLanguageServer
 
     CompletionResult = Union[
-        Optional[List[types.CompletionItem]],
-        Coroutine[Any, Any, Optional[List[types.CompletionItem]]],
+        Optional[list[types.CompletionItem]],
+        Coroutine[Any, Any, Optional[list[types.CompletionItem]]],
     ]
 
     DocumentSymbolResult = Union[
-        Optional[List[types.DocumentSymbol]],
-        Coroutine[Any, Any, Optional[List[types.DocumentSymbol]]],
+        Optional[list[types.DocumentSymbol]],
+        Coroutine[Any, Any, Optional[list[types.DocumentSymbol]]],
     ]
 
     MaybeAsyncNone = Union[
@@ -37,8 +35,8 @@ if typing.TYPE_CHECKING:
     ]
 
     WorkspaceSymbolResult = Union[
-        Optional[List[types.WorkspaceSymbol]],
-        Coroutine[Any, Any, Optional[List[types.WorkspaceSymbol]]],
+        Optional[list[types.WorkspaceSymbol]],
+        Coroutine[Any, Any, Optional[list[types.WorkspaceSymbol]]],
     ]
 
 
@@ -82,7 +80,7 @@ class LanguageFeature:
     def document_save(self, params: types.DidSaveTextDocumentParams) -> MaybeAsyncNone:
         """Called when a text document is saved."""
 
-    completion_trigger: Optional[CompletionTrigger] = None
+    completion_trigger: CompletionTrigger | None = None
 
     def completion(self, context: CompletionContext) -> CompletionResult:
         """Called when a completion request matches one of the specified triggers."""
@@ -102,16 +100,16 @@ class LanguageFeature:
 class CompletionTrigger:
     """Define when the feature's completion method should be called."""
 
-    patterns: List[re.Pattern]
+    patterns: list[re.Pattern]
     """A list of regular expressions to try"""
 
-    languages: Set[str] = attrs.field(factory=set)
+    languages: set[str] = attrs.field(factory=set)
     """Languages in which the completion trigger should fire.
 
     If empty, the document's language will be ignored.
     """
 
-    characters: Set[str] = attrs.field(factory=set)
+    characters: set[str] = attrs.field(factory=set)
     """Characters which, when typed, should trigger a completion request.
 
     If empty, this trigger will ignore any trigger characters.
@@ -124,7 +122,7 @@ class CompletionTrigger:
         document: TextDocument,
         language: str,
         client_capabilities: types.ClientCapabilities,
-    ) -> Optional[CompletionContext]:
+    ) -> CompletionContext | None:
         """Determine if this completion trigger should fire.
 
         Parameters
@@ -254,7 +252,7 @@ class CompletionContext:
         )
 
     @property
-    def documentation_formats(self) -> List[types.MarkupKind]:
+    def documentation_formats(self) -> list[types.MarkupKind]:
         """The list of documentation formats supported by the client."""
         return get_capability(
             self.capabilities,
@@ -291,7 +289,7 @@ class CompletionContext:
         )
 
     @property
-    def supported_tags(self) -> List[types.CompletionItemTag]:
+    def supported_tags(self) -> list[types.CompletionItemTag]:
         """The list of ``CompletionItemTags`` supported by the client."""
         capabilities = get_capability(
             self.capabilities,

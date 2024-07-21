@@ -18,8 +18,6 @@ from .config import SphinxConfig
 
 if typing.TYPE_CHECKING:
     from typing import Callable
-    from typing import Dict
-    from typing import Optional
 
     from esbonio.server.features.project_manager import ProjectManager
 
@@ -93,7 +91,7 @@ class SphinxManager(server.LanguageFeature):
         self.project_manager = project_manager
         """The project manager instance to use."""
 
-        self.clients: Dict[str, Optional[SphinxClient]] = {
+        self.clients: dict[str, SphinxClient | None] = {
             # Prevent any clients from being created in the global scope.
             "": None,
         }
@@ -102,10 +100,10 @@ class SphinxManager(server.LanguageFeature):
         self._events = server.EventSource(self.logger)
         """The SphinxManager can emit events."""
 
-        self._pending_builds: Dict[str, asyncio.Task] = {}
+        self._pending_builds: dict[str, asyncio.Task] = {}
         """Holds tasks that will trigger a build after a given delay if not cancelled."""
 
-        self._progress_tokens: Dict[str, str] = {}
+        self._progress_tokens: dict[str, str] = {}
         """Holds work done progress tokens."""
 
     def add_listener(self, event: str, handler):
@@ -183,7 +181,7 @@ class SphinxManager(server.LanguageFeature):
             return
 
         # Pass through any unsaved content to the Sphinx agent.
-        content_overrides: Dict[str, str] = {}
+        content_overrides: dict[str, str] = {}
         known_src_uris = await project.get_src_uris()
 
         for src_uri in known_src_uris:
@@ -226,7 +224,7 @@ class SphinxManager(server.LanguageFeature):
         else:
             self.logger.error(f"No client with id {client_id!r} available to restart")
 
-    async def get_client(self, uri: Uri) -> Optional[SphinxClient]:
+    async def get_client(self, uri: Uri) -> SphinxClient | None:
         """Given a uri, return the relevant sphinx client instance for it."""
 
         scope = self.server.configuration.scope_for(uri)

@@ -25,9 +25,8 @@ from esbonio.server.features.sphinx_manager import make_subprocess_sphinx_client
 if typing.TYPE_CHECKING:
     from typing import Any
     from typing import Callable
-    from typing import Tuple
 
-    ServerManager = Callable[[Any], Tuple[EsbonioLanguageServer, SphinxManager]]
+    ServerManager = Callable[[Any], tuple[EsbonioLanguageServer, SphinxManager]]
 
 
 @pytest.fixture

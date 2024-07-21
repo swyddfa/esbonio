@@ -15,7 +15,6 @@ from esbonio.sphinx_agent.types import Role
 
 if typing.TYPE_CHECKING:
     from typing import Literal
-    from typing import Optional
 
 
 VSCODE = "visual-studio-code"
@@ -218,8 +217,8 @@ def test_render_role_completion(
     insert_behavior: Literal["insert", "replace"],
     role: Role,
     text: str,
-    character: Optional[int],
-    expected: Optional[types.CompletionItem],
+    character: int | None,
+    expected: types.CompletionItem | None,
 ):
     """Ensure that we can render role completions correctly.
 

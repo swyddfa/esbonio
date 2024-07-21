@@ -7,8 +7,6 @@ import pytest
 from esbonio.server.features.project_manager import Project
 
 if typing.TYPE_CHECKING:
-    from typing import List
-
     from sphinx.application import Sphinx
 
 
@@ -67,7 +65,7 @@ async def test_std_domain_discovery(app: Sphinx, project: Project):
 )
 @pytest.mark.asyncio
 async def test_intersphinx_domain_discovery(
-    project: Project, domain: str, objtype: str, projname: str, expected: List[str]
+    project: Project, domain: str, objtype: str, projname: str, expected: list[str]
 ):
     """Ensure that we can correctly index all the objects associated with the Python
     domain in intersphinx projects."""

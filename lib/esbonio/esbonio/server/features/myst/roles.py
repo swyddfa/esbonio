@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-import typing
-
 from lsprotocol import types
 
 from esbonio import server
 from esbonio.server.features.roles import RolesFeature
 from esbonio.server.features.roles import completion
 from esbonio.sphinx_agent.types import MYST_ROLE
-
-if typing.TYPE_CHECKING:
-    from typing import List
-    from typing import Optional
 
 
 class MystRoles(server.LanguageFeature):
@@ -45,7 +39,7 @@ class MystRoles(server.LanguageFeature):
 
     async def completion(
         self, context: server.CompletionContext
-    ) -> Optional[List[types.CompletionItem]]:
+    ) -> list[types.CompletionItem] | None:
         """Provide completion suggestions for roles."""
 
         groups = context.match.groupdict()
@@ -84,7 +78,7 @@ class MystRoles(server.LanguageFeature):
 
     async def complete_roles(
         self, context: server.CompletionContext
-    ) -> Optional[List[types.CompletionItem]]:
+    ) -> list[types.CompletionItem] | None:
         """Return completion suggestions for the available roles"""
 
         render_func = completion.get_role_renderer(

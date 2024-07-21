@@ -1,6 +1,5 @@
 import inspect
 from typing import Any
-from typing import Dict
 from typing import Optional
 
 from docutils.parsers.rst import roles as docutils_roles
@@ -55,7 +54,7 @@ def get_impl_location(impl: Any) -> Optional[types.Location]:
 def index_roles(app: Sphinx):
     """Index all the roles that are available to this app."""
 
-    roles: Dict[str, types.Role] = {}
+    roles: dict[str, types.Role] = {}
 
     # Process the roles registered through Sphinx
     for name, impl, providers in app.esbonio._roles:

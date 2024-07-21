@@ -11,9 +11,7 @@ from esbonio import server
 
 if typing.TYPE_CHECKING:
     from typing import Callable
-    from typing import Dict
     from typing import Optional
-    from typing import Tuple
 
     from . import Directive
 
@@ -23,7 +21,7 @@ if typing.TYPE_CHECKING:
 
 
 WORD = re.compile("[a-zA-Z]+")
-_DIRECTIVE_RENDERERS: Dict[Tuple[str, str], DirectiveRenderer] = {}
+_DIRECTIVE_RENDERERS: dict[tuple[str, str], DirectiveRenderer] = {}
 """CompletionItem rendering functions for directives."""
 
 
@@ -39,7 +37,7 @@ def renderer(*, language: str, insert_behavior: str):
 
 def get_directive_renderer(
     language: str, insert_behavior: str
-) -> Optional[DirectiveRenderer]:
+) -> DirectiveRenderer | None:
     """Return the directive renderer to use.
 
     Parameters
@@ -62,7 +60,7 @@ def get_directive_renderer(
 def render_rst_directive_with_insert_text(
     context: server.CompletionContext,
     directive: Directive,
-) -> Optional[types.CompletionItem]:
+) -> types.CompletionItem | None:
     """Render a ``CompletionItem`` using ``insertText`` fields.
 
     This implements the ``insert`` behavior for directives.
@@ -139,7 +137,7 @@ def render_rst_directive_with_insert_text(
 def render_rst_directive_with_text_edit(
     context: server.CompletionContext,
     directive: Directive,
-) -> Optional[types.CompletionItem]:
+) -> types.CompletionItem | None:
     """Render a ``CompletionItem`` for a reStructuredText directive using the
     ``textEdit`` field.
 
@@ -189,7 +187,7 @@ def render_rst_directive_with_text_edit(
 def render_myst_directive_with_text_edit(
     context: server.CompletionContext,
     directive: Directive,
-) -> Optional[types.CompletionItem]:
+) -> types.CompletionItem | None:
     """Render a ``CompletionItem`` for a MyST directive using the ``textEdit`` field.
 
     Parameters
@@ -240,7 +238,7 @@ def render_myst_directive_with_text_edit(
 def render_myst_directive_with_insert_text(
     context: server.CompletionContext,
     directive: Directive,
-) -> Optional[types.CompletionItem]:
+) -> types.CompletionItem | None:
     """Render a ``CompletionItem`` for a MyST directive using the ``insertText`` field.
 
     Parameters

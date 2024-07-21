@@ -1,16 +1,10 @@
 from __future__ import annotations
 
-import typing
-
 import pytest
 
 from esbonio import server
 from esbonio.server.features.log import LoggerConfiguration
 from esbonio.server.features.log import LoggingConfig
-
-if typing.TYPE_CHECKING:
-    from typing import Dict
-
 
 SERVER = server.EsbonioLanguageServer
 
@@ -303,7 +297,7 @@ SERVER = server.EsbonioLanguageServer
         ),
     ],
 )
-def test_logging_config(config: LoggingConfig, expected: Dict):
+def test_logging_config(config: LoggingConfig, expected: dict):
     """Ensure that we can convert the user's config into the config we can pass to the
     ``logging.config`` module correctly."""
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import enum
 import json
 import logging
@@ -5,7 +7,6 @@ import logging.config
 import textwrap
 from logging.handlers import MemoryHandler
 from typing import Any
-from typing import Dict
 from typing import Optional
 
 import attrs
@@ -205,7 +206,7 @@ class LoggingConfigBuilder:
 
         self.loggers[name] = dict(level=level, propagate=False, handlers=handlers)
 
-    def finish(self) -> Dict[str, Any]:
+    def finish(self) -> dict[str, Any]:
         """Return the final configuration."""
         return dict(
             version=1,
@@ -235,13 +236,13 @@ class LoggingConfig:
     window: bool = attrs.field(default=False)
     """If set, send message as a ``window/logMessage`` notification"""
 
-    config: Dict[str, LoggerConfiguration] = attrs.field(factory=dict)
+    config: dict[str, LoggerConfiguration] = attrs.field(factory=dict)
     """Configuration of individual loggers"""
 
     show_deprecation_warnings: bool = attrs.field(default=False)
     """Developer flag to enable deprecation warnings."""
 
-    def to_logging_config(self, server: server.EsbonioLanguageServer) -> Dict[str, Any]:
+    def to_logging_config(self, server: server.EsbonioLanguageServer) -> dict[str, Any]:
         """Convert the user's config into a config dict that can be passed to the
         ``logging.config.dictConfig()`` function.
 
