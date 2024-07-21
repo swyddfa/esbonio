@@ -16,16 +16,12 @@ from esbonio.sphinx_agent.types import Uri
 
 if typing.TYPE_CHECKING:
     from typing import Any
-    from typing import Dict
-    from typing import List
-    from typing import Optional
-    from typing import Tuple
 
 
 logger = logging.getLogger(__name__)
 
 
-def application_args(**kwargs) -> Dict[str, Any]:
+def application_args(**kwargs) -> dict[str, Any]:
     defaults = {
         "confoverrides": {},
         "freshenv": False,
@@ -429,7 +425,7 @@ def application_args(**kwargs) -> Dict[str, Any]:
         ),
     ],
 )
-def test_cli_arg_handling(args: List[str], expected: Dict[str, Any]):
+def test_cli_arg_handling(args: list[str], expected: dict[str, Any]):
     """Ensure that we can convert ``sphinx-build`` to the correct Sphinx application
     options."""
     config = SphinxConfig.fromcli(args)
@@ -471,7 +467,7 @@ REL_INC_PATH = os.path.relpath(INC_PATH)
         (f"internal padding before {RST_PATH}:34", (Uri.for_file(RST_PATH), 34)),
     ],
 )
-def test_source_to_uri_linum(location: str, expected: Tuple[str, Optional[int]]):
+def test_source_to_uri_linum(location: str, expected: tuple[str, int | None]):
     """Ensure we can correctly determine a dianostic's location based on the string we
     get from sphinx."""
 

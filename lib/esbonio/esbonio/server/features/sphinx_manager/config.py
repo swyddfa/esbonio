@@ -1,8 +1,9 @@
+from __future__ import annotations
+
 import hashlib
 import importlib.util
 import logging
 import pathlib
-from typing import List
 from typing import Optional
 
 import attrs
@@ -45,19 +46,19 @@ class SphinxConfig:
     enable_dev_tools: bool = attrs.field(default=False)
     """Flag to enable dev tools."""
 
-    python_command: List[str] = attrs.field(factory=list)
+    python_command: list[str] = attrs.field(factory=list)
     """The command to use when launching the python interpreter."""
 
-    build_command: List[str] = attrs.field(factory=list)
+    build_command: list[str] = attrs.field(factory=list)
     """The sphinx-build command to use."""
 
-    env_passthrough: List[str] = attrs.field(factory=list)
+    env_passthrough: list[str] = attrs.field(factory=list)
     """List of environment variables to pass through to the Sphinx subprocess"""
 
     cwd: str = attrs.field(default="${scopeFsPath}")
     """The working directory to use."""
 
-    python_path: List[pathlib.Path] = attrs.field(factory=list)
+    python_path: list[pathlib.Path] = attrs.field(factory=list)
     """The value of ``PYTHONPATH`` to use when injecting the sphinx agent into the
     target environment"""
 
@@ -66,7 +67,7 @@ class SphinxConfig:
         uri: Uri,
         workspace: Workspace,
         logger: logging.Logger,
-    ) -> "Optional[SphinxConfig]":
+    ) -> Optional[SphinxConfig]:
         """Resolve the configuration based on user provided values.
 
         Parameters
@@ -154,7 +155,7 @@ class SphinxConfig:
 
         return None
 
-    def _resolve_python_path(self, logger: logging.Logger) -> List[pathlib.Path]:
+    def _resolve_python_path(self, logger: logging.Logger) -> list[pathlib.Path]:
         """Return the list of paths to put on the sphinx agent's ``PYTHONPATH``
 
         Using the ``PYTHONPATH`` environment variable, we can inject additional Python
@@ -182,7 +183,7 @@ class SphinxConfig:
         python_path = [sphinx_agent]
         return python_path
 
-    def _resolve_build_command(self, uri: Uri, logger: logging.Logger) -> List[str]:
+    def _resolve_build_command(self, uri: Uri, logger: logging.Logger) -> list[str]:
         """Return the ``sphinx-build`` command to use.
 
         If no command is configured, this will attempt to guess the command to use based

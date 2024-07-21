@@ -1,7 +1,6 @@
 import logging
 import typing
 from typing import IO
-from typing import List
 
 from docutils import nodes
 from docutils.core import Publisher
@@ -212,13 +211,13 @@ class SymbolVisitor(nodes.NodeVisitor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.symbols: List[types.Symbol] = []
+        self.symbols: list[types.Symbol] = []
         """Holds the symbols for the document"""
 
-        self.parents: List[int] = []
+        self.parents: list[int] = []
         """Holds the ids of the current hierarchy."""
 
-        self.order: List[int] = [0]
+        self.order: list[int] = [0]
         """Holds the current position at each level of the hierarchy."""
 
     def push_symbol(self, name: str, kind: int, range_: types.Range, detail: str = ""):

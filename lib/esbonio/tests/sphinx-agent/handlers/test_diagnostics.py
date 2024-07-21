@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 import pathlib
 from typing import Any
-from typing import Dict
-from typing import List
 
 import pytest
 from pygls.protocol import default_converter
@@ -15,8 +15,8 @@ from esbonio.sphinx_agent import types
 
 
 def check_diagnostics(
-    expected: Dict[Uri, List[types.Diagnostic]],
-    actual: Dict[Uri, List[Dict[str, Any]]],
+    expected: dict[Uri, list[types.Diagnostic]],
+    actual: dict[Uri, list[dict[str, Any]]],
 ):
     """Ensure that two sets of diagnostics are equal."""
     converter = default_converter()

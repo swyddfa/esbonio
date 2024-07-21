@@ -1,7 +1,5 @@
 from typing import Any
-from typing import Dict
 from typing import Optional
-from typing import Set
 from urllib.parse import urlencode
 
 from lsprotocol import types
@@ -34,7 +32,7 @@ class PreviewManager(server.LanguageFeature):
         self.sphinx.add_listener("build", self.on_build)
         """The sphinx manager."""
 
-        self.built_clients: Set[str] = set()
+        self.built_clients: set[str] = set()
         """Keeps track of which clients run a build at least once."""
 
         self.build_path: Optional[str] = None
@@ -190,7 +188,7 @@ class PreviewManager(server.LanguageFeature):
         server = await self.preview
         webview = await self.webview
 
-        query_params: Dict[str, Any] = dict(ws=webview.port)
+        query_params: dict[str, Any] = dict(ws=webview.port)
 
         if self.config.show_line_markers:
             query_params["show-markers"] = True

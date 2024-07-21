@@ -1,16 +1,10 @@
 from __future__ import annotations
 
-import typing
-
 from lsprotocol import types
 
 from esbonio import server
 from esbonio.server.features import directives
 from esbonio.server.features.project_manager import ProjectManager
-
-if typing.TYPE_CHECKING:
-    from typing import List
-    from typing import Optional
 
 
 class SphinxDirectives(directives.DirectiveProvider):
@@ -21,7 +15,7 @@ class SphinxDirectives(directives.DirectiveProvider):
 
     async def suggest_directives(
         self, context: server.CompletionContext
-    ) -> Optional[List[directives.Directive]]:
+    ) -> list[directives.Directive] | None:
         """Given a completion context, suggest directives that may be used."""
 
         if (project := self.manager.get_project(context.uri)) is None:
@@ -41,7 +35,7 @@ class SphinxDirectives(directives.DirectiveProvider):
         primary_domain = await project.get_config_value("primary_domain")
         active_domain = default_domain or primary_domain or "py"
 
-        result: List[directives.Directive] = []
+        result: list[directives.Directive] = []
         for name, implementation in await project.get_directives():
             # std: directives can be used unqualified
             if name.startswith("std:"):

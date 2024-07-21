@@ -1,16 +1,10 @@
 from __future__ import annotations
 
 import pathlib
-import typing
 
 import pytest
 from lsprotocol import types
 from pytest_lsp import LanguageClient
-
-if typing.TYPE_CHECKING:
-    from typing import Optional
-    from typing import Set
-
 
 EXPECTED = {
     "ref",
@@ -63,8 +57,8 @@ async def test_rst_role_completions(
     client: LanguageClient,
     uri_for,
     text: str,
-    expected: Optional[Set[str]],
-    unexpected: Optional[Set[str]],
+    expected: set[str] | None,
+    unexpected: set[str] | None,
 ):
     """Ensure that the language server can offer role completions in rst documents."""
     test_uri = uri_for("workspaces", "demo", "rst", "roles.rst")
@@ -171,8 +165,8 @@ async def test_rst_role_target_completions(
     client: LanguageClient,
     uri_for,
     text: str,
-    expected: Optional[Set[str]],
-    unexpected: Optional[Set[str]],
+    expected: set[str] | None,
+    unexpected: set[str] | None,
 ):
     """Ensure that the language server can offer role target completions in rst
     documents."""
@@ -260,8 +254,8 @@ async def test_myst_role_completions(
     client: LanguageClient,
     uri_for,
     text: str,
-    expected: Optional[Set[str]],
-    unexpected: Optional[Set[str]],
+    expected: set[str] | None,
+    unexpected: set[str] | None,
 ):
     """Ensure that the language server can offer completions in MyST documents."""
     test_uri = uri_for("workspaces", "demo", "myst", "roles.md")
@@ -368,8 +362,8 @@ async def test_myst_role_target_completions(
     client: LanguageClient,
     uri_for,
     text: str,
-    expected: Optional[Set[str]],
-    unexpected: Optional[Set[str]],
+    expected: set[str] | None,
+    unexpected: set[str] | None,
 ):
     """Ensure that the language server can offer completions in MyST documents."""
     test_uri = uri_for("workspaces", "demo", "myst", "roles.md")

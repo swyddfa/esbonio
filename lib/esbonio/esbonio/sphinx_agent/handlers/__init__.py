@@ -1,14 +1,12 @@
+from __future__ import annotations
+
 import inspect
 import logging
 import sys
 import traceback
 import typing
 from typing import Callable
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Tuple
-from typing import Type
 
 import sphinx.application
 from sphinx import __version__ as __sphinx_version__
@@ -42,12 +40,12 @@ class SphinxHandler:
         self.app: Optional[Sphinx] = None
         """The sphinx application instance"""
 
-        self._content_overrides: Dict[Uri, str] = {}
+        self._content_overrides: dict[Uri, str] = {}
         """Holds any additional content to inject into a build."""
 
-        self._handlers: Dict[str, Tuple[Type, Callable]] = self._register_handlers()
+        self._handlers: dict[str, tuple[type, Callable]] = self._register_handlers()
 
-    def get(self, method: str) -> Optional[Tuple[Type, Callable]]:
+    def get(self, method: str) -> Optional[tuple[type, Callable]]:
         """Return the handler for the given method - if possible.
 
         Parameters
@@ -67,7 +65,7 @@ class SphinxHandler:
         """
         return self._handlers.get(method)
 
-    def _register_handlers(self) -> Dict[str, Tuple[Type, Callable]]:
+    def _register_handlers(self) -> dict[str, tuple[type, Callable]]:
         """Return a map of all the handlers we provide.
 
         A handler
@@ -85,7 +83,7 @@ class SphinxHandler:
            representing the message body, the second element is the method which
            implements it.
         """
-        handlers: Dict[str, Tuple[Type, Callable]] = {}
+        handlers: dict[str, tuple[type, Callable]] = {}
 
         for name in dir(self):
             method_func = getattr(self, name)
@@ -135,7 +133,7 @@ class SphinxHandler:
         )
         send_message(response)
 
-    def _cb_env_before_read_docs(self, app: Sphinx, env, docnames: List[str]):
+    def _cb_env_before_read_docs(self, app: Sphinx, env, docnames: list[str]):
         """Used to add additional documents to the "to build" list."""
 
         is_building = set(docnames)

@@ -11,9 +11,6 @@ from sphinx import version_info
 from ..log import source_to_uri_and_linum
 
 if typing.TYPE_CHECKING:
-    from typing import Dict
-    from typing import Tuple
-
     from sphinx.application import Sphinx
 
 
@@ -42,7 +39,7 @@ class source_locations(nodes.General, nodes.Element):
 
 
 def visit_source_locations(self, node):
-    source_index: Dict[int, Tuple[str, int]] = node["index"]
+    source_index: dict[int, tuple[str, int]] = node["index"]
 
     self.body.append('<div id="esbonio-marker-index" style="display: none">\n')
     for idx, (uri, linum) in source_index.items():

@@ -6,11 +6,8 @@ from typing import Protocol
 
 if typing.TYPE_CHECKING:
     import pathlib
+    from collections.abc import Generator
     from typing import Any
-    from typing import Dict
-    from typing import Generator
-    from typing import List
-    from typing import Optional
 
     from esbonio.server import Uri
     from esbonio.sphinx_agent import types
@@ -42,8 +39,8 @@ class SphinxClient(Protocol):
     """Describes the API language features can use to inspect/manipulate a Sphinx
     application instance."""
 
-    state: Optional[ClientState]
-    sphinx_info: Optional[types.SphinxInfo]
+    state: ClientState | None
+    sphinx_info: types.SphinxInfo | None
 
     @property
     def id(self) -> str:
@@ -91,9 +88,9 @@ class SphinxClient(Protocol):
     async def build(
         self,
         *,
-        filenames: Optional[List[str]] = None,
+        filenames: list[str] | None = None,
         force_all: bool = False,
-        content_overrides: Optional[Dict[str, str]] = None,
+        content_overrides: dict[str, str] | None = None,
     ) -> types.BuildResult:
         """Trigger a Sphinx build."""
         ...

@@ -9,12 +9,8 @@ from esbonio import server
 from esbonio.sphinx_agent import types
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Coroutine
     from typing import Any
-    from typing import Coroutine
-    from typing import Dict
-    from typing import List
-    from typing import Optional
-    from typing import Union
 
     from esbonio.server import Uri
 
@@ -24,7 +20,7 @@ class RoleProvider:
 
     def get_role(
         self, uri: Uri, name: str
-    ) -> Union[Optional[types.Role], Coroutine[Any, Any, Optional[types.Role]]]:
+    ) -> types.Role | None | Coroutine[Any, Any, types.Role | None]:
         """Return the definition of the given role, if known.
 
         Parameters
@@ -39,9 +35,7 @@ class RoleProvider:
 
     def suggest_roles(
         self, context: server.CompletionContext
-    ) -> Union[
-        Optional[List[types.Role]], Coroutine[Any, Any, Optional[List[types.Role]]]
-    ]:
+    ) -> list[types.Role] | None | Coroutine[Any, Any, list[types.Role] | None]:
         """Givem a completion context, suggest roles that may be used."""
         return None
 
@@ -51,10 +45,11 @@ class RoleTargetProvider:
 
     def suggest_targets(
         self, context: server.CompletionContext, **kwargs
-    ) -> Union[
-        Optional[List[lsp.CompletionItem]],
-        Coroutine[Any, Any, Optional[List[lsp.CompletionItem]]],
-    ]:
+    ) -> (
+        list[lsp.CompletionItem]
+        | None
+        | Coroutine[Any, Any, list[lsp.CompletionItem] | None]
+    ):
         """Givem a completion context, suggest role targets that may be used."""
         return None
 
@@ -69,8 +64,8 @@ class RolesFeature(server.LanguageFeature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._role_providers: Dict[int, RoleProvider] = {}
-        self._target_providers: Dict[str, RoleTargetProvider] = {}
+        self._role_providers: dict[int, RoleProvider] = {}
+        self._target_providers: dict[str, RoleTargetProvider] = {}
 
     def add_role_provider(self, provider: RoleProvider):
         """Register a role provider.
@@ -100,7 +95,7 @@ class RolesFeature(server.LanguageFeature):
 
     async def suggest_roles(
         self, context: server.CompletionContext
-    ) -> List[types.Role]:
+    ) -> list[types.Role]:
         """Suggest roles that may be used, given a completion context.
 
         Parameters
@@ -108,11 +103,11 @@ class RolesFeature(server.LanguageFeature):
         context
            The completion context
         """
-        items: List[types.Role] = []
+        items: list[types.Role] = []
 
         for provider in self._role_providers.values():
             try:
-                result: Optional[List[types.Role]] = None
+                result: list[types.Role] | None = None
 
                 aresult = provider.suggest_roles(context)
                 if inspect.isawaitable(aresult):
@@ -126,7 +121,7 @@ class RolesFeature(server.LanguageFeature):
 
         return items
 
-    async def get_role(self, uri: Uri, name: str) -> Optional[types.Role]:
+    async def get_role(self, uri: Uri, name: str) -> types.Role | None:
         """Return the definition of the given role name.
 
         Parameters
@@ -139,12 +134,12 @@ class RolesFeature(server.LanguageFeature):
 
         Returns
         -------
-        Optional[types.Role]
+        types.Role | None
            The role's definition, if known
         """
         for provider in self._role_providers.values():
             try:
-                result: Optional[types.Role] = None
+                result: types.Role | None = None
 
                 aresult = provider.get_role(uri, name)
                 if inspect.isawaitable(aresult):
@@ -160,7 +155,7 @@ class RolesFeature(server.LanguageFeature):
 
     async def suggest_targets(
         self, context: server.CompletionContext, role_name: str
-    ) -> List[lsp.CompletionItem]:
+    ) -> list[lsp.CompletionItem]:
         """Suggest role targets that may be used, given a completion context.
 
         Parameters
@@ -186,7 +181,7 @@ class RolesFeature(server.LanguageFeature):
                 continue
 
             try:
-                result: Optional[List[lsp.CompletionItem]] = None
+                result: list[lsp.CompletionItem] | None = None
 
                 aresult = provider.suggest_targets(context, **spec.kwargs)
                 if inspect.isawaitable(aresult):

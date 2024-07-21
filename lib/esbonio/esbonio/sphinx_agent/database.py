@@ -5,12 +5,7 @@ import sqlite3
 from dataclasses import dataclass
 from dataclasses import field
 from typing import Any
-from typing import List
 from typing import Literal
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Union
 
 
 class Database:
@@ -19,7 +14,7 @@ class Database:
         name: str
         dtype: str
         notnull: bool = field(default=False)
-        default: Optional[Any] = field(default=None)
+        default: Any | None = field(default=None)
         pk: int = field(default=0)
 
         @property
@@ -30,7 +25,7 @@ class Database:
     @dataclass
     class Table:
         name: str
-        columns: List[Database.Column]
+        columns: list[Database.Column]
 
         @property
         def create_statement(self):
@@ -39,7 +34,7 @@ class Database:
             columns = ",".join([c.definition for c in self.columns])
             return "".join([f"CREATE TABLE {self.name} (", columns, ");"])
 
-    def __init__(self, dbpath: Union[pathlib.Path, Literal[":memory:"]]):
+    def __init__(self, dbpath: pathlib.Path | Literal[":memory:"]):
         self.path = dbpath
 
         if isinstance(self.path, pathlib.Path) and not self.path.parent.exists():
@@ -50,9 +45,9 @@ class Database:
         # Ensure that Write Ahead Logging is enabled.
         self.db.execute("PRAGMA journal_mode(WAL)")
 
-        self._checked_tables: Set[str] = set()
+        self._checked_tables: set[str] = set()
 
-    def _get_table(self, name: str) -> Optional[Table]:
+    def _get_table(self, name: str) -> Table | None:
         """Get the table with the given name, if it exists."""
         # TODO: SQLite does not seem to like '?' syntax in this statement...
         cursor = self.db.execute(f"PRAGMA table_info({name});")
@@ -89,8 +84,8 @@ class Database:
 
         # TODO: Is there a way to pass the table name as a '?' parameter?
         base_query = f"DELETE FROM {table.name}"  # noqa: S608
-        where: List[str] = []
-        parameters: List[Any] = []
+        where: list[str] = []
+        parameters: list[Any] = []
 
         for param, value in kwargs.items():
             if value is None:
@@ -134,7 +129,7 @@ class Database:
 
         self._checked_tables.add(table.name)
 
-    def insert_values(self, table: Table, values: List[Tuple]):
+    def insert_values(self, table: Table, values: list[tuple]):
         """Insert the given values into the given table."""
 
         if len(values) == 0:

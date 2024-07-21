@@ -8,12 +8,8 @@ import attrs
 from esbonio import server
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Coroutine
     from typing import Any
-    from typing import Coroutine
-    from typing import Dict
-    from typing import List
-    from typing import Optional
-    from typing import Union
 
 
 @attrs.define
@@ -23,7 +19,7 @@ class Directive:
     name: str
     """The name of the directive, as the user would type in an rst file."""
 
-    implementation: Optional[str]
+    implementation: str | None
     """The dotted name of the directive's implementation."""
 
 
@@ -32,9 +28,7 @@ class DirectiveProvider:
 
     def suggest_directives(
         self, context: server.CompletionContext
-    ) -> Union[
-        Optional[List[Directive]], Coroutine[Any, Any, Optional[List[Directive]]]
-    ]:
+    ) -> list[Directive] | None | Coroutine[Any, Any, list[Directive] | None]:
         """Given a completion context, suggest directives that may be used."""
         return None
 
@@ -49,7 +43,7 @@ class DirectiveFeature(server.LanguageFeature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._providers: Dict[int, DirectiveProvider] = {}
+        self._providers: dict[int, DirectiveProvider] = {}
 
     def add_provider(self, provider: DirectiveProvider):
         """Register a directive provider.
@@ -63,7 +57,7 @@ class DirectiveFeature(server.LanguageFeature):
 
     async def suggest_directives(
         self, context: server.CompletionContext
-    ) -> List[Directive]:
+    ) -> list[Directive]:
         """Suggest directives that may be used, given a completion context.
 
         Parameters
@@ -71,11 +65,11 @@ class DirectiveFeature(server.LanguageFeature):
         context
            The completion context.
         """
-        items: List[Directive] = []
+        items: list[Directive] = []
 
         for provider in self._providers.values():
             try:
-                result: Optional[List[Directive]] = None
+                result: list[Directive] | None = None
 
                 aresult = provider.suggest_directives(context)
                 if inspect.isawaitable(aresult):

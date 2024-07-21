@@ -16,8 +16,6 @@ from websockets.server import serve
 from esbonio import server
 
 if typing.TYPE_CHECKING:
-    from typing import Optional
-
     from websockets import WebSocketServer
 
     from .config import PreviewConfig
@@ -39,21 +37,21 @@ class WebviewServer(Server):
         self.lsp._send_only_body = True
 
         self._connected = False
-        self._ws_server: Optional[WebSocketServer] = None
+        self._ws_server: WebSocketServer | None = None
 
-        self._startup_task: Optional[asyncio.Task] = None
+        self._startup_task: asyncio.Task | None = None
         """The task that resolves once startup is complete."""
 
-        self._server_task: Optional[asyncio.Task] = None
+        self._server_task: asyncio.Task | None = None
         """The task hosting the server itself."""
 
-        self._editor_in_control: Optional[asyncio.Task] = None
+        self._editor_in_control: asyncio.Task | None = None
         """If set, the editor is in control and the view should not emit scroll events"""
 
-        self._view_in_control: Optional[asyncio.Task] = None
+        self._view_in_control: asyncio.Task | None = None
         """If set, the view is in control and the editor should not emit scroll events"""
 
-        self._current_uri: Optional[str] = None
+        self._current_uri: str | None = None
         """If set, indicates the current uri the editor and view are scrolling."""
 
     def __await__(self):

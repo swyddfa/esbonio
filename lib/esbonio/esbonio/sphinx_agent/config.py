@@ -1,10 +1,10 @@
+from __future__ import annotations
+
 import dataclasses
 import inspect
 import pathlib
 import sys
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Literal
 from typing import Optional
 from typing import Union
@@ -33,7 +33,7 @@ class SphinxConfig:
     doctree_dir: str
     """The directory to write doctrees into."""
 
-    config_overrides: Dict[str, Any] = dataclasses.field(default_factory=dict)
+    config_overrides: dict[str, Any] = dataclasses.field(default_factory=dict)
     """Any overrides to configuration values."""
 
     force_full_build: bool = dataclasses.field(default=False)
@@ -51,7 +51,7 @@ class SphinxConfig:
     silent: bool = dataclasses.field(default=False)
     """Hide all Sphinx output."""
 
-    tags: List[str] = dataclasses.field(default_factory=list)
+    tags: list[str] = dataclasses.field(default_factory=list)
     """Tags to enable during a build."""
 
     verbosity: int = dataclasses.field(default=0)
@@ -75,7 +75,7 @@ class SphinxConfig:
         return self.num_jobs
 
     @classmethod
-    def fromcli(cls, args: List[str]):
+    def fromcli(cls, args: list[str]):
         """Return the ``SphinxConfig`` instance that's equivalent to the given arguments.
 
         Parameters
@@ -128,7 +128,7 @@ class SphinxConfig:
             warning_is_error=sphinx_args.get("warningiserror", False),
         )
 
-    def to_application_args(self) -> Dict[str, Any]:
+    def to_application_args(self) -> dict[str, Any]:
         """Convert this into the equivalent Sphinx application arguments."""
 
         # On OSes like Fedora Silverblue, `/home` is symlinked to `/var/home`.  This

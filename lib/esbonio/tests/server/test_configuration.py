@@ -1,9 +1,8 @@
+from __future__ import annotations
+
 import itertools
 from typing import Any
-from typing import Dict
-from typing import List
 from typing import Optional
-from typing import Type
 from typing import TypeVar
 
 import attrs
@@ -23,7 +22,7 @@ T = TypeVar("T")
 @attrs.define
 class ExampleConfig:
     log_level: str = "error"
-    log_names: List[str] = attrs.field(factory=list)
+    log_names: list[str] = attrs.field(factory=list)
 
 
 @attrs.define
@@ -426,11 +425,11 @@ def server(event_loop):
 )
 def test_get_configuration(
     server: EsbonioLanguageServer,
-    init_options: Dict[str, Any],
-    workspace_config: Dict[str, Any],
-    file_config: Dict[str, Any],
+    init_options: dict[str, Any],
+    workspace_config: dict[str, Any],
+    file_config: dict[str, Any],
     section: str,
-    spec: Type[T],
+    spec: type[T],
     scope: Optional[str],
     expected: T,
 ):

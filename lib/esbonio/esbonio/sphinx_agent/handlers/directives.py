@@ -1,8 +1,8 @@
+from __future__ import annotations
+
 import importlib
 import inspect
-from typing import List
 from typing import Optional
-from typing import Type
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives as docutils_directives
@@ -22,14 +22,14 @@ DIRECTIVES_TABLE = Database.Table(
 )
 
 
-def get_impl_name(directive: Type[Directive]) -> str:
+def get_impl_name(directive: type[Directive]) -> str:
     try:
         return f"{directive.__module__}.{directive.__name__}"
     except AttributeError:
         return f"{directive.__module__}.{directive.__class__.__name__}"
 
 
-def get_impl_location(impl: Type[Directive]) -> Optional[str]:
+def get_impl_location(impl: type[Directive]) -> Optional[str]:
     """Get the implementation location of the given directive"""
 
     try:
@@ -66,7 +66,7 @@ def index_directives(app: Sphinx):
     first time.
     """
 
-    directives: List[types.Directive] = []
+    directives: list[types.Directive] = []
 
     ignored_directives = {"restructuredtext-test-directive"}
     found_directives = {
