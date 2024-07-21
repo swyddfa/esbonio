@@ -8,6 +8,7 @@ import re
 import sys
 import threading
 import traceback
+import typing
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 from typing import TypeVar
@@ -33,10 +34,10 @@ def parse_message(obj: dict, cls: type[T]) -> T:
 
     if dataclasses.is_dataclass(cls):
         kwargs = {}
-        fields = {f.name: f for f in dataclasses.fields(cls)}
+        fields = typing.get_type_hints(cls)
 
         for key, value in obj.items():
-            kwargs[key] = parse_message(value, fields[key].type)
+            kwargs[key] = parse_message(value, fields[key])
 
         return cls(**kwargs)  # type: ignore[return-value]
 
