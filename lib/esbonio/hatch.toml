@@ -14,10 +14,10 @@ extra-dependencies = ["pytest-lsp>=0.3.1,<1"]
 matrix-name-format = "{variable}{value}"
 
 [[envs.hatch-test.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+python = ["3.9", "3.10", "3.11", "3.12"]
 
 [[envs.hatch-test.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+python = ["3.9", "3.10", "3.11", "3.12"]
 sphinx = ["5", "6", "7"]
 
 [envs.hatch-test.overrides]
