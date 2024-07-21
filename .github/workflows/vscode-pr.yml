@@ -22,7 +22,7 @@ jobs:
     - uses: 'actions/setup-python@v5'
       with:
         # This must be the minimum Python version we support
-        python-version: "3.8"
+        python-version: "3.9"
 
     - name: Pip cache
       uses: actions/cache@v4

@@ -9,7 +9,7 @@ HATCH_VERSION = 1.10.0
 NODE_VERSION := 18.20.2
 
 # The versions of Python we support
-PYXX_versions := 3.8 3.9 3.10 3.11 3.12
+PYXX_versions := 3.9 3.10 3.11 3.12
 PY_INTERPRETERS =
 
 # Hatch is not only used for building packages, but bootstrapping any missing
