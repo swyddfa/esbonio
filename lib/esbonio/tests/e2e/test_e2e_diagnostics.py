@@ -6,6 +6,7 @@ import pytest_lsp
 from lsprotocol import types
 from pytest_lsp import ClientServerConfig
 from pytest_lsp import LanguageClient
+from sphinx import version_info as sphinx_version
 
 SERVER_CMD = ["-m", "esbonio"]
 TEST_DIR = pathlib.Path(__file__).parent.parent
@@ -25,12 +26,15 @@ async def test_rst_document_diagnostic(client: LanguageClient, uri_for):
 
     assert report.kind == "full"
 
+    if sphinx_version[0] >= 8:
+        message = "image file not readable: not-an-image.png [image.not_readable]"
+    else:
+        message = "image file not readable: not-an-image.png"
+
     # We will only check the diagnostic message, full details will be handled by other
     # test cases.
     messages = {d.message for d in report.items}
-    assert messages == {
-        "image file not readable: not-an-image.png",
-    }
+    assert messages == {message}
 
     assert len(client.diagnostics) == 0, "Server should not publish diagnostics"
 
@@ -49,12 +53,15 @@ async def test_myst_document_diagnostic(client: LanguageClient, uri_for):
 
     assert report.kind == "full"
 
+    if sphinx_version[0] >= 8:
+        message = "image file not readable: not-an-image.png [image.not_readable]"
+    else:
+        message = "image file not readable: not-an-image.png"
+
     # We will only check the diagnostic message, full details will be handled by other
     # test cases.
     messages = {d.message for d in report.items}
-    assert messages == {
-        "image file not readable: not-an-image.png",
-    }
+    assert messages == {message}
 
     assert len(client.diagnostics) == 0, "Server should not publish diagnostics"
 
@@ -66,14 +73,15 @@ async def test_workspace_diagnostic(client: LanguageClient, uri_for):
         types.WorkspaceDiagnosticParams(previous_result_ids=[])
     )
 
+    if sphinx_version[0] >= 8:
+        message = "image file not readable: not-an-image.png [image.not_readable]"
+    else:
+        message = "image file not readable: not-an-image.png"
+
     workspace_uri = uri_for("workspaces", "demo")
     expected = {
-        str(workspace_uri / "rst" / "diagnostics.rst"): {
-            "image file not readable: not-an-image.png",
-        },
-        str(workspace_uri / "myst" / "diagnostics.md"): {
-            "image file not readable: not-an-image.png",
-        },
+        str(workspace_uri / "rst" / "diagnostics.rst"): {message},
+        str(workspace_uri / "myst" / "diagnostics.md"): {message},
     }
     assert len(report.items) == len(expected)
     for item in report.items:
@@ -159,13 +167,15 @@ async def pub_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
 async def test_publish_diagnostics(pub_client: LanguageClient, uri_for):
     """Ensure that the server publishes the diagnostics it finds"""
     workspace_uri = uri_for("workspaces", "demo")
+
+    if sphinx_version[0] >= 8:
+        message = "image file not readable: not-an-image.png [image.not_readable]"
+    else:
+        message = "image file not readable: not-an-image.png"
+
     expected = {
-        str(workspace_uri / "rst" / "diagnostics.rst"): {
-            "image file not readable: not-an-image.png",
-        },
-        str(workspace_uri / "myst" / "diagnostics.md"): {
-            "image file not readable: not-an-image.png",
-        },
+        str(workspace_uri / "rst" / "diagnostics.rst"): {message},
+        str(workspace_uri / "myst" / "diagnostics.md"): {message},
     }
 
     # The server might not have published its diagnostics yet
