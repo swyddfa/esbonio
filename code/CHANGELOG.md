@@ -1,3 +1,11 @@
+## v0.95.1 - 2024-07-23
+
+
+### Fixes
+
+- Actually bump the bundled version of `esbonio` to `1.0b6` ([#865](https://github.com/swyddfa/esbonio/issues/865))
+
+
 ## v0.95.0 - 2024-07-19
 
 
