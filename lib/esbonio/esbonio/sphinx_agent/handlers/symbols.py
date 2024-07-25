@@ -66,7 +66,7 @@ def update_symbols(app: Sphinx, docname: str, source):
             destination=NullOutput(),
         )
         publisher.settings = settings
-        publisher.set_source(source="\n".join(source), source_path=filename)
+        publisher.set_source(source="\n".join(source), source_path=str(filename))
         publisher.publish()
         document = publisher.document
 
