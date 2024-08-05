@@ -39,4 +39,4 @@ value = ["tests/sphinx-agent", "tests/e2e"]
 
 [envs.hatch-static-analysis]
 config-path = "ruff_defaults.toml"
-dependencies = ["ruff==0.5.4"]
+dependencies = ["ruff==0.5.6"]
