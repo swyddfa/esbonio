@@ -165,6 +165,12 @@
                         "default": null,
                         "description": "The sphinx-build command to use."
                     },
+                    "esbonio.sphinx.configOverrides": {
+                        "scope": "resource",
+                        "type": "object",
+                        "default": null,
+                        "description": "Overrides to apply to Sphinx's configuration."
+                    },
                     "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
                         "type": "array",
