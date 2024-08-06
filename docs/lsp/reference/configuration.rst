@@ -252,7 +252,7 @@ The following options control the creation of the Sphinx application object mana
 
    A list of environment variables to pass through to the Sphinx process.
 
-.. esbonio:config:: sphinx.configOverrides
+.. esbonio:config:: esbonio.sphinx.configOverrides
    :scope: project
    :type: object
 

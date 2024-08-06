@@ -10,6 +10,7 @@ import dataclasses
 import os
 import pathlib
 import re
+from typing import Any
 from typing import Callable
 from typing import Optional
 from typing import Union
@@ -465,6 +466,9 @@ class CreateApplicationParams:
 
     command: list[str]
     """The ``sphinx-build`` command to base the app instance on."""
+
+    config_overrides: dict[str, Any]
+    """Overrides to apply to the application's configuration."""
 
 
 @dataclasses.dataclass

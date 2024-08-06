@@ -110,6 +110,7 @@ class SphinxHandler:
         if sphinx_config is None:
             raise ValueError("Invalid build command")
 
+        sphinx_config.config_overrides.update(request.params.config_overrides)
         sphinx_args = sphinx_config.to_application_args()
         self.app = Sphinx(**sphinx_args)
 

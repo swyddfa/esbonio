@@ -211,6 +211,7 @@ class SubprocessSphinxClient(JsonRPCClient):
 
             params = types.CreateApplicationParams(
                 command=self.config.build_command,
+                config_overrides=self.config.config_overrides,
             )
             self.sphinx_info = await self.protocol.send_request_async(
                 "sphinx/createApp", params
