@@ -121,6 +121,10 @@ async def pub_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                         workspace_uri.fs_path,
                         str(build_dir),
                     ],
+                    "configOverrides": {
+                        "html_theme": "alabaster",
+                        "html_theme_options": {},
+                    },
                     "pythonCommand": [sys.executable],
                 },
             },
