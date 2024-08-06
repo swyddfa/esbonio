@@ -4,6 +4,7 @@ import hashlib
 import importlib.util
 import logging
 import pathlib
+from typing import Any
 from typing import Optional
 
 import attrs
@@ -51,6 +52,9 @@ class SphinxConfig:
 
     build_command: list[str] = attrs.field(factory=list)
     """The sphinx-build command to use."""
+
+    config_overrides: dict[str, Any] = attrs.field(factory=dict)
+    """Overrides to apply to Sphinx's configuration."""
 
     env_passthrough: list[str] = attrs.field(factory=list)
     """List of environment variables to pass through to the Sphinx subprocess"""
@@ -104,6 +108,7 @@ class SphinxConfig:
 
         return SphinxConfig(
             enable_dev_tools=self.enable_dev_tools,
+            config_overrides=self.config_overrides,
             cwd=cwd,
             env_passthrough=self.env_passthrough,
             python_command=self.python_command,
