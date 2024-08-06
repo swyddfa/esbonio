@@ -57,7 +57,7 @@ jobs:
 
         # Use in-repo version of esbonio for dev builds
         echo "whl=${ESBONIO_WHL}"
-        ESBONIO=${ESBONIO_WHL} make dist
+        ESBONIO=${ESBONIO_WHL} make -d dist
       id: assets
       name: Package Extension
 
