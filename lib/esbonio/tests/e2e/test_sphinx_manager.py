@@ -94,6 +94,10 @@ async def test_get_client(
                 sphinx=dict(
                     pythonCommand=[sys.executable],
                     buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                    configOverrides={
+                        "html_theme": "alabaster",
+                        "html_theme_options": {},
+                    },
                 ),
             ),
         ),
@@ -182,6 +186,10 @@ async def test_get_client_with_many_uris(
                 sphinx=dict(
                     pythonCommand=[sys.executable],
                     buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                    configOverrides={
+                        "html_theme": "alabaster",
+                        "html_theme_options": {},
+                    },
                 ),
             ),
         ),
@@ -234,8 +242,14 @@ async def test_get_client_with_many_uris_in_many_projects(
     server, manager = server_manager(
         dict(
             esbonio=dict(
-                sphinx=dict(pythonCommand=[sys.executable]),
-                buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                sphinx=dict(
+                    pythonCommand=[sys.executable],
+                    buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                    configOverrides={
+                        "html_theme": "alabaster",
+                        "html_theme_options": {},
+                    },
+                ),
             ),
         ),
     )  # Ensure that the server is ready
@@ -286,6 +300,10 @@ async def test_updated_config(
                 sphinx=dict(
                     pythonCommand=[sys.executable],
                     buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                    configOverrides={
+                        "html_theme": "alabaster",
+                        "html_theme_options": {},
+                    },
                 ),
             ),
         ),

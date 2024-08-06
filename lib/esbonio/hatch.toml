@@ -27,7 +27,6 @@ sphinx = ["8"]
 
 [envs.hatch-test.overrides]
 matrix.sphinx.dependencies = [
-    "furo",
     "sphinx-design",
     "myst-parser",
     { value = "sphinx>=6,<7", if = ["6"] },

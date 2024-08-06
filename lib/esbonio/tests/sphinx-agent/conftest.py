@@ -52,6 +52,10 @@ async def client(request, uri_for, build_dir):
             demo_workspace.fs_path,
             str(build_dir),
         ],
+        config_overrides={
+            "html_theme": "alabaster",
+            "html_theme_options": {},
+        },
     )
     resolved = config.resolve(test_uri, workspace, logger)
     assert resolved is not None
@@ -82,6 +86,10 @@ def app(client, build_dir):
         outdir=str(pathlib.Path(build_dir, "html")),
         doctreedir=str(pathlib.Path(build_dir, "doctrees")),
         buildername="html",
+        confoverrides={
+            "html_theme": "alabaster",
+            "html_theme_options": {},
+        },
     )
 
     sys.path.pop(0)
