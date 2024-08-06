@@ -26,7 +26,8 @@
         "**/.ipynb_checkpoints": true,
         "**/.coverage": true,
         "**/.vscode-test": true,
-        "**/.mypy_cache": true
+        "**/.mypy_cache": true,
+        "**/.ruff_cache": true
     },
     "esbonio.server.showDeprecationWarnings": true,
     "python.testing.pytestArgs": [
