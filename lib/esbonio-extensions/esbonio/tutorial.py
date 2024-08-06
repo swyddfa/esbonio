@@ -16,7 +16,7 @@ from docutils.io import StringOutput
 from docutils.parsers.rst.directives.admonitions import BaseAdmonition
 from sphinx.application import Sphinx
 from sphinx.builders import Builder
-from sphinx.util import status_iterator
+from sphinx.util.display import status_iterator
 from sphinx.util.docutils import new_document
 from sphinx.util.logging import getLogger
 from sphinx.util.osutil import copyfile
