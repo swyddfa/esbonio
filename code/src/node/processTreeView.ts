@@ -1,5 +1,7 @@
 import * as vscode from 'vscode'
 import { Notifications, Events } from "../common/constants";
+import { OutputChannelLogger } from '../common/log'
+
 import { AppCreatedNotification, ClientCreatedNotification, ClientDestroyedNotification, ClientErroredNotification, EsbonioClient, SphinxClientConfig, SphinxInfo } from './client';
 
 /**
@@ -13,7 +15,7 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
   private _onDidChangeTreeData: vscode.EventEmitter<ProcessTreeNode | undefined | null | void> = new vscode.EventEmitter<ProcessTreeNode | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<ProcessTreeNode | undefined | null | void> = this._onDidChangeTreeData.event;
 
-  constructor(client: EsbonioClient) {
+  constructor(private logger: OutputChannelLogger, client: EsbonioClient) {
     client.addHandler(
       Notifications.SPHINX_CLIENT_CREATED,
       (params: ClientCreatedNotification) => this.clientCreated(params)
@@ -52,14 +54,14 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
       case 'container':
         return { label: element.name, collapsibleState: vscode.TreeItemCollapsibleState.Expanded }
 
-      case 'process':
+      case 'sphinxProcess':
         let label = 'Starting...'
         let icon: vscode.ThemeIcon | undefined = new vscode.ThemeIcon("sync~spin")
         let client = this.sphinxClients.get(element.id)!
         let tooltip
 
         if (client.state === 'running') {
-          label = `Sphinx ${client.app?.version}`
+          label = `Sphinx v${client.app?.version}`
           icon = undefined
 
         } else if (client.state === 'errored') {
@@ -73,11 +75,59 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
           iconPath: icon,
           tooltip: tooltip,
           contextValue: element.kind,
+          collapsibleState: vscode.TreeItemCollapsibleState.Expanded
+        }
+
+      case 'sphinxBuilder':
+        return {
+          label: element.name,
+          iconPath: new vscode.ThemeIcon('book'),
+          tooltip: new vscode.MarkdownString("**Build Directory**\n\n" + element.uri.fsPath),
+          contextValue: element.kind,
+          collapsibleState: vscode.TreeItemCollapsibleState.Collapsed
+        }
+
+      case 'sphinxCommand':
+        let cmd: string[] = []
+        element.command.forEach(c => cmd.push(`- ${c}`))
+
+        return {
+          label: element.command.join(' '),
+          iconPath: new vscode.ThemeIcon('console'),
+          tooltip: new vscode.MarkdownString(`**Sphinx Command**\n  ${cmd.join('\n  ')}`),
+          contextValue: element.kind,
           collapsibleState: vscode.TreeItemCollapsibleState.None
         }
 
-      case 'property':
-        return { label: 'Prop', collapsibleState: vscode.TreeItemCollapsibleState.None }
+      case 'python':
+        let pyCmd: string[] = []
+        element.command.forEach(c => pyCmd.push(`- ${c}`))
+
+        return {
+          label: element.command.join(' '),
+          iconPath: vscode.ThemeIcon.File,
+          tooltip: new vscode.MarkdownString(`**Python Command**\n  ${pyCmd.join('\n  ')}`),
+          resourceUri: vscode.Uri.parse('file:///test.py'),  // Needed to pull in the icon for Python
+          contextValue: element.kind,
+          collapsibleState: vscode.TreeItemCollapsibleState.None
+        }
+
+      case 'directory':
+        return {
+          resourceUri: element.uri,
+          iconPath: vscode.ThemeIcon.Folder,
+          contextValue: element.kind,
+          collapsibleState: vscode.TreeItemCollapsibleState.Collapsed,
+        }
+
+      case 'file':
+        return {
+          resourceUri: element.uri,
+          iconPath: vscode.ThemeIcon.File,
+          contextValue: element.kind,
+          command: { command: 'vscode.open', title: `Open ${element.name}`, arguments: [element.uri], },
+          collapsibleState: vscode.TreeItemCollapsibleState.None
+        }
     }
 
   }
@@ -90,34 +140,78 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
    * @param element The element to return children for
    * @returns The given element's children
    */
-  getChildren(element?: ProcessTreeNode): Thenable<ProcessTreeNode[]> {
+  async getChildren(element?: ProcessTreeNode): Promise<ProcessTreeNode[]> {
     const result: ProcessTreeNode[] = []
 
     if (!element) {
       for (let process of this.sphinxClients.values()) {
 
         let cwd = process.config.cwd
-        let node: ProcssContainerNode = { kind: 'container', name: cwd, path: cwd }
+        let node: ProcessContainerNode = { kind: 'container', name: cwd, path: cwd }
         result.push(node)
       }
 
-      return Promise.resolve(result)
+      return result
     }
 
     switch (element.kind) {
       case 'container':
         for (let [id, process] of this.sphinxClients.entries()) {
           if (element.name === process.config.cwd) {
-            let node: SphinxProcessNode = { kind: 'process', id: id }
+            let node: SphinxProcessNode = { kind: 'sphinxProcess', id: id }
             result.push(node)
           }
         }
         break
-      case 'process':
-      case 'property':
+      case 'sphinxProcess':
+        let client = this.sphinxClients.get(element.id)
+        if (!client) {
+          break
+        }
+
+        let pythonNode: PythonCommandNode = { kind: 'python', command: client.config.pythonCommand }
+        result.push(pythonNode)
+
+        let commandNode: SphinxCommandNode = { kind: 'sphinxCommand', command: client.config.buildCommand }
+        result.push(commandNode)
+
+        let app = client.app
+        if (!app) {
+          break
+        }
+
+        let builderNode: SphinxBuilderNode = {
+          kind: 'sphinxBuilder',
+          name: app.builder_name,
+          uri: vscode.Uri.file(app.build_dir)
+        }
+        result.push(builderNode)
+
+        break
+
+      // Check the build dir for any files/directories
+      // TODO: Is there a way to insert VSCode's native file tree here?
+      //       It would save having to reimplement it ourselves.
+      case 'sphinxBuilder':
+      case 'directory':
+        let items = await vscode.workspace.fs.readDirectory(element.uri)
+        for (let [name, type] of items) {
+          let node: FileNode | DirNode = {
+            kind: type === vscode.FileType.Directory ? 'directory' : 'file',
+            name: name,
+            uri: vscode.Uri.joinPath(element.uri, name)
+          }
+          result.push(node)
+        }
+        break
+
+      // The following node types have no children
+      case 'sphinxCommand':
+      case 'python':
+      case 'file':
     }
 
-    return Promise.resolve(result)
+    return result
   }
 
   /**
@@ -126,6 +220,7 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
    * @param params Information about the newly created client.
    */
   private clientCreated(params: ClientCreatedNotification) {
+    this.logger.debug(`sphinx/clientCreated: ${JSON.stringify(params.config, undefined, 2)}`)
     this.sphinxClients.set(params.id, new SphinxProcess(params.config))
     this._onDidChangeTreeData.fire()
   }
@@ -136,6 +231,8 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
    * @param params Information about the newly created app.
    */
   private appCreated(params: AppCreatedNotification) {
+    this.logger.debug(`sphinx/appCreated: ${JSON.stringify(params.application, undefined, 2)}`)
+
     const client = this.sphinxClients.get(params.id)
     if (!client) { return }
 
@@ -175,30 +272,66 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
   }
 }
 
-type ProcessTreeNode = ProcssContainerNode | SphinxProcessNode | ProcessPropertyNode
+type ProcessTreeNode = ProcessContainerNode | SphinxProcessNode | SphinxBuilderNode | SphinxCommandNode | PythonCommandNode | DirNode | FileNode
 
 /**
- * Represents a property of the sphinx process
+ * Represents a Python command
  */
-interface ProcessPropertyNode {
-  kind: 'property'
+interface PythonCommandNode {
+  kind: 'python'
+  command: string[]
 }
 
 /**
  * Represents the sphinx process in the tree view
  */
 interface SphinxProcessNode {
-  kind: 'process'
+  kind: 'sphinxProcess'
   id: string
+}
+
+/**
+ * Represents the builder used by the parent sphinx process.
+ */
+interface SphinxBuilderNode {
+  kind: 'sphinxBuilder'
+  name: string
+  uri: vscode.Uri
+}
+
+/**
+ * Represents the build command used by the parent sphinx process.
+ */
+interface SphinxCommandNode {
+  kind: 'sphinxCommand'
+  command: string[]
 }
 
 /**
  * Represents a container for the sphinx process
  */
-interface ProcssContainerNode {
+interface ProcessContainerNode {
   kind: 'container'
   name: string
   path: string
+}
+
+/**
+ * Represents a directory
+ */
+interface DirNode {
+  kind: 'directory'
+  name: string
+  uri: vscode.Uri
+}
+
+/**
+ * Represents a file node
+ */
+interface FileNode {
+  kind: 'file'
+  name: string
+  uri: vscode.Uri
 }
 
 class SphinxProcess {
