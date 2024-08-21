@@ -338,9 +338,6 @@ export class EsbonioClient {
    * transport.
    */
   private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
-
-
-
     let documentSelector = config.get<TextDocumentFilter[]>("server.documentSelector")
     if (!documentSelector || documentSelector.length === 0) {
       documentSelector = Server.DEFAULT_SELECTOR
@@ -361,8 +358,7 @@ export class EsbonioClient {
               return result
             }
 
-            result.forEach(async (config, i) => {
-              await this.injectPython(params, i, config)
+            result.forEach((config) => {
               this.stripNulls(config)
             })
             return result
@@ -391,31 +387,6 @@ export class EsbonioClient {
       } else if (typeof config[k] === 'object') {
         this.stripNulls(config[k])
       }
-    }
-  }
-
-  /**
-   * Inject the user's configured Python interpreter into the configuration.
-   */
-  private async injectPython(params: ConfigurationParams, index: number, config: any) {
-    if (params.items[index].section !== "esbonio") {
-      return
-    }
-
-    if (config?.sphinx?.pythonCommand?.length > 0) {
-      return
-    }
-
-    // User has not explictly configured a Python command, try and inject the
-    // Python interpreter they have configured for this resource.
-    let scopeUri: vscode.Uri | undefined
-    let scope = params.items[index].scopeUri
-    if (scope) {
-      scopeUri = vscode.Uri.parse(scope)
-    }
-    let python = await this.python.getCmd(scopeUri)
-    if (python) {
-      config.sphinx.pythonCommand = python
     }
   }
 
