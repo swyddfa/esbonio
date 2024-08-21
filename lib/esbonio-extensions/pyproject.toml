@@ -7,7 +7,7 @@ name = "esbonio-extensions"
 dynamic = ["version"]
 description = "A collection of extensions for Sphinx and the Esbonio language server"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "Alex Carney", email = "alcarneyme@gmail.com" }]
 classifiers = [
@@ -16,7 +16,6 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
