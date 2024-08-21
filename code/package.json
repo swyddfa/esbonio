@@ -35,7 +35,6 @@
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
-        "@types/glob": "^8.1.0",
         "@types/node": "^18",
         "@types/vscode": "1.78.0",
         "@vscode/vsce": "^2.31.1",
@@ -439,7 +438,7 @@
             "view/item/context": [
                 {
                     "command": "esbonio.sphinx.restart",
-                    "when": "view == sphinxProcesses && viewItem == process",
+                    "when": "view == sphinxProcesses && viewItem == sphinxProcess",
                     "group": "inline"
                 }
             ]
