@@ -697,16 +697,8 @@ if __name__ == "__main__":
     path = "tutorial_demo"
     package = "esbonio"
 
-    # `files` only available in Python 3.9+
-    if hasattr(importlib.resources, "files"):
-        demo = importlib.resources.files(package).joinpath(path)
-        source = pathlib.Path(demo)
-
-    else:
-        # `path` deprecated in Python 3.11, so let's only rely on it when we
-        # have to.
-        with importlib.resources.path(package, path) as demo:
-            source = pathlib.Path(demo)
+    demo = importlib.resources.files(package).joinpath(path)
+    source = pathlib.Path(demo)
 
     destination = pathlib.Path(
         platformdirs.user_data_dir(appname="esbonio-tutorial", appauthor="swyddfa")
