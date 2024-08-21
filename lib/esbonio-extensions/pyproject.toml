@@ -29,7 +29,6 @@ dependencies = ["esbonio", "platformdirs", "sphinx"]
 [project.optional-dependencies]
 dev = ["black", "flake8", "pytest", "pytest-cov", "mock"]
 spelling = ["pyspellchecker"]
-tutorial = ["nbformat"]
 
 [project.urls]
 "Bug Tracker" = "https://github.com/swyddfa/esbonio/issues"
