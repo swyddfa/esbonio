@@ -1,2 +1,19 @@
 [tool.esbonio.sphinx]
-buildCommand = ["sphinx-build", "-M", "dirhtml", ".", "./_build"]
+# buildCommand = ["sphinx-build", "-M", "dirhtml", ".", "./_build"]
+pythonCommand = ["hatch", "-e", "docs", "run", "python"]
+
+[tool.hatch.envs.docs]
+installer = 'uv'
+skip-install = true
+dependencies = [
+    "aiosqlite",
+    "sphinx",
+    "sphinx-design",
+    "furo",
+    "myst-parser",
+    "platformdirs",
+    "pytest_lsp",
+]
+
+[tool.hatch.envs.docs.scripts]
+build = "sphinx-build -M dirhtml . ./_build"
