@@ -15,6 +15,7 @@ if typing.TYPE_CHECKING:
 
 
 STATIC_DIR = (pathlib.Path(__file__).parent.parent / "static").resolve()
+ALLOWED_MODULES = {"docutils.nodes", "sphinx.addnodes"}
 
 
 def has_source(node):
@@ -29,6 +30,16 @@ def has_source(node):
     # Caused by this line:
     # https://github.com/sphinx-doc/sphinx/blob/ec993dda3690f260345133c47a4a0f6ef0b18493/sphinx/environment/__init__.py#L630
     if isinstance(node, addnodes.toctree) and version_info[0] < 7:
+        return False
+
+    # It's not only limited to `toctreenodes`!
+    #
+    # The identical error is thrown when using esbonio with the `ablog` extension
+    # See: https://github.com/swyddfa/esbonio/issues/874
+    #
+    # I think for now, the safest approach is to only handle nodes defined by Sphinx or
+    # docutils.
+    if node.__module__ not in ALLOWED_MODULES:
         return False
 
     return (node.line or 0) > 0 and node.source is not None
