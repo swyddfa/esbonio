@@ -185,7 +185,7 @@ class SphinxManager(server.LanguageFeature):
         known_src_uris = await project.get_src_uris()
 
         for src_uri in known_src_uris:
-            doc = self.server.workspace.get_document(str(src_uri))
+            doc = self.server.workspace.get_text_document(str(src_uri))
             doc_version = doc.version or 0
             saved_version = getattr(doc, "saved_version", 0)
 
@@ -197,7 +197,9 @@ class SphinxManager(server.LanguageFeature):
         try:
             result = await client.build(content_overrides=content_overrides)
         except Exception as exc:
-            self.server.show_message(f"{exc}", lsp.MessageType.Error)
+            self.server.window_show_message(
+                lsp.ShowMessageParams(message=f"{exc}", type=lsp.MessageType.Error)
+            )
             return
         finally:
             self.stop_progress(client)
@@ -268,7 +270,7 @@ class SphinxManager(server.LanguageFeature):
 
         # If there was a previous client, stop it.
         if (previous_client := self.clients.pop(event.scope, None)) is not None:
-            self.server.lsp.notify(
+            self.server.protocol.notify(
                 "sphinx/clientDestroyed",
                 ClientDestroyedNotification(id=previous_client.id),
             )
@@ -282,7 +284,7 @@ class SphinxManager(server.LanguageFeature):
         self.clients[event.scope] = client = self.client_factory(self, resolved)
         client.add_listener("state-change", partial(self._on_state_change, event.scope))
 
-        self.server.lsp.notify(
+        self.server.protocol.notify(
             "sphinx/clientCreated",
             ClientCreatedNotification(id=client.id, scope=event.scope, config=resolved),
         )
@@ -303,7 +305,7 @@ class SphinxManager(server.LanguageFeature):
         if old_state == ClientState.Starting and new_state == ClientState.Running:
             if (sphinx_info := client.sphinx_info) is not None:
                 self.project_manager.register_project(scope, client.db)
-                self.server.lsp.notify(
+                self.server.protocol.notify(
                     "sphinx/appCreated",
                     AppCreatedNotification(id=client.id, application=sphinx_info),
                 )
@@ -318,8 +320,10 @@ class SphinxManager(server.LanguageFeature):
                     traceback.format_exception(type(exc), exc, exc.__traceback__)
                 )
 
-            self.server.lsp.show_message(error, lsp.MessageType.Error)
-            self.server.lsp.notify(
+            self.server.window_show_message(
+                lsp.ShowMessageParams(message=error, type=lsp.MessageType.Error)
+            )
+            self.server.protocol.notify(
                 "sphinx/clientErrored",
                 ClientErroredNotification(id=client.id, error=error, detail=detail),
             )
@@ -331,13 +335,13 @@ class SphinxManager(server.LanguageFeature):
         self.logger.debug("Starting progress: '%s'", token)
 
         try:
-            await self.server.progress.create_async(token)
+            await self.server.work_done_progress.create_async(token)
         except Exception as exc:
             self.logger.debug("Unable to create progress token: %s", exc)
             return
 
         self._progress_tokens[client.id] = token
-        self.server.progress.begin(
+        self.server.work_done_progress.begin(
             token,
             lsp.WorkDoneProgressBegin(title="sphinx-build", cancellable=False),
         )
@@ -346,7 +350,9 @@ class SphinxManager(server.LanguageFeature):
         if (token := self._progress_tokens.pop(client.id, None)) is None:
             return
 
-        self.server.progress.end(token, lsp.WorkDoneProgressEnd(message="Finished"))
+        self.server.work_done_progress.end(
+            token, lsp.WorkDoneProgressEnd(message="Finished")
+        )
 
     def report_progress(self, client: SphinxClient, progress: types.ProgressParams):
         """Report progress done for the given client."""
@@ -357,7 +363,7 @@ class SphinxManager(server.LanguageFeature):
         if (token := self._progress_tokens.get(client.id, None)) is None:
             return
 
-        self.server.progress.report(
+        self.server.work_done_progress.report(
             token,
             lsp.WorkDoneProgressReport(
                 message=progress.message,
