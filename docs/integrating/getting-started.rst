@@ -34,17 +34,3 @@ These guides will help you get ``esbonio`` setup with your editor of choice
       :text-align: center
 
       Using ``esbonio`` with Neovim's built in language client.
-
-Additional Features
-===================
-
-The language server provides additional notifications and commands that are not part of the LSP specification.
-This means that they require additional client side integration code to be enabled.
-
-Theses features are not a requirement to use ``esbonio``, but they do offer some quality of life improvements.
-
-.. toctree::
-   :maxdepth: 1
-
-   Sphinx Processes <reference/sphinx-processes>
-   Previews <reference/previews>
