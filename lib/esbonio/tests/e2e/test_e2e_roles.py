@@ -52,7 +52,7 @@ SPHINX_PY_CLASSES = {"sphinx.addnodes.desc"}
         ("(:c:func", EXPECTED, UNEXPECTED),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_rst_role_completions(
     client: LanguageClient,
     uri_for,
@@ -88,7 +88,7 @@ async def test_rst_role_completions(
         types.DidChangeTextDocumentParams(
             text_document=types.VersionedTextDocumentIdentifier(uri=uri, version=2),
             content_changes=[
-                types.TextDocumentContentChangeEvent_Type1(
+                types.TextDocumentContentChangePartial(
                     text=text,
                     range=types.Range(
                         start=types.Position(line=linum, character=0),
@@ -160,7 +160,7 @@ async def test_rst_role_completions(
         (":py:func:`", {"counters.pattern.count_numbers"}, set()),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_rst_role_target_completions(
     client: LanguageClient,
     uri_for,
@@ -197,7 +197,7 @@ async def test_rst_role_target_completions(
         types.DidChangeTextDocumentParams(
             text_document=types.VersionedTextDocumentIdentifier(uri=uri, version=2),
             content_changes=[
-                types.TextDocumentContentChangeEvent_Type1(
+                types.TextDocumentContentChangePartial(
                     text=text,
                     range=types.Range(
                         start=types.Position(line=linum, character=0),
@@ -249,7 +249,7 @@ async def test_rst_role_target_completions(
         ("({c:func", EXPECTED, UNEXPECTED),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_myst_role_completions(
     client: LanguageClient,
     uri_for,
@@ -285,7 +285,7 @@ async def test_myst_role_completions(
         types.DidChangeTextDocumentParams(
             text_document=types.VersionedTextDocumentIdentifier(uri=uri, version=2),
             content_changes=[
-                types.TextDocumentContentChangeEvent_Type1(
+                types.TextDocumentContentChangePartial(
                     text=text,
                     range=types.Range(
                         start=types.Position(line=linum, character=0),
@@ -357,7 +357,7 @@ async def test_myst_role_completions(
         ("{py:func}`", {"counters.pattern.count_numbers"}, set()),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_myst_role_target_completions(
     client: LanguageClient,
     uri_for,
@@ -393,7 +393,7 @@ async def test_myst_role_target_completions(
         types.DidChangeTextDocumentParams(
             text_document=types.VersionedTextDocumentIdentifier(uri=uri, version=2),
             content_changes=[
-                types.TextDocumentContentChangeEvent_Type1(
+                types.TextDocumentContentChangePartial(
                     text=text,
                     range=types.Range(
                         start=types.Position(line=linum, character=0),

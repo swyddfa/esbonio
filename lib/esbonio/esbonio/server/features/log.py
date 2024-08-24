@@ -36,7 +36,9 @@ class WindowLogMessageHandler(logging.Handler):
             return
 
         log = self.format(record).strip()
-        self.server.show_message_log(log)
+        self.server.window_log_message(
+            types.LogMessageParams(message=log, type=types.MessageType.Log)
+        )
 
 
 @attrs.define

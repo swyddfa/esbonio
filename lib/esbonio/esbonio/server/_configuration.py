@@ -441,7 +441,7 @@ class Configuration:
         )
 
         try:
-            results = await self.server.get_configuration_async(params)
+            results = await self.server.workspace_configuration_async(params)
         except Exception:
             self.logger.error("Unable to get workspace configuration", exc_info=True)
             return

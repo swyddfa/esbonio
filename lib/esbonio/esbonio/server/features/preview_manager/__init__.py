@@ -202,7 +202,7 @@ class PreviewManager(server.LanguageFeature):
         self.logger.info("Preview available at: %s", uri.as_string(encode=False))
 
         if self.supports_show_document:
-            result = await self.server.show_document_async(
+            result = await self.server.window_show_document_async(
                 types.ShowDocumentParams(
                     uri=uri.as_string(encode=False), external=True, take_focus=False
                 )

@@ -28,7 +28,7 @@ dependencies = [
     "aiosqlite",
     "platformdirs",
     "docutils",
-    "pygls>=1.1.0",
+    "pygls>=2.0a0",
     "tomli ; python_version<'3.11'",
     "websockets",
 ]
@@ -42,7 +42,7 @@ dependencies = [
 esbonio = "esbonio.server.cli:main"
 
 [project.optional-dependencies]
-typecheck = ["mypy", "pytest-lsp>=0.3.1", "types-docutils", "types-pygments"]
+typecheck = ["mypy", "pytest-lsp>=1.0b0", "types-docutils", "types-pygments"]
 
 [tool.coverage.run]
 parallel = true
@@ -60,6 +60,7 @@ exclude_also = [
 [tool.pytest.ini_options]
 addopts = "--doctest-glob='*.txt'"
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.mypy]
 mypy_path = "$MYPY_CONFIG_FILE_DIR"

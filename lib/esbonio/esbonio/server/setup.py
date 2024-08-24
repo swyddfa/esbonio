@@ -84,7 +84,7 @@ def _configure_lsp_methods(server: EsbonioLanguageServer):
         ls: EsbonioLanguageServer, params: types.DidSaveTextDocumentParams
     ):
         # Record the version number of the document
-        doc = ls.workspace.get_document(params.text_document.uri)
+        doc = ls.workspace.get_text_document(params.text_document.uri)
         doc.saved_version = doc.version or 0
 
         await call_features(ls, "document_save", params)
@@ -135,9 +135,7 @@ def _configure_lsp_methods(server: EsbonioLanguageServer):
                 )
             )
 
-        # Typing issues should be fixed in a future version of lsprotocol
-        # see: https://github.com/microsoft/lsprotocol/pull/285
-        return types.WorkspaceDiagnosticReport(items=reports)  # type: ignore[arg-type]
+        return types.WorkspaceDiagnosticReport(items=reports)
 
     @server.feature(types.TEXT_DOCUMENT_DOCUMENT_SYMBOL)
     async def on_document_symbol(

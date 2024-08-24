@@ -55,7 +55,7 @@ MYST_UNEXPECTED = UNEXPECTED.copy()
         ("   .. c:", RST_EXPECTED, RST_UNEXPECTED),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_rst_directive_completions(
     client: LanguageClient,
     uri_for,
@@ -92,7 +92,7 @@ async def test_rst_directive_completions(
         types.DidChangeTextDocumentParams(
             text_document=types.VersionedTextDocumentIdentifier(uri=uri, version=2),
             content_changes=[
-                types.TextDocumentContentChangeEvent_Type1(
+                types.TextDocumentContentChangePartial(
                     text=text,
                     range=types.Range(
                         start=types.Position(line=linum, character=0),
@@ -150,7 +150,7 @@ async def test_rst_directive_completions(
         ("   ```{c:", MYST_EXPECTED, MYST_UNEXPECTED),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_myst_directive_completions(
     client: LanguageClient,
     uri_for,
@@ -186,7 +186,7 @@ async def test_myst_directive_completions(
         types.DidChangeTextDocumentParams(
             text_document=types.VersionedTextDocumentIdentifier(uri=uri, version=2),
             content_changes=[
-                types.TextDocumentContentChangeEvent_Type1(
+                types.TextDocumentContentChangePartial(
                     text=text,
                     range=types.Range(
                         start=types.Position(line=linum, character=0),

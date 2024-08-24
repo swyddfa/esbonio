@@ -13,7 +13,7 @@ SERVER_CMD = ["-m", "esbonio"]
 TEST_DIR = pathlib.Path(__file__).parent.parent
 
 
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_rst_document_diagnostic(client: LanguageClient, uri_for):
     """Ensure that we can get the diagnostics for a single rst document correctly."""
 
@@ -40,7 +40,7 @@ async def test_rst_document_diagnostic(client: LanguageClient, uri_for):
     assert len(client.diagnostics) == 0, "Server should not publish diagnostics"
 
 
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_myst_document_diagnostic(client: LanguageClient, uri_for):
     """Ensure that we can get the diagnostics for a single myst document correctly."""
 
@@ -67,7 +67,7 @@ async def test_myst_document_diagnostic(client: LanguageClient, uri_for):
     assert len(client.diagnostics) == 0, "Server should not publish diagnostics"
 
 
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_workspace_diagnostic(client: LanguageClient, uri_for):
     """Ensure that we can get diagnostics for the whole workspace correctly."""
     report = await client.workspace_diagnostic_async(
@@ -172,7 +172,7 @@ async def pub_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
         print("Gave up waiting for process to exit")
 
 
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio(loop_scope="module")
 async def test_publish_diagnostics(pub_client: LanguageClient, uri_for):
     """Ensure that the server publishes the diagnostics it finds"""
     workspace_uri = uri_for("workspaces", "demo")

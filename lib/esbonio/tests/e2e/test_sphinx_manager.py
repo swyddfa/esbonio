@@ -46,7 +46,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
     loop = asyncio.get_running_loop()
 
     esbonio = create_language_server(EsbonioLanguageServer, [], loop=loop)
-    esbonio.lsp.transport = StdOutTransportAdapter(io.BytesIO(), sys.stderr.buffer)
+    esbonio.protocol.transport = StdOutTransportAdapter(io.BytesIO(), sys.stderr.buffer)
 
     project_manager = ProjectManager(esbonio)
     esbonio.add_feature(project_manager)
@@ -58,7 +58,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
 
     def initialize(init_options):
         # Initialize the server.
-        esbonio.lsp._procedure_handler(
+        esbonio.protocol._procedure_handler(
             lsp.InitializeRequest(
                 id=1,
                 params=lsp.InitializeParams(
@@ -72,7 +72,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
             )
         )
 
-        esbonio.lsp._procedure_handler(
+        esbonio.protocol._procedure_handler(
             lsp.InitializedNotification(params=lsp.InitializedParams())
         )
         return esbonio, sphinx_manager

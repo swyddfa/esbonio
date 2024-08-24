@@ -472,7 +472,7 @@ def test_get_configuration(
         for idx, uri in enumerate(workspace_config.keys())
         if uri != ""
     ]
-    server.lsp._workspace = Workspace(None, workspace_folders=workspace_folders)
+    server.protocol._workspace = Workspace(None, workspace_folders=workspace_folders)
 
     scope_uri = Uri.parse(scope) if scope else None
 

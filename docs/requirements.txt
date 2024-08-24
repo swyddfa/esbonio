@@ -4,6 +4,7 @@ sphinx
 sphinx-design
 furo
 myst-parser
-pytest_lsp
+pytest_lsp>=1.0b0
+pygls>=2.0a0
 platformdirs
 aiosqlite

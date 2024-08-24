@@ -10,8 +10,11 @@ packages = ["esbonio"]
 
 [envs.hatch-test]
 default-args = ["tests/server"]
-extra-dependencies = ["pytest-lsp>=0.3.1,<1"]
+extra-dependencies = ["pytest-lsp>=1.0b0"]
 matrix-name-format = "{variable}{value}"
+
+[envs.hatch-test.env-vars]
+UV_PRERELEASE="allow"
 
 [[envs.hatch-test.matrix]]
 python = ["3.9", "3.10", "3.11", "3.12", "3.13"]

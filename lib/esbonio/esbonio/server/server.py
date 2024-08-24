@@ -13,7 +13,7 @@ from uuid import uuid4
 import cattrs
 from lsprotocol import types
 from pygls.capabilities import get_capability
-from pygls.server import LanguageServer
+from pygls.lsp.server import LanguageServer
 from pygls.workspace import TextDocument
 from pygls.workspace import Workspace
 
@@ -35,19 +35,19 @@ LF = TypeVar("LF", bound="LanguageFeature")
 class EsbonioWorkspace(Workspace):
     """A modified version of pygls' workspace that ensures uris are always resolved."""
 
-    def get_document(self, doc_uri: str) -> TextDocument:
+    def get_text_document(self, doc_uri: str) -> TextDocument:
         uri = str(Uri.parse(doc_uri).resolve())
         return super().get_text_document(uri)
 
-    def put_document(self, text_document: types.TextDocumentItem):
+    def put_text_document(self, text_document: types.TextDocumentItem):
         text_document.uri = str(Uri.parse(text_document.uri).resolve())
         return super().put_text_document(text_document)
 
-    def remove_document(self, doc_uri: str):
+    def remove_text_document(self, doc_uri: str):
         doc_uri = str(Uri.parse(doc_uri).resolve())
         return super().remove_text_document(doc_uri)
 
-    def update_document(
+    def update_text_document(
         self,
         text_doc: types.VersionedTextDocumentIdentifier,
         change: types.TextDocumentContentChangeEvent,
@@ -99,7 +99,7 @@ class EsbonioLanguageServer(LanguageServer):
     @property
     def converter(self) -> cattrs.Converter:
         """The cattrs converter instance we should use."""
-        return self.lsp._converter
+        return self.protocol._converter
 
     def _finish_task(self, task: asyncio.Task[Any]):
         """Cleanup a finished task."""
@@ -133,7 +133,7 @@ class EsbonioLanguageServer(LanguageServer):
             self.logger.info("Language client: %s %s", client.name, client.version)
 
         # TODO: Propose patch to pygls for providing custom Workspace implementations.
-        self.lsp._workspace = EsbonioWorkspace(
+        self.protocol._workspace = EsbonioWorkspace(
             self.workspace.root_uri,
             self.workspace._sync_kind,
             list(self.workspace.folders.values()),
@@ -307,7 +307,9 @@ class EsbonioLanguageServer(LanguageServer):
 
         for uri, diag_list in diagnostics.items():
             self.logger.debug("Publishing %d diagnostics for: %s", len(diag_list), uri)
-            self.publish_diagnostics(str(uri), diag_list.data)
+            self.text_document_publish_diagnostics(
+                types.PublishDiagnosticsParams(uri=str(uri), diagnostics=diag_list.data)
+            )
 
     async def _register_did_change_watched_files_handler(self):
         """Register the server's handler for ``workspace/didChangeWatchedFiles``."""
@@ -326,7 +328,7 @@ class EsbonioLanguageServer(LanguageServer):
             return
 
         try:
-            await self.register_capability_async(
+            await self.client_register_capability_async(
                 types.RegistrationParams(
                     registrations=[
                         types.Registration(
@@ -375,7 +377,7 @@ class EsbonioLanguageServer(LanguageServer):
             return
 
         try:
-            await self.register_capability_async(
+            await self.client_register_capability_async(
                 types.RegistrationParams(
                     registrations=[
                         types.Registration(
