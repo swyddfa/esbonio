@@ -7,6 +7,7 @@ import traceback
 import typing
 import warnings
 from functools import partial
+from http.server import HTTPServer
 from multiprocessing import Process
 from multiprocessing import Queue
 from threading import Thread
@@ -51,13 +52,6 @@ from esbonio.lsp.sphinx.preview import start_preview_server
 
 from .line_number_transform import LineNumberTransform
 
-# Use a Thread as a preview server instead of Process for Python 3.12+
-# Usable since Thread and Process shares the same API
-PreviewRunnableType = Union[Process, Thread]
-PreviewRunnable: PreviewRunnableType = Process
-if sys.version_info.major >= 3 and sys.version_info.minor >= 12:
-    PreviewRunnable = Thread
-
 __all__ = [
     "InitializationOptions",
     "MissingConfigError",
@@ -67,6 +61,11 @@ __all__ = [
 ]
 
 IS_LINUX = platform.system() == "Linux"
+
+# Use a Thread as a preview server instead of Process for all Linux systems
+PreviewRunnable: type[Process] | type[Thread] = Process
+if IS_LINUX:
+    PreviewRunnable = Thread
 
 # fmt: off
 # Order matters!
@@ -102,8 +101,11 @@ class SphinxLanguageServer(RstLanguageServer):
         self.sphinx_log: Optional[SphinxLogHandler] = None
         """Logging handler for sphinx messages."""
 
-        self.preview_runnable: Optional[PreviewRunnableType] = None
+        self.preview_runnable: Optional[PreviewRunnable] = None
         """The process hosting the preview server."""
+
+        self.preview_linux_server: Optional[HTTPServer] = None
+        """The handle of HTTPServer running the preview server only on Linux systems."""
 
         self.preview_port: Optional[int] = None
         """The port the preview server is running on."""
@@ -183,8 +185,10 @@ class SphinxLanguageServer(RstLanguageServer):
 
     def on_shutdown(self, *args):
         if self.preview_runnable:
+            self.preview_runnable
             if not hasattr(self.preview_runnable, "kill"):
-                self.preview_runnable.terminate()
+                if self.preview_linux_server is not None:
+                    self.preview_linux_server.shutdown()
             else:
                 self.preview_runnable.kill()
 
@@ -443,6 +447,8 @@ class SphinxLanguageServer(RstLanguageServer):
             self.logger.debug("Starting preview server.")
             server = make_preview_server(self.app.outdir)  # type: ignore[arg-type]
             self.preview_port = server.server_port
+            # Remember the HTTPServer object to call shutdown when we want it to end
+            self.preview_linux_server = server
 
             self.preview_process = PreviewRunnable(
                 target=server.serve_forever, daemon=True
