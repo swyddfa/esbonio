@@ -178,11 +178,13 @@ class SphinxLanguageServer(RstLanguageServer):
 
     def on_shutdown(self, *args):
         if self.preview_runnable:
-            if not hasattr(self.preview_runnable, "kill"):
-                if self.preview_linux_server is not None:
-                    self.preview_linux_server.shutdown()
+            if self.preview_linux_server is not None:
+                self.preview_linux_server.shutdown()
             else:
-                self.preview_runnable.kill()
+                if not hasattr(self.preview_runnable, "kill"):
+                    self.preview_runnable.terminate()
+                else:
+                    self.preview_runnable.kill()
 
     def save(self, params: DidSaveTextDocumentParams):
         super().save(params)
