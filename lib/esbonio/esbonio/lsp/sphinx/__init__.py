@@ -60,11 +60,6 @@ __all__ = [
 
 IS_LINUX = platform.system() == "Linux"
 
-# Use a Thread as a preview server instead of Process for all Linux systems
-PreviewRunnable: type[Process] | type[Thread] = Process
-if IS_LINUX:
-    PreviewRunnable = Thread
-
 # fmt: off
 # Order matters!
 DEFAULT_MODULES = [
@@ -99,7 +94,7 @@ class SphinxLanguageServer(RstLanguageServer):
         self.sphinx_log: Optional[SphinxLogHandler] = None
         """Logging handler for sphinx messages."""
 
-        self.preview_runnable: Optional[PreviewRunnable] = None
+        self.preview_runnable: Optional[Process | Thread] = None
         """The process hosting the preview server."""
 
         self.preview_linux_server: Optional[HTTPServer] = None
@@ -447,16 +442,14 @@ class SphinxLanguageServer(RstLanguageServer):
             # Remember the HTTPServer object to call shutdown when we want it to end
             self.preview_linux_server = server
 
-            self.preview_process = PreviewRunnable(
-                target=server.serve_forever, daemon=True
-            )
+            self.preview_process = Thread(target=server.serve_forever, daemon=True)
             self.preview_process.start()
 
         if not self.preview_runnable and not IS_LINUX:
             self.logger.debug("Starting preview server")
 
             q: Queue = Queue()
-            self.preview_runnable = PreviewRunnable(
+            self.preview_runnable = Process(
                 target=start_preview_server, args=(q, self.app.outdir), daemon=True
             )
             self.preview_runnable.start()
