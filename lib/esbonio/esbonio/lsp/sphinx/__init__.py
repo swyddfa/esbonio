@@ -183,7 +183,6 @@ class SphinxLanguageServer(RstLanguageServer):
 
     def on_shutdown(self, *args):
         if self.preview_runnable:
-            self.preview_runnable
             if not hasattr(self.preview_runnable, "kill"):
                 if self.preview_linux_server is not None:
                     self.preview_linux_server.shutdown()
