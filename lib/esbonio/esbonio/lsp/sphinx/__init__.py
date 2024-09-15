@@ -2,7 +2,6 @@ import json
 import logging
 import pathlib
 import platform
-import sys
 import traceback
 import typing
 import warnings
@@ -18,7 +17,6 @@ from typing import Iterator
 from typing import List
 from typing import Optional
 from typing import Tuple
-from typing import Union
 
 import pygls.uris as Uri
 from lsprotocol.types import DeleteFilesParams
