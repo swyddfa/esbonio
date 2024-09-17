@@ -1,3 +1,4 @@
+import asyncio
 import pathlib
 import sys
 
@@ -89,4 +90,8 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
     yield
 
     # Teardown
-    await lsp_client.shutdown_session()
+    try:
+        await asyncio.wait_for(lsp_client.shutdown_session(), timeout=2.0)
+    except (asyncio.TimeoutError, TimeoutError):
+        # HACK: Working around openlawlibrary/pygls#433
+        print("Gave up waiting for process to exit")
