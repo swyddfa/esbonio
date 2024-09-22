@@ -1,3 +1,21 @@
+## v1.0.0b7 - 2024-09-22
+
+### Enhancements
+
+- Re-implemented the `esbonio.sphinx.configOverrides` option ([#785](https://github.com/swyddfa/esbonio/issues/785))
+
+### Fixes
+
+- Esbonio's preview generation should no longer conflict with extensions like `ablog` which call methods like `replac_self()` on custom doctree nodes. ([#874](https://github.com/swyddfa/esbonio/issues/874))
+
+### Misc
+
+- Drop support for Python 3.8 ([#858](https://github.com/swyddfa/esbonio/issues/858))
+- Add support for Python 3.13 ([#859](https://github.com/swyddfa/esbonio/issues/859))
+- Drop Sphinx `5.x` support, add Sphinx `8.x` support ([#866](https://github.com/swyddfa/esbonio/issues/866))
+- Migrate to pygls v2 ([#882](https://github.com/swyddfa/esbonio/issues/882))
+
+
 ## v1.0.0b6 - 2024-07-19
 
 
