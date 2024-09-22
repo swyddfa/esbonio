@@ -1,3 +1,19 @@
+v0.2.3 - 2024-09-22
+-------------------
+
+Misc
+^^^^
+
+- Use ``importlib.resources`` instead of ``pkg_resources``
+
+  Drop Python 3.7 support.
+
+  Add support for Python 3.12 (`#656 <https://github.com/swyddfa/esbonio/issues/656>`_)
+- Drop Python 3.8 support
+
+  Remove dependency on `nbformat` (`#879 <https://github.com/swyddfa/esbonio/issues/879>`_)
+
+
 v0.2.2 - 2022-11-05
 -------------------
 
