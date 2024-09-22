@@ -2,8 +2,7 @@ name: Language Server PR
 on:
   pull_request:
     branches:
-    - develop
-    - release
+    - 0.x
     paths:
     - 'lib/esbonio/**'
 

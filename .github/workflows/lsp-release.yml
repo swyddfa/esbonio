@@ -2,7 +2,7 @@ name: 'Release: esbonio'
 on:
   push:
     branches:
-    - release
+    - 0.x
     paths:
     - 'lib/esbonio/**'
 
