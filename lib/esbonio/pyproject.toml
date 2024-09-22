@@ -77,6 +77,11 @@ envlist = py37-sphinx{4,5}, py{38,39,310,311}-sphinx{4,5,6}
 [testenv]
 deps =
     sphinx4: sphinx>=4,<5
+    sphinx4: sphinxcontrib-applehelp<1.0.5
+    sphinx4: sphinxcontrib-devhelp<1.0.3
+    sphinx4: sphinxcontrib-htmlhelp<2.0.2
+    sphinx4: sphinxcontrib-serializinghtml<1.1.6
+    sphinx4: sphinxcontrib-qthelp<1.0.4
 
     sphinx5: sphinx>=5,<6
 
