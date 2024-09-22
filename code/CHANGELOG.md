@@ -1,3 +1,22 @@
+## v0.95.2 - 2024-09-22
+
+### Enhancements
+
+- Expose the `esbonio.sphinx.configOverrides` option ([#785](https://github.com/swyddfa/esbonio/issues/785))
+
+### Misc
+
+- Drop support for Python 3.8 ([#858](https://github.com/swyddfa/esbonio/issues/858))
+- Add support for Python 3.13 ([#859](https://github.com/swyddfa/esbonio/issues/859))
+- **IMPORTANT!**
+
+  The VSCode extension will no longer automatically inject the currently active Python interpreter into the configuration sent to the server.
+  It is now required for all users to set the `esbonio.sphinx.pythonCommand` option, either in your VSCode settings, or in your project's `pyproject.toml` file.
+
+  This makes VSCode's behavior more predicable and brings it in line with how other editors behave.
+  It also encourages the sharing of project configuration settings, which is particuarly useful if you use an [environment manager](https://docs.esbon.io/en/latest/lsp/howto/use-esbonio-with.html) ([#881](https://github.com/swyddfa/esbonio/issues/881))
+
+
 ## v0.95.1 - 2024-07-23
 
 
