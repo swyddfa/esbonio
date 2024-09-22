@@ -95,8 +95,8 @@ TAG="${TAG_PREFIX}${VERSION}"
 DATE=$(date +%Y-%m-%d)
 
 
-# Only if we are on the release branch.
-if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
+# Only if we are on the 0.x branch.
+if [ "${GITHUB_REF}" = "refs/heads/0.x" ]; then
 
     # Make sure there's at least some changes...
     if [ -z "$(find changes -name '*.rst')" ]; then
@@ -112,16 +112,16 @@ if [ "${GITHUB_REF}" = "refs/heads/release" ]; then
     python -m towncrier build --yes --version="${VERSION}"
 
     # Setup git, commit, tag and push all the changes.
-    git config user.name github-actions
-    git config user.email github-actions@github.com
+    git config user.name 'github-actions[bot]'
+    git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
     git commit -am "${COMMIT_MSG}${VERSION}"
 
     # Other stages may have run before this, make sure we have the latest
-    git pull --rebase origin release
+    git pull --rebase origin '0.x'
     git tag -a "${TAG}" -m "${COMMIT_MSG}${VERSION}"
 
-    git push origin release
+    git push origin '0.x'
     git push origin --tags
 
     # Create a markdown copy of the Changelog, needed for the VSCode marketplace.
