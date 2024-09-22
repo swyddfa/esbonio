@@ -12,6 +12,6 @@
 aiosqlite
 docutils
 platformdirs
-pygls>=1.1.0
+pygls>=2a0
 tomli
 websockets
