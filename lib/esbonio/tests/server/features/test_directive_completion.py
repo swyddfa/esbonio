@@ -16,7 +16,6 @@ from esbonio.sphinx_agent.types import RST_DIRECTIVE
 
 if typing.TYPE_CHECKING:
     from typing import Literal
-    from typing import Optional
 
 
 VSCODE = "visual-studio-code"
@@ -643,8 +642,8 @@ def test_render_directive_completion(
     insert_behavior: Literal["insert", "replace"],
     directive: Directive,
     text: str,
-    character: Optional[int],
-    expected: Optional[types.CompletionItem],
+    character: int | None,
+    expected: types.CompletionItem | None,
 ):
     """Ensure that we can render directive completions correctly.
 

@@ -1,9 +1,10 @@
 # Test cases originally based on:
 # https://github.com/microsoft/vscode/blob/5653420433692dc4269ad39adbc143e3438af179/src/vs/base/test/common/uri.test.ts
+from __future__ import annotations
+
 import os.path
 import pathlib
 from typing import Any
-from typing import Dict
 
 import pytest
 
@@ -440,7 +441,7 @@ def test_uri_parse_encode():
         (Uri.parse("scheme://authority/path"), dict(path=None), "scheme://authority"),
     ],
 )
-def test_uri_where(before: Uri, args: Dict[str, str], expected: str):
+def test_uri_where(before: Uri, args: dict[str, str], expected: str):
     """Ensure that we can transform uris correctly."""
     assert str(before.where(**args)) == expected
 
@@ -463,7 +464,7 @@ def test_uri_where(before: Uri, args: Dict[str, str], expected: str):
         ),
     ],
 )
-def test_uri_where_validation(before: Uri, args: Dict[str, str], message: str):
+def test_uri_where_validation(before: Uri, args: dict[str, str], message: str):
     """Ensure that transformed uris are validated"""
 
     with pytest.raises(ValueError) as e:

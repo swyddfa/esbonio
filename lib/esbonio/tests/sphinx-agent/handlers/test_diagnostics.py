@@ -1,10 +1,11 @@
+from __future__ import annotations
+
 import pathlib
 from typing import Any
-from typing import Dict
-from typing import List
 
 import pytest
 from pygls.protocol import default_converter
+from sphinx import version_info as sphinx_version
 
 from esbonio.server import Uri
 from esbonio.server.features.project_manager import Project
@@ -15,8 +16,8 @@ from esbonio.sphinx_agent import types
 
 
 def check_diagnostics(
-    expected: Dict[Uri, List[types.Diagnostic]],
-    actual: Dict[Uri, List[Dict[str, Any]]],
+    expected: dict[Uri, list[types.Diagnostic]],
+    actual: dict[Uri, list[dict[str, Any]]],
 ):
     """Ensure that two sets of diagnostics are equal."""
     converter = default_converter()
@@ -36,10 +37,15 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
     rst_diagnostics_uri = uri_for("workspaces/demo/rst/diagnostics.rst")
     myst_diagnostics_uri = uri_for("workspaces/demo/myst/diagnostics.md")
 
+    if sphinx_version[0] >= 8:
+        message = "image file not readable: not-an-image.png [image.not_readable]"
+    else:
+        message = "image file not readable: not-an-image.png"
+
     expected = {
         rst_diagnostics_uri: [
             types.Diagnostic(
-                message="image file not readable: not-an-image.png",
+                message=message,
                 severity=types.DiagnosticSeverity.Warning,
                 range=types.Range(
                     start=types.Position(line=5, character=0),
@@ -49,7 +55,7 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
         ],
         myst_diagnostics_uri: [
             types.Diagnostic(
-                message="image file not readable: not-an-image.png",
+                message=message,
                 severity=types.DiagnosticSeverity.Warning,
                 range=types.Range(
                     start=types.Position(line=0, character=0),

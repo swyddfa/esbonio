@@ -1,4 +1,6 @@
-exclude: '.bumpversion.cfg$'
+ci:
+  autoupdate_schedule: quarterly
+
 repos:
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -9,26 +11,41 @@ repos:
   - id: trailing-whitespace
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.5.2
+  rev: v0.6.5
   hooks:
   - id: ruff
+    name: ruff (esbonio)
     args: [--fix]
+    files: 'lib/esbonio/.*\.py'
+
+  - id: ruff
+    name: ruff (esbonio-extensions)
+    args: [--fix]
+    files: 'lib/esbonio-extensions/.*\.py'
 
   - id: ruff-format
+    name: ruff-format (esbonio)
+    files: 'lib/esbonio/.*\.py'
+
+  - id: ruff-format
+    name: ruff-format (esbonio-extensions)
+    files: 'lib/esbonio-extensions/.*\.py'
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.10.1'
+  rev: 'v1.11.2'
   hooks:
   - id: mypy
     name: mypy (scripts)
     files: 'scripts/.*\.py'
+    exclude: 'scripts/.*_documentation\.py'
+
   - id: mypy
     name: mypy (esbonio)
     args: [--config,lib/esbonio/pyproject.toml]
     additional_dependencies:
     - aiosqlite
     - platformdirs
-    - pygls
+    - pygls>=2a0
     - pytest_lsp>=0.3
     - sphinx
     - tomli

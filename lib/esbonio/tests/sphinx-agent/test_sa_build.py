@@ -67,7 +67,7 @@ async def test_build_content_override(client: SubprocessSphinxClient, uri_for):
     assert expected in index_html.read_text()
 
 
-@pytest_asyncio.fixture(scope="module")
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def client_build_error(uri_for, tmp_path_factory):
     """A sphinx client that will error when a build is triggered."""
     build_dir = tmp_path_factory.mktemp("build")
@@ -105,7 +105,7 @@ async def client_build_error(uri_for, tmp_path_factory):
     await sphinx_client.stop()
 
 
-@pytest.mark.asyncio(scope="module")
+@pytest.mark.asyncio(loop_scope="module")
 async def test_build_error(client_build_error: SubprocessSphinxClient):
     """Ensure that when a build error occurs, useful information is reported."""
 

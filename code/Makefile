@@ -36,15 +36,15 @@ dev-deps: node_modules/.installed bundled/libs/.installed
 # Ensures the latest version of esbonio from PyPi is used.
 release-deps: node_modules/.installed bundled/libs/.installed
 	-test -L bundled/libs/esbonio && rm bundled/libs/esbonio
-	test -d bundled/libs/esbonio-*.dist-info || $(PY38) -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade $(ESBONIO)
+	test -d bundled/libs/esbonio-*.dist-info || $(PY39) -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade $(ESBONIO)
 
 requirements.txt: $(HATCH) requirements.in
 	$(HATCH) run deps:update
 
-bundled/libs/.installed: $(PY38) requirements.txt
+bundled/libs/.installed: $(PY39) requirements.txt
 	-test -d bundled/libs  && rm -r bundled/libs
-	$(PY38) --version
-	$(PY38) -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements.txt
+	$(PY39) --version
+	$(PY39) -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements.txt
 	touch $@
 
 node_modules/.installed: package.json package-lock.json $(NPM)

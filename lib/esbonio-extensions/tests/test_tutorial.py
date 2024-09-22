@@ -1,9 +1,8 @@
+import json
 import pathlib
 
-import nbformat.v4 as nbformat
-import pytest
-
 import esbonio.tutorial as tutorial
+import pytest
 
 
 @pytest.mark.parametrize(
@@ -28,26 +27,17 @@ def test_notebook_translator(testdata, parse_rst, name):
     the correct sequence of notebook cells."""
 
     rst = testdata(pathlib.Path("tutorial", name + ".rst")).decode("utf8")
-    json = testdata(pathlib.Path("tutorial", name + ".ipynb")).decode("utf8")
+    ipynb = testdata(pathlib.Path("tutorial", name + ".ipynb")).decode("utf8")
 
-    nb = nbformat.reads(json)
-
-    # Don't worry about different minor version numbers
-    nb.nbformat_minor = None
+    expected = json.loads(ipynb)
 
     doctree = parse_rst(rst)
-
     translator = tutorial.NotebookTranslator(doctree)
     doctree.walkabout(translator)
-
     notebook = translator.asnotebook()
-    notebook.nbformat_minor = None
 
-    # Don't worry about cell ids
-    for cell in notebook.cells:
-        cell.id = ""
+    # # Don't worry about cell ids
+    # for cell in notebook.cells:
+    #     cell.id = ""
 
-    actual = nbformat.writes(notebook)
-    expected = nbformat.writes(nb)
-
-    assert expected == actual
+    assert expected == notebook

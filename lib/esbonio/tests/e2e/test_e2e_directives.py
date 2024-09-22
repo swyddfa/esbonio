@@ -1,16 +1,10 @@
 from __future__ import annotations
 
 import pathlib
-import typing
 
 import pytest
 from lsprotocol import types
 from pytest_lsp import LanguageClient
-
-if typing.TYPE_CHECKING:
-    from typing import Optional
-    from typing import Set
-
 
 EXPECTED = {
     "function",
@@ -61,13 +55,13 @@ MYST_UNEXPECTED = UNEXPECTED.copy()
         ("   .. c:", RST_EXPECTED, RST_UNEXPECTED),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_rst_directive_completions(
     client: LanguageClient,
     uri_for,
     text: str,
-    expected: Optional[Set[str]],
-    unexpected: Optional[Set[str]],
+    expected: set[str] | None,
+    unexpected: set[str] | None,
 ):
     """Ensure that the language server can offer directive completions in rst
     documents."""
@@ -98,7 +92,7 @@ async def test_rst_directive_completions(
         types.DidChangeTextDocumentParams(
             text_document=types.VersionedTextDocumentIdentifier(uri=uri, version=2),
             content_changes=[
-                types.TextDocumentContentChangeEvent_Type1(
+                types.TextDocumentContentChangePartial(
                     text=text,
                     range=types.Range(
                         start=types.Position(line=linum, character=0),
@@ -156,13 +150,13 @@ async def test_rst_directive_completions(
         ("   ```{c:", MYST_EXPECTED, MYST_UNEXPECTED),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_myst_directive_completions(
     client: LanguageClient,
     uri_for,
     text: str,
-    expected: Optional[Set[str]],
-    unexpected: Optional[Set[str]],
+    expected: set[str] | None,
+    unexpected: set[str] | None,
 ):
     """Ensure that the language server can offer completions in MyST documents."""
     test_uri = uri_for("workspaces", "demo", "myst", "directives.md")
@@ -192,7 +186,7 @@ async def test_myst_directive_completions(
         types.DidChangeTextDocumentParams(
             text_document=types.VersionedTextDocumentIdentifier(uri=uri, version=2),
             content_changes=[
-                types.TextDocumentContentChangeEvent_Type1(
+                types.TextDocumentContentChangePartial(
                     text=text,
                     range=types.Range(
                         start=types.Position(line=linum, character=0),

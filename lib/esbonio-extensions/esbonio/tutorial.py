@@ -1,31 +1,72 @@
+from __future__ import annotations
+
+import json
 import pathlib
 import re
 import textwrap
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Set
-from typing import Tuple
-from typing import Union
+import typing
 
-import nbformat
-import nbformat.v4 as nbf
-from docutils import nodes
-from docutils import writers
+from docutils import nodes, writers
 from docutils.io import StringOutput
 from docutils.parsers.rst.directives.admonitions import BaseAdmonition
 from sphinx.application import Sphinx
 from sphinx.builders import Builder
-from sphinx.util import status_iterator
+from sphinx.util.display import status_iterator
 from sphinx.util.docutils import new_document
 from sphinx.util.logging import getLogger
-from sphinx.util.osutil import copyfile
-from sphinx.util.osutil import relative_uri
+from sphinx.util.osutil import copyfile, relative_uri
+
+if typing.TYPE_CHECKING:
+    from typing import Any, Iterable, Literal, Set, Tuple, TypedDict, Union
+
+    CellType = Literal["code", "markdown"]
+
+    class MarkdownCell(TypedDict):
+        """Represents a markdown cell in a notebook"""
+
+        cell_type: Literal["markdown"]
+        """The type of cell"""
+
+        metadata: dict[str, Any]
+        """Metadata for the cell"""
+
+        source: str | list[str]
+        """The cell's source"""
+
+    class CodeCell(TypedDict):
+        """Represents a code cell in a notebook"""
+
+        cell_type: Literal["code"]
+        """The type of cell"""
+
+        execution_count: int | None
+
+        metadata: dict[str, Any]
+        """Metadata for the cell"""
+
+        source: str | list[str]
+        """The cell's source"""
+
+        outputs: list[Any]
+        """A list of cell outputs"""
+
+    NotebookCell = CodeCell | MarkdownCell
+
+    class Notebook(TypedDict):
+        """Represents the top-level notebook structure."""
+
+        metadata: dict[str, Any]
+
+        nbformat: int
+
+        nbformat_minor: int
+
+        cells: list[NotebookCell]
+
 
 __version__ = "0.2.2"
 
 logger = getLogger(__name__)
-CELL_TYPES = {"markdown": nbf.new_markdown_cell, "code": nbf.new_code_cell}
 REPL_PATTERN = re.compile(r"^(>>>|\.\.\.) ?", re.MULTILINE)
 
 CODE_LANGUAGES = {"default", "python", "pycon3", "pycon"}
@@ -62,36 +103,40 @@ class NotebookTranslator(nodes.NodeVisitor):
     def __init__(self, document):
         super().__init__(document)
 
-        self.cells: List[nbformat.NotebookNode] = []
+        self.cells: list[NotebookCell] = []
         """A list of cells that have been constructed so far."""
 
         self.section_level = 0
         """Used to keep track of the nested sections."""
 
-        self._list_styles: List[str] = []
+        self._list_styles: list[str] = []
         """Used to keep track of the current list style."""
 
-        self._prefix: List[Tuple[nodes.Node, str]] = []
+        self._prefix: list[Tuple[nodes.Node, str]] = []
         """Used to keep track of the prefix to insert before text. e.g. ``> `` for
         markdown quote blocks."""
 
-    def asnotebook(self) -> nbformat.NotebookNode:
-        # Trim any empty cells.
-        cells = [c for c in self.cells if len(c.source) > 0]
+    def asnotebook(self) -> Notebook:
+        cells: list[NotebookCell] = []
+        for cell in self.cells:
+            # Skip empty cells
+            if len(cell["source"]) == 0:
+                continue
 
-        return nbf.new_notebook(cells=cells)
+            if isinstance(source := cell["source"], str):
+                cell["source"] = source.splitlines(keepends=True)
+
+            cells.append(cell)
+
+        return {"metadata": {}, "nbformat": 4, "nbformat_minor": 4, "cells": cells}
 
     def astext(self) -> str:
-        return nbf.writes(self.asnotebook())
+        return json.dumps(self.asnotebook(), indent=2)
 
     @property
-    def current_cell(self) -> Optional[nbformat.NotebookNode]:
+    def current_cell(self) -> NotebookCell | None:
         """Small helper for keeping track of the cell currently under construction."""
-
-        if len(self.cells) == 0:
-            return None
-
-        return self.cells[-1]
+        return self.cells[-1] if len(self.cells) > 0 else None
 
     @property
     def list_style(self) -> str:
@@ -103,7 +148,7 @@ class NotebookTranslator(nodes.NodeVisitor):
         """Return the current prefix to insert at the start of the current line."""
         return "".join(item[1] for item in self._prefix)
 
-    def new_cell(self, cell_type: str, *args, **kwargs) -> nbformat.NotebookNode:
+    def new_cell(self, cell_type: CellType, *args, **kwargs) -> NotebookCell:
         """Add a new cell to the notebook.
 
         To help simplify the implementation of visitors, asking for a new ``markdown`` cell
@@ -111,17 +156,31 @@ class NotebookTranslator(nodes.NodeVisitor):
 
         Parameters
         ----------
-        cell_type:
+        cell_type
            The type of cell to create, can be either ``markdown`` or ``code``
         """
 
         if (
             self.current_cell is not None
-            and self.current_cell.cell_type == cell_type == "markdown"
+            and self.current_cell["cell_type"] == cell_type == "markdown"
         ):
             return
 
-        new_cell = CELL_TYPES[cell_type](*args, **kwargs)
+        if cell_type == "markdown":
+            new_cell: MarkdownCell = {
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": "",
+            }
+        else:
+            new_cell: CodeCell = {
+                "cell_type": "code",
+                "metadata": {},
+                "execution_count": None,
+                "source": "",
+                "outputs": [],
+            }
+
         self.cells.append(new_cell)
 
         return new_cell
@@ -140,7 +199,7 @@ class NotebookTranslator(nodes.NodeVisitor):
 
         # If the text is just a newline on its own, include the prefix
         if text == "\n":
-            self.current_cell.source += f"\n{self.prefix}"
+            self.current_cell["source"] += f"\n{self.prefix}"
             return
 
         # Remove the final newline if it exists, we'll add it back later.
@@ -153,7 +212,7 @@ class NotebookTranslator(nodes.NodeVisitor):
         if final_newline:
             text += "\n"
 
-        self.current_cell.source += text
+        self.current_cell["source"] += text
 
     def push_prefix(self, node: nodes.Node, prefix: str):
         """Push a (node, prefix) pair onto the prefix stack."""
@@ -381,7 +440,7 @@ class NotebookTranslator(nodes.NodeVisitor):
         self.append_text("`: ")
 
     def visit_Text(self, node):
-        if self.current_cell.cell_type == "markdown":
+        if self.current_cell["cell_type"] == "markdown":
             self.append_text(node.astext())
             return
 
@@ -515,11 +574,11 @@ class Tutorial(Builder):
             notebook = translator.asnotebook()
 
             blocks = []
-            for cell in notebook.cells:
-                source = cell.source
+            for cell in notebook["cells"]:
+                source = "".join(cell["source"])
 
                 # Comment out the lines containing markdown.
-                if cell.cell_type == "markdown":
+                if cell["cell_type"] == "markdown":
                     source = textwrap.indent(source, "# ")
 
                 blocks.append(source)
@@ -638,16 +697,8 @@ if __name__ == "__main__":
     path = "tutorial_demo"
     package = "esbonio"
 
-    # `files` only available in Python 3.9+
-    if hasattr(importlib.resources, "files"):
-        demo = importlib.resources.files(package).joinpath(path)
-        source = pathlib.Path(demo)
-
-    else:
-        # `path` deprecated in Python 3.11, so let's only rely on it when we
-        # have to.
-        with importlib.resources.path(package, path) as demo:
-            source = pathlib.Path(demo)
+    demo = importlib.resources.files(package).joinpath(path)
+    source = pathlib.Path(demo)
 
     destination = pathlib.Path(
         platformdirs.user_data_dir(appname="esbonio-tutorial", appauthor="swyddfa")

@@ -1,7 +1,6 @@
-from typing import List
+from __future__ import annotations
+
 from typing import Optional
-from typing import Set
-from typing import Tuple
 
 import pytest
 from lsprotocol import types
@@ -15,7 +14,7 @@ def document_symbol(
     kind: types.SymbolKind,
     range: str,
     selection_range: str = "",
-    children: Optional[List[types.DocumentSymbol]] = None,
+    children: Optional[list[types.DocumentSymbol]] = None,
     detail: str = "",
 ) -> types.DocumentSymbol:
     """Helper for defining symbol instances."""
@@ -95,12 +94,12 @@ def document_symbol(
         ),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_document_symbols(
     client: LanguageClient,
     uri_for,
-    filepath: List[str],
-    expected: Optional[List[types.DocumentSymbol]],
+    filepath: list[str],
+    expected: Optional[list[types.DocumentSymbol]],
 ):
     """Ensure that we handle ``textDocument/documentSymbols`` requests correctly."""
 
@@ -126,135 +125,129 @@ async def test_document_symbols(
         # No query -> return all symbols.
         (
             "",
-            set(
-                [
-                    # (
-                    #   path (relative to workspace root),
-                    #   range (s:c-e:c),
-                    #   "name",
-                    #   types.SymbolKind,
-                    #   "container_name"
-                    #  )
-                    (
-                        "/rst/symbols.rst",
-                        "1:0-1:6",
-                        "Symbols",
-                        types.SymbolKind.String,
-                        "",
-                    ),
-                    (
-                        "/rst/symbols.rst",
-                        "3:0-3:16",
-                        "What is a symbol? admonition",
-                        types.SymbolKind.Class,
-                        "Symbols",
-                    ),
-                    (
-                        "/myst/symbols.md",
-                        "0:0-0:6",
-                        "Symbols",
-                        types.SymbolKind.String,
-                        "",
-                    ),
-                    (
-                        "/myst/symbols.md",
-                        "2:0-2:16",
-                        "What is a symbol? admonition",
-                        types.SymbolKind.Class,
-                        "Symbols",
-                    ),
-                    (
-                        "/myst/symbols.md",
-                        "20:0-20:3",
-                        "note",
-                        types.SymbolKind.Class,
-                        "Document Symbols",
-                    ),
-                ]
-            ),
+            {
+                # (
+                #   path (relative to workspace root),
+                #   range (s:c-e:c),
+                #   "name",
+                #   types.SymbolKind,
+                #   "container_name"
+                #  )
+                (
+                    "/rst/symbols.rst",
+                    "1:0-1:6",
+                    "Symbols",
+                    types.SymbolKind.String,
+                    "",
+                ),
+                (
+                    "/rst/symbols.rst",
+                    "3:0-3:16",
+                    "What is a symbol? admonition",
+                    types.SymbolKind.Class,
+                    "Symbols",
+                ),
+                (
+                    "/myst/symbols.md",
+                    "0:0-0:6",
+                    "Symbols",
+                    types.SymbolKind.String,
+                    "",
+                ),
+                (
+                    "/myst/symbols.md",
+                    "2:0-2:16",
+                    "What is a symbol? admonition",
+                    types.SymbolKind.Class,
+                    "Symbols",
+                ),
+                (
+                    "/myst/symbols.md",
+                    "20:0-20:3",
+                    "note",
+                    types.SymbolKind.Class,
+                    "Document Symbols",
+                ),
+            },
         ),
         # We should be able to query by symbol name
         (
             "Symbols",
-            set(
-                [
-                    (
-                        "/rst/symbols.rst",
-                        "1:0-1:6",
-                        "Symbols",
-                        types.SymbolKind.String,
-                        "",
-                    ),
-                    (
-                        "/rst/symbols.rst",
-                        "14:0-14:15",
-                        "Document Symbols",
-                        types.SymbolKind.String,
-                        "Symbols",
-                    ),
-                    (
-                        "/rst/symbols.rst",
-                        "23:0-23:16",
-                        "Workspace Symbols",
-                        types.SymbolKind.String,
-                        "Symbols",
-                    ),
-                    (
-                        "/myst/symbols.md",
-                        "0:0-0:6",
-                        "Symbols",
-                        types.SymbolKind.String,
-                        "",
-                    ),
-                    (
-                        "/myst/symbols.md",
-                        "12:0-12:15",
-                        "Document Symbols",
-                        types.SymbolKind.String,
-                        "Symbols",
-                    ),
-                    (
-                        "/myst/symbols.md",
-                        "27:0-27:16",
-                        "Workspace Symbols",
-                        types.SymbolKind.String,
-                        "Symbols",
-                    ),
-                ]
-            ),
+            {
+                (
+                    "/rst/symbols.rst",
+                    "1:0-1:6",
+                    "Symbols",
+                    types.SymbolKind.String,
+                    "",
+                ),
+                (
+                    "/rst/symbols.rst",
+                    "14:0-14:15",
+                    "Document Symbols",
+                    types.SymbolKind.String,
+                    "Symbols",
+                ),
+                (
+                    "/rst/symbols.rst",
+                    "23:0-23:16",
+                    "Workspace Symbols",
+                    types.SymbolKind.String,
+                    "Symbols",
+                ),
+                (
+                    "/myst/symbols.md",
+                    "0:0-0:6",
+                    "Symbols",
+                    types.SymbolKind.String,
+                    "",
+                ),
+                (
+                    "/myst/symbols.md",
+                    "12:0-12:15",
+                    "Document Symbols",
+                    types.SymbolKind.String,
+                    "Symbols",
+                ),
+                (
+                    "/myst/symbols.md",
+                    "27:0-27:16",
+                    "Workspace Symbols",
+                    types.SymbolKind.String,
+                    "Symbols",
+                ),
+            },
         ),
         # We should also be able to query by (document) symbol `detail` e.g. a directive name
         (
             "admonition",
-            set(
-                [
-                    (
-                        "/myst/symbols.md",
-                        "2:0-2:16",
-                        "What is a symbol? admonition",
-                        types.SymbolKind.Class,
-                        "Symbols",
-                    ),
-                    (
-                        "/rst/symbols.rst",
-                        "3:0-3:16",
-                        "What is a symbol? admonition",
-                        types.SymbolKind.Class,
-                        "Symbols",
-                    ),
-                ]
-            ),
+            {
+                (
+                    "/myst/symbols.md",
+                    "2:0-2:16",
+                    "What is a symbol? admonition",
+                    types.SymbolKind.Class,
+                    "Symbols",
+                ),
+                (
+                    "/rst/symbols.rst",
+                    "3:0-3:16",
+                    "What is a symbol? admonition",
+                    types.SymbolKind.Class,
+                    "Symbols",
+                ),
+            },
         ),
         # Make sure we don't return anything when there are no matches
         ("--not-a-real-symbol-name--", None),
     ],
 )
-@pytest.mark.asyncio(scope="session")
+@pytest.mark.asyncio(loop_scope="session")
 async def test_workspace_symbols(
     client: LanguageClient,
     query: str,
     uri_for,
-    expected: Optional[Set[Tuple[str, str, str, types.SymbolKind, str]]],
+    expected: Optional[set[tuple[str, str, str, types.SymbolKind, str]]],
 ):
     """Ensure that we handle ``workspace/symbol`` requests correctly."""
 

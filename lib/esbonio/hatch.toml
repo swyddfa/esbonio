@@ -10,24 +10,31 @@ packages = ["esbonio"]
 
 [envs.hatch-test]
 default-args = ["tests/server"]
-extra-dependencies = ["pytest-lsp>=0.3.1,<1"]
+extra-dependencies = ["pytest-lsp>=1.0b0"]
 matrix-name-format = "{variable}{value}"
 
-[[envs.hatch-test.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
+[envs.hatch-test.env-vars]
+UV_PRERELEASE="allow"
 
 [[envs.hatch-test.matrix]]
-python = ["3.8", "3.9", "3.10", "3.11", "3.12"]
-sphinx = ["5", "6", "7"]
+python = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+[[envs.hatch-test.matrix]]
+python = ["3.9", "3.10", "3.11", "3.12", "3.13"]
+sphinx = ["6", "7"]
+
+[[envs.hatch-test.matrix]]
+python = ["3.10", "3.11", "3.12", "3.13"]
+sphinx = ["8"]
+
 
 [envs.hatch-test.overrides]
 matrix.sphinx.dependencies = [
-    "furo",
     "sphinx-design",
     "myst-parser",
-    { value = "sphinx>=5,<6", if = ["5"] },
     { value = "sphinx>=6,<7", if = ["6"] },
     { value = "sphinx>=7,<8", if = ["7"] },
+    { value = "sphinx>=8,<9", if = ["8"] },
 ]
 
 [envs.hatch-test.overrides.matrix.sphinx.default-args]
@@ -35,4 +42,4 @@ value = ["tests/sphinx-agent", "tests/e2e"]
 
 [envs.hatch-static-analysis]
 config-path = "ruff_defaults.toml"
-dependencies = ["ruff==0.5.2"]
+dependencies = ["ruff==0.6.5"]

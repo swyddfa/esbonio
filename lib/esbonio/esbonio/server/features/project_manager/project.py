@@ -11,13 +11,7 @@ from esbonio.sphinx_agent import types
 
 if typing.TYPE_CHECKING:
     from typing import Any
-    from typing import Dict
-    from typing import List
-    from typing import Optional
-    from typing import Tuple
-    from typing import Type
     from typing import TypeVar
-    from typing import Union
 
     import cattrs
 
@@ -27,10 +21,10 @@ if typing.TYPE_CHECKING:
 class Project:
     """Represents a documentation project."""
 
-    def __init__(self, dbpath: Union[str, pathlib.Path], converter: cattrs.Converter):
+    def __init__(self, dbpath: str | pathlib.Path, converter: cattrs.Converter):
         self.converter = converter
         self.dbpath = dbpath
-        self._connection: Optional[aiosqlite.Connection] = None
+        self._connection: aiosqlite.Connection | None = None
 
     async def close(self):
         if self._connection is not None:
@@ -42,10 +36,10 @@ class Project:
 
         return self._connection
 
-    def load_as(self, o: str, t: Type[T]) -> T:
+    def load_as(self, o: str, t: type[T]) -> T:
         return self.converter.structure(json.loads(o), t)
 
-    async def get_src_uris(self) -> List[Uri]:
+    async def get_src_uris(self) -> list[Uri]:
         """Return all known source uris."""
         db = await self.get_db()
 
@@ -54,7 +48,7 @@ class Project:
             results = await cursor.fetchall()
             return [Uri.parse(s[0]) for s in results]
 
-    async def get_build_path(self, src_uri: Uri) -> Optional[str]:
+    async def get_build_path(self, src_uri: Uri) -> str | None:
         """Get the build path associated with the given ``src_uri``."""
         db = await self.get_db()
 
@@ -65,7 +59,7 @@ class Project:
 
             return result[0]
 
-    async def get_config_value(self, name: str) -> Optional[Any]:
+    async def get_config_value(self, name: str) -> Any | None:
         """Return the requested configuration value, if available."""
 
         db = await self.get_db()
@@ -78,7 +72,7 @@ class Project:
         (value,) = row
         return json.loads(value)
 
-    async def get_directives(self) -> List[Tuple[str, Optional[str]]]:
+    async def get_directives(self) -> list[tuple[str, str | None]]:
         """Get the directives known to Sphinx."""
         db = await self.get_db()
 
@@ -86,7 +80,7 @@ class Project:
         cursor = await db.execute(query)
         return await cursor.fetchall()  # type: ignore[return-value]
 
-    async def get_role(self, name: str) -> Optional[types.Role]:
+    async def get_role(self, name: str) -> types.Role | None:
         """Get the roles known to Sphinx."""
         db = await self.get_db()
 
@@ -96,7 +90,7 @@ class Project:
 
         return types.Role.from_db(self.load_as, *result) if result is not None else None
 
-    async def get_roles(self) -> List[Tuple[str, Optional[str]]]:
+    async def get_roles(self) -> list[tuple[str, str | None]]:
         """Get the roles known to Sphinx."""
         db = await self.get_db()
 
@@ -104,7 +98,7 @@ class Project:
         cursor = await db.execute(query)
         return await cursor.fetchall()  # type: ignore[return-value]
 
-    async def get_document_symbols(self, src_uri: Uri) -> List[types.Symbol]:
+    async def get_document_symbols(self, src_uri: Uri) -> list[types.Symbol]:
         """Get the symbols for the given file."""
         db = await self.get_db()
         query = (
@@ -114,14 +108,14 @@ class Project:
         cursor = await db.execute(query, (str(src_uri.resolve()),))
         return await cursor.fetchall()  # type: ignore[return-value]
 
-    async def find_symbols(self, **kwargs) -> List[types.Symbol]:
+    async def find_symbols(self, **kwargs) -> list[types.Symbol]:
         """Find symbols which match the given criteria."""
         db = await self.get_db()
         base_query = (
             "SELECT id, name, kind, detail, range, parent_id, order_id FROM symbols"
         )
-        where: List[str] = []
-        parameters: List[Any] = []
+        where: list[str] = []
+        parameters: list[Any] = []
 
         for param, value in kwargs.items():
             where.append(f"{param} = ?")
@@ -138,7 +132,7 @@ class Project:
 
     async def get_workspace_symbols(
         self, query: str
-    ) -> List[Tuple[str, str, int, str, str, str]]:
+    ) -> list[tuple[str, str, int, str, str, str]]:
         """Return all the workspace symbols matching the given query string"""
 
         db = await self.get_db()
@@ -161,11 +155,11 @@ WHERE
         cursor = await db.execute(sql_query, (query_str, query_str))
         return await cursor.fetchall()  # type: ignore[return-value]
 
-    async def get_diagnostics(self) -> Dict[Uri, List[Dict[str, Any]]]:
+    async def get_diagnostics(self) -> dict[Uri, list[dict[str, Any]]]:
         """Get diagnostics for the project."""
         db = await self.get_db()
         cursor = await db.execute("SELECT * FROM diagnostics")
-        results: Dict[Uri, List[Dict[str, Any]]] = {}
+        results: dict[Uri, list[dict[str, Any]]] = {}
 
         for uri_str, item in await cursor.fetchall():
             uri = Uri.parse(uri_str)

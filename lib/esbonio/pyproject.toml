@@ -7,20 +7,20 @@ name = "esbonio"
 dynamic = ["version"]
 description = "A language server for sphinx/docutils based documentation projects."
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name = "Alex Carney", email = "alcarneyme@gmail.com" }]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Documentation",
     "Topic :: Documentation :: Sphinx",
 ]
@@ -28,7 +28,7 @@ dependencies = [
     "aiosqlite",
     "platformdirs",
     "docutils",
-    "pygls>=1.1.0",
+    "pygls>=2.0a0",
     "tomli ; python_version<'3.11'",
     "websockets",
 ]
@@ -42,8 +42,7 @@ dependencies = [
 esbonio = "esbonio.server.cli:main"
 
 [project.optional-dependencies]
-typecheck = ["mypy", "pytest-lsp>=0.3.1", "types-docutils", "types-pygments"]
-dev = ["black", "flake8", "pre-commit", "tox"]
+typecheck = ["mypy", "pytest-lsp>=1.0b0", "types-docutils", "types-pygments"]
 
 [tool.coverage.run]
 parallel = true
@@ -61,6 +60,7 @@ exclude_also = [
 [tool.pytest.ini_options]
 addopts = "--doctest-glob='*.txt'"
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 
 [tool.mypy]
 mypy_path = "$MYPY_CONFIG_FILE_DIR"
@@ -71,7 +71,7 @@ check_untyped_defs = true
 venv = ".env"
 include = ["esbonio"]
 
-pythonVersion = "3.8"
+pythonVersion = "3.9"
 pythonPlatform = "All"
 
 [tool.towncrier]

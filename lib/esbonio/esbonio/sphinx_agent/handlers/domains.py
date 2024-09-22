@@ -10,12 +10,6 @@ from ..app import Sphinx
 from ..util import as_json
 
 if typing.TYPE_CHECKING:
-    from typing import Dict
-    from typing import List
-    from typing import Optional
-    from typing import Set
-    from typing import Tuple
-
     from sphinx.domains import Domain
     from sphinx.util.typing import Inventory
 
@@ -50,9 +44,7 @@ class DomainObjects:
     """Discovers and indexes domain objects."""
 
     def __init__(self, app: Sphinx):
-        self._info: Dict[
-            Tuple[str, str, str, str], Tuple[Optional[str], Optional[str]]
-        ] = {}
+        self._info: dict[tuple[str, str, str, str], tuple[str | None, str | None]] = {}
 
         # Needs to run late, but before the handler in ./roles.py
         app.connect("builder-inited", self.init_db, priority=998)
@@ -139,7 +131,7 @@ class DomainObjects:
         self._info[key] = (description, location)
 
 
-def index_domain(app: Sphinx, domain: Domain, projects: Optional[List[str]]):
+def index_domain(app: Sphinx, domain: Domain, projects: list[str] | None):
     """Index the roles in the given domain.
 
     Parameters
@@ -153,7 +145,7 @@ def index_domain(app: Sphinx, domain: Domain, projects: Optional[List[str]]):
     projects
        The list of known intersphinx projects
     """
-    target_types: Dict[str, Set[str]] = {}
+    target_types: dict[str, set[str]] = {}
 
     for obj_name, item_type in domain.object_types.items():
         for role_name in item_type.roles:
@@ -190,7 +182,7 @@ def index_domain(app: Sphinx, domain: Domain, projects: Optional[List[str]]):
             )
 
 
-def index_intersphinx_projects(app: Sphinx) -> List[Tuple[str, str, str, str]]:
+def index_intersphinx_projects(app: Sphinx) -> list[tuple[str, str, str, str]]:
     """Index all the projects known to intersphinx.
 
     Parameters
@@ -207,7 +199,7 @@ def index_intersphinx_projects(app: Sphinx) -> List[Tuple[str, str, str, str]]:
     app.esbonio.db.ensure_table(PROJECTS_TABLE)
     app.esbonio.db.clear_table(PROJECTS_TABLE)
 
-    projects: List[Tuple[str, str, str, str]] = []
+    projects: list[tuple[str, str, str, str]] = []
     objects = []
 
     mapping = getattr(app.config, "intersphinx_mapping", {})

@@ -9,9 +9,6 @@ from functools import partial
 
 if typing.TYPE_CHECKING:
     from typing import Any
-    from typing import Dict
-    from typing import Optional
-    from typing import Set
 
 
 class EventSource:
@@ -20,14 +17,14 @@ class EventSource:
     # TODO: It might be nice to do some fancy typing here so that type checkers
     # etc know which events are possible etc.
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: logging.Logger | None = None):
         self.logger = logger or logging.getLogger(__name__)
         """The logging instance to use."""
 
-        self.handlers: Dict[str, set] = {}
+        self.handlers: dict[str, set] = {}
         """Collection of handlers for various events."""
 
-        self._tasks: Set[asyncio.Task] = set()
+        self._tasks: set[asyncio.Task] = set()
         """Holds tasks that are currently executing an async event handler."""
 
     def add_listener(self, event: str, handler):

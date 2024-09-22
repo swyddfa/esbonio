@@ -13,7 +13,7 @@ logger = logging.getLogger("esbonio.sphinx_agent")
 
 def _serialize_message(obj):
     if dataclasses.is_dataclass(obj):
-        return dataclasses.asdict(obj)
+        return dataclasses.asdict(obj)  # type: ignore[call-overload]
 
     if isinstance(obj, (_TranslationProxy, pathlib.Path)):
         return str(obj)

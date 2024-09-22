@@ -1,7 +1,7 @@
+from __future__ import annotations
+
 import asyncio
 import json
-from typing import Dict
-from typing import List
 from typing import Optional
 
 from lsprotocol import types
@@ -21,7 +21,7 @@ class SphinxSymbols(LanguageFeature):
 
     async def document_symbol(
         self, params: types.DocumentSymbolParams
-    ) -> Optional[List[types.DocumentSymbol]]:
+    ) -> Optional[list[types.DocumentSymbol]]:
         """Called when a document symbols request is received."""
 
         uri = Uri.parse(params.text_document.uri)
@@ -32,8 +32,8 @@ class SphinxSymbols(LanguageFeature):
         if len(symbols) == 0:
             return None
 
-        root: List[types.DocumentSymbol] = []
-        index: Dict[int, types.DocumentSymbol] = {}
+        root: list[types.DocumentSymbol] = []
+        index: dict[int, types.DocumentSymbol] = {}
 
         for id_, name, kind, detail, range_json, parent_id, _ in symbols:
             range_ = self.converter.structure(json.loads(range_json), types.Range)
@@ -60,7 +60,7 @@ class SphinxSymbols(LanguageFeature):
 
     async def workspace_symbol(
         self, params: types.WorkspaceSymbolParams
-    ) -> Optional[List[types.WorkspaceSymbol]]:
+    ) -> Optional[list[types.WorkspaceSymbol]]:
         """Called when a workspace symbol request is received."""
 
         tasks = []
@@ -70,7 +70,7 @@ class SphinxSymbols(LanguageFeature):
             )
 
         symbols = await asyncio.gather(*tasks)
-        result: List[types.WorkspaceSymbol] = []
+        result: list[types.WorkspaceSymbol] = []
 
         for batch in symbols:
             for uri_str, name, kind, detail, range_json, container in batch:

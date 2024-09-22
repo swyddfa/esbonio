@@ -1,5 +1,5 @@
 export namespace Server {
-  export const REQUIRED_PYTHON = "3.8.0"
+  export const REQUIRED_PYTHON = "3.9.0"
 
   export const DEFAULT_SELECTOR = [
     { scheme: 'file', language: 'restructuredtext' },

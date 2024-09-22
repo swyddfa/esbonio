@@ -11,9 +11,7 @@ from esbonio import server
 
 if typing.TYPE_CHECKING:
     from typing import Callable
-    from typing import Dict
     from typing import Optional
-    from typing import Tuple
 
     from esbonio.sphinx_agent.types import Role
 
@@ -27,10 +25,10 @@ if typing.TYPE_CHECKING:
 
 
 WORD = re.compile("[a-zA-Z]+")
-_ROLE_RENDERERS: Dict[Tuple[str, str], RoleRenderer] = {}
+_ROLE_RENDERERS: dict[tuple[str, str], RoleRenderer] = {}
 """CompletionItem rendering functions for roles."""
 
-_ROLE_TARGET_RENDERERS: Dict[Tuple[str, str], RoleTargetRenderer] = {}
+_ROLE_TARGET_RENDERERS: dict[tuple[str, str], RoleTargetRenderer] = {}
 """CompletionItem rendering functions for role targets."""
 
 
@@ -54,7 +52,7 @@ def role_target_renderer(*, language: str, insert_behavior: str):
     return fn
 
 
-def get_role_renderer(language: str, insert_behavior: str) -> Optional[RoleRenderer]:
+def get_role_renderer(language: str, insert_behavior: str) -> RoleRenderer | None:
     """Return the role renderer to use.
 
     Parameters
@@ -75,7 +73,7 @@ def get_role_renderer(language: str, insert_behavior: str) -> Optional[RoleRende
 
 def get_role_target_renderer(
     language: str, insert_behavior: str
-) -> Optional[RoleTargetRenderer]:
+) -> RoleTargetRenderer | None:
     """Return the role target renderer to use.
 
     Parameters
@@ -97,7 +95,7 @@ def get_role_target_renderer(
 @role_renderer(language="rst", insert_behavior="insert")
 def render_rst_role_with_insert_text(
     context: server.CompletionContext, role: Role
-) -> Optional[types.CompletionItem]:
+) -> types.CompletionItem | None:
     """Render a ``CompletionItem`` using ``insertText``.
 
     This implements the ``insert`` insert behavior for roles.
@@ -145,7 +143,7 @@ def render_rst_role_with_insert_text(
 @role_target_renderer(language="rst", insert_behavior="replace")
 def render_rst_target_with_text_edit(
     context: server.CompletionContext, item: types.CompletionItem
-) -> Optional[types.CompletionItem]:
+) -> types.CompletionItem | None:
     """Render a ``CompletionItem`` using ``insertText``.
 
     This implements the ``replace`` insert behavior for role targets.
@@ -169,7 +167,7 @@ def render_rst_target_with_text_edit(
 @role_renderer(language="markdown", insert_behavior="insert")
 def render_myst_role_with_insert_text(
     context: server.CompletionContext, role: Role
-) -> Optional[types.CompletionItem]:
+) -> types.CompletionItem | None:
     """Render a ``CompletionItem`` using ``insertText``.
 
     This implements the ``insert`` insert behavior for roles.
@@ -217,7 +215,7 @@ def render_myst_role_with_insert_text(
 @role_renderer(language="rst", insert_behavior="replace")
 def render_rst_role_with_text_edit(
     context: server.CompletionContext, role: Role
-) -> Optional[types.CompletionItem]:
+) -> types.CompletionItem | None:
     """Render a role's ``CompletionItem`` using ``textEdit``.
 
     This implements the ``replace`` insert behavior for roles.
@@ -260,7 +258,7 @@ def render_rst_role_with_text_edit(
 @role_renderer(language="markdown", insert_behavior="replace")
 def render_myst_role_with_text_edit(
     context: server.CompletionContext, role: Role
-) -> Optional[types.CompletionItem]:
+) -> types.CompletionItem | None:
     """Render a role's ``CompletionItem`` using ``textEdit``.
 
     This implements the ``replace`` insert behavior for roles.
@@ -303,7 +301,7 @@ def render_myst_role_with_text_edit(
 @role_target_renderer(language="markdown", insert_behavior="replace")
 def render_myst_target_with_text_edit(
     context: server.CompletionContext, item: types.CompletionItem
-) -> Optional[types.CompletionItem]:
+) -> types.CompletionItem | None:
     """Render a ``CompletionItem`` using ``textEdit``.
 
     This implements the ``replace`` insert behavior for role targets.

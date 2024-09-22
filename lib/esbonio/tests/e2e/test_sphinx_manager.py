@@ -25,9 +25,8 @@ from esbonio.server.features.sphinx_manager import make_subprocess_sphinx_client
 if typing.TYPE_CHECKING:
     from typing import Any
     from typing import Callable
-    from typing import Tuple
 
-    ServerManager = Callable[[Any], Tuple[EsbonioLanguageServer, SphinxManager]]
+    ServerManager = Callable[[Any], tuple[EsbonioLanguageServer, SphinxManager]]
 
 
 @pytest.fixture
@@ -47,7 +46,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
     loop = asyncio.get_running_loop()
 
     esbonio = create_language_server(EsbonioLanguageServer, [], loop=loop)
-    esbonio.lsp.transport = StdOutTransportAdapter(io.BytesIO(), sys.stderr.buffer)
+    esbonio.protocol.transport = StdOutTransportAdapter(io.BytesIO(), sys.stderr.buffer)
 
     project_manager = ProjectManager(esbonio)
     esbonio.add_feature(project_manager)
@@ -59,7 +58,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
 
     def initialize(init_options):
         # Initialize the server.
-        esbonio.lsp._procedure_handler(
+        esbonio.protocol._procedure_handler(
             lsp.InitializeRequest(
                 id=1,
                 params=lsp.InitializeParams(
@@ -73,7 +72,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
             )
         )
 
-        esbonio.lsp._procedure_handler(
+        esbonio.protocol._procedure_handler(
             lsp.InitializedNotification(params=lsp.InitializedParams())
         )
         return esbonio, sphinx_manager
@@ -95,6 +94,10 @@ async def test_get_client(
                 sphinx=dict(
                     pythonCommand=[sys.executable],
                     buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                    configOverrides={
+                        "html_theme": "alabaster",
+                        "html_theme_options": {},
+                    },
                 ),
             ),
         ),
@@ -183,6 +186,10 @@ async def test_get_client_with_many_uris(
                 sphinx=dict(
                     pythonCommand=[sys.executable],
                     buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                    configOverrides={
+                        "html_theme": "alabaster",
+                        "html_theme_options": {},
+                    },
                 ),
             ),
         ),
@@ -235,8 +242,14 @@ async def test_get_client_with_many_uris_in_many_projects(
     server, manager = server_manager(
         dict(
             esbonio=dict(
-                sphinx=dict(pythonCommand=[sys.executable]),
-                buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                sphinx=dict(
+                    pythonCommand=[sys.executable],
+                    buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                    configOverrides={
+                        "html_theme": "alabaster",
+                        "html_theme_options": {},
+                    },
+                ),
             ),
         ),
     )  # Ensure that the server is ready
@@ -287,6 +300,10 @@ async def test_updated_config(
                 sphinx=dict(
                     pythonCommand=[sys.executable],
                     buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
+                    configOverrides={
+                        "html_theme": "alabaster",
+                        "html_theme_options": {},
+                    },
                 ),
             ),
         ),

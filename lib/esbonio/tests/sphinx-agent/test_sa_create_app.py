@@ -31,7 +31,13 @@ async def test_create_application(uri_for):
             WorkspaceFolder(uri=str(demo_workspace), name="demo"),
         ],
     )
-    config = SphinxConfig(python_command=[sys.executable])
+    config = SphinxConfig(
+        python_command=[sys.executable],
+        config_overrides={
+            "html_theme": "alabaster",
+            "html_theme_options": {},
+        },
+    )
     resolved = config.resolve(test_uri, workspace, logger)
     assert resolved is not None
     client = None
@@ -85,6 +91,10 @@ async def test_create_application_error(uri_for, tmp_path_factory):
             demo_workspace.fs_path,
             str(build_dir),
         ],
+        config_overrides={
+            "html_theme": "alabaster",
+            "html_theme_options": {},
+        },
     )
     resolved = config.resolve(test_uri, workspace, logger)
     assert resolved is not None

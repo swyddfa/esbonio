@@ -5,11 +5,10 @@ ifeq ($(strip $(ARCH)),)
 $(error Unable to determine platform architecture)
 endif
 
-HATCH_VERSION = 1.10.0
-NODE_VERSION := 18.20.2
+NODE_VERSION := 18.20.4
 
 # The versions of Python we support
-PYXX_versions := 3.8 3.9 3.10 3.11 3.12
+PYXX_versions := 3.9 3.10 3.11 3.12
 PY_INTERPRETERS =
 
 # Hatch is not only used for building packages, but bootstrapping any missing
@@ -17,12 +16,12 @@ PY_INTERPRETERS =
 HATCH ?= $(or $(shell command -v hatch), $(BIN)/hatch)
 
 $(HATCH):
-	curl -L --output /tmp/hatch.tar.gz https://github.com/pypa/hatch/releases/download/hatch-v$(HATCH_VERSION)/hatch-$(HATCH_VERSION)-$(ARCH)-unknown-linux-gnu.tar.gz
+	curl -L --output /tmp/hatch.tar.gz https://github.com/pypa/hatch/releases/latest/download/hatch-$(ARCH)-unknown-linux-gnu.tar.gz
 	tar -xf /tmp/hatch.tar.gz -C /tmp
 	rm /tmp/hatch.tar.gz
 
 	test -d $(BIN) || mkdir -p $(BIN)
-	mv /tmp/hatch-$(HATCH_VERSION)-$(ARCH)-unknown-linux-gnu $(HATCH)
+	mv /tmp/hatch $(HATCH)
 
 	$@ --version
 	touch $@

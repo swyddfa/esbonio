@@ -4,6 +4,7 @@ sphinx
 sphinx-design
 furo
 myst-parser
-pytest_lsp
--e lib/esbonio
--e lib/esbonio-extensions[tutorial]
+pytest_lsp>=1.0b0
+pygls>=2.0a0
+platformdirs
+aiosqlite

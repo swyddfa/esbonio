@@ -11,9 +11,6 @@ from esbonio.server.features.project_manager import ProjectManager
 from esbonio.sphinx_agent import types
 
 if typing.TYPE_CHECKING:
-    from typing import List
-    from typing import Optional
-
     from esbonio.server import Uri
     from esbonio.server.features.project_manager import Project
 
@@ -41,9 +38,9 @@ class ObjectsProvider(roles.RoleTargetProvider):
         self,
         context: server.CompletionContext,
         *,
-        obj_types: List[str],
-        projects: Optional[List[str]],
-    ) -> Optional[List[lsp.CompletionItem]]:
+        obj_types: list[str],
+        projects: list[str] | None,
+    ) -> list[lsp.CompletionItem] | None:
         #  TODO: Handle .. currentmodule
 
         if (project := self.manager.get_project(context.uri)) is None:
@@ -67,9 +64,7 @@ class ObjectsProvider(roles.RoleTargetProvider):
 
         return items
 
-    def _prepare_target_query(
-        self, projects: Optional[List[str]], obj_types: List[str]
-    ):
+    def _prepare_target_query(self, projects: list[str] | None, obj_types: list[str]):
         """Prepare the query to use when looking up targets."""
 
         select = "SELECT name, display, objtype FROM objects"
@@ -123,7 +118,7 @@ class SphinxRoles(roles.RoleProvider):
         primary_domain = await project.get_config_value("primary_domain")
         return default_domain or primary_domain or "py"
 
-    async def get_role(self, uri: Uri, name: str) -> Optional[types.Role]:
+    async def get_role(self, uri: Uri, name: str) -> types.Role | None:
         """Return the role with the given name."""
 
         if (project := self.manager.get_project(uri)) is None:
@@ -140,7 +135,7 @@ class SphinxRoles(roles.RoleProvider):
 
     async def suggest_roles(
         self, context: server.CompletionContext
-    ) -> Optional[List[types.Role]]:
+    ) -> list[types.Role] | None:
         """Given a completion context, suggest roles that may be used."""
 
         if (project := self.manager.get_project(context.uri)) is None:
@@ -148,7 +143,7 @@ class SphinxRoles(roles.RoleProvider):
 
         default_domain = await self.get_default_domain(project, context.uri)
 
-        result: List[types.Role] = []
+        result: list[types.Role] = []
         for name, implementation in await project.get_roles():
             # std: directives can be used unqualified
             if name.startswith("std:"):

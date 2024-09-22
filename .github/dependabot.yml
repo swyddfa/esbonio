@@ -9,22 +9,22 @@ updates:
     directory: "/"
     target-branch: "develop"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
 
   - package-ecosystem: "npm"
     directory: "/code"
     target-branch: "develop"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
 
   - package-ecosystem: "pip"
     directory: "/code"
     target-branch: "develop"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
 
   - package-ecosystem: "pip"
     directory: "/lib/esbonio/tests/workspaces/demo"
     target-branch: "develop"
     schedule:
-      interval: "weekly"
+      interval: "monthly"

@@ -1,17 +1,11 @@
 from __future__ import annotations
 
-import typing
-
 from lsprotocol import types
 
 from esbonio import server
 from esbonio.server.features.directives import DirectiveFeature
 from esbonio.server.features.directives import completion
 from esbonio.sphinx_agent.types import RST_DIRECTIVE
-
-if typing.TYPE_CHECKING:
-    from typing import List
-    from typing import Optional
 
 
 class RstDirectives(server.LanguageFeature):
@@ -45,7 +39,7 @@ class RstDirectives(server.LanguageFeature):
 
     async def completion(
         self, context: server.CompletionContext
-    ) -> Optional[List[types.CompletionItem]]:
+    ) -> list[types.CompletionItem] | None:
         """Provide completion suggestions for directives."""
 
         groups = context.match.groupdict()
@@ -75,7 +69,7 @@ class RstDirectives(server.LanguageFeature):
 
     async def complete_directives(
         self, context: server.CompletionContext
-    ) -> Optional[List[types.CompletionItem]]:
+    ) -> list[types.CompletionItem] | None:
         """Return completion suggestions for the available directives."""
 
         render_func = completion.get_directive_renderer(

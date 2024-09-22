@@ -62,6 +62,7 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
    :hidden:
 
    Getting Started <integrating/getting-started>
+   integrating/previews
 
 Sphinx Extensions
 -----------------

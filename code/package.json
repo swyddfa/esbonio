@@ -31,17 +31,16 @@
     ],
     "dependencies": {
         "@vscode/python-extension": "^1.0.5",
-        "semver": "^7.6.2",
+        "semver": "^7.6.3",
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
-        "@types/glob": "^8.1.0",
         "@types/node": "^18",
-        "@types/vscode": "1.78.0",
-        "@vscode/vsce": "^2.30.0",
-        "esbuild": "^0.23.0",
-        "ovsx": "^0.9.1",
-        "typescript": "^5.5.3"
+        "@types/vscode": "1.82.0",
+        "@vscode/vsce": "^3.1.0",
+        "esbuild": "^0.23.1",
+        "ovsx": "^0.9.4",
+        "typescript": "^5.6.2"
     },
     "engines": {
         "vscode": "^1.82.0"
@@ -164,6 +163,12 @@
                         },
                         "default": null,
                         "description": "The sphinx-build command to use."
+                    },
+                    "esbonio.sphinx.configOverrides": {
+                        "scope": "resource",
+                        "type": "object",
+                        "default": null,
+                        "description": "Overrides to apply to Sphinx's configuration."
                     },
                     "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
@@ -433,7 +438,7 @@
             "view/item/context": [
                 {
                     "command": "esbonio.sphinx.restart",
-                    "when": "view == sphinxProcesses && viewItem == process",
+                    "when": "view == sphinxProcesses && viewItem == sphinxProcess",
                     "group": "inline"
                 }
             ]

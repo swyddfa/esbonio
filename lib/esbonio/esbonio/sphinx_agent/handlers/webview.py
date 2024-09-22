@@ -11,13 +11,11 @@ from sphinx import version_info
 from ..log import source_to_uri_and_linum
 
 if typing.TYPE_CHECKING:
-    from typing import Dict
-    from typing import Tuple
-
     from sphinx.application import Sphinx
 
 
 STATIC_DIR = (pathlib.Path(__file__).parent.parent / "static").resolve()
+ALLOWED_MODULES = {"docutils.nodes", "sphinx.addnodes"}
 
 
 def has_source(node):
@@ -34,6 +32,16 @@ def has_source(node):
     if isinstance(node, addnodes.toctree) and version_info[0] < 7:
         return False
 
+    # It's not only limited to `toctreenodes`!
+    #
+    # The identical error is thrown when using esbonio with the `ablog` extension
+    # See: https://github.com/swyddfa/esbonio/issues/874
+    #
+    # I think for now, the safest approach is to only handle nodes defined by Sphinx or
+    # docutils.
+    if node.__module__ not in ALLOWED_MODULES:
+        return False
+
     return (node.line or 0) > 0 and node.source is not None
 
 
@@ -42,7 +50,7 @@ class source_locations(nodes.General, nodes.Element):
 
 
 def visit_source_locations(self, node):
-    source_index: Dict[int, Tuple[str, int]] = node["index"]
+    source_index: dict[int, tuple[str, int]] = node["index"]
 
     self.body.append('<div id="esbonio-marker-index" style="display: none">\n')
     for idx, (uri, linum) in source_index.items():

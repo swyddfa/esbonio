@@ -1,7 +1,7 @@
 # This file is used to generate requirements.txt.
 #
 # Only run the commands below to manually upgrade packages in requirements.txt:
-# NOTE: Use the minimum version of Python we support when running these commands (currently 3.8)
+# NOTE: Use the minimum version of Python we support when running these commands (currently 3.9)
 #
 # 1) python -m pip install pip-tools
 # 2) pip-compile --generate-hashes --upgrade ./requirements.in
@@ -12,6 +12,6 @@
 aiosqlite
 docutils
 platformdirs
-pygls>=1.1.0
+pygls>=2a0
 tomli
 websockets

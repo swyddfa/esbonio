@@ -2,9 +2,9 @@ import argparse
 import logging
 import sys
 import warnings
+from collections.abc import Sequence
 from logging.handlers import MemoryHandler
 from typing import Optional
-from typing import Sequence
 
 from pygls.protocol import default_converter
 

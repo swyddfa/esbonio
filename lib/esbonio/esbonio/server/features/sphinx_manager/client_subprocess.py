@@ -23,9 +23,6 @@ from .config import SphinxConfig
 
 if typing.TYPE_CHECKING:
     from typing import Any
-    from typing import Dict
-    from typing import List
-    from typing import Optional
 
     from .client import SphinxClient
     from .manager import SphinxManager
@@ -54,7 +51,7 @@ class SubprocessSphinxClient(JsonRPCClient):
     def __init__(
         self,
         config: SphinxConfig,
-        logger: Optional[logging.Logger] = None,
+        logger: logging.Logger | None = None,
         protocol_cls=SphinxAgentProtocol,
         *args,
         **kwargs,
@@ -70,22 +67,22 @@ class SubprocessSphinxClient(JsonRPCClient):
         self.logger = logger or logging.getLogger(__name__)
         """The logger instance to use."""
 
-        self.sphinx_info: Optional[types.SphinxInfo] = None
+        self.sphinx_info: types.SphinxInfo | None = None
         """Information about the Sphinx application the client is connected to."""
 
-        self.state: Optional[ClientState] = None
+        self.state: ClientState | None = None
         """The current state of the client."""
 
-        self.exception: Optional[Exception] = None
+        self.exception: Exception | None = None
         """The most recently encountered exception (if any)"""
 
         self._events = EventSource(self.logger)
         """The sphinx client can emit events."""
 
-        self._startup_task: Optional[asyncio.Task] = None
+        self._startup_task: asyncio.Task | None = None
         """The startup task."""
 
-        self._stderr_forwarder: Optional[asyncio.Task] = None
+        self._stderr_forwarder: asyncio.Task | None = None
         """A task that forwards the server's stderr to the test process."""
 
     def __repr__(self):
@@ -214,6 +211,7 @@ class SubprocessSphinxClient(JsonRPCClient):
 
             params = types.CreateApplicationParams(
                 command=self.config.build_command,
+                config_overrides=self.config.config_overrides,
             )
             self.sphinx_info = await self.protocol.send_request_async(
                 "sphinx/createApp", params
@@ -254,9 +252,9 @@ class SubprocessSphinxClient(JsonRPCClient):
     async def build(
         self,
         *,
-        filenames: Optional[List[str]] = None,
+        filenames: list[str] | None = None,
         force_all: bool = False,
-        content_overrides: Optional[Dict[str, str]] = None,
+        content_overrides: dict[str, str] | None = None,
     ) -> types.BuildResult:
         """Trigger a Sphinx build."""
 
@@ -334,7 +332,7 @@ def make_test_sphinx_client(config: SphinxConfig) -> SubprocessSphinxClient:
     return client
 
 
-def get_sphinx_env(config: SphinxConfig) -> Dict[str, str]:
+def get_sphinx_env(config: SphinxConfig) -> dict[str, str]:
     """Return the set of environment variables to use with the Sphinx process."""
 
     env = {

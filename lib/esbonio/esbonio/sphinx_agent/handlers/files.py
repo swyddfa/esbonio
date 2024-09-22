@@ -10,9 +10,6 @@ from ..util import as_json
 
 if typing.TYPE_CHECKING:
     from typing import Any
-    from typing import List
-    from typing import Optional
-    from typing import Tuple
 
     from sphinx.config import Config
 
@@ -47,7 +44,7 @@ def init_db(app: Sphinx, config: Config):
     app.esbonio.db.ensure_table(CONFIG_TABLE)
 
 
-def value_to_db(name: str, item: Any) -> Tuple[str, str, Any]:
+def value_to_db(name: str, item: Any) -> tuple[str, str, Any]:
     """Convert a single value to its DB representation"""
 
     try:
@@ -62,7 +59,7 @@ def dump_config(app: Sphinx, *args):
     it."""
     app.esbonio.db.clear_table(CONFIG_TABLE)
 
-    values: List[Tuple[str, str, str]] = []
+    values: list[tuple[str, str, str]] = []
     config = app.config.__getstate__()
 
     # For some reason, most config values are nested under 'values'
@@ -89,13 +86,13 @@ def dump_config(app: Sphinx, *args):
     app.esbonio.db.insert_values(CONFIG_TABLE, values)
 
 
-def build_file_mapping(app: Sphinx, exc: Optional[Exception]):
+def build_file_mapping(app: Sphinx, exc: Exception | None):
     """Given a Sphinx application, return a mapping of all known source files to their
     corresponding output files."""
 
     env = app.env
     builder = app.builder
-    files: List[Tuple[str, str, str]] = []
+    files: list[tuple[str, str, str]] = []
 
     for docname in env.found_docs:
         uri = Uri.for_file(env.doc2path(docname)).resolve()
