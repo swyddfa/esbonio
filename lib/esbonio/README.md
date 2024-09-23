@@ -7,41 +7,51 @@
 
 A [Language Server](https://microsoft.github.io/language-server-protocol/) that aims to make it easier to work with [reStructuredText](https://docutils.sourceforge.io/rst.html) tools such as [Sphinx](https://www.sphinx-doc.org/en/master/)
 
-It's still in early development, but already provides the following features.
+> **Important**
+>
+> The `0.16.x` version of the language server is no longer in active development, all new users are encouraged to start with the `1.0bx` version.
+>
+> Existing users are also encouraged to [migrate](https://docs.esbon.io/en/latest/lsp/howto/migrate-to-v1.html), unless you are relying on a feature not yet provided by the `1.0bx` version.
+> (See [this issue](https://github.com/swyddfa/esbonio/issues/901) for the latest status)
+>
+> The `1.0` version of the language server will be released once the remaining features from `0.16.x` have been ported across.
 
-## Completion
+## Features
 
-![Completion Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/completion-demo.gif)
+### Completion
 
-## Definitions
+![Completion Demo](https://github.com/swyddfa/esbonio/raw/0.x/resources/images/completion-demo.gif)
 
-![Definition Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/definition-demo.gif)
+### Definitions
+
+![Definition Demo](https://github.com/swyddfa/esbonio/raw/0.x/resources/images/definition-demo.gif)
 
 
-## Diagnostics
+### Diagnostics
 
-![Diagnostics Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/diagnostic-sphinx-errors-demo.png)
+![Diagnostics Demo](https://github.com/swyddfa/esbonio/raw/0.x/resources/images/diagnostic-sphinx-errors-demo.png)
 
-## Document Links
+### Document Links
 
-![Document Link Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/document-links-demo.png)
+![Document Link Demo](https://github.com/swyddfa/esbonio/raw/0.x/resources/images/document-links-demo.png)
 
-## Document Symbols
+### Document Symbols
 
-![Document Symbols](https://github.com/swyddfa/esbonio/raw/release/resources/images/document-symbols-demo.png)
+![Document Symbols](https://github.com/swyddfa/esbonio/raw/0.x/resources/images/document-symbols-demo.png)
 
-## Hover
+### Hover
 
-![Hover Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/hover-demo.png)
+![Hover Demo](https://github.com/swyddfa/esbonio/raw/0.x/resources/images/hover-demo.png)
 
-## Implementations
+### Implementations
 
-![Implementations Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/implementation-demo.gif)
+![Implementations Demo](https://github.com/swyddfa/esbonio/raw/0.x/resources/images/implementation-demo.gif)
+
 ## Installation
 
 The Language Server can be installed via pip.
 
-Be sure to check out the [Getting Started](https://swyddfa.github.io/esbonio/docs/latest/en/lsp/getting-started.html) guide for details on integrating the server with your editor of choice.
+Be sure to check out the [Getting Started](https://docs.esbon.io/en/esbonio-language-server-v0.16.4/lsp/getting-started.html) guide for details on integrating the server with your editor of choice.
 
 ```
 $ pip install esbonio
