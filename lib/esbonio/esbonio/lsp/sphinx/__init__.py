@@ -96,7 +96,7 @@ class SphinxLanguageServer(RstLanguageServer):
         """The process hosting the preview server."""
 
         self.preview_server: Optional[HTTPServer] = None
-        """The handle of HTTPServer running the preview server only on Linux systems."""
+        """The handle of HTTPServer running the preview server."""
 
         self.preview_port: Optional[int] = None
         """The port the preview server is running on."""
