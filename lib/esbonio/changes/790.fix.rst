@@ -1,0 +1,1 @@
+Changed the preview server to use a Thread instead of a Process to prevent deadlocks on certain systems by @Nitorac

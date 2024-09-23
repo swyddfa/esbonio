@@ -6,8 +6,8 @@ import traceback
 import typing
 import warnings
 from functools import partial
-from multiprocessing import Process
-from multiprocessing import Queue
+from http.server import HTTPServer
+from threading import Thread
 from typing import IO
 from typing import Any
 from typing import Dict
@@ -92,8 +92,11 @@ class SphinxLanguageServer(RstLanguageServer):
         self.sphinx_log: Optional[SphinxLogHandler] = None
         """Logging handler for sphinx messages."""
 
-        self.preview_process: Optional[Process] = None
+        self.preview_runnable: Optional[Thread] = None
         """The process hosting the preview server."""
+
+        self.preview_server: Optional[HTTPServer] = None
+        """The handle of HTTPServer running the preview server."""
 
         self.preview_port: Optional[int] = None
         """The port the preview server is running on."""
@@ -172,11 +175,8 @@ class SphinxLanguageServer(RstLanguageServer):
             )
 
     def on_shutdown(self, *args):
-        if self.preview_process:
-            if not hasattr(self.preview_process, "kill"):
-                self.preview_process.terminate()
-            else:
-                self.preview_process.kill()
+        if self.preview_runnable and self.preview_server is not None:
+            self.preview_server.shutdown()
 
     def save(self, params: DidSaveTextDocumentParams):
         super().save(params)
@@ -429,23 +429,15 @@ class SphinxLanguageServer(RstLanguageServer):
 
             return {}
 
-        if not self.preview_process and IS_LINUX:
+        if not self.preview_runnable:
             self.logger.debug("Starting preview server.")
             server = make_preview_server(self.app.outdir)  # type: ignore[arg-type]
             self.preview_port = server.server_port
+            # Remember the HTTPServer object to call shutdown when we want it to end
+            self.preview_server = server
 
-            self.preview_process = Process(target=server.serve_forever, daemon=True)
-            self.preview_process.start()
-
-        if not self.preview_process and not IS_LINUX:
-            self.logger.debug("Starting preview server")
-
-            q: Queue = Queue()
-            self.preview_process = Process(
-                target=start_preview_server, args=(q, self.app.outdir), daemon=True
-            )
-            self.preview_process.start()
-            self.preview_port = q.get()
+            self.preview_runnable = Thread(target=server.serve_forever, daemon=True)
+            self.preview_runnable.start()
 
         if options.get("show", True):
             self.show_document(
