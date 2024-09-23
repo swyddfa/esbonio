@@ -1,3 +1,18 @@
+v0.16.5 - 2024-09-23
+--------------------
+
+Fixes
+^^^^^
+
+- Changed the preview server to use a Thread instead of a Process to prevent deadlocks on certain systems by @Nitorac (`#790 <https://github.com/swyddfa/esbonio/issues/790>`_)
+
+
+Misc
+^^^^
+
+- Pin pygls ``<2`` (`#898 <https://github.com/swyddfa/esbonio/issues/898>`_)
+
+
 v0.16.4 - 2024-01-11
 --------------------
 
