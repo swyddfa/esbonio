@@ -7,8 +7,6 @@ import typing
 import warnings
 from functools import partial
 from http.server import HTTPServer
-from multiprocessing import Process
-from multiprocessing import Queue
 from threading import Thread
 from typing import IO
 from typing import Any
@@ -94,10 +92,10 @@ class SphinxLanguageServer(RstLanguageServer):
         self.sphinx_log: Optional[SphinxLogHandler] = None
         """Logging handler for sphinx messages."""
 
-        self.preview_runnable: Optional[Process | Thread] = None
+        self.preview_runnable: Optional[Thread] = None
         """The process hosting the preview server."""
 
-        self.preview_linux_server: Optional[HTTPServer] = None
+        self.preview_server: Optional[HTTPServer] = None
         """The handle of HTTPServer running the preview server only on Linux systems."""
 
         self.preview_port: Optional[int] = None
@@ -177,14 +175,8 @@ class SphinxLanguageServer(RstLanguageServer):
             )
 
     def on_shutdown(self, *args):
-        if self.preview_runnable:
-            if self.preview_linux_server is not None:
-                self.preview_linux_server.shutdown()
-            else:
-                if not hasattr(self.preview_runnable, "kill"):
-                    self.preview_runnable.terminate()
-                else:
-                    self.preview_runnable.kill()
+        if self.preview_runnable and self.preview_server is not None:
+            self.preview_server.shutdown()
 
     def save(self, params: DidSaveTextDocumentParams):
         super().save(params)
@@ -437,25 +429,15 @@ class SphinxLanguageServer(RstLanguageServer):
 
             return {}
 
-        if not self.preview_runnable and IS_LINUX:
+        if not self.preview_runnable:
             self.logger.debug("Starting preview server.")
             server = make_preview_server(self.app.outdir)  # type: ignore[arg-type]
             self.preview_port = server.server_port
             # Remember the HTTPServer object to call shutdown when we want it to end
-            self.preview_linux_server = server
+            self.preview_server = server
 
-            self.preview_process = Thread(target=server.serve_forever, daemon=True)
-            self.preview_process.start()
-
-        if not self.preview_runnable and not IS_LINUX:
-            self.logger.debug("Starting preview server")
-
-            q: Queue = Queue()
-            self.preview_runnable = Process(
-                target=start_preview_server, args=(q, self.app.outdir), daemon=True
-            )
+            self.preview_runnable = Thread(target=server.serve_forever, daemon=True)
             self.preview_runnable.start()
-            self.preview_port = q.get()
 
         if options.get("show", True):
             self.show_document(
