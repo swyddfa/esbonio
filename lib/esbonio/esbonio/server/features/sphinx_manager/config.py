@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import logging
 import pathlib
@@ -8,7 +7,6 @@ from typing import Any
 from typing import Optional
 
 import attrs
-import platformdirs
 from pygls.workspace import Workspace
 
 from esbonio.server import Uri
@@ -227,9 +225,12 @@ class SphinxConfig:
             conf_py = current / "conf.py"
             logger.debug("Trying path: %s", current)
             if conf_py.exists():
-                cache = platformdirs.user_cache_dir("esbonio", "swyddfa")
-                project = hashlib.md5(str(current).encode()).hexdigest()  # noqa: S324
-                build_dir = str(pathlib.Path(cache, project))
-                return ["sphinx-build", "-M", "dirhtml", str(current), str(build_dir)]
+                return [
+                    "sphinx-build",
+                    "-M",
+                    "dirhtml",
+                    str(current),
+                    "${defaultBuildDir}",
+                ]
 
         return []

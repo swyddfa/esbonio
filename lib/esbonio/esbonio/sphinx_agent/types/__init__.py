@@ -144,6 +144,10 @@ Symbol = tuple[  # Represents either a document symbol or workspace symbol depen
 ]
 
 
+# -- RPC Types
+#
+# These represent the structure of the messages sent between the Sphinx agent and the
+# parent language server.
 @dataclasses.dataclass
 class CreateApplicationParams:
     """Parameters of a ``sphinx/createApp`` request."""
@@ -153,6 +157,9 @@ class CreateApplicationParams:
 
     config_overrides: dict[str, Any]
     """Overrides to apply to the application's configuration."""
+
+    context: dict[str, str] = dataclasses.field(default_factory=dict)
+    """The context in which to resolve config variables."""
 
 
 @dataclasses.dataclass

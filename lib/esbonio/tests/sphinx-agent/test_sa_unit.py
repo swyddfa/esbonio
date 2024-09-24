@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import logging
 import os
 import pathlib
@@ -431,7 +432,7 @@ def test_cli_arg_handling(args: list[str], expected: dict[str, Any]):
     config = SphinxConfig.fromcli(args)
     assert config is not None
 
-    actual = config.to_application_args()
+    actual = config.to_application_args({})
 
     # pytest overrides stderr on windows, so if we were to put `sys.stderr` in the
     # `expected` dict this test would fail as `sys.stderr` inside a test function has a
@@ -440,6 +441,66 @@ def test_cli_arg_handling(args: list[str], expected: dict[str, Any]):
     # So, let's test for it here instead
     assert actual.pop("status") == sys.stderr
     assert actual.pop("warning") == sys.stderr
+
+    assert expected == actual
+
+
+@pytest.mark.parametrize(
+    "args, expected, context",
+    [
+        (
+            ["-M", "html", "src", "${defaultBuildDir}"],
+            application_args(
+                srcdir="src",
+                confdir="src",
+                outdir=os.sep + os.path.join("path", "to", "cache", "<HASH>", "html"),
+                doctreedir=(
+                    os.sep + os.path.join("path", "to", "cache", "<HASH>", "doctrees")
+                ),
+                buildername="html",
+            ),
+            {
+                "cacheDir": os.sep + os.sep.join(["path", "to", "cache"]),
+            },
+        ),
+        (
+            ["-b", "html", "src", "${defaultBuildDir}"],
+            application_args(
+                srcdir="src",
+                confdir="src",
+                outdir=os.sep + os.sep.join(["path", "to", "cache", "<HASH>"]),
+                doctreedir=(
+                    os.sep + os.path.join("path", "to", "cache", r"<HASH>", ".doctrees")
+                ),
+                buildername="html",
+            ),
+            {
+                "cacheDir": os.sep + os.sep.join(["path", "to", "cache"]),
+            },
+        ),
+    ],
+)
+def test_cli_default_build_dir(
+    args: list[str], expected: dict[str, Any], context: dict[str, str]
+):
+    """Ensure that we can handle ``${defaultBuildDir}`` variable correctly."""
+    config = SphinxConfig.fromcli(args)
+    assert config is not None
+
+    actual = config.to_application_args(context)
+
+    # pytest overrides stderr on windows, so if we were to put `sys.stderr` in the
+    # `expected` dict this test would fail as `sys.stderr` inside a test function has a
+    # different value.
+    #
+    # So, let's test for it here instead
+    assert actual.pop("status") == sys.stderr
+    assert actual.pop("warning") == sys.stderr
+
+    # Compute the expected hash now that the confdir has been resolved
+    ehash = hashlib.md5(config.conf_dir.encode()).hexdigest()
+    expected["outdir"] = expected["outdir"].replace("<HASH>", ehash)
+    expected["doctreedir"] = expected["doctreedir"].replace("<HASH>", ehash)
 
     assert expected == actual
 
