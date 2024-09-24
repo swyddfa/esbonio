@@ -1,5 +1,5 @@
 [tool.esbonio.sphinx]
-# buildCommand = ["sphinx-build", "-M", "dirhtml", ".", "./_build"]
+buildCommand = ["sphinx-build", "-M", "dirhtml", ".", "${defaultBuildDir}"]
 pythonCommand = ["hatch", "-e", "docs", "run", "python"]
 
 [tool.hatch.envs.docs]
