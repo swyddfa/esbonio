@@ -160,7 +160,9 @@ class SphinxConfig:
                 continue
 
             replacement = self.resolve_config_variable(match.group(1), context)
-            setattr(self, name, VARIABLE.sub(replacement, value))
+            result = VARIABLE.sub(re.escape(replacement), value)
+
+            setattr(self, name, result)
 
         build_dir = pathlib.Path(self.build_dir).resolve()
         doctree_dir = pathlib.Path(self.doctree_dir).resolve()
