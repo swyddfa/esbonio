@@ -78,7 +78,10 @@ export class PreviewManager {
   }
 
   private scrollView(editor: vscode.TextEditor) {
-    if (editor.document.uri !== this.currentUri) {
+    // For some reason, the object representation of the same URI is not stable
+    // leading this check to fail in cases where it should pass.
+    // Instead, compare the string representation of the uris.
+    if (editor.document.uri.toString() !== this.currentUri?.toString()) {
       return
     }
 
