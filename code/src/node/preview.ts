@@ -141,7 +141,21 @@ export class PreviewManager {
       return
     }
 
-    this.panel.webview.postMessage({ 'show': params.uri })
+    let panel = this.panel
+    let uri = vscode.Uri.parse(params.uri)
+
+    // Needed so that previews work in Codespaces
+    // see: https://github.com/swyddfa/esbonio/issues/896
+    vscode.env.asExternalUri(uri).then(
+      extUri => {
+        this.logger.debug(`${uri.toString(true)} -> asExternalUri -> ${extUri.toString(true)}`)
+        panel.webview.postMessage({ 'show': extUri.toString(true) })
+      },
+      err => {
+        this.logger.error(`Unable to convert uri to an external uri: ${err}`)
+      }
+    )
+
   }
 
   private showInternalDocument(params: ShowDocumentParams) {
