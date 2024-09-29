@@ -238,8 +238,18 @@ class SphinxManager(server.LanguageFeature):
                 partial(self._create_or_replace_client, uri),
                 scope=uri,
             )
-            # The first few callers in a given scope will miss out, but that shouldn't matter
-            # too much
+
+            # It's possible for this code path to be hit multiple times in quick
+            # succession e.g. on a fresh server start with N .rst files already open,
+            # creating the opportunity to accidentally spawn N duplicated clients!
+            #
+            # To prevent this, store a `None` at this scope, all being well it will be
+            # replaced with the actual client instance when the
+            # `_create_or_replace_client` callback runs.
+            self.clients[scope] = None
+
+            # The first few callers in a given scope will miss out, but that shouldn't
+            # matter too much
             return None
 
         if (client := self.clients[scope]) is None:
