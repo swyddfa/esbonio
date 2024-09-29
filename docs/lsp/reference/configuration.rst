@@ -74,24 +74,30 @@ The following options are useful when extending or working on the language serve
 
    Developer flag which, when enabled, the server will publish any deprecation warnings as diagnostics.
 
-.. esbonio:config:: esbonio.server.enableDevTools (boolean)
+.. esbonio:config:: esbonio.server.enableDevTools
    :scope: global
    :type: boolean
 
    Enable `lsp-devtools`_ integration for the language server itself.
 
-.. esbonio:config:: esbonio.sphinx.enableDevTools (boolean)
+.. esbonio:config:: esbonio.sphinx.enableDevTools
    :scope: global
    :type: boolean
 
    Enable `lsp-devtools`_ integration for the Sphinx subprocess started by the language server.
 
-.. esbonio:config:: esbonio.sphinx.pythonPath (string[])
+.. esbonio:config:: esbonio.sphinx.pythonPath
    :scope: global
    :type: string[]
 
    List of paths to use when constructing the value of ``PYTHONPATH``.
    Used to inject the sphinx agent into the target environment."
+
+.. esbonio:config:: esbonio.preview.showLineMarkers
+   :scope: global
+   :type: boolean
+
+   When enabled, reveal the source uri and line number (if possible) for the html element under the cursor.
 
 .. _lsp-devtools: https://swyddfa.github.io/lsp-devtools/docs/latest/en/
 
