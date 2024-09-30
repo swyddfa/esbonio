@@ -149,6 +149,8 @@ export class PreviewManager {
     vscode.env.asExternalUri(uri).then(
       extUri => {
         this.logger.debug(`${uri.toString(true)} -> asExternalUri -> ${extUri.toString(true)}`)
+
+        panel.webview.html = this.getWebViewHTML(`${extUri.scheme}://${extUri.authority}`)
         panel.webview.postMessage({ 'show': extUri.toString(true) })
       },
       err => {
@@ -193,10 +195,35 @@ export class PreviewManager {
       { enableScripts: true, retainContextWhenHidden: true }
     )
 
+    // The webview will notify us when the page has finished loading.
+    // Which should also mean the websocket connection is up and running.
+    // Try and sync up the view to the editor.
+    this.panel.webview.onDidReceiveMessage(message => {
+      if (!message.ready) {
+        return
+      }
+
+      let editor = findEditorFor(this.currentUri)
+      if (editor) {
+        this.scrollView(editor)
+      }
+    })
+
+    this.panel.onDidDispose(() => {
+      this.panel = undefined
+      this.currentUri = undefined
+    })
+
+    return this.panel
+  }
+
+  private getWebViewHTML(origin: string): string {
+
     let scriptNonce = getNonce()
     let cssNonce = getNonce()
+    this.logger.debug(`Generating HTML for origin: ${origin}`)
 
-    this.panel.webview.html = `
+    return `
 <!DOCTYPE html>
 <html>
 
@@ -204,7 +231,7 @@ export class PreviewManager {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src 'nonce-${cssNonce}'; script-src 'nonce-${scriptNonce}'; frame-src http://localhost:*/" />
+        content="default-src 'none'; style-src 'nonce-${cssNonce}'; script-src 'nonce-${scriptNonce}'; frame-src ${origin}/" />
 
   <style nonce="${cssNonce}">
     * { box-sizing: border-box;}
@@ -336,7 +363,7 @@ export class PreviewManager {
       }
 
       // Control messages coming from the webpage being shown.
-      if (event.origin.startsWith("http://localhost:")) {
+      if (event.origin.startsWith("${origin}")) {
         if (message.ready) {
           status.style.display = "none"
           noContent.style.display = "none"
@@ -349,27 +376,6 @@ export class PreviewManager {
 
 </html>
 `
-
-    // The webview will notify us when the page has finished loading.
-    // Which should also mean the websocket connection is up and running.
-    // Try and sync up the view to the editor.
-    this.panel.webview.onDidReceiveMessage(message => {
-      if (!message.ready) {
-        return
-      }
-
-      let editor = findEditorFor(this.currentUri)
-      if (editor) {
-        this.scrollView(editor)
-      }
-    })
-
-    this.panel.onDidDispose(() => {
-      this.panel = undefined
-      this.currentUri = undefined
-    })
-
-    return this.panel
   }
 }
 
