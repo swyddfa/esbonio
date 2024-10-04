@@ -188,14 +188,15 @@ class PreviewManager(server.LanguageFeature):
         server = await self.preview
         webview = await self.webview
 
-        query_params: dict[str, Any] = dict(ws=webview.port)
+        host = "localhost"
+        query_params: dict[str, Any] = dict(ws=f"ws://{host}:{webview.port}")
 
         if self.config.show_line_markers:
             query_params["show-markers"] = True
 
         uri = Uri.create(
             scheme="http",
-            authority=f"localhost:{server.port}",
+            authority=f"{host}:{server.port}",
             path=self.build_path,
             query=urlencode(query_params),
         )
