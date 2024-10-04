@@ -148,10 +148,13 @@ export class PreviewManager {
     // see: https://github.com/swyddfa/esbonio/issues/896
     vscode.env.asExternalUri(uri).then(
       extUri => {
-        this.logger.debug(`${uri.toString(true)} -> asExternalUri -> ${extUri.toString(true)}`)
+        // Annoyingly, asExternalUri doesn't preserve attributes like `path` or `query`
+        let previewUri = uri.with({ scheme: extUri.scheme, authority: extUri.authority })
+        let origin = `${previewUri.scheme}://${previewUri.authority}`
+        this.logger.debug(`asExternalUri('${uri.toString(true)}') -> '${previewUri.toString(true)}'`)
 
-        panel.webview.html = this.getWebViewHTML(`${extUri.scheme}://${extUri.authority}`)
-        panel.webview.postMessage({ 'show': extUri.toString(true) })
+        panel.webview.html = this.getWebViewHTML(origin)
+        panel.webview.postMessage({ 'show': previewUri.toString(true) })
       },
       err => {
         this.logger.error(`Unable to convert uri to an external uri: ${err}`)
