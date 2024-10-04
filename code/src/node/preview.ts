@@ -221,7 +221,6 @@ export class PreviewManager {
 
     let scriptNonce = getNonce()
     let cssNonce = getNonce()
-    this.logger.debug(`Generating HTML for origin: ${origin}`)
 
     return `
 <!DOCTYPE html>
@@ -231,7 +230,11 @@ export class PreviewManager {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src 'nonce-${cssNonce}'; script-src 'nonce-${scriptNonce}'; frame-src ${origin}/" />
+        content="default-src 'none';
+                 style-src 'nonce-${cssNonce}';
+                 style-src-attr 'unsafe-inline';
+                 script-src 'nonce-${scriptNonce}';
+                 frame-src ${origin}/" />
 
   <style nonce="${cssNonce}">
     * { box-sizing: border-box;}
