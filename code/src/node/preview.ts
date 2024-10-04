@@ -336,8 +336,6 @@ export class PreviewManager {
     const noContent = document.getElementById("no-content")
     const status = document.getElementById("status")
 
-    console.debug(window.location)
-
     // Restore previous page?
     const previousState = vscode.getState()
     if (previousState && previousState.url) {
@@ -349,7 +347,7 @@ export class PreviewManager {
       let message = event.data
 
       // Control messages coming from the webview hosting this page
-      if (event.origin.startsWith("vscode-webview://")) {
+      if (event.origin === window.location.origin) {
 
         if (message.show === "<nothing>") {
           status.style.display = "none"
