@@ -1,8 +1,9 @@
 import * as vscode from 'vscode'
 import { OutputChannelLogger } from '../common/log'
 import { EsbonioClient } from './client'
-import { Commands, Events, Notifications } from '../common/constants'
+import { Commands, Events } from '../common/constants'
 import { ShowDocumentParams, Range } from 'vscode-languageclient'
+import { URLSearchParams } from 'url'
 
 interface PreviewFileParams {
   uri: string
@@ -43,7 +44,7 @@ export class PreviewManager {
 
     client.addHandler(
       "window/showDocument",
-      (params: { params: ShowDocumentParams, default: any }) => this.showDocument(params)
+      async (params: { params: ShowDocumentParams, default: any }) => await this.showDocument(params)
     )
 
     client.addHandler(
@@ -131,7 +132,7 @@ export class PreviewManager {
     this.currentUri = editor.document.uri
   }
 
-  private showDocument(req: { params: ShowDocumentParams, default: any }) {
+  private async showDocument(req: { params: ShowDocumentParams, default: any }) {
     let params = req.params
     if (!params.external) {
       return this.showInternalDocument(params)
@@ -142,25 +143,54 @@ export class PreviewManager {
     }
 
     let panel = this.panel
-    let uri = vscode.Uri.parse(params.uri)
 
-    // Needed so that previews work in Codespaces
-    // see: https://github.com/swyddfa/esbonio/issues/896
-    vscode.env.asExternalUri(uri).then(
-      extUri => {
-        // Annoyingly, asExternalUri doesn't preserve attributes like `path` or `query`
-        let previewUri = uri.with({ scheme: extUri.scheme, authority: extUri.authority })
-        let origin = `${previewUri.scheme}://${previewUri.authority}`
-        this.logger.debug(`asExternalUri('${uri.toString(true)}') -> '${previewUri.toString(true)}'`)
+    let previewUri = vscode.Uri.parse(params.uri)
+    let externalUri = await vscode.env.asExternalUri(previewUri)
 
-        panel.webview.html = this.getWebViewHTML(origin)
-        panel.webview.postMessage({ 'show': previewUri.toString(true) })
-      },
-      err => {
-        this.logger.error(`Unable to convert uri to an external uri: ${err}`)
-      }
-    )
+    // Annoyingly, asExternalUri doesn't preserve attributes like `path` or `query`
+    previewUri = previewUri.with({ scheme: externalUri.scheme, authority: externalUri.authority })
 
+    let origin = `${previewUri.scheme}://${previewUri.authority}`
+    panel.webview.html = this.getWebViewHTML(origin)
+
+    // Don't forget as also need an external uri for the websocket connection
+    let queryParams = new URLSearchParams(previewUri.query)
+    let ws = queryParams.get('ws')
+    if (!ws) {
+      this.logger.error("Missing websocket uri, features like sync scrolling will not be available.")
+      this.displayUri(previewUri, queryParams)
+      return
+    }
+
+    // We need to also pass the websocket uri through `asExternalUri` however, it only works for
+    // http(s) uris
+    let wsUri = vscode.Uri.parse(ws)
+    wsUri = await vscode.env.asExternalUri(wsUri.with({ scheme: 'http' }))
+    wsUri = wsUri.with({ scheme: wsUri.scheme === 'https' ? 'wss' : 'ws' })
+    queryParams.set('ws', wsUri.toString())
+
+    this.displayUri(previewUri, queryParams)
+  }
+
+  /**
+   * Display the given uri in the preview pane.
+   *
+   * @param uri The base uri to present
+   * @param queryParams The query parameters to include
+   * @returns
+   */
+  private displayUri(uri: vscode.Uri, queryParams: URLSearchParams) {
+
+    // As far as I can tell, there isn't a way to convince vscode's URI type to encode the
+    // uri in a way that does not break query parameters (since it converts ?x=y to ?x%3Dy).
+    // It also appears to be intended behavior see: https://github.com/Microsoft/vscode/issues/8466
+    //
+    // So we need to do it ourselves.
+    let query = queryParams.toString()
+    let displayUri = `${uri.with({ query: '' })}?${query}`
+
+    this.logger.debug(`Displaying uri: ${displayUri}`)
+    this.panel?.webview.postMessage({ 'show': displayUri })
   }
 
   private showInternalDocument(params: ShowDocumentParams) {
