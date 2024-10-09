@@ -173,6 +173,9 @@
                     "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
                         "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
                         "default": null,
                         "description": "The command to use when launching the Python interpreter for the process hosting the Sphinx application."
                     },
