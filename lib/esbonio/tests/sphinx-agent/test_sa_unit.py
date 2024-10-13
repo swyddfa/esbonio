@@ -9,6 +9,7 @@ import typing
 from unittest import mock
 
 import pytest
+from sphinx import version_info as sphinx_version
 
 from esbonio.sphinx_agent.config import SphinxConfig
 from esbonio.sphinx_agent.log import DiagnosticFilter
@@ -20,6 +21,11 @@ if typing.TYPE_CHECKING:
 
 
 logger = logging.getLogger(__name__)
+
+
+sphinx_lt_81 = sphinx_version[0] < 8 or (
+    sphinx_version[0] == 8 and sphinx_version[1] < 1
+)
 
 
 def application_args(**kwargs) -> dict[str, Any]:
@@ -231,7 +237,9 @@ def application_args(**kwargs) -> dict[str, Any]:
                 doctreedir=os.path.join("out", "doctrees"),
                 buildername="html",
                 warningiserror=True,
-                keep_going=True,
+                # --keep-going ignored since v8.1
+                # https://github.com/sphinx-doc/sphinx/pull/12743/files#diff-4aea2ac365ab5325b530ac42efc67feac98db110e7f943ea13b5cf88f4260e59
+                keep_going=sphinx_lt_81,
             ),
         ),
         (
@@ -421,7 +429,9 @@ def application_args(**kwargs) -> dict[str, Any]:
                 doctreedir=os.path.join("out", ".doctrees"),
                 buildername="html",
                 warningiserror=True,
-                keep_going=True,
+                # --keep-going ignored since v8.1
+                # https://github.com/sphinx-doc/sphinx/pull/12743/files#diff-4aea2ac365ab5325b530ac42efc67feac98db110e7f943ea13b5cf88f4260e59
+                keep_going=sphinx_lt_81,
             ),
         ),
     ],
