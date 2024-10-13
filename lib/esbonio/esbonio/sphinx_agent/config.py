@@ -112,6 +112,11 @@ class SphinxConfig:
         values = m_Sphinx.call_args[0]
         sphinx_args = {k: v for k, v in zip(keys, values)}
 
+        # Sphinx 8.1 changed the way arguments are passed to the `Sphinx` class.
+        # See: https://github.com/swyddfa/esbonio/issues/912
+        if len(values) == 0:
+            sphinx_args = m_Sphinx.call_args.kwargs
+
         if sphinx_args is None:
             return None
 
