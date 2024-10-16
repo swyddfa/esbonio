@@ -12,6 +12,7 @@ import typing
 import pytest
 import pytest_asyncio
 from lsprotocol import types as lsp
+from pygls import IS_WIN
 from pygls.server import StdOutTransportAdapter
 
 from esbonio.server import EsbonioLanguageServer
@@ -138,9 +139,17 @@ async def test_get_client(
 async def test_get_client_with_error(
     server_manager: ServerManager, demo_workspace: Uri
 ):
-    """Ensure that we correctly handle the case where there is an error with a client."""
+    """Ensure that we correctly handle the case where there is an error with the client."""
 
-    server, manager = server_manager(None)
+    server, manager = server_manager(
+        dict(
+            esbonio=dict(
+                sphinx=dict(
+                    pythonCommand=["/not/a/real/env/python"],
+                ),
+            ),
+        ),
+    )
     # Ensure that the server is ready
     await server.ready
 
@@ -165,7 +174,13 @@ async def test_get_client_with_error(
 
     assert result is client
     assert client.state == ClientState.Errored
-    assert "No python environment configured" in str(client.exception)
+
+    if IS_WIN:
+        message = "The system cannot find the file specified"
+    else:
+        message = "No such file or directory"
+
+    assert message in str(client.exception)
 
     # Finally, if we request another uri from the same project we should get back
     # the same client instance - even though it failed to start.
