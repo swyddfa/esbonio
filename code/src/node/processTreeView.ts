@@ -101,10 +101,10 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
 
       case 'python':
         let pyCmd: string[] = []
-        element.command.forEach(c => pyCmd.push(`- ${c}`))
+        element.command?.forEach(c => pyCmd.push(`- ${c}`))
 
         return {
-          label: element.command.join(' '),
+          label: element.command?.join(' '),
           iconPath: vscode.ThemeIcon.File,
           tooltip: new vscode.MarkdownString(`**Python Command**\n  ${pyCmd.join('\n  ')}`),
           resourceUri: vscode.Uri.parse('file:///test.py'),  // Needed to pull in the icon for Python
@@ -279,7 +279,7 @@ type ProcessTreeNode = ProcessContainerNode | SphinxProcessNode | SphinxBuilderN
  */
 interface PythonCommandNode {
   kind: 'python'
-  command: string[]
+  command: string[] | undefined
 }
 
 /**
