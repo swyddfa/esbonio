@@ -1,2 +1,3 @@
-bundled/libs
+bundled
 node_modules
+*.vsix
