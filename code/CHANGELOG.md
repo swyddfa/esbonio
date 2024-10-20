@@ -1,3 +1,19 @@
+## v0.96.0 - 2024-10-20
+
+### Features
+
+- The VSCode extension now provides a fallback environment in the event the user has not configured `esbonio.sphinx.pythonCommand`. The environment only includes Sphinx itself and the MyST parser but it should be enough to provide basic support ([#915](https://github.com/swyddfa/esbonio/issues/915))
+
+### Fixes
+
+- Ensure scrolling is still synchronised, even after scrolling the preview window ([#875](https://github.com/swyddfa/esbonio/issues/875))
+- The preview window should now work when using Codespaces ([#896](https://github.com/swyddfa/esbonio/issues/896))
+
+### Misc
+
+- Update bundled version of the language server to `1.0.0b8` ([#917](https://github.com/swyddfa/esbonio/issues/917))
+
+
 ## v0.95.2 - 2024-09-22
 
 ### Enhancements
