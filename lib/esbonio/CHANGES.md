@@ -1,3 +1,19 @@
+## v1.0.0b8 - 2024-10-20
+
+### Enhancements
+
+- When clicking on internal links of a previewed page, the corresponding source file will be automatically opened in the editor ([#704](https://github.com/swyddfa/esbonio/issues/704))
+- The language server should now also work with an incomplete Python environment. If one or more Sphinx extensions are missing, esbonio will still be able to run a build and report the missing extensions as a diagnostic ([#913](https://github.com/swyddfa/esbonio/issues/913))
+- When asking for a `html_theme` that is not available in the current environment, the server will now fallback to Sphinx's `alabaster` theme and report the error as a diagnostic ([#916](https://github.com/swyddfa/esbonio/issues/916))
+
+### Fixes
+
+- The `esbonio.preview.showLineMarkers` option should now work again.
+
+  When clicking on internal links of a previewed page, the websocket connection to the language server is now preserved. ([#906](https://github.com/swyddfa/esbonio/issues/906))
+- Esbonio should once again be able to parse `sphinx-build` command line arguments for versions of Sphinx `>=8.1` ([#912](https://github.com/swyddfa/esbonio/issues/912))
+
+
 ## v1.0.0b7 - 2024-09-22
 
 ### Enhancements
