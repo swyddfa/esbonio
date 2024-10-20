@@ -17,6 +17,7 @@ from .log import DiagnosticFilter
 if typing.TYPE_CHECKING:
     from typing import IO
     from typing import Any
+    from typing import Literal
 
     RoleDefinition = tuple[str, Any, list[types.Role.TargetProvider]]
 
@@ -43,15 +44,41 @@ class Esbonio:
     log: DiagnosticFilter
 
     def __init__(self, dbpath: pathlib.Path, app: _Sphinx):
+        self.app: _Sphinx = app
         self.db = Database(dbpath)
         self.log = DiagnosticFilter(app)
 
         self._roles: list[RoleDefinition] = []
         """Roles captured during Sphinx startup."""
 
+        self._config_ast: ast.Module | Literal[False] | None = None
+        """The parsed AST of the user's conf.py file.
+        If ``False``, we already tried parsing the module and were unable to."""
 
         self.diagnostics: dict[types.Uri, set[types.Diagnostic]] = {}
         """Recorded diagnostics."""
+
+    @property
+    def config_uri(self) -> types.Uri:
+        return types.Uri.for_file(pathlib.Path(self.app.confdir, "conf.py"))
+
+    @property
+    def config_ast(self) -> ast.Module | None:
+        """Return the AST for the user's conf.py (if possible)"""
+
+        if self._config_ast is not None:
+            return self._config_ast or None  # convert ``False`` to ``None``
+
+        try:
+            conf_py = pathlib.Path(self.app.confdir, "conf.py")
+            self._config_ast = ast.parse(source=conf_py.read_text())
+            return self._config_ast
+        except Exception as exc:
+            logger.debug("Unable to parse user's conf.py: %s", exc)
+            self._config_ast = False
+
+            return None
+
     def add_role(
         self,
         name: str,
@@ -138,22 +165,13 @@ class Sphinx(_Sphinx):
         Parameters
         ----------
         extname
-           The name of the extension that caused the excetion
+           The name of the extension that caused the exception
 
         exc
            The exception instance
         """
 
-        if not isinstance(cause := exc.__cause__, ImportError):
-            return
-
-        # Parse the user's config file
-        # TODO: Move this somewhere more central.
-        try:
-            conf_py = pathlib.Path(self.confdir, "conf.py")
-            config = ast.parse(source=conf_py.read_text())
-        except Exception:
-            logger.debug("Unable to parse user's conf.py")
+        if (config := self.esbonio.config_ast) is None:
             return
 
         # Now attempt to find the soure location of the extenison.
@@ -162,10 +180,10 @@ class Sphinx(_Sphinx):
             return
 
         diagnostic = types.Diagnostic(
-            range=range_, message=str(cause), severity=types.DiagnosticSeverity.Error
+            range=range_, message=f"{exc}", severity=types.DiagnosticSeverity.Error
         )
 
-        uri = types.Uri.for_file(conf_py)
+        uri = self.esbonio.config_uri
         logger.debug("Adding diagnostic %s: %s", uri, diagnostic)
         self.esbonio.diagnostics.setdefault(uri, set()).add(diagnostic)
 
