@@ -38,10 +38,12 @@ release-deps: node_modules/.installed bundled/libs/.installed bundled/env/.insta
 	-test -L bundled/libs/esbonio && rm bundled/libs/esbonio
 	test -d bundled/libs/esbonio-*.dist-info || $(PY39) -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade $(ESBONIO)
 
-requirements-libs.txt: $(HATCH) requirements-libs.in
+# Hatch is only required to exist, don't rebuild this target if it happens to be newer!
+# https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html
+requirements-libs.txt: requirements-libs.in | $(HATCH)
 	$(HATCH) run deps:update-libs
 
-requirements-env.txt: $(HATCH) requirements-env.in
+requirements-env.txt: requirements-env.in | $(HATCH)
 	$(HATCH) run deps:update-env
 
 bundled/libs/.installed: $(PY39) requirements-libs.txt
