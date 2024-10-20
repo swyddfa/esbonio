@@ -49,6 +49,9 @@ class Esbonio:
         self._roles: list[RoleDefinition] = []
         """Roles captured during Sphinx startup."""
 
+
+        self.diagnostics: dict[types.Uri, set[types.Diagnostic]] = {}
+        """Recorded diagnostics."""
     def add_role(
         self,
         name: str,
@@ -162,10 +165,9 @@ class Sphinx(_Sphinx):
             range=range_, message=str(cause), severity=types.DiagnosticSeverity.Error
         )
 
-        # TODO: Move the set of diagnostics somewhere more central.
         uri = types.Uri.for_file(conf_py)
         logger.debug("Adding diagnostic %s: %s", uri, diagnostic)
-        self.esbonio.log.diagnostics.setdefault(uri, set()).add(diagnostic)
+        self.esbonio.diagnostics.setdefault(uri, set()).add(diagnostic)
 
 
 def find_extension_declaration(mod: ast.Module, extname: str) -> types.Range | None:

@@ -30,7 +30,6 @@ class DiagnosticFilter(logging.Filter):
         super().__init__(*args, **kwargs)
 
         self.app = app
-        self.diagnostics: dict[Uri, set[types.Diagnostic]] = {}
 
     def filter(self, record: logging.LogRecord) -> bool:
         conditions = [
@@ -76,7 +75,7 @@ class DiagnosticFilter(logging.Filter):
             ),
         )
 
-        self.diagnostics.setdefault(uri, set()).add(diagnostic)
+        self.app.esbonio.diagnostics.setdefault(uri, set()).add(diagnostic)
         return True
 
 
