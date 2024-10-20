@@ -1,5 +1,3 @@
-from typing import Optional
-
 from sphinx.config import Config
 
 from ..app import Database
@@ -18,19 +16,20 @@ DIAGNOSTICS_TABLE = Database.Table(
 
 def init_db(app: Sphinx, config: Config):
     app.esbonio.db.ensure_table(DIAGNOSTICS_TABLE)
+    sync_diagnostics(app)
 
 
 def clear_diagnostics(app: Sphinx, docname: str, source):
     """Clear the diagnostics assocated with the given file."""
     uri = Uri.for_file(app.env.doc2path(docname, base=True))
-    app.esbonio.log.diagnostics.pop(uri, None)
+    app.esbonio.diagnostics.pop(uri, None)
 
 
-def sync_diagnostics(app: Sphinx, exc: Optional[Exception]):
+def sync_diagnostics(app: Sphinx, *args):
     app.esbonio.db.clear_table(DIAGNOSTICS_TABLE)
 
     results = []
-    diagnostics = app.esbonio.log.diagnostics
+    diagnostics = app.esbonio.diagnostics
 
     for uri, items in diagnostics.items():
         for item in items:

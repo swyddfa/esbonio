@@ -1,0 +1,24 @@
+# This file is used to generate requirements-env.txt.
+#
+# Only run the commands below to manually upgrade packages in requirements-env.txt:
+# NOTE: Use the minimum version of Python we support when running these commands (currently 3.9)
+#
+# 1) python -m pip install pip-tools
+# 2) pip-compile --generate-hashes --upgrade ./requirements-env.in
+#
+# To install the environment specified in requirements-env.txt (again using the minimum supported python)
+#
+# 3) python -m pip install -t ./bundled/env --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements-env.txt
+
+# Pick a modern version of Sphinx - but not too modern!
+# Sphinx v7 is a nice version since it supports all versions of Python we currently support. (3.9+)
+sphinx==7.*
+
+# Since we advertise MyST support we probably should include it so that it works out of the box.
+# v3 supports most of the Python versions we currently support (missing official 3.13 support though)
+myst-parser==3.*
+
+# There's an argument to be made to include some of the most popular themes/extensions here.
+# However, these two packages alone bloat the install size of the extension dramatically!
+# And this is only a fallback so that the extension does *something* rather than crash.
+# For full support of their project, users really should be configuring `esbonio.sphinx.pythonCommand`

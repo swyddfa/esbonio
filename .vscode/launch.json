@@ -1,27 +1,6 @@
 {
     "version": "0.2.0",
-    "inputs": [
-        {
-            "id": "workspace",
-            "type": "pickString",
-            "description": "Pick the workspace root for this session",
-            "default": "code/",
-            "options": [
-                {
-                    "label": "code",
-                    "value": "code"
-                },
-                {
-                    "label": "docs",
-                    "value": "docs"
-                },
-                {
-                    "label": "demo",
-                    "value": "lib/esbonio/tests/workspaces/demo"
-                },
-            ]
-        }
-    ],
+    "inputs": [],
     "configurations": [
         {
             "name": "VSCode Extension",
@@ -39,38 +18,8 @@
             "preLaunchTask": "${defaultBuildTask}",
         },
         {
-            "name": "VSCode Web Extension",
-            "type": "extensionHost",
-            "debugWebWorkerHost": true,
-            "request": "launch",
-            "args": [
-                "--extensionDevelopmentPath=${workspaceRoot}/code",
-                "--extensionDevelopmentKind=web",
-                "--folder-uri=${workspaceRoot}/${input:workspace}"
-            ],
-            "outFiles": [
-                "${workspaceRoot}/code/dist/browser/**/*.js"
-            ],
-            "preLaunchTask": "${defaultBuildTask}",
-        },
-        {
-            "name": "Docs",
-            "type": "python",
-            "request": "launch",
-            "module": "sphinx.cmd.build",
-            "args": [
-                "-M",
-                "html",
-                ".",
-                "_build",
-                "-Ea"
-            ],
-            "python": "${command:python.interpreterPath}",
-            "cwd": "${workspaceFolder}/docs"
-        },
-        {
             "name": "pytest: esbonio",
-            "type": "python",
+            "type": "debugpy",
             "request": "launch",
             "module": "pytest",
             "justMyCode": false,
@@ -84,7 +33,7 @@
         },
         {
             "name": "Python: Attach",
-            "type": "python",
+            "type": "debugpy",
             "request": "attach",
             "connect": {
                 "host": "localhost",
@@ -92,11 +41,12 @@
             },
             "pathMappings": [
                 {
-                    "localRoot": "${workspaceFolder}/lib/esbonio",
+                    "localRoot": "${workspaceFolder}",
                     "remoteRoot": "."
                 }
             ],
-            "justMyCode": false
+            "justMyCode": false,
+            "subProcess": true,
         },
     ],
 }

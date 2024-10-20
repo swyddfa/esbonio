@@ -106,12 +106,14 @@ class SphinxHandler:
 
     def create_sphinx_app(self, request: types.CreateApplicationRequest):
         """Create a new sphinx application instance."""
-        sphinx_config = SphinxConfig.fromcli(request.params.command)
+        params = request.params
+
+        sphinx_config = SphinxConfig.fromcli(params.command)
         if sphinx_config is None:
             raise ValueError("Invalid build command")
 
-        sphinx_config.config_overrides.update(request.params.config_overrides)
-        sphinx_args = sphinx_config.to_application_args()
+        sphinx_config.config_overrides.update(params.config_overrides)
+        sphinx_args = sphinx_config.to_application_args(params.context)
         self.app = Sphinx(**sphinx_args)
 
         # Connect event handlers.

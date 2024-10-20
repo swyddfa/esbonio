@@ -4,7 +4,11 @@ dependencies = ["pip-tools"]
 skip-install = true
 
 [envs.deps.scripts]
-update = [
+update-env = [
     "python --version",
-    "pip-compile --resolver=backtracking --generate-hashes --upgrade requirements.in",
+    "pip-compile --resolver=backtracking --generate-hashes --upgrade requirements-env.in --output-file requirements-env.txt",
+]
+update-libs = [
+    "python --version",
+    "pip-compile --resolver=backtracking --generate-hashes --upgrade requirements-libs.in --output-file requirements-libs.txt",
 ]

@@ -1,5 +1,5 @@
 [tool.esbonio.sphinx]
-# buildCommand = ["sphinx-build", "-M", "dirhtml", ".", "./_build"]
+buildCommand = ["sphinx-build", "-M", "dirhtml", ".", "${defaultBuildDir}"]
 pythonCommand = ["hatch", "-e", "docs", "run", "python"]
 
 [tool.hatch.envs.docs]
@@ -12,8 +12,12 @@ dependencies = [
     "furo",
     "myst-parser",
     "platformdirs",
-    "pytest_lsp",
+    "pytest_lsp>=1.0b0",
+    "pygls>=2.0a0",
 ]
+
+[tool.hatch.envs.docs.env-vars]
+UV_PRERELEASE = "allow"
 
 [tool.hatch.envs.docs.scripts]
 build = "sphinx-build -M dirhtml . ./_build"

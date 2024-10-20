@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-import hashlib
 import importlib.util
 import logging
 import pathlib
+import sys
 from typing import Any
 from typing import Optional
 
 import attrs
-import platformdirs
 from pygls.workspace import Workspace
 
 from esbonio.server import Uri
@@ -62,6 +61,13 @@ class SphinxConfig:
     cwd: str = attrs.field(default="${scopeFsPath}")
     """The working directory to use."""
 
+    # Unable to use `str | None` syntax with cattrs when running Python 3.9
+    fallback_env: Optional[str] = attrs.field(default=None)
+    """Location of the fallback environment to use.
+
+    Intended to be used by clients to handle the case where the user has not configured
+    ``python_command`` themselves."""
+
     python_path: list[pathlib.Path] = attrs.field(factory=list)
     """The value of ``PYTHONPATH`` to use when injecting the sphinx agent into the
     target environment"""
@@ -91,8 +97,8 @@ class SphinxConfig:
            The fully resolved config object to use.
            If ``None``, a valid configuration could not be created.
         """
-        python_path = self._resolve_python_path(logger)
-        if len(python_path) == 0:
+        python_command, python_path = self._resolve_python(logger)
+        if len(python_path) == 0 or len(python_command) == 0:
             return None
 
         cwd = self._resolve_cwd(uri, workspace, logger)
@@ -111,7 +117,7 @@ class SphinxConfig:
             config_overrides=self.config_overrides,
             cwd=cwd,
             env_passthrough=self.env_passthrough,
-            python_command=self.python_command,
+            python_command=python_command,
             build_command=build_command,
             python_path=python_path,
         )
@@ -160,12 +166,25 @@ class SphinxConfig:
 
         return None
 
-    def _resolve_python_path(self, logger: logging.Logger) -> list[pathlib.Path]:
-        """Return the list of paths to put on the sphinx agent's ``PYTHONPATH``
+    def _resolve_python(
+        self, logger: logging.Logger
+    ) -> tuple[list[str], list[pathlib.Path]]:
+        """Return the python configuration to use when launching the sphinx agent.
+
+        The first element of the returned tuple is the command to use when running the
+        sphinx agent. This could be as simple as the path to the python interpreter in a
+        particular virtual environment or a complex command such as
+        ``hatch -e docs run python``.
 
         Using the ``PYTHONPATH`` environment variable, we can inject additional Python
-        packages into the user's Python environment. This method will locate the
-        installation path of the sphinx agent and return it.
+        packages into the user's Python environment. This method also locates the
+        installation path of the sphinx agent and returns it in the second element of the
+        tuple.
+
+        Finally, if the user has not configured a python environment and the client has
+        set the ``fallback_env`` option, this method will construct a command based on
+        the current interpreter to create an isolated environment based on
+        ``fallback_env``.
 
         Parameters
         ----------
@@ -174,19 +193,34 @@ class SphinxConfig:
 
         Returns
         -------
-        List[pathlib.Path]
-           The list of paths to Python packages to inject into the sphinx agent's target
-           environment. If empty, the ``esbonio.sphinx_agent`` package was not found.
+        tuple[list[str], list[pathlib.Path]]
+           A tuple of the form ``(python_command, python_path)``.
         """
-        if len(self.python_path) > 0:
-            return self.python_path
+        if len(python_path := list(self.python_path)) == 0:
+            if (sphinx_agent := get_module_path("esbonio.sphinx_agent")) is None:
+                logger.error("Unable to locate the sphinx agent")
+                return [], []
 
-        if (sphinx_agent := get_module_path("esbonio.sphinx_agent")) is None:
-            logger.error("Unable to locate the sphinx agent")
-            return []
+            python_path.append(sphinx_agent)
 
-        python_path = [sphinx_agent]
-        return python_path
+        if len(python_command := list(self.python_command)) == 0:
+            if self.fallback_env is None:
+                logger.error("No python command configured")
+                return [], []
+
+            if not (fallback_env := pathlib.Path(self.fallback_env)).exists():
+                logger.error(
+                    "Provided fallback environment %s does not exist", fallback_env
+                )
+                return [], []
+
+            # Since the client has provided a fallback environment we can isolate the
+            # current Python interpreter from its environment and reuse it.
+            logger.debug("Using fallback environment")
+            python_path.append(fallback_env)
+            python_command.extend([sys.executable, "-S"])
+
+        return python_command, python_path
 
     def _resolve_build_command(self, uri: Uri, logger: logging.Logger) -> list[str]:
         """Return the ``sphinx-build`` command to use.
@@ -227,9 +261,12 @@ class SphinxConfig:
             conf_py = current / "conf.py"
             logger.debug("Trying path: %s", current)
             if conf_py.exists():
-                cache = platformdirs.user_cache_dir("esbonio", "swyddfa")
-                project = hashlib.md5(str(current).encode()).hexdigest()  # noqa: S324
-                build_dir = str(pathlib.Path(cache, project))
-                return ["sphinx-build", "-M", "dirhtml", str(current), str(build_dir)]
+                return [
+                    "sphinx-build",
+                    "-M",
+                    "dirhtml",
+                    str(current),
+                    "${defaultBuildDir}",
+                ]
 
         return []

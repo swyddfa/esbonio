@@ -1,3 +1,5 @@
+.. _lsp-use-with:
+
 How To Use Esbonio With...
 ==========================
 

@@ -25,7 +25,7 @@ release: $(TOWNCRIER) $(HATCH) $(PY)
 	$(PY) ../scripts/make_release.py vscode
 
 # Ensures the version of esbonio in ../lib/esbonio is used.
-dev-deps: node_modules/.installed bundled/libs/.installed
+dev-deps: node_modules/.installed bundled/libs/.installed bundled/env/.installed
 	-test -d bundled/libs/esbonio-*.dist-info  && rm -r bundled/libs/esbonio-*.dist-info
 	-test -L bundled/libs/esbonio  || rm -r bundled/libs/esbonio
 	if [ ! -f bundled/libs/esbonio/__main__.py ]; then \
@@ -34,17 +34,28 @@ dev-deps: node_modules/.installed bundled/libs/.installed
 	fi
 
 # Ensures the latest version of esbonio from PyPi is used.
-release-deps: node_modules/.installed bundled/libs/.installed
+release-deps: node_modules/.installed bundled/libs/.installed bundled/env/.installed
 	-test -L bundled/libs/esbonio && rm bundled/libs/esbonio
 	test -d bundled/libs/esbonio-*.dist-info || $(PY39) -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade $(ESBONIO)
 
-requirements.txt: $(HATCH) requirements.in
-	$(HATCH) run deps:update
+# Hatch is only required to exist, don't rebuild this target if it happens to be newer!
+# https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html
+requirements-libs.txt: requirements-libs.in | $(HATCH)
+	$(HATCH) run deps:update-libs
 
-bundled/libs/.installed: $(PY39) requirements.txt
+requirements-env.txt: requirements-env.in | $(HATCH)
+	$(HATCH) run deps:update-env
+
+bundled/libs/.installed: $(PY39) requirements-libs.txt
 	-test -d bundled/libs  && rm -r bundled/libs
 	$(PY39) --version
-	$(PY39) -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements.txt
+	$(PY39) -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements-libs.txt
+	touch $@
+
+bundled/env/.installed: $(PY39) requirements-env.txt
+	-test -d bundled/env  && rm -r bundled/env
+	$(PY39) --version
+	$(PY39) -m pip install -t ./bundled/env --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements-env.txt
 	touch $@
 
 node_modules/.installed: package.json package-lock.json $(NPM)

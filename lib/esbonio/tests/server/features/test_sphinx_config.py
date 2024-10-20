@@ -1,6 +1,7 @@
 import logging
 import os
 import pathlib
+import sys
 from typing import Optional
 
 import pytest
@@ -18,6 +19,10 @@ CWD = os.path.join(".", "path", "to", "workspace")[1:]
 PYTHON_CMD = ["/bin/python"]
 BUILD_CMD = ["sphinx-build", "-M", "html", "src", "dest"]
 PYPATH = [pathlib.Path("/path/to/site-packages/esbonio")]
+
+# The value of FALLBACK_ENV must actually exist somewhere on the filesystem
+# But for the tests here, the actual location doesn't really matter
+FALLBACK_ENV = str(pathlib.Path(__file__).parent)
 
 
 def mk_uri(path: str) -> str:
@@ -150,6 +155,54 @@ def mk_uri(path: str) -> str:
                 python_path=PYPATH,
             ),
             None,
+        ),
+        (  # If no python command provided, and no fallback env
+            # available, the configuration is invalid
+            "file:///path/to/workspace/file.rst",
+            Workspace(None),
+            SphinxConfig(
+                python_command=[],
+                build_command=BUILD_CMD,
+                cwd=CWD,
+                python_path=PYPATH,
+            ),
+            None,
+        ),
+        (  # If no python command provided, but there is a fallback env
+            # use that
+            "file:///path/to/workspace/file.rst",
+            Workspace(None),
+            SphinxConfig(
+                python_command=[],
+                fallback_env=FALLBACK_ENV,
+                build_command=BUILD_CMD,
+                cwd=CWD,
+                python_path=PYPATH,
+            ),
+            SphinxConfig(
+                python_command=[sys.executable, "-S"],
+                build_command=BUILD_CMD,
+                cwd=CWD,
+                python_path=[PYPATH[0], pathlib.Path(FALLBACK_ENV)],
+            ),
+        ),
+        (  # If a fallback_env is available, but the user has provided their
+            # own python_command, we should really use that.
+            "file:///path/to/workspace/file.rst",
+            Workspace(None),
+            SphinxConfig(
+                python_command=PYTHON_CMD,
+                fallback_env=FALLBACK_ENV,
+                build_command=BUILD_CMD,
+                cwd=CWD,
+                python_path=PYPATH,
+            ),
+            SphinxConfig(
+                python_command=PYTHON_CMD,
+                build_command=BUILD_CMD,
+                cwd=CWD,
+                python_path=PYPATH,
+            ),
         ),
     ],
 )

@@ -11,6 +11,7 @@ import sys
 import typing
 from uuid import uuid4
 
+import platformdirs
 from pygls.client import JsonRPCClient
 from pygls.protocol import JsonRPCProtocol
 
@@ -212,6 +213,9 @@ class SubprocessSphinxClient(JsonRPCClient):
             params = types.CreateApplicationParams(
                 command=self.config.build_command,
                 config_overrides=self.config.config_overrides,
+                context={
+                    "cacheDir": platformdirs.user_cache_dir("esbonio", "swyddfa"),
+                },
             )
             self.sphinx_info = await self.protocol.send_request_async(
                 "sphinx/createApp", params

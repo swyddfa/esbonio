@@ -52,10 +52,6 @@ async def client(request, uri_for, build_dir):
             demo_workspace.fs_path,
             str(build_dir),
         ],
-        config_overrides={
-            "html_theme": "alabaster",
-            "html_theme_options": {},
-        },
     )
     resolved = config.resolve(test_uri, workspace, logger)
     assert resolved is not None

@@ -30,7 +30,6 @@ sphinx = ["8"]
 
 [envs.hatch-test.overrides]
 matrix.sphinx.dependencies = [
-    "sphinx-design",
     "myst-parser",
     { value = "sphinx>=6,<7", if = ["6"] },
     { value = "sphinx>=7,<8", if = ["7"] },

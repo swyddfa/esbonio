@@ -74,24 +74,30 @@ The following options are useful when extending or working on the language serve
 
    Developer flag which, when enabled, the server will publish any deprecation warnings as diagnostics.
 
-.. esbonio:config:: esbonio.server.enableDevTools (boolean)
+.. esbonio:config:: esbonio.server.enableDevTools
    :scope: global
    :type: boolean
 
    Enable `lsp-devtools`_ integration for the language server itself.
 
-.. esbonio:config:: esbonio.sphinx.enableDevTools (boolean)
+.. esbonio:config:: esbonio.sphinx.enableDevTools
    :scope: global
    :type: boolean
 
    Enable `lsp-devtools`_ integration for the Sphinx subprocess started by the language server.
 
-.. esbonio:config:: esbonio.sphinx.pythonPath (string[])
+.. esbonio:config:: esbonio.sphinx.pythonPath
    :scope: global
    :type: string[]
 
    List of paths to use when constructing the value of ``PYTHONPATH``.
    Used to inject the sphinx agent into the target environment."
+
+.. esbonio:config:: esbonio.preview.showLineMarkers
+   :scope: global
+   :type: boolean
+
+   When enabled, reveal the source uri and line number (if possible) for the html element under the cursor.
 
 .. _lsp-devtools: https://swyddfa.github.io/lsp-devtools/docs/latest/en/
 
@@ -230,21 +236,42 @@ The following options control the creation of the Sphinx application object mana
    :scope: project
    :type: string[]
 
-   The ``sphinx-build`` command to use when invoking the Sphinx subprocess.
+   The ``sphinx-build`` command ``esbonio`` should use when building your documentation, for example::
+
+     ["sphinx-build", "-M", "dirhtml", "docs", "${defaultBuildDir}", "--fail-on-warning"]
+
+   This can contain any valid :external+sphinx:std:doc:`man/sphinx-build` argument however, the following arguments will be ignored and have no effect.
+
+   - ``--color``, ``-P``, ``--pdb``
+
+   Additionally, this option supports the following variables
+
+   - ``${defaultBuildDir}``: Expands to esbonio's default choice of build directory
 
 .. esbonio:config:: esbonio.sphinx.pythonCommand
    :scope: project
    :type: string[]
 
-   The command to use when launching the Python interpreter for the process hosting the Sphinx application.
-   Use this to select the Python environment you want to use when building your documentation.
+   Used to select the Python environment ``esbonio`` should use when building your documentation.
+   This can be as simple as the full path to the Python executable in your virtual environment::
+
+     ["/home/user/Projects/example/venv/bin/python"]
+
+   Or a complex command with a number of options and arguments::
+
+     ["hatch", "-e", "docs", "run", "python"]
+
+   For more examples see :ref:`lsp-use-with`
 
 .. esbonio:config:: esbonio.sphinx.cwd
    :scope: project
    :type: string
 
    The working directory from which to launch the Sphinx process.
-   If not set, this will default to the root of the workspace folder containing the project.
+   If not set
+
+   - ``esbonio`` will use the directory containing the "closest" ``pyproject.toml`` file.
+   - If no ``pyproject.toml`` file can be found, ``esbonio`` will use workspace folder containing the project.
 
 .. esbonio:config:: esbonio.sphinx.envPassthrough
    :scope: project

@@ -39,7 +39,9 @@ class EsbonioWorkspace(Workspace):
         uri = str(Uri.parse(doc_uri).resolve())
         return super().get_text_document(uri)
 
-    def put_text_document(self, text_document: types.TextDocumentItem):
+    def put_text_document(
+        self, text_document: types.TextDocumentItem, notebook_uri: str | None = None
+    ):
         text_document.uri = str(Uri.parse(text_document.uri).resolve())
         return super().put_text_document(text_document)
 

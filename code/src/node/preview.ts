@@ -1,8 +1,9 @@
 import * as vscode from 'vscode'
 import { OutputChannelLogger } from '../common/log'
 import { EsbonioClient } from './client'
-import { Commands, Events, Notifications } from '../common/constants'
+import { Commands, Events } from '../common/constants'
 import { ShowDocumentParams, Range } from 'vscode-languageclient'
+import { URLSearchParams } from 'url'
 
 interface PreviewFileParams {
   uri: string
@@ -43,7 +44,7 @@ export class PreviewManager {
 
     client.addHandler(
       "window/showDocument",
-      (params: { params: ShowDocumentParams, default: any }) => this.showDocument(params)
+      async (params: { params: ShowDocumentParams, default: any }) => await this.showDocument(params)
     )
 
     client.addHandler(
@@ -78,7 +79,10 @@ export class PreviewManager {
   }
 
   private scrollView(editor: vscode.TextEditor) {
-    if (editor.document.uri !== this.currentUri) {
+    // For some reason, the object representation of the same URI is not stable
+    // leading this check to fail in cases where it should pass.
+    // Instead, compare the string representation of the uris.
+    if (editor.document.uri.toString() !== this.currentUri?.toString()) {
       return
     }
 
@@ -128,7 +132,7 @@ export class PreviewManager {
     this.currentUri = editor.document.uri
   }
 
-  private showDocument(req: { params: ShowDocumentParams, default: any }) {
+  private async showDocument(req: { params: ShowDocumentParams, default: any }) {
     let params = req.params
     if (!params.external) {
       return this.showInternalDocument(params)
@@ -138,7 +142,55 @@ export class PreviewManager {
       return
     }
 
-    this.panel.webview.postMessage({ 'show': params.uri })
+    let panel = this.panel
+
+    let previewUri = vscode.Uri.parse(params.uri)
+    let externalUri = await vscode.env.asExternalUri(previewUri)
+
+    // Annoyingly, asExternalUri doesn't preserve attributes like `path` or `query`
+    previewUri = previewUri.with({ scheme: externalUri.scheme, authority: externalUri.authority })
+
+    let origin = `${previewUri.scheme}://${previewUri.authority}`
+    panel.webview.html = this.getWebViewHTML(origin)
+
+    // Don't forget as also need an external uri for the websocket connection
+    let queryParams = new URLSearchParams(previewUri.query)
+    let ws = queryParams.get('ws')
+    if (!ws) {
+      this.logger.error("Missing websocket uri, features like sync scrolling will not be available.")
+      this.displayUri(previewUri, queryParams)
+      return
+    }
+
+    // We need to also pass the websocket uri through `asExternalUri` however, it only works for
+    // http(s) uris
+    let wsUri = vscode.Uri.parse(ws)
+    wsUri = await vscode.env.asExternalUri(wsUri.with({ scheme: 'http' }))
+    wsUri = wsUri.with({ scheme: wsUri.scheme === 'https' ? 'wss' : 'ws' })
+    queryParams.set('ws', wsUri.toString())
+
+    this.displayUri(previewUri, queryParams)
+  }
+
+  /**
+   * Display the given uri in the preview pane.
+   *
+   * @param uri The base uri to present
+   * @param queryParams The query parameters to include
+   * @returns
+   */
+  private displayUri(uri: vscode.Uri, queryParams: URLSearchParams) {
+
+    // As far as I can tell, there isn't a way to convince vscode's URI type to encode the
+    // uri in a way that does not break query parameters (since it converts ?x=y to ?x%3Dy).
+    // It also appears to be intended behavior see: https://github.com/Microsoft/vscode/issues/8466
+    //
+    // So we need to do it ourselves.
+    let query = queryParams.toString()
+    let displayUri = `${uri.with({ query: '' })}?${query}`
+
+    this.logger.debug(`Displaying uri: ${displayUri}`)
+    this.panel?.webview.postMessage({ 'show': displayUri })
   }
 
   private showInternalDocument(params: ShowDocumentParams) {
@@ -176,10 +228,34 @@ export class PreviewManager {
       { enableScripts: true, retainContextWhenHidden: true }
     )
 
+    // The webview will notify us when the page has finished loading.
+    // Which should also mean the websocket connection is up and running.
+    // Try and sync up the view to the editor.
+    this.panel.webview.onDidReceiveMessage(message => {
+      if (!message.ready) {
+        return
+      }
+
+      let editor = findEditorFor(this.currentUri)
+      if (editor) {
+        this.scrollView(editor)
+      }
+    })
+
+    this.panel.onDidDispose(() => {
+      this.panel = undefined
+      this.currentUri = undefined
+    })
+
+    return this.panel
+  }
+
+  private getWebViewHTML(origin: string): string {
+
     let scriptNonce = getNonce()
     let cssNonce = getNonce()
 
-    this.panel.webview.html = `
+    return `
 <!DOCTYPE html>
 <html>
 
@@ -187,7 +263,11 @@ export class PreviewManager {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none'; style-src 'nonce-${cssNonce}'; script-src 'nonce-${scriptNonce}'; frame-src http://localhost:*/" />
+        content="default-src 'none';
+                 style-src 'nonce-${cssNonce}';
+                 style-src-attr 'unsafe-inline';
+                 script-src 'nonce-${scriptNonce}';
+                 frame-src ${origin}/" />
 
   <style nonce="${cssNonce}">
     * { box-sizing: border-box;}
@@ -286,8 +366,6 @@ export class PreviewManager {
     const noContent = document.getElementById("no-content")
     const status = document.getElementById("status")
 
-    console.debug(window.location)
-
     // Restore previous page?
     const previousState = vscode.getState()
     if (previousState && previousState.url) {
@@ -299,7 +377,7 @@ export class PreviewManager {
       let message = event.data
 
       // Control messages coming from the webview hosting this page
-      if (event.origin.startsWith("vscode-webview://")) {
+      if (event.origin === window.location.origin) {
 
         if (message.show === "<nothing>") {
           status.style.display = "none"
@@ -319,7 +397,7 @@ export class PreviewManager {
       }
 
       // Control messages coming from the webpage being shown.
-      if (event.origin.startsWith("http://localhost:")) {
+      if (event.origin.startsWith("${origin}")) {
         if (message.ready) {
           status.style.display = "none"
           noContent.style.display = "none"
@@ -332,27 +410,6 @@ export class PreviewManager {
 
 </html>
 `
-
-    // The webview will notify us when the page has finished loading.
-    // Which should also mean the websocket connection is up and running.
-    // Try and sync up the view to the editor.
-    this.panel.webview.onDidReceiveMessage(message => {
-      if (!message.ready) {
-        return
-      }
-
-      let editor = findEditorFor(this.currentUri)
-      if (editor) {
-        this.scrollView(editor)
-      }
-    })
-
-    this.panel.onDidDispose(() => {
-      this.panel = undefined
-      this.currentUri = undefined
-    })
-
-    return this.panel
   }
 }
 

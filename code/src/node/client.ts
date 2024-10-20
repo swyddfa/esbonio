@@ -137,6 +137,8 @@ export class EsbonioClient {
 
   private handlers: Map<string, any[]>
 
+  private extensionUri: vscode.Uri
+
   constructor(
     private logger: OutputChannelLogger,
     private python: PythonManager,
@@ -144,6 +146,7 @@ export class EsbonioClient {
     private channel: vscode.OutputChannel,
   ) {
     this.handlers = new Map()
+    this.extensionUri = context.extensionUri
 
     // Restart server implementation
     context.subscriptions.push(
@@ -348,6 +351,11 @@ export class EsbonioClient {
       outputChannel: this.channel,
       connectionOptions: {
         maxRestartCount: 0
+      },
+      initializationOptions: {
+        sphinx: {
+          fallbackEnv: vscode.Uri.joinPath(this.extensionUri, "bundled", "env").fsPath,
+        }
       },
       middleware: {
         workspace: {

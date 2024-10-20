@@ -37,9 +37,9 @@
     "devDependencies": {
         "@types/node": "^18",
         "@types/vscode": "1.82.0",
-        "@vscode/vsce": "^3.1.0",
-        "esbuild": "^0.23.1",
-        "ovsx": "^0.9.4",
+        "@vscode/vsce": "^3.1.1",
+        "esbuild": "^0.24.0",
+        "ovsx": "^0.9.5",
         "typescript": "^5.6.2"
     },
     "engines": {
@@ -173,6 +173,9 @@
                     "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
                         "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
                         "default": null,
                         "description": "The command to use when launching the Python interpreter for the process hosting the Sphinx application."
                     },
