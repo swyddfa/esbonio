@@ -22,14 +22,14 @@ def init_db(app: Sphinx, config: Config):
 def clear_diagnostics(app: Sphinx, docname: str, source):
     """Clear the diagnostics assocated with the given file."""
     uri = Uri.for_file(app.env.doc2path(docname, base=True))
-    app.esbonio.log.diagnostics.pop(uri, None)
+    app.esbonio.diagnostics.pop(uri, None)
 
 
 def sync_diagnostics(app: Sphinx, *args):
     app.esbonio.db.clear_table(DIAGNOSTICS_TABLE)
 
     results = []
-    diagnostics = app.esbonio.log.diagnostics
+    diagnostics = app.esbonio.diagnostics
 
     for uri, items in diagnostics.items():
         for item in items:
