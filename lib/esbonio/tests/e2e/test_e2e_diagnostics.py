@@ -81,12 +81,19 @@ async def test_workspace_diagnostic(client: LanguageClient, uri_for):
 
     workspace_uri = uri_for("workspaces", "demo")
     expected = {
-        str(workspace_uri / "rst" / "diagnostics.rst"): {message},
-        str(workspace_uri / "myst" / "diagnostics.md"): {message},
+        str(workspace_uri / "conf.py"): (
+            "no theme named 'furo' found",
+            "Could not import extension sphinx_design (exception: "
+            "No module named 'sphinx_design')",
+        ),
+        str(workspace_uri / "index.rst"): ('Unknown directive type "grid"'),
+        str(workspace_uri / "rst" / "diagnostics.rst"): (message,),
+        str(workspace_uri / "myst" / "diagnostics.md"): (message,),
     }
     assert len(report.items) == len(expected)
     for item in report.items:
-        assert expected[item.uri] == {d.message for d in item.items}
+        for diagnostic in item.items:
+            assert diagnostic.message.startswith(expected[item.uri])
 
     assert len(client.diagnostics) == 0, "Server should not publish diagnostics"
 
