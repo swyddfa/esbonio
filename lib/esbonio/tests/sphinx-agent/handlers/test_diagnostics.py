@@ -5,7 +5,6 @@ from typing import Any
 
 import pytest
 from pygls.protocol import default_converter
-from sphinx import version_info as sphinx_version
 
 from esbonio.server import Uri
 from esbonio.server.features.project_manager import Project
@@ -26,8 +25,17 @@ def check_diagnostics(
     for k, ex_diags in expected.items():
         actual_diags = [converter.structure(d, types.Diagnostic) for d in actual[k]]
 
-        # Order of results is not important
-        assert set(actual_diags) == set(ex_diags)
+        assert len(ex_diags) == len(actual_diags)
+
+        for actual_diagnostic in actual_diags:
+            # Assumes ranges are unique
+            matches = [e for e in ex_diags if e.range == actual_diagnostic.range]
+            assert len(matches) == 1
+
+            expected_diagnostic = matches[0]
+            assert actual_diagnostic.range == expected_diagnostic.range
+            assert actual_diagnostic.severity == expected_diagnostic.severity
+            assert actual_diagnostic.message.startswith(expected_diagnostic.message)
 
 
 @pytest.mark.asyncio
@@ -36,13 +44,40 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
     that they are correctly reset when fixed."""
     rst_diagnostics_uri = uri_for("workspaces/demo/rst/diagnostics.rst")
     myst_diagnostics_uri = uri_for("workspaces/demo/myst/diagnostics.md")
+    index_uri = uri_for("workspaces/demo/index.rst")
+    conf_uri = uri_for("workspaces/demo/conf.py")
 
-    if sphinx_version[0] >= 8:
-        message = "image file not readable: not-an-image.png [image.not_readable]"
-    else:
-        message = "image file not readable: not-an-image.png"
+    message = "image file not readable: not-an-image.png"
 
     expected = {
+        index_uri: [
+            types.Diagnostic(
+                message='Unknown directive type "grid"',
+                severity=types.DiagnosticSeverity.Error,
+                range=types.Range(
+                    start=types.Position(line=11, character=0),
+                    end=types.Position(line=12, character=0),
+                ),
+            )
+        ],
+        conf_uri: [
+            types.Diagnostic(
+                message="Could not import extension sphinx_design",
+                severity=types.DiagnosticSeverity.Error,
+                range=types.Range(
+                    start=types.Position(line=20, character=4),
+                    end=types.Position(line=20, character=19),
+                ),
+            ),
+            types.Diagnostic(
+                message="no theme named 'furo' found",
+                severity=types.DiagnosticSeverity.Error,
+                range=types.Range(
+                    start=types.Position(line=41, character=0),
+                    end=types.Position(line=41, character=19),
+                ),
+            ),
+        ],
         rst_diagnostics_uri: [
             types.Diagnostic(
                 message=message,
@@ -77,7 +112,10 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
     )
 
     actual = await project.get_diagnostics()
-    check_diagnostics({myst_diagnostics_uri: expected[myst_diagnostics_uri]}, actual)
+
+    fixed_expected = expected.copy()
+    del fixed_expected[rst_diagnostics_uri]
+    check_diagnostics(fixed_expected, actual)
 
     # The original diagnostics should be reported when the issues are re-introduced.
     #
