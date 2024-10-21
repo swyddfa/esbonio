@@ -5,7 +5,7 @@ ifeq ($(strip $(ARCH)),)
 $(error Unable to determine platform architecture)
 endif
 
-NODE_VERSION := 18.20.4
+NODE_VERSION := 20.18.0
 
 # The versions of Python we support
 PYXX_versions := 3.9 3.10 3.11 3.12
