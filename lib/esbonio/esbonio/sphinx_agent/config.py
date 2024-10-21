@@ -165,7 +165,7 @@ class SphinxConfig:
                 continue
 
             replacement = self.resolve_config_variable(match.group(1), context)
-            result = VARIABLE.sub(re.escape(replacement), value)
+            result = VARIABLE.sub(replacement.replace("\\", r"\\"), value)
 
             setattr(self, name, result)
 
