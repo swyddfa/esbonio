@@ -45,4 +45,8 @@ def setup(app: Sphinx):
     # TODO: Support for Sphinx v7+
     # app.connect("include-read")
 
-    app.connect("build-finished", sync_diagnostics)
+    # sync_diagnostics needs to run after all diagnostics have been emitted.
+    # This ensures proper synchronization of data, as some extensions, like
+    # sphinx-needs, emit diagnostics during the "build-finished" event.
+    # Setting priority to 900 ensures this handler runs after typical operations.
+    app.connect("build-finished", sync_diagnostics, priority=900)
