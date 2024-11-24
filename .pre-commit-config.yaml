@@ -45,8 +45,8 @@ repos:
     additional_dependencies:
     - aiosqlite
     - platformdirs
-    - pygls>=2a0
-    - pytest_lsp>=0.3
+    - pygls>=2a2
+    - pytest_lsp>=1.0b2
     - sphinx
     - tomli
     - types-docutils
