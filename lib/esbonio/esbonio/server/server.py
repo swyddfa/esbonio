@@ -7,6 +7,7 @@ import logging
 import platform
 import traceback
 import typing
+from concurrent.futures import Future
 from typing import TypeVar
 from uuid import uuid4
 
@@ -79,7 +80,7 @@ class EsbonioLanguageServer(LanguageServer):
         self._features: dict[type[LanguageFeature], LanguageFeature] = {}
         """The collection of language features registered with the server."""
 
-        self._ready: asyncio.Future[bool] = asyncio.Future()
+        self._ready: Future[bool] = Future()
         """Indicates if the server is ready."""
 
         self._tasks: set[asyncio.Task] = set()
@@ -95,7 +96,7 @@ class EsbonioLanguageServer(LanguageServer):
         return iter(self._features.items())
 
     @property
-    def ready(self) -> asyncio.Future:
+    def ready(self) -> Future[bool]:
         return self._ready
 
     @property
