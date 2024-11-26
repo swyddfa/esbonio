@@ -128,4 +128,4 @@ class PreviewServer:
 def make_http_server(
     esbonio: server.EsbonioLanguageServer, config: PreviewConfig
 ) -> PreviewServer:
-    return PreviewServer(esbonio.logger, config, esbonio.thread_pool_executor)
+    return PreviewServer(esbonio.logger, config, esbonio.thread_pool)
