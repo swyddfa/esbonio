@@ -1,22 +1,23 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import socket
+import threading
 import typing
 
 from lsprotocol import types
+from pygls.io_ import run_websocket
 from pygls.protocol import JsonRPCProtocol
 from pygls.protocol import default_converter
 from pygls.server import JsonRPCServer
-from pygls.server import WebSocketTransportAdapter
-from websockets.server import serve
+from websockets.asyncio.server import serve
 
 from esbonio import server
 
 if typing.TYPE_CHECKING:
-    from websockets import WebSocketServer
+    from websockets.asyncio.server import Server as WebSocketServer
+    from websockets.asyncio.server import ServerConnection as WebSocketConnection
 
     from .config import PreviewConfig
 
@@ -34,7 +35,6 @@ class WebviewServer(JsonRPCServer):
 
         self.config = config
         self.logger = logger.getChild("WebviewServer")
-        self.protocol._send_only_body = True
 
         self._connected = False
         self._ws_server: WebSocketServer | None = None
@@ -121,31 +121,30 @@ class WebviewServer(JsonRPCServer):
     async def _start_ws(self, host: str, port: int) -> None:
         """Actually, start the server."""
 
-        async def connection(websocket):
-            loop = asyncio.get_running_loop()
-            transport = WebSocketTransportAdapter(websocket, loop)
-
-            self.protocol.connection_made(transport)  # type: ignore[arg-type]
+        async def connection(websocket: WebSocketConnection):
             self._connected = True
             self.logger.debug("Connected")
 
-            async for message in websocket:
-                self.protocol._procedure_handler(
-                    json.loads(message, object_hook=self.protocol._deserialize_message)
-                )
+            await run_websocket(
+                stop_event=threading.Event(),
+                websocket=websocket,
+                protocol=self.protocol,
+                logger=self.logger,
+                error_handler=self.report_server_error,
+            )
 
             self.logger.debug("Connection lost")
             self._connected = False
 
-        async with serve(
+        self._ws_server = await serve(
             connection,
             host,
             port,
             # logger=self.logger.getChild("ws"),
             family=socket.AF_INET,  # Use IPv4 only.
-        ) as ws_server:
-            self._ws_server = ws_server
-            await asyncio.Future()  # run forever
+        )
+        async with self._ws_server:
+            await self._ws_server.serve_forever()
 
 
 def make_ws_server(
