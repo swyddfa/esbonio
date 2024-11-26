@@ -241,8 +241,7 @@ class SubprocessSphinxClient(JsonRPCClient):
     async def stop(self):
         """Stop the client."""
 
-        if self.state in {ClientState.Running, ClientState.Building}:
-            self.protocol.notify("exit", None)
+        self.protocol.notify("exit", None)
 
         # Give the agent a little time to close.
         await asyncio.sleep(0.5)

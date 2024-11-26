@@ -13,7 +13,6 @@ import pytest
 import pytest_asyncio
 from lsprotocol import types as lsp
 from pygls import IS_WIN
-from pygls.server import StdOutTransportAdapter
 
 from esbonio.server import EsbonioLanguageServer
 from esbonio.server import Uri
@@ -50,7 +49,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
     loop = asyncio.get_running_loop()
 
     esbonio = create_language_server(EsbonioLanguageServer, [], loop=loop)
-    esbonio.protocol.transport = StdOutTransportAdapter(io.BytesIO(), sys.stderr.buffer)
+    esbonio.protocol.set_writer(io.BytesIO())
 
     project_manager = ProjectManager(esbonio)
     esbonio.add_feature(project_manager)
@@ -62,7 +61,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
 
     async def initialize(init_options):
         # Initialize the server.
-        esbonio.protocol._procedure_handler(
+        esbonio.protocol.handle_message(
             lsp.InitializeRequest(
                 id=1,
                 params=lsp.InitializeParams(
@@ -76,7 +75,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
             )
         )
 
-        esbonio.protocol._procedure_handler(
+        esbonio.protocol.handle_message(
             lsp.InitializedNotification(params=lsp.InitializedParams())
         )
 
