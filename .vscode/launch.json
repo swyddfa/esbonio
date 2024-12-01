@@ -48,5 +48,13 @@
             "justMyCode": false,
             "subProcess": true,
         },
+        {
+            "name": "Python: Debug Test",
+            "type": "debugpy",
+            "request": "launch",
+            "purpose": ["debug-test"],
+            "justMyCode": false,
+            "subProcess": true
+        }
     ],
 }
