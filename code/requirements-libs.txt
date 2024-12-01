@@ -28,17 +28,17 @@ exceptiongroup==1.2.2 \
     --hash=sha256:3111b9d131c238bec2f8f516e123e14ba243563fb135d3fe885990585aa7795b \
     --hash=sha256:47c2edf7c6738fafb49fd34290706d1a1a2f4d1c6df275526b62cbb4aa5393cc
     # via cattrs
-lsprotocol==2024.0.0a2 \
-    --hash=sha256:65c218418b850a62fa70aed1dfe4cfae5c09ef7d3f9710060a0c0a609c1c6cb2 \
-    --hash=sha256:928785ded9b3c3c044c04b36893471585476dd6df274b6d296c7910e3d284c1a
+lsprotocol==2024.0.0b1 \
+    --hash=sha256:93785050ac155ae2be16b1ebfbd74c214feb3d3ef77b10399ce941e5ccef6ebd \
+    --hash=sha256:d3667fb70894d361aa6c495c5c8a1b2e6a44be65ff84c21a9cbb67ebfb4830fd
     # via pygls
 platformdirs==4.3.6 \
     --hash=sha256:357fb2acbc885b0419afd3ce3ed34564c13c9b95c89360cd9563f73aa5e2b907 \
     --hash=sha256:73e575e1408ab8103900836b97580d5307456908a03e92031bab39e4554cc3fb
     # via -r requirements-libs.in
-pygls==2.0.0a1 \
-    --hash=sha256:934568567502bd535146ff383b81c6811e5b4acfdc6d513cbcafe672689bdcd3 \
-    --hash=sha256:acbc284440daeb5aca7f12b785d250e7a55f1e3aada57d0e22cc9efe63e47c12
+pygls==2.0.0a2 \
+    --hash=sha256:03e00634ed8d989918268aaa4b4a0c3ab857ea2d4ee94514a52efa5ddd6d5d9f \
+    --hash=sha256:b202369321409343aa6440d73111d9fa0c22e580466ff1c7696b8358bb91f243
     # via -r requirements-libs.in
 tomli==2.0.2 \
     --hash=sha256:2ebe24485c53d303f690b0ec092806a085f07af5a5aa1464f3931eec36caaa38 \
