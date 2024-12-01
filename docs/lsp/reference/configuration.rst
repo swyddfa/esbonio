@@ -196,7 +196,7 @@ This sets the default log level to ``debug`` and dials back or redirects the out
              "level": "info"
            },
            "esbonio.PreviewServer": {
-             "filename": "http.log",
+             "filepath": "http.log",
              "stderr": false
            },
            "esbonio.WebviewServer": {
