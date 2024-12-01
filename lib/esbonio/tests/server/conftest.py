@@ -41,8 +41,4 @@ async def client(request, uri_for, lsp_client: LanguageClient):
     yield
 
     # Teardown
-    try:
-        await asyncio.wait_for(lsp_client.shutdown_session(), timeout=2.0)
-    except (asyncio.TimeoutError, TimeoutError):
-        # HACK: Working around openlawlibrary/pygls#433
-        print("Gave up waiting for process to exit")
+    await asyncio.wait_for(lsp_client.shutdown_session(), timeout=2.0)
