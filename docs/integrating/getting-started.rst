@@ -1,3 +1,5 @@
+.. _editor-integration:
+
 Editor Integration
 ------------------
 

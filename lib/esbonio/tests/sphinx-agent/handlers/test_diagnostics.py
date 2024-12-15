@@ -55,8 +55,8 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
                 message='Unknown directive type "grid"',
                 severity=types.DiagnosticSeverity.Error,
                 range=types.Range(
-                    start=types.Position(line=11, character=0),
-                    end=types.Position(line=12, character=0),
+                    start=types.Position(line=13, character=0),
+                    end=types.Position(line=14, character=0),
                 ),
             )
         ],
