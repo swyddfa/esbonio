@@ -3,6 +3,8 @@ Esbonio Demo
 
 Welcome to the demo documentation site for the Esbonio language server!
 
+.. Write a message here
+
 This site is intended to complement the `Esbonio tutorial`_ and serve as an overview of all of the features provided by the language server.
 For the best experience it's recommended that you view the source for the demo from your editor of choice - with the Esbonio language server enabled of course!
 
