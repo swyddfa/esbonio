@@ -234,7 +234,6 @@ export class EsbonioClient {
     const config = vscode.workspace.getConfiguration("esbonio")
     const debugServer = config.get<boolean>('server.debug')
     const serverDevtools = config.get<boolean>('server.enableDevTools')
-    const sphinxDevtools = config.get<boolean>('sphinx.enableDevTools')
     const lsp_devtools = this.resolveCommand("lsp-devtools")?.trim()
 
     const command = []
@@ -250,11 +249,6 @@ export class EsbonioClient {
 
     // Isolate the Python interpreter from the user's environment - we brought our own.
     command.push(...pythonCommand, "-S")
-
-    if ((serverDevtools || sphinxDevtools) && lsp_devtools) {
-      // Requires lsp-devtools to be on the user's PATH.
-      await this.startDevtools(lsp_devtools, "inspect")
-    }
 
     if (debugServer) {
       let debugCommand = await this.python.getDebugerCommand()
@@ -419,27 +413,4 @@ export class EsbonioClient {
     }
   }
 
-  private async startDevtools(command: string, ...args: string[]) {
-
-    if (this.devtools) {
-      return
-    }
-
-    const task = new vscode.Task(
-      { type: 'esbonio-devtools' },
-      vscode.TaskScope.Workspace,
-      "lsp-devtools",
-      "esbonio",
-      new vscode.ProcessExecution(
-        command,
-        args,
-        {
-          env: {
-            PYTHONPATH: join(this.context.extensionPath, "bundled", "libs")
-          }
-        }
-      ),
-    )
-    this.devtools = await vscode.tasks.executeTask(task)
-  }
 }
