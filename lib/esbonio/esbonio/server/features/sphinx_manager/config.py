@@ -3,14 +3,18 @@ from __future__ import annotations
 import importlib.util
 import logging
 import pathlib
+import re
 import sys
 from typing import Any
 from typing import Optional
 
 import attrs
+from pygls import IS_WIN
 from pygls.workspace import Workspace
 
 from esbonio.server import Uri
+
+VARIABLE = re.compile(r"\$\{([^}]+)\}")
 
 
 def get_module_path(module: str) -> Optional[pathlib.Path]:
@@ -97,12 +101,12 @@ class SphinxConfig:
            The fully resolved config object to use.
            If ``None``, a valid configuration could not be created.
         """
-        python_command, python_path = self._resolve_python(logger)
-        if len(python_path) == 0 or len(python_command) == 0:
+
+        if (cwd := self._resolve_cwd(uri, workspace, logger)) is None:
             return None
 
-        cwd = self._resolve_cwd(uri, workspace, logger)
-        if cwd is None:
+        python_command, python_path = self._resolve_python(logger, cwd)
+        if len(python_path) == 0 or len(python_command) == 0:
             return None
 
         build_command = self._resolve_build_command(uri, logger)
@@ -167,7 +171,7 @@ class SphinxConfig:
         return None
 
     def _resolve_python(
-        self, logger: logging.Logger
+        self, logger: logging.Logger, cwd: str
     ) -> tuple[list[str], list[pathlib.Path]]:
         """Return the python configuration to use when launching the sphinx agent.
 
@@ -220,6 +224,9 @@ class SphinxConfig:
             python_path.append(fallback_env)
             python_command.extend([sys.executable, "-S"])
 
+        else:
+            python_command = [_resolve_variable(c, cwd) for c in python_command]
+
         return python_command, python_path
 
     def _resolve_build_command(self, uri: Uri, logger: logging.Logger) -> list[str]:
@@ -270,3 +277,41 @@ class SphinxConfig:
                 ]
 
         return []
+
+
+def _resolve_variable(arg: str, cwd: str) -> str:
+    """Resolve the configuration variables in the given argument, if any.
+
+    Parameters
+    ----------
+    arg
+       The string containing the vatiables to resolve
+
+    cwd
+       The current working directory of the configuration.
+    """
+
+    if (match := VARIABLE.match(arg)) is None:
+        return arg
+
+    varname = match.group(1)
+
+    if varname.startswith("venv:"):
+        env = varname.replace("venv:", "")
+        return _resolve_variable_venv(env, cwd)
+
+    raise ValueError(f"Undefined variable: {varname!r}")
+
+
+def _resolve_variable_venv(env: str, cwd: str) -> str:
+    """Resolve the ``${venv:<path>}`` config variable"""
+    if IS_WIN:
+        envpath = pathlib.Path(env, "Scripts", "python.exe")
+    else:
+        envpath = pathlib.Path(env, "bin", "python")
+
+    if envpath.is_absolute():
+        return str(envpath)
+    else:
+        envpath = cwd / envpath
+        return str(envpath.resolve())
