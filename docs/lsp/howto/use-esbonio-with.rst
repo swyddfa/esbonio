@@ -29,8 +29,32 @@ Then you should set :esbonio:conf:`esbonio.sphinx.pythonCommand` to
    [tool.esbonio.sphinx]
    pythonCommand = ["hatch", "-e", "docs", "run", "python"]
 
-... Poetry
-----------
+Pipenv
+------
+
+If your project uses `Pipenv <https://pipenv.pypa.io/en/latest/index.html>`__ for its dependency management
+
+.. code-block:: ini
+
+   [[source]]
+   url = "https://pypi.org/simple"
+   verify_ssl = true
+   name = "pypi"
+
+   [packages]
+   furo = "*"
+   sphinx = "*"
+   sphinx-design = "*"
+
+Then :esbonio:conf:`esbonio.sphinx.pythonCommand` should be set to
+
+.. code-block:: toml
+
+   [tool.esbonio.sphinx]
+   pythonCommand = ["pipenv", "run", "python"]
+
+Poetry
+------
 
 Given a set of dependencies managed through `Poetry <https://python-poetry.org/>`__
 
