@@ -147,7 +147,7 @@ With the environment created, we now need to tell Esbonio to use it
 
         [tool.esbonio.sphinx]
         buildCommand = ["sphinx-build", "-M", "dirhtml", ".", "./_build"]
-      + pythonCommand = ["env/bin/python"]
+      + pythonCommand = ["${venv:env}"]
 
 #. Save the file, Esbonio will detect the configuration change and automatically restart its background Sphinx process within the newly created environment
 
@@ -157,7 +157,7 @@ With the environment created, we now need to tell Esbonio to use it
 Next Steps
 ----------
 
-That's all you need to get started, you should now be able to start using Esbonio in your own projects!
+That's all you need to get started, you should now be able to make use of Esbonio in your own projects!
 
 If you like, you can continue exploring the demo project to discover some of the other features Esbonio provides by clicking either
 
