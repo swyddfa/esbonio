@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from lsprotocol import types
+from lsprotocol import types as lsp
 
 from esbonio import server
 from esbonio.server.features import directives
 from esbonio.server.features.project_manager import ProjectManager
+from esbonio.sphinx_agent import types
 
 
 class SphinxDirectives(directives.DirectiveProvider):
@@ -15,7 +16,7 @@ class SphinxDirectives(directives.DirectiveProvider):
 
     async def suggest_directives(
         self, context: server.CompletionContext
-    ) -> list[directives.Directive] | None:
+    ) -> list[types.Directive] | None:
         """Given a completion context, suggest directives that may be used."""
 
         if (project := self.manager.get_project(context.uri)) is None:
@@ -24,7 +25,7 @@ class SphinxDirectives(directives.DirectiveProvider):
         # Does the document have a default domain set?
         results = await project.find_symbols(
             uri=str(context.uri.resolve()),
-            kind=types.SymbolKind.Class.value,
+            kind=lsp.SymbolKind.Class.value,
             detail="default-domain",
         )
         if len(results) > 0:
@@ -35,25 +36,23 @@ class SphinxDirectives(directives.DirectiveProvider):
         primary_domain = await project.get_config_value("primary_domain")
         active_domain = default_domain or primary_domain or "py"
 
-        result: list[directives.Directive] = []
+        result: list[types.Directive] = []
         for name, implementation in await project.get_directives():
             # std: directives can be used unqualified
             if name.startswith("std:"):
                 short_name = name.replace("std:", "")
                 result.append(
-                    directives.Directive(name=short_name, implementation=implementation)
+                    types.Directive(name=short_name, implementation=implementation)
                 )
 
             # Also suggest unqualified versions of directives from the currently active domain.
             elif name.startswith(f"{active_domain}:"):
                 short_name = name.replace(f"{active_domain}:", "")
                 result.append(
-                    directives.Directive(name=short_name, implementation=implementation)
+                    types.Directive(name=short_name, implementation=implementation)
                 )
 
-            result.append(
-                directives.Directive(name=name, implementation=implementation)
-            )
+            result.append(types.Directive(name=name, implementation=implementation))
 
         return result
 

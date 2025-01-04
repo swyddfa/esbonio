@@ -8,11 +8,11 @@ from pygls.workspace import TextDocument
 from pytest_lsp import client_capabilities
 
 from esbonio import server
-from esbonio.server.features.directives import Directive
 from esbonio.server.features.directives import completion
 from esbonio.server.testing import range_from_str
 from esbonio.sphinx_agent.types import MYST_DIRECTIVE
 from esbonio.sphinx_agent.types import RST_DIRECTIVE
+from esbonio.sphinx_agent.types import Directive
 
 if typing.TYPE_CHECKING:
     from typing import Literal

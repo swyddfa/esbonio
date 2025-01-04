@@ -3,10 +3,10 @@ from __future__ import annotations
 from lsprotocol import types
 
 from esbonio import server
-from esbonio.server.features.directives import Directive
 from esbonio.server.features.directives import DirectiveFeature
 from esbonio.server.features.directives import completion
 from esbonio.sphinx_agent.types import MYST_DIRECTIVE
+from esbonio.sphinx_agent.types import Directive
 
 
 class MystDirectives(server.LanguageFeature):

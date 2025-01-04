@@ -7,11 +7,14 @@ server. For this reason this module *cannot* import anything from Sphinx.
 from __future__ import annotations
 
 import dataclasses
-import re
 from typing import Any
 from typing import Optional
 from typing import Union
 
+from .directives import MYST_DIRECTIVE
+from .directives import RST_DIRECTIVE
+from .directives import RST_DIRECTIVE_OPTION
+from .directives import Directive
 from .lsp import Diagnostic
 from .lsp import DiagnosticSeverity
 from .lsp import Location
@@ -27,112 +30,25 @@ from .uri import Uri
 __all__ = (
     "Diagnostic",
     "DiagnosticSeverity",
+    "Directive",
     "IS_WIN",
     "Location",
+    "MYST_DIRECTIVE",
     "MYST_ROLE",
     "Position",
     "RST_DEFAULT_ROLE",
+    "RST_DIRECTIVE",
+    "RST_DIRECTIVE_OPTION",
     "RST_ROLE",
     "Range",
     "Role",
     "Uri",
 )
 
-MYST_DIRECTIVE: re.Pattern = re.compile(
-    r"""
-    (\s*)                             # directives can be indented
-    (?P<directive>
-      ```(`*)?                        # directives start with at least 3 ` chars
-      (?!\w)                          # -- regular code blocks are not directives
-      [{]?                            # followed by an opening brace
-      (?P<name>[^}]+)?                # directives have a name
-      [}]?                            # directives are closed with a closing brace
-    )
-    (\s+(?P<argument>.*?)\s*$)?       # directives may take an argument
-    """,
-    re.VERBOSE,
-)
-"""A regular expression to detect and parse partial and complete MyST directives.
-
-This does **not** include any options or content that may be included with the
-initial declaration.
-"""
-
-
-RST_DIRECTIVE: re.Pattern = re.compile(
-    r"""
-    (\s*)                             # directives can be indented
-    (?P<directive>
-      \.\.                            # directives start with a comment
-      [ ]?                            # followed by a space
-      (?P<substitution>\|             # this could be a substitution definition
-        (?P<substitution_text>[^|]+)?
-      \|?)?
-      [ ]?
-      (?P<name>([\w-]|:(?!:))+)?      # directives have a name
-      (::)?                           # directives end with '::'
-    )
-    ([\s]+(?P<argument>.*?)\s*$)?     # directives may take an argument
-    """,
-    re.VERBOSE,
-)
-"""A regular expression to detect and parse partial and complete directives.
-
-This does **not** include any options or content that may be included underneath
-the initial declaration. A number of named capture groups are available.
-
-``name``
-   The name of the directive, not including the domain prefix.
-
-``directive``
-   Everything that makes up a directive, from the initial ``..`` up to and including the
-   ``::`` characters.
-
-``argument``
-   All argument text.
-
-``substitution``
-   If the directive is part of a substitution definition, this group will contain
-"""
-
-
-RST_DIRECTIVE_OPTION: re.Pattern = re.compile(
-    r"""
-    (?P<indent>\s+)       # directive options must be indented
-    (?P<option>
-      :                   # options start with a ':'
-      (?P<name>[\w-]+)?   # options have a name
-      :?                  # options end with a ':'
-    )
-    (\s*
-      (?P<value>.*)       # options can have a value
-    )?
-    """,
-    re.VERBOSE,
-)
-"""A regular expression used to detect and parse partial and complete directive options.
-
-A number of named capture groups are available
-
-``name``
-   The name of the option
-
-``option``
-   The name of the option including the surrounding ``:`` characters.
-
-``indent``
-   The whitespace characters making preceeding the initial ``:`` character
-
-``value``
-   The value passed to the option
-
-"""
-
 
 # -- DB Types
 #
 # These represent the structure of data as stored in the SQLite database
-Directive = tuple[str, Optional[str], Optional[str]]
 Symbol = tuple[  # Represents either a document symbol or workspace symbol depending on context.
     int,  # id
     str,  # name
