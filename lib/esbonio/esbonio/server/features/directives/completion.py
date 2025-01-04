@@ -13,7 +13,7 @@ if typing.TYPE_CHECKING:
     from typing import Callable
     from typing import Optional
 
-    from . import Directive
+    from esbonio.sphinx_agent.types import Directive
 
     DirectiveRenderer = Callable[
         [server.CompletionContext, Directive], Optional[types.CompletionItem]
