@@ -19,17 +19,34 @@ if typing.TYPE_CHECKING:
         [server.CompletionContext, Directive], Optional[types.CompletionItem]
     ]
 
+    DirectiveArgumentRenderer = Callable[
+        [server.CompletionContext, types.CompletionItem], Optional[types.CompletionItem]
+    ]
+
 
 WORD = re.compile("[a-zA-Z]+")
 _DIRECTIVE_RENDERERS: dict[tuple[str, str], DirectiveRenderer] = {}
 """CompletionItem rendering functions for directives."""
 
+_DIRECTIVE_ARGUMENT_RENDERERS: dict[tuple[str, str], DirectiveArgumentRenderer] = {}
+"""CompletionItem rendering functions for role targets."""
 
-def renderer(*, language: str, insert_behavior: str):
+
+def directive_renderer(*, language: str, insert_behavior: str):
     """Define a new rendering function."""
 
     def fn(f: DirectiveRenderer) -> DirectiveRenderer:
         _DIRECTIVE_RENDERERS[(language, insert_behavior)] = f
+        return f
+
+    return fn
+
+
+def directive_argument_renderer(*, language: str, insert_behavior: str):
+    """Define a new rendering function."""
+
+    def fn(f: DirectiveArgumentRenderer) -> DirectiveArgumentRenderer:
+        _DIRECTIVE_ARGUMENT_RENDERERS[(language, insert_behavior)] = f
         return f
 
     return fn
@@ -56,7 +73,28 @@ def get_directive_renderer(
     return _DIRECTIVE_RENDERERS.get((language, insert_behavior), None)
 
 
-@renderer(language="rst", insert_behavior="insert")
+def get_directive_argument_renderer(
+    language: str, insert_behavior: str
+) -> DirectiveArgumentRenderer | None:
+    """Return the directive argument renderer to use.
+
+    Parameters
+    ----------
+    language
+       The source language the completion item will be inserted into
+
+    insert_behavior
+       How the completion should behave when inserted.
+
+    Returns
+    -------
+    Optional[DirectiveArgumentRenderer]
+       The rendering function to use that matches the given criteria, if available.
+    """
+    return _DIRECTIVE_ARGUMENT_RENDERERS.get((language, insert_behavior), None)
+
+
+@directive_renderer(language="rst", insert_behavior="insert")
 def render_rst_directive_with_insert_text(
     context: server.CompletionContext,
     directive: Directive,
@@ -133,7 +171,31 @@ def render_rst_directive_with_insert_text(
     return item
 
 
-@renderer(language="rst", insert_behavior="replace")
+@directive_argument_renderer(language="rst", insert_behavior="replace")
+def render_directive_agument_with_text_edit(
+    context: server.CompletionContext, item: types.CompletionItem
+) -> types.CompletionItem | None:
+    """Render a ``CompletionItem`` using ``textEdit``.
+
+    This implements the ``replace`` insert behavior for role targets.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    item
+       The ``CompletionItem`` representing the directive argument.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the item should be skipped
+    """
+    return item
+
+
+@directive_renderer(language="rst", insert_behavior="replace")
 def render_rst_directive_with_text_edit(
     context: server.CompletionContext,
     directive: Directive,
@@ -183,7 +245,7 @@ def render_rst_directive_with_text_edit(
     return item
 
 
-@renderer(language="markdown", insert_behavior="replace")
+@directive_renderer(language="markdown", insert_behavior="replace")
 def render_myst_directive_with_text_edit(
     context: server.CompletionContext,
     directive: Directive,
@@ -234,7 +296,7 @@ def render_myst_directive_with_text_edit(
     return item
 
 
-@renderer(language="markdown", insert_behavior="insert")
+@directive_renderer(language="markdown", insert_behavior="insert")
 def render_myst_directive_with_insert_text(
     context: server.CompletionContext,
     directive: Directive,

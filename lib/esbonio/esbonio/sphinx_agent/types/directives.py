@@ -4,6 +4,7 @@ import re
 import typing
 from dataclasses import dataclass
 from dataclasses import field
+from typing import Any
 
 from .lsp import Location
 
@@ -110,6 +111,16 @@ A number of named capture groups are available
 class Directive:
     """Represents a directive."""
 
+    @dataclass
+    class ArgumentProvider:
+        """An argument provider instance."""
+
+        name: str
+        """The name of the provider."""
+
+        kwargs: dict[str, Any] = field(default_factory=dict)
+        """Arguments to pass to the argument provider"""
+
     name: str
     """The name of the directive, as the user would type in an rst file."""
 
@@ -119,6 +130,21 @@ class Directive:
     location: Location | None = field(default=None)
     """The location of the directive's implementation, if known"""
 
+    argument_providers: list[ArgumentProvider] = field(default_factory=list)
+    """The list of argument providers that can be used with this directive."""
+
+    def to_db(
+        self, dumps: Callable[[Any], str]
+    ) -> tuple[str, str | None, str | None, str | None]:
+        """Convert this directive to its database representation"""
+
+        providers = None
+        if len(self.argument_providers) > 0:
+            providers = dumps(self.argument_providers)
+
+        location = dumps(self.location) if self.location is not None else None
+        return (self.name, self.implementation, location, providers)
+
     @classmethod
     def from_db(
         cls,
@@ -126,11 +152,20 @@ class Directive:
         name: str,
         implementation: str | None,
         location: str | None,
+        providers: str | None,
     ) -> Directive:
         """Create a directive from its database representation"""
+
         loc = load_as(location, Location) if location is not None else None
+        argument_providers = (
+            load_as(providers, list[Directive.ArgumentProvider])
+            if providers is not None
+            else []
+        )
+
         return cls(
             name=name,
             implementation=implementation,
             location=loc,
+            argument_providers=argument_providers,
         )

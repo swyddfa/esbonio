@@ -72,6 +72,20 @@ class Project:
         (value,) = row
         return json.loads(value)
 
+    async def get_directive(self, name: str) -> types.Directive | None:
+        """Get the directive with the given name."""
+        db = await self.get_db()
+
+        query = "SELECT * FROM directives WHERE name = ?"
+        cursor = await db.execute(query, (name,))
+        result = await cursor.fetchone()
+
+        return (
+            types.Directive.from_db(self.load_as, *result)
+            if result is not None
+            else None
+        )
+
     async def get_directives(self) -> list[tuple[str, str | None]]:
         """Get the directives known to Sphinx."""
         db = await self.get_db()
@@ -81,7 +95,7 @@ class Project:
         return await cursor.fetchall()  # type: ignore[return-value]
 
     async def get_role(self, name: str) -> types.Role | None:
-        """Get the roles known to Sphinx."""
+        """Get the role with the given name."""
         db = await self.get_db()
 
         query = "SELECT * FROM roles WHERE name = ?"
