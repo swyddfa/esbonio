@@ -164,6 +164,24 @@
                         "default": null,
                         "description": "The sphinx-build command to use."
                     },
+                    "esbonio.sphinx.buildTriggers": {
+                        "scope": "window",
+                        "type": "object",
+                        "default": null,
+                        "properties": {
+                            "onSave": {
+                                "type": "boolean",
+                                "default": true,
+                                "description": "Trigger a build each time a file is saved"
+                            },
+                            "onChange": {
+                                "type": ["boolean", "number"],
+                                "default": 2.0,
+                                "description": "Trigger a build each time a file is changed"
+                            }
+                        },
+                        "description": "Triggers that control when the language server rebuilds your project."
+                    },
                     "esbonio.sphinx.configOverrides": {
                         "scope": "resource",
                         "type": "object",
