@@ -57,7 +57,8 @@ class DomainObjects:
         project_names = [p[0] for p in projects]
 
         for domain in app.env.domains.values():
-            index_domain(app, domain, project_names)
+            index_domain_directives(app, domain)
+            index_domain_roles(app, domain, project_names)
 
     def commit(self, app, exc):
         """Commit changes to the database.
@@ -131,7 +132,22 @@ class DomainObjects:
         self._info[key] = (description, location)
 
 
-def index_domain(app: Sphinx, domain: Domain, projects: list[str] | None):
+def index_domain_directives(app: Sphinx, domain: Domain):
+    """Index the directives in the given domain.
+
+    Parameters
+    ----------
+    app
+       The application instance
+
+    domain
+       The domain to index
+    """
+    for name, directive in domain.directives.items():
+        app.esbonio.add_directive(f"{domain.name}:{name}", directive, [])
+
+
+def index_domain_roles(app: Sphinx, domain: Domain, projects: list[str] | None):
     """Index the roles in the given domain.
 
     Parameters
