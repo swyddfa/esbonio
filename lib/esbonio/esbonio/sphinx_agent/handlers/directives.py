@@ -18,6 +18,7 @@ DIRECTIVES_TABLE = Database.Table(
         Database.Column(name="name", dtype="TEXT"),
         Database.Column(name="implementation", dtype="TEXT"),
         Database.Column(name="location", dtype="JSON"),
+        Database.Column(name="argument_providers", dtype="JSON"),
     ],
 )
 
@@ -66,7 +67,13 @@ def index_directives(app: Sphinx):
     first time.
     """
 
-    directives: list[types.Directive] = []
+    directives: dict[str, types.Directive] = {}
+
+    # Process the roles registered through Sphinx
+    for name, impl, providers in app.esbonio._directives:
+        directives[name] = types.Directive(
+            name, get_impl_name(impl), argument_providers=providers
+        )
 
     ignored_directives = {"restructuredtext-test-directive"}
     found_directives = {
@@ -75,7 +82,7 @@ def index_directives(app: Sphinx):
     }
 
     for name, directive in found_directives.items():
-        if name in ignored_directives:
+        if name in ignored_directives or name in directives:
             continue
 
         # core docutils directives are a (module, Class) reference.
@@ -88,25 +95,17 @@ def index_directives(app: Sphinx):
                 directive = getattr(module, cls)
             except Exception:
                 # TODO: Log the error somewhere...
-                directives.append((name, None, None))
+                directives[name] = types.Directive(name, None, None)
                 continue
 
-        directives.append((name, get_impl_name(directive), None))
-
-    for prefix, domain in app.env.domains.items():
-        for name, directive in domain.directives.items():
-            directives.append(
-                (
-                    f"{prefix}:{name}",
-                    get_impl_name(directive),
-                    None,
-                )
-            )
+        directives[name] = types.Directive(name, get_impl_name(directive))
 
     app.esbonio.db.ensure_table(DIRECTIVES_TABLE)
     app.esbonio.db.clear_table(DIRECTIVES_TABLE)
-    app.esbonio.db.insert_values(DIRECTIVES_TABLE, directives)
+    app.esbonio.db.insert_values(
+        DIRECTIVES_TABLE, [d.to_db(as_json) for d in directives.values()]
+    )
 
 
 def setup(app: Sphinx):
-    app.connect("builder-inited", index_directives)
+    app.connect("builder-inited", index_directives, priority=999)
