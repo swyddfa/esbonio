@@ -6,6 +6,7 @@ from typing import Optional
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives as docutils_directives
+from pygments.lexers import get_all_lexers
 
 from .. import types
 from ..app import Database
@@ -100,6 +101,8 @@ def index_directives(app: Sphinx):
 
         directives[name] = types.Directive(name, get_impl_name(directive))
 
+    _add_providers(directives)
+
     app.esbonio.db.ensure_table(DIRECTIVES_TABLE)
     app.esbonio.db.clear_table(DIRECTIVES_TABLE)
     app.esbonio.db.insert_values(
@@ -109,3 +112,36 @@ def index_directives(app: Sphinx):
 
 def setup(app: Sphinx):
     app.connect("builder-inited", index_directives, priority=999)
+
+
+def _add_providers(directives: dict[str, types.Directive]):
+    """Add provider definitions to built in directive types we know about."""
+
+    lexers_provider = _get_lexers_provider()
+
+    for name in ["code-block", "sourcecode", "highlight"]:
+        if (directive := directives.get(name)) is not None:
+            directive.argument_providers = [lexers_provider]
+
+
+def _get_lexers_provider() -> types.Directive.ArgumentProvider:
+    """Get the argument provider instance that returns the names of pygments lexers."""
+
+    langs = []
+    for name, labels, files, mimes in get_all_lexers():
+        filenames = ", ".join(f"`{f}`" for f in files)
+        mimetypes = ", ".join(f"`{m}`" for m in mimes)
+
+        for label in labels:
+            langs.append(
+                {
+                    "label": label,
+                    "kind": 21,  # Constant
+                    "documentation": {
+                        "kind": "markdown",
+                        "value": f"### {name}\nFilenames: {filenames}\n\nMIME Types: {mimetypes}",
+                    },
+                }
+            )
+
+    return types.Directive.ArgumentProvider("values", {"values": langs})
