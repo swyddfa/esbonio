@@ -8,6 +8,9 @@ from lsprotocol import types as lsp
 from esbonio import server
 from esbonio.sphinx_agent import types
 
+from . import providers
+from .providers import DirectiveArgumentProvider
+
 if typing.TYPE_CHECKING:
     from collections.abc import Coroutine
     from typing import Any
@@ -39,20 +42,6 @@ class DirectiveProvider:
         list[types.Directive] | None | Coroutine[Any, Any, list[types.Directive] | None]
     ):
         """Given a completion context, suggest directives that may be used."""
-        return None
-
-
-class DirectiveArgumentProvider:
-    """Base class for directive argument providers."""
-
-    def suggest_arguments(
-        self, context: server.CompletionContext, **kwargs
-    ) -> (
-        list[lsp.CompletionItem]
-        | None
-        | Coroutine[Any, Any, list[lsp.CompletionItem] | None]
-    ):
-        """Given a completion context, suggest directive arguments that may be used."""
         return None
 
 
@@ -211,4 +200,11 @@ class DirectiveFeature(server.LanguageFeature):
 
 def esbonio_setup(server: server.EsbonioLanguageServer):
     directives = DirectiveFeature(server)
+    directives.add_directive_argument_provider(
+        "values",
+        providers.ValuesProvider(
+            server.converter, server.logger.getChild("ValuesProvider")
+        ),
+    )
+
     server.add_feature(directives)
