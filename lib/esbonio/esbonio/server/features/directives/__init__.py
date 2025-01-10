@@ -201,10 +201,10 @@ class DirectiveFeature(server.LanguageFeature):
 def esbonio_setup(server: server.EsbonioLanguageServer):
     directives = DirectiveFeature(server)
     directives.add_directive_argument_provider(
-        "values",
-        providers.ValuesProvider(
-            server.converter, server.logger.getChild("ValuesProvider")
-        ),
+        "filepath", providers.FilepathProvider(server)
+    )
+    directives.add_directive_argument_provider(
+        "values", providers.ValuesProvider(server)
     )
 
     server.add_feature(directives)
