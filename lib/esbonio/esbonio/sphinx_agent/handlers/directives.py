@@ -101,7 +101,7 @@ def index_directives(app: Sphinx):
 
         directives[name] = types.Directive(name, get_impl_name(directive))
 
-    _add_providers(directives)
+    _add_providers(app, directives)
 
     app.esbonio.db.ensure_table(DIRECTIVES_TABLE)
     app.esbonio.db.clear_table(DIRECTIVES_TABLE)
@@ -114,14 +114,21 @@ def setup(app: Sphinx):
     app.connect("builder-inited", index_directives, priority=999)
 
 
-def _add_providers(directives: dict[str, types.Directive]):
+def _add_providers(app: Sphinx, directives: dict[str, types.Directive]):
     """Add provider definitions to built in directive types we know about."""
 
     lexers_provider = _get_lexers_provider()
+    filepath_provider = types.Directive.ArgumentProvider(
+        "filepath", {"root": app.srcdir}
+    )
 
     for name in ["code-block", "sourcecode", "highlight"]:
         if (directive := directives.get(name)) is not None:
             directive.argument_providers = [lexers_provider]
+
+    for name in ["image", "figure", "include", "literalinclude"]:
+        if (directive := directives.get(name)) is not None:
+            directive.argument_providers = [filepath_provider]
 
 
 def _get_lexers_provider() -> types.Directive.ArgumentProvider:
