@@ -172,12 +172,12 @@ def render_rst_directive_with_insert_text(
 
 
 @directive_argument_renderer(language="rst", insert_behavior="replace")
-def render_directive_agument_with_text_edit(
+def render_rst_argument_with_text_edit(
     context: server.CompletionContext, item: types.CompletionItem
 ) -> types.CompletionItem | None:
     """Render a ``CompletionItem`` using ``textEdit``.
 
-    This implements the ``replace`` insert behavior for role targets.
+    This implements the ``replace`` insert behavior for rst directive arguments.
 
     Parameters
     ----------
@@ -293,6 +293,30 @@ def render_myst_directive_with_text_edit(
         ),
     )
 
+    return item
+
+
+@directive_argument_renderer(language="markdown", insert_behavior="replace")
+def render_myst_argument_with_text_edit(
+    context: server.CompletionContext, item: types.CompletionItem
+) -> types.CompletionItem | None:
+    """Render a ``CompletionItem`` using ``textEdit``.
+
+    This implements the ``replace`` insert behavior for MyST directive arguments.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    item
+       The ``CompletionItem`` representing the directive argument.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the item should be skipped
+    """
     return item
 
 

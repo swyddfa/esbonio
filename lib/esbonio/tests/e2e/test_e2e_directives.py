@@ -23,6 +23,7 @@ EXPECTED = {
 
 RST_EXPECTED = EXPECTED.copy()
 MYST_EXPECTED = {"eval-rst", *EXPECTED}
+LEXERS = {"python", "python-console", "nix"}
 
 UNEXPECTED = {
     "macro",
@@ -133,7 +134,8 @@ async def test_rst_directive_completions(
     [
         ("`", None, None),
         ("``", None, None),
-        ("```", MYST_EXPECTED, MYST_UNEXPECTED),
+        # Unless the user types a '{', we should suggest languauge names
+        ("```", LEXERS, MYST_EXPECTED | MYST_UNEXPECTED),
         ("```{", MYST_EXPECTED, MYST_UNEXPECTED),
         ("```{d", MYST_EXPECTED, MYST_UNEXPECTED),
         ("```{code-b", MYST_EXPECTED, MYST_UNEXPECTED),
@@ -141,7 +143,8 @@ async def test_rst_directive_completions(
         ("```{c:", MYST_EXPECTED, MYST_UNEXPECTED),
         ("   `", None, None),
         ("   ``", None, None),
-        ("   ```", MYST_EXPECTED, MYST_UNEXPECTED),
+        # Unless the user types a '{', we should suggest languauge names
+        ("   ```", LEXERS, MYST_EXPECTED | MYST_UNEXPECTED),
         ("   ```{", MYST_EXPECTED, MYST_UNEXPECTED),
         ("   ```{d", MYST_EXPECTED, MYST_UNEXPECTED),
         ("   ```{doctest}", None, None),
