@@ -56,6 +56,7 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
    :hidden:
 
    Getting Started <extending/getting-started>
+   extending/api-reference
 
 .. toctree::
    :caption: Integrating
