@@ -21,7 +21,6 @@ MYST_DIRECTIVE: re.Pattern = re.compile(
     (\s*)                             # directives can be indented
     (?P<directive>
       ```(`*)?                        # directives start with at least 3 ` chars
-      (?!\w)                          # -- regular code blocks are not directives
       [{]?                            # followed by an opening brace
       (?P<name>[^}]+)?                # directives have a name
       [}]?                            # directives are closed with a closing brace
