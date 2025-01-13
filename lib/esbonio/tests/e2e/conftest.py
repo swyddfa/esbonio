@@ -26,11 +26,19 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
     await lsp_client.initialize_session(
         types.InitializeParams(
             capabilities=types.ClientCapabilities(
-                # Signal pull diagnostic support
                 text_document=types.TextDocumentClientCapabilities(
+                    completion=types.CompletionClientCapabilities(
+                        completion_item=types.ClientCompletionItemOptions(
+                            documentation_format=[
+                                types.MarkupKind.Markdown,
+                                types.MarkupKind.PlainText,
+                            ]
+                        ),
+                    ),
+                    # Signal pull diagnostic support
                     diagnostic=types.DiagnosticClientCapabilities(
                         dynamic_registration=False
-                    )
+                    ),
                 ),
                 # Signal workDoneProgress/create support.
                 window=types.WindowClientCapabilities(
