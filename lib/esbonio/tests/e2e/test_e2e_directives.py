@@ -23,7 +23,6 @@ EXPECTED = {
 
 RST_EXPECTED = EXPECTED.copy()
 MYST_EXPECTED = {"eval-rst", *EXPECTED}
-LEXERS = {"python", "python-console", "nix"}
 
 UNEXPECTED = {
     "macro",
@@ -33,10 +32,19 @@ UNEXPECTED = {
 RST_UNEXPECTED = {"eval-rst", *UNEXPECTED}
 MYST_UNEXPECTED = UNEXPECTED.copy()
 
+# Code blocks
+LEXERS = {"python", "python-console", "nix"}
+
+# Filepaths
+ROOT_FILES = {"conf.py", "index.rst", "myst", "rst"}
+RST_FILES = {"directives.rst", "roles.rst", "domains"}
+MYST_FILES = {"directives.md", "roles.md"}
+
 
 @pytest.mark.parametrize(
     "text, expected, unexpected",
     [
+        # Test cases covering directive name completion
         (".", None, None),
         ("..", RST_EXPECTED, RST_UNEXPECTED),
         (".. ", RST_EXPECTED, RST_UNEXPECTED),
@@ -54,6 +62,21 @@ MYST_UNEXPECTED = UNEXPECTED.copy()
         ("   .. codex-block:: ", None, None),
         ("   .. _some_label:", None, None),
         ("   .. c:", RST_EXPECTED, RST_UNEXPECTED),
+        # Test cases covering directive argument completion for...
+        #
+        # -- pygments lexers
+        (".. code-block:: ", LEXERS, None),
+        (".. highlight:: ", LEXERS, None),
+        (".. sourcecode:: ", LEXERS, None),
+        # -- filepaths
+        (".. image:: /", ROOT_FILES, None),
+        (".. image:: ../", ROOT_FILES, None),
+        (".. image:: ", RST_FILES, None),
+        (".. image:: .", RST_FILES, None),
+        (".. image:: ./", RST_FILES, None),
+        (".. figure:: ./", RST_FILES, None),
+        (".. include:: ./", RST_FILES, None),
+        (".. literalinclude:: ./", RST_FILES, None),
     ],
 )
 @pytest.mark.asyncio(loop_scope="session")
@@ -132,9 +155,10 @@ async def test_rst_directive_completions(
 @pytest.mark.parametrize(
     "text, expected, unexpected",
     [
+        # Test cases covering directive name completions
         ("`", None, None),
         ("``", None, None),
-        # Unless the user types a '{', we should suggest languauge names
+        # -- Unless the user types a '{', we should suggest languauge names
         ("```", LEXERS, MYST_EXPECTED | MYST_UNEXPECTED),
         ("```{", MYST_EXPECTED, MYST_UNEXPECTED),
         ("```{d", MYST_EXPECTED, MYST_UNEXPECTED),
@@ -143,7 +167,7 @@ async def test_rst_directive_completions(
         ("```{c:", MYST_EXPECTED, MYST_UNEXPECTED),
         ("   `", None, None),
         ("   ``", None, None),
-        # Unless the user types a '{', we should suggest languauge names
+        # -- Unless the user types a '{', we should suggest languauge names
         ("   ```", LEXERS, MYST_EXPECTED | MYST_UNEXPECTED),
         ("   ```{", MYST_EXPECTED, MYST_UNEXPECTED),
         ("   ```{d", MYST_EXPECTED, MYST_UNEXPECTED),
@@ -151,6 +175,21 @@ async def test_rst_directive_completions(
         ("   ```{code-b", MYST_EXPECTED, MYST_UNEXPECTED),
         ("   ```{codex-block}", None, None),
         ("   ```{c:", MYST_EXPECTED, MYST_UNEXPECTED),
+        # Test cases covering directive argument completions for...
+        #
+        # -- pygments lexers
+        ("```{code-block} ", LEXERS, None),
+        ("```{highlight} ", LEXERS, None),
+        ("```{sourcecode} ", LEXERS, None),
+        # -- filepaths
+        ("```{image} /", ROOT_FILES, None),
+        ("```{image} ../", ROOT_FILES, None),
+        ("```{image} ", MYST_FILES, None),
+        ("```{image} .", MYST_FILES, None),
+        ("```{image} ./", MYST_FILES, None),
+        ("```{figure} ./", MYST_FILES, None),
+        ("```{include} ./", MYST_FILES, None),
+        ("```{literalinclude} ./", MYST_FILES, None),
     ],
 )
 @pytest.mark.asyncio(loop_scope="session")
