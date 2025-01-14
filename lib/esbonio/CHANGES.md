@@ -1,3 +1,24 @@
+## v1.0.0b9 - 2025-01-14
+
+### Features
+
+- The language server once again offers completion suggestions for arguments to the following classes of directives `code-blocks`, `images` and `includes` ([#941](https://github.com/swyddfa/esbonio/issues/941))
+
+### Enhancements
+
+- Add support for `${venv:<path>}` config variable to `esbonio.sphinx.pythonCommand` ([#914](https://github.com/swyddfa/esbonio/issues/914))
+- Add `esbonio.sphinx.buildTriggers` option that gives the user control over when esbonio will rebuild the documentation ([#935](https://github.com/swyddfa/esbonio/issues/935))
+
+### Fixes
+
+- Fix handling of binary websocket messages in documentation previews ([#665](https://github.com/swyddfa/esbonio/issues/665))
+- The language server no longer escapes `.` characters in filepaths when expanding the `${defaultBuildDir}` variable
+  resulting in weird filepaths ([#918](https://github.com/swyddfa/esbonio/issues/918))
+- The sphinx agent should now be able to collect diagnostics from extensions that make use of the `build-finished` event e.g. sphinx-needs by @AlexanderLanin ([#925](https://github.com/swyddfa/esbonio/issues/925))
+- The preview no longer synchronises its scroll state when reloading the page.
+  This should fix the issue where you would freqently lose your editor position while typing! ([#933](https://github.com/swyddfa/esbonio/issues/933))
+
+
 ## v1.0.0b8 - 2024-10-20
 
 ### Enhancements
