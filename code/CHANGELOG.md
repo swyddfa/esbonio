@@ -1,3 +1,10 @@
+## v0.96.1 - 2025-01-14
+
+### Enhancements
+
+- Expose the `esbonio.sphinx.buildTriggers` configuration option ([#935](https://github.com/swyddfa/esbonio/issues/935))
+
+
 ## v0.96.0 - 2024-10-20
 
 ### Features
