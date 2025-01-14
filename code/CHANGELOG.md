@@ -19,6 +19,7 @@
 ### Enhancements
 
 - Expose the `esbonio.sphinx.configOverrides` option ([#785](https://github.com/swyddfa/esbonio/issues/785))
+- The Sphinx Process tree view now includes details including `esbonio.sphinx.pythonCommand`, `esbonio.sphinx.buildCommand`, the current builder and output files ([#881](https://github.com/swyddfa/esbonio/issues/881))
 
 ### Misc
 

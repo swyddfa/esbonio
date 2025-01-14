@@ -64,8 +64,26 @@ class RstDirectives(server.LanguageFeature):
     async def complete_options(self, context: server.CompletionContext):
         return None
 
-    async def complete_arguments(self, context: server.CompletionContext):
-        return None
+    async def complete_arguments(
+        self, context: server.CompletionContext
+    ) -> list[types.CompletionItem] | None:
+        """Return completion suggestions for the current directive's argument"""
+
+        render_func = completion.get_directive_argument_renderer(
+            context.language, self._insert_behavior
+        )
+        if render_func is None:
+            return None
+
+        items = []
+        directive_name = context.match.group("name")
+        suggestions = await self.directives.suggest_arguments(context, directive_name)
+
+        for argument in suggestions:
+            if (item := render_func(context, argument)) is not None:
+                items.append(item)
+
+        return items if len(items) > 0 else None
 
     async def complete_directives(
         self, context: server.CompletionContext

@@ -23,7 +23,11 @@ if typing.TYPE_CHECKING:
     from docutils.nodes import Element
     from docutils.parsers.rst import Directive
 
+    DirectiveDefinition = tuple[
+        str, type[Directive], list[types.Directive.ArgumentProvider]
+    ]
     RoleDefinition = tuple[str, Any, list[types.Role.TargetProvider]]
+
 
 sphinx_logger = logging.getLogger(SPHINX_LOG_NAMESPACE)
 logger = sphinx_logger.getChild("esbonio")
@@ -55,6 +59,9 @@ class Esbonio:
         self._roles: list[RoleDefinition] = []
         """Roles captured during Sphinx startup."""
 
+        self._directives: list[DirectiveDefinition] = []
+        """Directives captured during Sphinx startup."""
+
         self._config_ast: ast.Module | Literal[False] | None = None
         """The parsed AST of the user's conf.py file.
         If ``False``, we already tried parsing the module and were unable to."""
@@ -82,6 +89,48 @@ class Esbonio:
             self._config_ast = False
 
             return None
+
+    def add_directive(
+        self,
+        name: str,
+        directive: type[Directive],
+        argument_providers: list[types.Directive.ArgumentProvider] | None = None,
+    ):
+        """Register a directive with esbonio.
+
+        Parameters
+        ----------
+        name
+           The name of the directive, as the user would type in a document
+
+        directive
+           The directive's implementation
+
+        argument_providers
+           A list of argument providers for the role
+        """
+        self._directives.append((name, directive, argument_providers or []))
+
+    @staticmethod
+    def create_directive_argument_provider(
+        name: str, **kwargs
+    ) -> types.Directive.ArgumentProvider:
+        """Create a new directive argument provider
+
+        Parameters
+        ----------
+        name
+           The name of the provider
+
+        kwargs
+           Additional arguments to pass to the provider instance
+
+        Returns
+        -------
+        types.Directive.ArgumentProvider
+           The target provider
+        """
+        return types.Directive.ArgumentProvider(name, kwargs)
 
     def add_role(
         self,
@@ -154,6 +203,7 @@ class Sphinx(_Sphinx):
 
     def add_directive(self, name: str, cls: type[Directive], override: bool = False):
         super().add_directive(name, cls, override or self._esbonio_retry_count > 0)
+        self.esbonio.add_directive(name, cls)
 
     def add_node(self, node: type[Element], override: bool = False, **kwargs):
         super().add_node(node, override or self._esbonio_retry_count > 0, **kwargs)

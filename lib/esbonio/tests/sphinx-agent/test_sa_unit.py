@@ -474,6 +474,21 @@ def test_cli_arg_handling(args: list[str], expected: dict[str, Any]):
             },
         ),
         (
+            ["-M", "html", "src", "${defaultBuildDir}"],
+            application_args(
+                srcdir="src",
+                confdir="src",
+                outdir=os.sep + os.path.join("path", "to", ".cache", "<HASH>", "html"),
+                doctreedir=(
+                    os.sep + os.path.join("path", "to", ".cache", "<HASH>", "doctrees")
+                ),
+                buildername="html",
+            ),
+            {
+                "cacheDir": os.sep + os.sep.join(["path", "to", ".cache"]),
+            },
+        ),
+        (
             ["-b", "html", "src", "${defaultBuildDir}"],
             application_args(
                 srcdir="src",
@@ -486,6 +501,22 @@ def test_cli_arg_handling(args: list[str], expected: dict[str, Any]):
             ),
             {
                 "cacheDir": os.sep + os.sep.join(["path", "to", "cache"]),
+            },
+        ),
+        (
+            ["-b", "html", "src", "${defaultBuildDir}"],
+            application_args(
+                srcdir="src",
+                confdir="src",
+                outdir=os.sep + os.sep.join(["path", "to", ".cache", "<HASH>"]),
+                doctreedir=(
+                    os.sep
+                    + os.path.join("path", "to", ".cache", r"<HASH>", ".doctrees")
+                ),
+                buildername="html",
+            ),
+            {
+                "cacheDir": os.sep + os.sep.join(["path", "to", ".cache"]),
             },
         ),
     ],

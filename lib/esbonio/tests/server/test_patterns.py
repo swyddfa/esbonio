@@ -16,8 +16,7 @@ from esbonio.sphinx_agent.types import RST_ROLE
         ("```", {"directive": "```"}),
         ("````", {"directive": "````"}),
         ("```{d", {"directive": "```{d", "name": "d"}),
-        # Regular code blocks should not be recognised
-        ("```python", None),
+        ("```python", {"directive": "```python", "name": "python"}),
         ("```{image}", {"name": "image", "directive": "```{image}"}),
         (
             "```{image}  filename.png",

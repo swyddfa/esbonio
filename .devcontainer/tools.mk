@@ -5,10 +5,10 @@ ifeq ($(strip $(ARCH)),)
 $(error Unable to determine platform architecture)
 endif
 
-NODE_VERSION := 18.20.4
+NODE_VERSION := 20.18.0
 
 # The versions of Python we support
-PYXX_versions := 3.9 3.10 3.11 3.12
+PYXX_versions := 3.9 3.10 3.11 3.12 3.13
 PY_INTERPRETERS =
 
 # Hatch is not only used for building packages, but bootstrapping any missing
@@ -74,7 +74,7 @@ PY ?= $(shell command -v python3)
 ifeq ($(strip $(PY)),)
 PY := $(BIN)/python
 
-$(PY): $(PY312)
+$(PY): $(PY313)
 	ln -s $< $@
 	$@ --version
 	touch $@
@@ -138,5 +138,5 @@ $(NPM):
 endif
 
 # One command to bootstrap all tools and check their versions
-tools: $(PY_INTERPRETERS) $(PY_TOOLS) $(NPM)
+tools: $(PY) $(PY_TOOLS) $(NPM)
 	for prog in $^ ; do echo -n "$${prog}\t" ; PATH=$(BIN) $${prog} --version; done

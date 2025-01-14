@@ -13,7 +13,6 @@ import pytest
 import pytest_asyncio
 from lsprotocol import types as lsp
 from pygls import IS_WIN
-from pygls.server import StdOutTransportAdapter
 
 from esbonio.server import EsbonioLanguageServer
 from esbonio.server import Uri
@@ -24,10 +23,13 @@ from esbonio.server.features.sphinx_manager import SphinxManager
 from esbonio.server.features.sphinx_manager import make_subprocess_sphinx_client
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Coroutine
     from typing import Any
     from typing import Callable
 
-    ServerManager = Callable[[Any], tuple[EsbonioLanguageServer, SphinxManager]]
+    ServerManager = Callable[
+        [Any], Coroutine[None, None, tuple[EsbonioLanguageServer, SphinxManager]]
+    ]
 
 
 @pytest.fixture
@@ -47,7 +49,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
     loop = asyncio.get_running_loop()
 
     esbonio = create_language_server(EsbonioLanguageServer, [], loop=loop)
-    esbonio.protocol.transport = StdOutTransportAdapter(io.BytesIO(), sys.stderr.buffer)
+    esbonio.protocol.set_writer(io.BytesIO())
 
     project_manager = ProjectManager(esbonio)
     esbonio.add_feature(project_manager)
@@ -57,9 +59,9 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
     )
     esbonio.add_feature(sphinx_manager)
 
-    def initialize(init_options):
+    async def initialize(init_options):
         # Initialize the server.
-        esbonio.protocol._procedure_handler(
+        esbonio.protocol.handle_message(
             lsp.InitializeRequest(
                 id=1,
                 params=lsp.InitializeParams(
@@ -73,9 +75,19 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
             )
         )
 
-        esbonio.protocol._procedure_handler(
+        esbonio.protocol.handle_message(
             lsp.InitializedNotification(params=lsp.InitializedParams())
         )
+
+        # Ensure that the server is ready
+        retry = 10
+        while (not esbonio.ready.done()) and retry > 0:
+            await asyncio.sleep(0.5)
+            retry -= 1
+
+        if not esbonio.ready.done():
+            raise RuntimeError("Server did not initialize")
+
         return esbonio, sphinx_manager
 
     yield initialize
@@ -89,7 +101,7 @@ async def test_get_client(
 ):
     """Ensure that we can create a SphinxClient correctly."""
 
-    server, manager = server_manager(
+    _, manager = await server_manager(
         dict(
             esbonio=dict(
                 sphinx=dict(
@@ -103,8 +115,6 @@ async def test_get_client(
             ),
         ),
     )
-    # Ensure that the server is ready
-    await server.ready
 
     result = await manager.get_client(demo_workspace / "index.rst")
     # At least for now, the first call to get_client will not return a client
@@ -141,7 +151,7 @@ async def test_get_client_with_error(
 ):
     """Ensure that we correctly handle the case where there is an error with the client."""
 
-    server, manager = server_manager(
+    _, manager = await server_manager(
         dict(
             esbonio=dict(
                 sphinx=dict(
@@ -150,8 +160,6 @@ async def test_get_client_with_error(
             ),
         ),
     )
-    # Ensure that the server is ready
-    await server.ready
 
     result = await manager.get_client(demo_workspace / "index.rst")
     # At least for now, the first call to get_client will not return a client
@@ -195,7 +203,7 @@ async def test_get_client_with_many_uris(
     """Ensure that when called in rapid succession, with many uris we only create a
     single client instance."""
 
-    server, manager = server_manager(
+    _, manager = await server_manager(
         dict(
             esbonio=dict(
                 sphinx=dict(
@@ -210,9 +218,6 @@ async def test_get_client_with_many_uris(
         ),
     )
 
-    # Ensure that the server is ready
-    await server.ready
-
     src_uris = [Uri.for_file(f) for f in pathlib.Path(demo_workspace).glob("**/*.rst")]
     coros = [manager.get_client(s) for s in src_uris]
 
@@ -226,7 +231,7 @@ async def test_get_client_with_many_uris(
 
     client = manager.clients[str(demo_workspace)]
     assert client is not None
-    assert client.state is None
+    assert client.state == ClientState.Starting
 
     # Now if we do the same again we should get the same client instance for each case.
     coros = [manager.get_client(s) for s in src_uris]
@@ -254,7 +259,7 @@ async def test_get_client_with_many_uris_in_many_projects(
     """Ensure that when called in rapid succession, with many uris we only create a
     single client instance for each project."""
 
-    server, manager = server_manager(
+    _, manager = await server_manager(
         dict(
             esbonio=dict(
                 sphinx=dict(
@@ -267,8 +272,7 @@ async def test_get_client_with_many_uris_in_many_projects(
                 ),
             ),
         ),
-    )  # Ensure that the server is ready
-    await server.ready
+    )
 
     src_uris = [Uri.for_file(f) for f in pathlib.Path(demo_workspace).glob("**/*.rst")]
     src_uris += [Uri.for_file(f) for f in pathlib.Path(docs_workspace).glob("**/*.rst")]
@@ -284,11 +288,11 @@ async def test_get_client_with_many_uris_in_many_projects(
 
     demo_client = manager.clients[str(demo_workspace)]
     assert demo_client is not None
-    assert demo_client.state is None
+    assert demo_client.state == ClientState.Starting
 
     docs_client = manager.clients[str(docs_workspace)]
     assert docs_client is not None
-    assert docs_client.state is None
+    assert docs_client.state == ClientState.Starting
 
     # Now if we do the same again we should get the same client instance for each case.
     coros = [manager.get_client(s) for s in src_uris]
@@ -309,7 +313,7 @@ async def test_updated_config(
     """Ensure that when the configuration affecting a Sphinx configuration is changed,
     the SphinxClient is recreated."""
 
-    server, manager = server_manager(
+    server, manager = await server_manager(
         dict(
             esbonio=dict(
                 sphinx=dict(
@@ -323,8 +327,6 @@ async def test_updated_config(
             ),
         ),
     )
-    # Ensure that the server is ready
-    await server.ready
 
     result = await manager.get_client(demo_workspace / "index.rst")
     # At least for now, the first call to get_client will not return a client

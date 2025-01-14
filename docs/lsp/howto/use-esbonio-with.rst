@@ -6,8 +6,8 @@ How To Use Esbonio With...
 There are (almost!) as many ways to manage a Python environment as there are packages on PyPi!
 This guide outlines how to configure ``esbonio`` to use the right environment for your project.
 
-... Hatch
----------
+Hatch
+-----
 
 If for example, you used `hatch <https://hatch.pypa.io/latest/>`__ to define an environment in which you build your documentation
 
@@ -29,8 +29,32 @@ Then you should set :esbonio:conf:`esbonio.sphinx.pythonCommand` to
    [tool.esbonio.sphinx]
    pythonCommand = ["hatch", "-e", "docs", "run", "python"]
 
-... Poetry
-----------
+Pipenv
+------
+
+If your project uses `Pipenv <https://pipenv.pypa.io/en/latest/index.html>`__ for its dependency management
+
+.. code-block:: ini
+
+   [[source]]
+   url = "https://pypi.org/simple"
+   verify_ssl = true
+   name = "pypi"
+
+   [packages]
+   furo = "*"
+   sphinx = "*"
+   sphinx-design = "*"
+
+Then :esbonio:conf:`esbonio.sphinx.pythonCommand` should be set to
+
+.. code-block:: toml
+
+   [tool.esbonio.sphinx]
+   pythonCommand = ["pipenv", "run", "python"]
+
+Poetry
+------
 
 Given a set of dependencies managed through `Poetry <https://python-poetry.org/>`__
 
@@ -61,8 +85,8 @@ Then you should set :esbonio:conf:`esbonio.sphinx.pythonCommand` to
    [tool.esbonio.sphinx]
    pythonCommand = ["poetry", "run", "python"]
 
-... venv / virtualenv
----------------------
+venv / virtualenv
+-----------------
 
 .. tip::
 
@@ -88,7 +112,7 @@ Assuming you already have an envrionment that you use to build your documentatio
    sphinxcontrib-serializinghtml 1.1.5
    urllib3                       2.1.0
 
-Then you set :esbonio:conf:`esbonio.sphinx.pythonCommand` to the full path to the ``python`` executable contained in the environment (which will be slightly different depending on your operating system)
+Then set :esbonio:conf:`esbonio.sphinx.pythonCommand` to the full path to the ``python`` executable contained in the environment (which will be slightly different depending on your operating system)
 
 .. tab-set::
 
@@ -104,4 +128,24 @@ Then you set :esbonio:conf:`esbonio.sphinx.pythonCommand` to the full path to th
       .. code-block:: toml
 
          [tool.esbonio.sphinx]
-         pythonCommand = ["C:\\Users\\user\\Projects\\myproject\\Scripts\\python.exe"]
+         pythonCommand = ["C:\\Users\\user\\Projects\\myproject\\venv\\Scripts\\python.exe"]
+
+Alternatively, you can use the ``${venv:<path>}`` configuration variable, this allows you to provide just the path to the ``venv`` folder and ``esbonio`` will expand it to the correct path to the Python executable for your platform.
+``<path>`` can either be an absolute path, or relative to the folder containing your ``pyproject.toml`` file.
+
+For example, say your project had the following structure
+
+.. code-block:: console
+
+   $ tree myproject
+   myproject
+   ├── docs
+   │   └── pyproject.toml
+   └── venv
+
+Then your ``pyproject.toml`` might look something like the following.
+
+.. code-block:: toml
+
+   [tool.esbonio.sphinx]
+   pythonCommand = ["${venv:../venv}"]

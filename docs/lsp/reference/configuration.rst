@@ -196,7 +196,7 @@ This sets the default log level to ``debug`` and dials back or redirects the out
              "level": "info"
            },
            "esbonio.PreviewServer": {
-             "filename": "http.log",
+             "filepath": "http.log",
              "stderr": false
            },
            "esbonio.WebviewServer": {
@@ -230,7 +230,7 @@ Name                        Description
 Sphinx
 ^^^^^^
 
-The following options control the creation of the Sphinx application object managed by the server.
+The following options control the creation and management of background Sphinx process by the server.
 
 .. esbonio:config:: esbonio.sphinx.buildCommand
    :scope: project
@@ -291,7 +291,7 @@ The following options control the creation of the Sphinx application object mana
    .. code-block:: json
 
       {
-         "sphinx.configOverrides": {
+         "esbonio.sphinx.configOverrides": {
             "language": "cy"
          }
       }
@@ -301,9 +301,38 @@ The following options control the creation of the Sphinx application object mana
    .. code-block:: json
 
       {
-         "sphinx.configOverrides": {
+         "esbonio.sphinx.configOverrides": {
             "html_context.docstitle": "ProjectName"
          }
+      }
+
+.. esbonio:config:: esbonio.sphinx.buildTriggers
+   :scope: global
+   :type: object
+
+   This option controls when the language server rebuilds your documentation.
+   The server's default configuration is equivalent to setting
+
+   .. code-block:: json
+
+      {
+        "esbonio.sphinx.buildTriggers": {
+          "onSave": true,
+          "onChange": 2.0,
+        }
+      }
+
+   where ``esbonio`` will rebuild each time you save a file, or each time you modify a file after a delay of 2 seconds.
+
+   The following configuration will disable **all** builds
+
+   .. code-block:: json
+
+      {
+        "esbonio.sphinx.buildTriggers": {
+          "onSave": false,
+          "onChange": false,
+        }
       }
 
 .. _lsp-configuration-preview:

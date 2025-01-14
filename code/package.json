@@ -37,10 +37,10 @@
     "devDependencies": {
         "@types/node": "^18",
         "@types/vscode": "1.82.0",
-        "@vscode/vsce": "^3.1.1",
-        "esbuild": "^0.24.0",
-        "ovsx": "^0.9.5",
-        "typescript": "^5.6.2"
+        "@vscode/vsce": "^3.2.1",
+        "esbuild": "^0.24.2",
+        "ovsx": "^0.10.1",
+        "typescript": "^5.7.2"
     },
     "engines": {
         "vscode": "^1.82.0"
@@ -163,6 +163,24 @@
                         },
                         "default": null,
                         "description": "The sphinx-build command to use."
+                    },
+                    "esbonio.sphinx.buildTriggers": {
+                        "scope": "window",
+                        "type": "object",
+                        "default": null,
+                        "properties": {
+                            "onSave": {
+                                "type": "boolean",
+                                "default": true,
+                                "description": "Trigger a build each time a file is saved"
+                            },
+                            "onChange": {
+                                "type": ["boolean", "number"],
+                                "default": 2.0,
+                                "description": "Trigger a build each time a file is changed"
+                            }
+                        },
+                        "description": "Triggers that control when the language server rebuilds your project."
                     },
                     "esbonio.sphinx.configOverrides": {
                         "scope": "resource",

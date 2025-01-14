@@ -17,6 +17,10 @@ class ProjectManager(server.LanguageFeature):
         self.projects: dict[str, Project] = {}
         """Holds active project instances"""
 
+    async def shutdown(self, params: None):
+        for project in self.projects.values():
+            await project.close()
+
     def register_project(self, scope: str, dbpath: str | pathlib.Path):
         """Register a project."""
         self.logger.debug("Registered project for scope '%s': '%s'", scope, dbpath)

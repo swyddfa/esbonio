@@ -5,6 +5,7 @@ import traceback
 import typing
 import uuid
 from functools import partial
+from typing import Union
 
 import attrs
 import lsprotocol.types as lsp
@@ -73,6 +74,25 @@ class ClientDestroyedNotification:
     """The client's id"""
 
 
+@attrs.define
+class SphinxBuildTriggers:
+    """Valid configuration options for Sphinx build triggers."""
+
+    on_save: bool = attrs.field(default=True)
+    """Trigger a build when a file is saved."""
+
+    on_change: bool | float = attrs.field(default=2.0)
+    """Trigger a build each time a file has changed, with a configurable delay."""
+
+
+@attrs.define
+class ManagerConfig:
+    """Configuration options for the sphinx manager."""
+
+    build_triggers: SphinxBuildTriggers = attrs.field(factory=SphinxBuildTriggers)
+    """Options controlling when to trigger a Sphinx build."""
+
+
 class SphinxManager(server.LanguageFeature):
     """Responsible for managing Sphinx application instances."""
 
@@ -97,6 +117,9 @@ class SphinxManager(server.LanguageFeature):
         }
         """Holds currently active Sphinx clients."""
 
+        self.config: ManagerConfig = ManagerConfig()
+        """The SphinxManager's configuration."""
+
         self._events = server.EventSource(self.logger)
         """The SphinxManager can emit events."""
 
@@ -109,6 +132,20 @@ class SphinxManager(server.LanguageFeature):
     def add_listener(self, event: str, handler):
         self._events.add_listener(event, handler)
 
+    def initialized(self, params: lsp.InitializedParams):
+        """Called once the initial handshake between client and server has finished."""
+
+        self.server.converter.register_structure_hook(
+            Union[bool, float], lambda obj, _: obj
+        )
+        self.configuration.subscribe(
+            "esbonio.sphinx", ManagerConfig, self.update_configuration
+        )
+
+    def update_configuration(self, event: server.ConfigChangeEvent[ManagerConfig]):
+        """Called when the user's configuration is updated."""
+        self.config = event.value
+
     async def document_change(self, params: lsp.DidChangeTextDocumentParams):
         if (uri := Uri.parse(params.text_document.uri)) is None:
             return
@@ -117,12 +154,19 @@ class SphinxManager(server.LanguageFeature):
         if client is None:
             return
 
+        if (delay := self.config.build_triggers.on_change) is False:
+            return
+
         # Cancel any existing pending builds
         if (task := self._pending_builds.pop(client.id, None)) is not None:
             task.cancel()
 
         self._pending_builds[client.id] = asyncio.create_task(
-            self.trigger_build_after(uri, client.id, delay=2)
+            self.trigger_build_after(
+                uri,
+                client.id,
+                delay=max(float(delay), 1.0),  # Enforce a minimum 1s delay
+            )
         )
 
     async def document_open(self, params: lsp.DidOpenTextDocumentParams):
@@ -139,10 +183,14 @@ class SphinxManager(server.LanguageFeature):
         if client is None:
             return
 
+        if not self.config.build_triggers.on_save:
+            return
+
         # Cancel any existing pending builds
         if (task := self._pending_builds.pop(client.id, None)) is not None:
             task.cancel()
 
+        self.logger.debug("Build triggered on save")
         await self.trigger_build(uri)
 
     async def shutdown(self, params: None):
@@ -162,11 +210,11 @@ class SphinxManager(server.LanguageFeature):
         await asyncio.sleep(delay)
 
         self._pending_builds.pop(app_id)
+        self.logger.debug("Build triggered after %ss delay", delay)
         await self.trigger_build(uri)
 
     async def trigger_build(self, uri: Uri):
         """Trigger a build for the relevant Sphinx application for the given uri."""
-        self.logger.debug("Triggering build")
 
         client = await self.get_client(uri)
         if client is None:

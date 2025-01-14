@@ -177,7 +177,7 @@ class Role:
         location: str | None,
         providers: str | None,
     ) -> Role:
-        """Convert this role to its database representation."""
+        """Create a role from its database representation."""
 
         loc = load_as(location, Location) if location is not None else None
         target_providers = (

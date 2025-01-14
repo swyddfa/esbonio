@@ -3,32 +3,44 @@ from __future__ import annotations
 import inspect
 import typing
 
-import attrs
+from lsprotocol import types as lsp
 
 from esbonio import server
+from esbonio.sphinx_agent import types
+
+from . import providers
+from .providers import DirectiveArgumentProvider
 
 if typing.TYPE_CHECKING:
     from collections.abc import Coroutine
     from typing import Any
 
-
-@attrs.define
-class Directive:
-    """Represents a directive."""
-
-    name: str
-    """The name of the directive, as the user would type in an rst file."""
-
-    implementation: str | None
-    """The dotted name of the directive's implementation."""
+    from esbonio.server import Uri
 
 
 class DirectiveProvider:
     """Base class for directive providers"""
 
+    def get_directive(
+        self, uri: Uri, name: str
+    ) -> types.Directive | None | Coroutine[Any, Any, types.Directive | None]:
+        """Return the definition of the given directive, if known
+
+        Parameters
+        ----------
+        uri
+           The uri of the document in which the directive name appears
+
+        name
+           The name of the directive, as the user would type in a document
+        """
+        return None
+
     def suggest_directives(
         self, context: server.CompletionContext
-    ) -> list[Directive] | None | Coroutine[Any, Any, list[Directive] | None]:
+    ) -> (
+        list[types.Directive] | None | Coroutine[Any, Any, list[types.Directive] | None]
+    ):
         """Given a completion context, suggest directives that may be used."""
         return None
 
@@ -43,9 +55,10 @@ class DirectiveFeature(server.LanguageFeature):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self._providers: dict[int, DirectiveProvider] = {}
+        self._directive_providers: dict[int, DirectiveProvider] = {}
+        self._argument_providers: dict[str, DirectiveArgumentProvider] = {}
 
-    def add_provider(self, provider: DirectiveProvider):
+    def add_directive_provider(self, provider: DirectiveProvider):
         """Register a directive provider.
 
         Parameters
@@ -53,11 +66,29 @@ class DirectiveFeature(server.LanguageFeature):
         provider
            The directive provider
         """
-        self._providers[id(provider)] = provider
+        self._directive_providers[id(provider)] = provider
+
+    def add_directive_argument_provider(
+        self, name: str, provider: DirectiveArgumentProvider
+    ):
+        """Register a directive argument provider.
+
+        Parameters
+        ----------
+        provider
+           The directive argument provider
+        """
+        if (existing := self._argument_providers.get(name)) is not None:
+            raise ValueError(
+                f"DirectiveArgumentProvider {provider!r} conflicts with existing "
+                f"provider: {existing!r}"
+            )
+
+        self._argument_providers[name] = provider
 
     async def suggest_directives(
         self, context: server.CompletionContext
-    ) -> list[Directive]:
+    ) -> list[types.Directive]:
         """Suggest directives that may be used, given a completion context.
 
         Parameters
@@ -65,11 +96,11 @@ class DirectiveFeature(server.LanguageFeature):
         context
            The completion context.
         """
-        items: list[Directive] = []
+        items: list[types.Directive] = []
 
-        for provider in self._providers.values():
+        for provider in self._directive_providers.values():
             try:
-                result: list[Directive] | None = None
+                result: list[types.Directive] | None = None
 
                 aresult = provider.suggest_directives(context)
                 if inspect.isawaitable(aresult):
@@ -85,7 +116,95 @@ class DirectiveFeature(server.LanguageFeature):
 
         return items
 
+    async def get_directive(self, uri: Uri, name: str) -> types.Directive | None:
+        """Return the definition of the given directive name.
+
+        Parameters
+        ----------
+        uri
+           The uri of the document in which the directive name appears
+
+        name
+           The name of the directive, as the user would type into a document.
+
+        Returns
+        -------
+        types.Directive | None
+           The directive's definition, if known
+        """
+        for provider in self._directive_providers.values():
+            try:
+                result: types.Directive | None = None
+
+                aresult = provider.get_directive(uri, name)
+                if inspect.isawaitable(aresult):
+                    result = await aresult
+
+                if result is not None:
+                    return result
+            except Exception:
+                name = type(provider).__name__
+                self.logger.error("Error in '%s.get_directive'", name, exc_info=True)
+
+        return None
+
+    async def suggest_arguments(
+        self, context: server.CompletionContext, directive_name: str
+    ) -> list[lsp.CompletionItem]:
+        """Suggest directive arguments that may be used, given a completion context.
+
+        Parameters
+        ----------
+        context
+           The completion context
+
+        directive_name
+           The directive to suggest arguments for
+        """
+        if (directive := await self.get_directive(context.uri, directive_name)) is None:
+            self.logger.debug("Unknown directive '%s'", directive_name)
+            return []
+
+        arguments = []
+        self.logger.debug(
+            "Suggesting arguments for directive: '%s' (%s)",
+            directive.name,
+            directive.implementation,
+        )
+
+        for spec in directive.argument_providers:
+            if (provider := self._argument_providers.get(spec.name)) is None:
+                self.logger.error("Unknown argument provider: '%s'", spec.name)
+                continue
+
+            try:
+                result: list[lsp.CompletionItem] | None = None
+
+                aresult = provider.suggest_arguments(context, **spec.kwargs)
+                if inspect.isawaitable(aresult):
+                    result = await aresult
+                else:
+                    result = aresult
+
+                if result is not None:
+                    arguments.extend(result)
+
+            except Exception:
+                name = type(provider).__name__
+                self.logger.error(
+                    "Error in '%s.suggest_arguments'", name, exc_info=True
+                )
+
+        return arguments
+
 
 def esbonio_setup(server: server.EsbonioLanguageServer):
     directives = DirectiveFeature(server)
+    directives.add_directive_argument_provider(
+        "filepath", providers.FilepathProvider(server)
+    )
+    directives.add_directive_argument_provider(
+        "values", providers.ValuesProvider(server)
+    )
+
     server.add_feature(directives)

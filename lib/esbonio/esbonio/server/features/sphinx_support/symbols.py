@@ -54,7 +54,7 @@ class SphinxSymbols(LanguageFeature):
                 if parent.children is None:
                     parent.children = [symbol]
                 else:
-                    parent.children.append(symbol)
+                    parent.children.append(symbol)  # type: ignore[attr-defined]
 
         return root
 

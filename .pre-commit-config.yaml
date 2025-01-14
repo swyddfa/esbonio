@@ -11,7 +11,7 @@ repos:
   - id: trailing-whitespace
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.6.9
+  rev: v0.8.6
   hooks:
   - id: ruff
     name: ruff (esbonio)
@@ -32,7 +32,7 @@ repos:
     files: 'lib/esbonio-extensions/.*\.py'
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.11.2'
+  rev: 'v1.14.1'
   hooks:
   - id: mypy
     name: mypy (scripts)
@@ -45,8 +45,8 @@ repos:
     additional_dependencies:
     - aiosqlite
     - platformdirs
-    - pygls>=2a0
-    - pytest_lsp>=0.3
+    - pygls>=2a2
+    - pytest_lsp>=1.0b2
     - sphinx
     - tomli
     - types-docutils
