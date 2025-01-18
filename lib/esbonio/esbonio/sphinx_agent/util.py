@@ -12,8 +12,10 @@ logger = logging.getLogger("esbonio.sphinx_agent")
 
 
 def _serialize_message(obj):
-    if dataclasses.is_dataclass(obj):
-        return dataclasses.asdict(obj)  # type: ignore[call-overload]
+    # As far as I know there's not a public function to detect just instances of a
+    # dataclass...
+    if dataclasses.is_dataclass(obj) and not isinstance(obj, type):
+        return dataclasses.asdict(obj)
 
     if isinstance(obj, (_TranslationProxy, pathlib.Path)):
         return str(obj)
