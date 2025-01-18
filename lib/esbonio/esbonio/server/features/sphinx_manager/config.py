@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import logging
+import os
 import pathlib
 import re
 import sys
@@ -314,4 +315,7 @@ def _resolve_variable_venv(env: str, cwd: str) -> str:
         return str(envpath)
     else:
         envpath = cwd / envpath
-        return str(envpath.resolve())
+        # Can't call envpath.resolve() here as that will also follow symlinks which we
+        # don't want to do
+        # https://github.com/swyddfa/esbonio/issues/945
+        return os.path.normpath(envpath)
