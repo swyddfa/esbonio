@@ -103,5 +103,6 @@ $(NPM):
 endif
 
 # One command to bootstrap all tools and check their versions
-tools: $(PY) $(PY_TOOLS) $(NPM)
+.PHONY: tools
+tools: $(UV) $(PY) $(PY_TOOLS) $(NPM) $(NPX)
 	for prog in $^ ; do echo -n "$${prog}\t" ; PATH=$(BIN) $${prog} --version; done
