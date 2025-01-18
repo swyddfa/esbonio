@@ -335,7 +335,7 @@ def mk_uri(path: str) -> str:
                 python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["C:\\path\\to\\workspace\\env\\Scripts\\python.exe"],
+                python_command=["c:\\path\\to\\workspace\\env\\Scripts\\python.exe"],
                 build_command=BUILD_CMD,
                 cwd=CWD,
                 python_path=PYPATH,
@@ -373,7 +373,7 @@ def mk_uri(path: str) -> str:
                 python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["C:\\path\\to\\env\\Scripts\\python.exe"],
+                python_command=["c:\\path\\to\\env\\Scripts\\python.exe"],
                 build_command=BUILD_CMD,
                 cwd=CWD,
                 python_path=PYPATH,
@@ -392,7 +392,7 @@ def mk_uri(path: str) -> str:
                 python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["C:\\path\\to\\env\\Scripts\\python.exe"],
+                python_command=["c:\\path\\to\\env\\Scripts\\python.exe"],
                 build_command=BUILD_CMD,
                 cwd=CWD,
                 python_path=PYPATH,
