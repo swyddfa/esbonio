@@ -74,10 +74,12 @@ endif
 
 # Node JS
 NPM ?= $(shell command -v npm)
+NPX ?= $(shell command -v npx)
 
 ifeq ($(strip $(NPM)),)
 
 NPM := $(BIN)/npm
+NPX := $(BIN)/npx
 NODE := $(BIN)/node
 NODE_DIR := $(HOME)/.local/node
 
@@ -92,9 +94,11 @@ $(NPM):
 	[ -d $(BIN) ] || mkdir -p $(BIN)
 	ln -s $(NODE_DIR)/bin/node $(NODE)
 	ln -s $(NODE_DIR)/bin/npm $(NPM)
+	ln -s $(NODE_DIR)/bin/npx $(NPX)
 
 	$(NODE) --version
 	PATH=$(BIN) $(NPM) --version
+	PATH=$(BIN) $(NPX) --version
 
 endif
 
