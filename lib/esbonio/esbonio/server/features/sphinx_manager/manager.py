@@ -81,7 +81,7 @@ class SphinxBuildTriggers:
     on_save: bool = attrs.field(default=True)
     """Trigger a build when a file is saved."""
 
-    on_change: bool | float = attrs.field(default=2.0)
+    on_change: Union[bool, float] = attrs.field(default=2.0)
     """Trigger a build each time a file has changed, with a configurable delay."""
 
 
