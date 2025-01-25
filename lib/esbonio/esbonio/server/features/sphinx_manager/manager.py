@@ -389,6 +389,11 @@ class SphinxManager(server.LanguageFeature):
     async def start_progress(self, client: SphinxClient):
         """Start reporting work done progress for the given client."""
 
+        # Make sure any existing progress tokens are cleaned up
+        if (existing := self._progress_tokens.get(client.id)) is not None:
+            self.logger.warning("Overwriting existing progress token: %r!", existing)
+            self.stop_progress(client)
+
         token = str(uuid.uuid4())
         self.logger.debug("Starting progress: '%s'", token)
 
@@ -408,6 +413,7 @@ class SphinxManager(server.LanguageFeature):
         if (token := self._progress_tokens.pop(client.id, None)) is None:
             return
 
+        self.logger.debug("Ending progress: %r", token)
         self.server.work_done_progress.end(
             token, lsp.WorkDoneProgressEnd(message="Finished")
         )
