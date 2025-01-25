@@ -50,6 +50,7 @@ class SphinxClient(Protocol):
     @property
     def db(self) -> pathlib.Path:
         """Connection to the associated database."""
+        ...
 
     @property
     def builder(self) -> str:

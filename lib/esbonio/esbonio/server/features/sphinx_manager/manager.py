@@ -220,8 +220,8 @@ class SphinxManager(server.LanguageFeature):
         if client is None:
             return
 
-        if client.state != ClientState.Running:
-            self.logger.debug("Skipping build, state is: %s", client.state)
+        if client.state not in {ClientState.Running}:
+            self.logger.debug("Skipping build, client is %s", client.state)
             return
 
         if (project := self.project_manager.get_project(uri)) is None:
@@ -240,20 +240,17 @@ class SphinxManager(server.LanguageFeature):
             if saved_version < doc_version:
                 content_overrides[str(src_uri)] = doc.source
 
-        await self.start_progress(client)
-
         try:
             result = await client.build(content_overrides=content_overrides)
+
+            # Notify listeners.
+            self._events.trigger("build", client, result)
+
         except Exception as exc:
             self.server.window_show_message(
                 lsp.ShowMessageParams(message=f"{exc}", type=lsp.MessageType.Error)
             )
             return
-        finally:
-            self.stop_progress(client)
-
-        # Notify listeners.
-        self._events.trigger("build", client, result)
 
     async def restart_client(self, client_id: str):
         """Restart the client with the given id"""
@@ -367,6 +364,12 @@ class SphinxManager(server.LanguageFeature):
                     "sphinx/appCreated",
                     AppCreatedNotification(id=client.id, application=sphinx_info),
                 )
+
+        if old_state == ClientState.Building:
+            self.stop_progress(client)
+
+        if new_state == ClientState.Building:
+            self.server.run_task(self.start_progress(client))
 
         if new_state == ClientState.Errored:
             error = ""
