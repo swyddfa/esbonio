@@ -25,11 +25,15 @@ from esbonio.server.features.sphinx_manager import make_subprocess_sphinx_client
 if typing.TYPE_CHECKING:
     from collections.abc import Coroutine
     from typing import Any
-    from typing import Callable
+    from typing import Protocol
 
-    ServerManager = Callable[
-        [Any], Coroutine[None, None, tuple[EsbonioLanguageServer, SphinxManager]]
-    ]
+    class ServerManagerFactory(Protocol):
+        def __call__(
+            self,
+            *,
+            init_options: dict[str, Any] | None = None,
+            workspace_config: dict[str, Any] | None = None,
+        ) -> Coroutine[None, None, tuple[EsbonioLanguageServer, SphinxManager]]: ...
 
 
 @pytest.fixture
@@ -59,7 +63,11 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
     )
     esbonio.add_feature(sphinx_manager)
 
-    async def initialize(init_options):
+    async def initialize(
+        *,
+        init_options: dict[str, Any] | None = None,
+        workspace_config: dict[str, Any] | None = None,
+    ):
         # Initialize the server.
         esbonio.protocol.handle_message(
             lsp.InitializeRequest(
@@ -88,6 +96,9 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
         if not esbonio.ready.done():
             raise RuntimeError("Server did not initialize")
 
+        # Hack to set the workspace configuration we require.
+        esbonio.configuration._workspace_config = workspace_config or {}
+
         return esbonio, sphinx_manager
 
     yield initialize
@@ -97,12 +108,12 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
 
 @pytest.mark.asyncio
 async def test_get_client(
-    server_manager: ServerManager, demo_workspace: Uri, tmp_path: pathlib.Path
+    server_manager: ServerManagerFactory, demo_workspace: Uri, tmp_path: pathlib.Path
 ):
     """Ensure that we can create a SphinxClient correctly."""
 
     _, manager = await server_manager(
-        dict(
+        init_options=dict(
             esbonio=dict(
                 sphinx=dict(
                     pythonCommand=[sys.executable],
@@ -147,12 +158,12 @@ async def test_get_client(
 
 @pytest.mark.asyncio
 async def test_get_client_with_error(
-    server_manager: ServerManager, demo_workspace: Uri
+    server_manager: ServerManagerFactory, demo_workspace: Uri
 ):
     """Ensure that we correctly handle the case where there is an error with the client."""
 
     _, manager = await server_manager(
-        dict(
+        init_options=dict(
             esbonio=dict(
                 sphinx=dict(
                     pythonCommand=["/not/a/real/env/python"],
@@ -198,13 +209,13 @@ async def test_get_client_with_error(
 
 @pytest.mark.asyncio
 async def test_get_client_with_many_uris(
-    server_manager: ServerManager, demo_workspace: Uri, tmp_path: pathlib.Path
+    server_manager: ServerManagerFactory, demo_workspace: Uri, tmp_path: pathlib.Path
 ):
     """Ensure that when called in rapid succession, with many uris we only create a
     single client instance."""
 
     _, manager = await server_manager(
-        dict(
+        init_options=dict(
             esbonio=dict(
                 sphinx=dict(
                     pythonCommand=[sys.executable],
@@ -251,7 +262,7 @@ async def test_get_client_with_many_uris(
 
 @pytest.mark.asyncio
 async def test_get_client_with_many_uris_in_many_projects(
-    server_manager: ServerManager,
+    server_manager: ServerManagerFactory,
     demo_workspace: Uri,
     docs_workspace: Uri,
     tmp_path: pathlib.Path,
@@ -260,18 +271,44 @@ async def test_get_client_with_many_uris_in_many_projects(
     single client instance for each project."""
 
     _, manager = await server_manager(
-        dict(
-            esbonio=dict(
-                sphinx=dict(
-                    pythonCommand=[sys.executable],
-                    buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
-                    configOverrides={
-                        "html_theme": "alabaster",
-                        "html_theme_options": {},
-                    },
+        workspace_config={
+            str(demo_workspace): dict(
+                esbonio=dict(
+                    sphinx=dict(
+                        pythonCommand=[sys.executable],
+                        buildCommand=[
+                            "sphinx-build",
+                            "-M",
+                            "dirhtml",
+                            ".",
+                            str(tmp_path / "demo"),
+                        ],
+                        configOverrides={
+                            "html_theme": "alabaster",
+                            "html_theme_options": {},
+                        },
+                    ),
                 ),
             ),
-        ),
+            str(docs_workspace): dict(
+                esbonio=dict(
+                    sphinx=dict(
+                        pythonCommand=[sys.executable],
+                        buildCommand=[
+                            "sphinx-build",
+                            "-M",
+                            "dirhtml",
+                            ".",
+                            str(tmp_path / "docs"),
+                        ],
+                        configOverrides={
+                            "html_theme": "alabaster",
+                            "html_theme_options": {},
+                        },
+                    ),
+                ),
+            ),
+        },
     )
 
     src_uris = [Uri.for_file(f) for f in pathlib.Path(demo_workspace).glob("**/*.rst")]
@@ -308,13 +345,13 @@ async def test_get_client_with_many_uris_in_many_projects(
 
 @pytest.mark.asyncio
 async def test_updated_config(
-    server_manager: ServerManager, demo_workspace: Uri, tmp_path: pathlib.Path
+    server_manager: ServerManagerFactory, demo_workspace: Uri, tmp_path: pathlib.Path
 ):
     """Ensure that when the configuration affecting a Sphinx configuration is changed,
     the SphinxClient is recreated."""
 
     server, manager = await server_manager(
-        dict(
+        init_options=dict(
             esbonio=dict(
                 sphinx=dict(
                     pythonCommand=[sys.executable],
