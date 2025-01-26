@@ -46,9 +46,6 @@ class Subscription(Generic[T]):
     spec: type[T]
     """The subscription's class definition."""
 
-    callback: ConfigurationCallback
-    """The subscription's callback."""
-
     context: ConfigurationContext
     """The context for this subscription."""
 
@@ -163,7 +160,9 @@ class Configuration:
         self._file_config: dict[str, dict[str, Any]] = {}
         """The cached configuration coming from configuration files."""
 
-        self._subscriptions: dict[Subscription, Any] = {}
+        self._subscriptions: dict[
+            Subscription, tuple[Any, list[ConfigurationCallback]]
+        ] = {}
         """Subscriptions and their last known value"""
 
     @property
@@ -225,19 +224,33 @@ class Configuration:
         context = ConfigurationContext(
             file_scope=file_scope, workspace_scope=workspace_scope
         )
-        subscription = Subscription(section, spec, callback, context)
+        subscription = Subscription(section, spec, context)
 
-        if subscription in self._subscriptions:
-            self.logger.debug("Ignoring duplicate subscription: %s", subscription)
-            return
+        if new_subscription := subscription not in self._subscriptions:
+            self.logger.debug("Creating new subscription: %s", subscription)
+            self._subscriptions[subscription] = (None, [])
 
-        # We need to wait for the server to be ready before we update any subscriptions
+        value, callbacks = self._subscriptions[subscription]
+        callbacks.append(callback)
+
         if self.server.ready.done():
-            self._notify_subscription(subscription)
+            # If a value exists, notify the new callback immediately
+            if value is not None:
+                change_event = ConfigChangeEvent(
+                    scope=subscription.context.scope,
+                    value=value,
+                    previous=None,
+                )
+                self._invoke_callback(callback, change_event)
 
-        else:
-            callback = partial(self._notify_subscription, subscription)
-            self.server.ready.add_done_callback(callback)
+            else:
+                # Otherwise compute a value and notify all of them
+                self._notify_subscription(subscription)
+
+        elif new_subscription:
+            self.server.ready.add_done_callback(
+                partial(self._notify_subscription, subscription)
+            )
 
     def _notify_subscriptions(self):
         """Notify all subscriptions about configuration changes, if necessary."""
@@ -254,7 +267,7 @@ class Configuration:
            The subscription to check
         """
 
-        previous_value = self._subscriptions.get(subscription)
+        previous_value, callbacks = self._subscriptions[subscription]
         value = self._get_config(
             subscription.section,
             subscription.spec,
@@ -264,7 +277,7 @@ class Configuration:
         # No need to notify if nothing has changed
         self.logger.debug("Previous: %s", previous_value)
         self.logger.debug("Current: %s", value)
-        self._subscriptions[subscription] = value
+        self._subscriptions[subscription] = value, callbacks
 
         if previous_value == value:
             return
@@ -276,16 +289,30 @@ class Configuration:
         )
         self.logger.info("%s", change_event)
 
+        for callback in callbacks:
+            self._invoke_callback(callback, change_event)
+
+    def _invoke_callback(
+        self, callback: ConfigurationCallback, change_event: ConfigChangeEvent
+    ):
+        """Invoke the given callback
+
+        Parameters
+        ----------
+        callback
+           The callback function to invoke
+
+        change_event
+           The change event to send
+        """
         try:
-            ret = subscription.callback(change_event)
+            ret = callback(change_event)
             if inspect.iscoroutine(ret):
                 self.server.run_task(ret)
 
         except Exception:
             self.logger.error(
-                "Error in configuration callback: %s",
-                subscription.callback,
-                exc_info=True,
+                "Error in configuration callback: %s", callback, exc_info=True
             )
 
     def get(self, section: str, spec: type[T], scope: Uri | None = None) -> T:
