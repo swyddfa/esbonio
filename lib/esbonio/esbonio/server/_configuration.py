@@ -5,6 +5,7 @@ import json
 import pathlib
 import re
 import typing
+from functools import partial
 from typing import Generic
 from typing import TypeVar
 
@@ -230,46 +231,62 @@ class Configuration:
             self.logger.debug("Ignoring duplicate subscription: %s", subscription)
             return
 
-        self._subscriptions[subscription] = None
+        # We need to wait for the server to be ready before we update any subscriptions
+        if self.server.ready.done():
+            self._notify_subscription(subscription)
 
-        # Once the server is ready, update all the subscriptions
-        self.server.ready.add_done_callback(self._notify_subscriptions)
+        else:
+            callback = partial(self._notify_subscription, subscription)
+            self.server.ready.add_done_callback(callback)
 
-    def _notify_subscriptions(self, *args):
-        """Notify subscriptions about configuration changes, if necessary."""
+    def _notify_subscriptions(self):
+        """Notify all subscriptions about configuration changes, if necessary."""
 
-        for subscription, previous_value in self._subscriptions.items():
-            value = self._get_config(
-                subscription.section,
-                subscription.spec,
-                subscription.context,
+        for subscription in self._subscriptions:
+            self._notify_subscription(subscription)
+
+    def _notify_subscription(self, subscription: Subscription, *args):
+        """Check a single subscription's value and notify it, if it has changed.
+
+        Parameters
+        ----------
+        subscription
+           The subscription to check
+        """
+
+        previous_value = self._subscriptions.get(subscription)
+        value = self._get_config(
+            subscription.section,
+            subscription.spec,
+            subscription.context,
+        )
+
+        # No need to notify if nothing has changed
+        self.logger.debug("Previous: %s", previous_value)
+        self.logger.debug("Current: %s", value)
+        self._subscriptions[subscription] = value
+
+        if previous_value == value:
+            return
+
+        change_event = ConfigChangeEvent(
+            scope=subscription.context.scope,
+            value=value,
+            previous=previous_value,
+        )
+        self.logger.info("%s", change_event)
+
+        try:
+            ret = subscription.callback(change_event)
+            if inspect.iscoroutine(ret):
+                self.server.run_task(ret)
+
+        except Exception:
+            self.logger.error(
+                "Error in configuration callback: %s",
+                subscription.callback,
+                exc_info=True,
             )
-
-            # No need to notify if nothing has changed
-            self.logger.debug("Previous: %s", previous_value)
-            self.logger.debug("Current: %s", value)
-            if previous_value == value:
-                continue
-
-            self._subscriptions[subscription] = value
-            change_event = ConfigChangeEvent(
-                scope=subscription.context.scope,
-                value=value,
-                previous=previous_value,
-            )
-            self.logger.info("%s", change_event)
-
-            try:
-                ret = subscription.callback(change_event)
-                if inspect.iscoroutine(ret):
-                    self.server.run_task(ret)
-
-            except Exception:
-                self.logger.error(
-                    "Error in configuration callback: %s",
-                    subscription.callback,
-                    exc_info=True,
-                )
 
     def get(self, section: str, spec: type[T], scope: Uri | None = None) -> T:
         """Get the requested configuration section.
