@@ -5,11 +5,11 @@ import inspect
 import pathlib
 import typing
 from collections.abc import Iterable
-from typing import Any
 
 from lsprotocol import types
 
 from . import Uri
+from .feature import DocumentLinkContext
 
 if typing.TYPE_CHECKING:
     from .server import EsbonioLanguageServer
@@ -113,6 +113,35 @@ def _configure_lsp_methods(server: EsbonioLanguageServer):
             items=items,
             kind=types.DocumentDiagnosticReportKind.Full,
         )
+
+    @server.feature(types.TEXT_DOCUMENT_DOCUMENT_LINK)
+    async def on_document_link(
+        ls: EsbonioLanguageServer, params: types.DocumentLinkParams
+    ):
+        uri = params.text_document.uri
+        doc = ls.workspace.get_text_document(uri)
+        context = DocumentLinkContext(
+            uri=Uri.parse(uri), doc=doc, capabilities=ls.client_capabilities
+        )
+        ls.logger.debug("%s", context)
+
+        links = []
+        for cls, feature in ls:
+            name = f"{cls.__name__}"
+
+            try:
+                result = feature.document_link(context)
+                if inspect.isawaitable(result):
+                    result = await result
+
+                if isinstance(result, list):
+                    links.extend(result)
+
+            except Exception:
+                ls.logger.exception("Error in '%s.document_link' handler", name)
+                continue
+
+        return links or None
 
     @server.feature(types.WORKSPACE_DIAGNOSTIC)
     async def on_workspace_diagnostic(
@@ -261,31 +290,6 @@ async def call_features(ls: EsbonioLanguageServer, method: str, *args, **kwargs)
         except Exception:
             name = f"{cls.__name__}"
             ls.logger.error("Error in '%s.%s' handler", name, method, exc_info=True)
-
-
-async def gather_results(ls: EsbonioLanguageServer, method: str, *args, **kwargs):
-    """Call all features, gathering all results into a list."""
-    results: list[Any] = []
-    for cls, feature in ls:
-        try:
-            impl = getattr(feature, method)
-
-            result = impl(*args, **kwargs)
-            if inspect.isawaitable(result):
-                items = await result
-            else:
-                items = result
-
-            if isinstance(items, list):
-                results.extend(items)
-            elif items is not None:
-                results.append(items)
-
-        except Exception:
-            name = f"{cls.__name__}"
-            ls.logger.error("Error in '%s.%s' handler", name, method, exc_info=True)
-
-    return results
 
 
 async def return_first_result(ls: EsbonioLanguageServer, method: str, *args, **kwargs):

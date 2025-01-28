@@ -29,6 +29,21 @@ class DirectiveArgumentProvider:
         """Given a completion context, suggest directive arguments that may be used."""
         return None
 
+    def resolve_argument_link(
+        self, context: server.DocumentLinkContext, argument: str, **kwargs
+    ) -> None | str | tuple[str, str | None]:
+        """Resolve a document link request for the given argument.
+
+        Parameters
+        ----------
+        context
+           The context of the document link request
+
+        argument
+           The argument to resolve the link for
+        """
+        return None
+
 
 class ValuesProvider(DirectiveArgumentProvider):
     """Simple completions provider that supports a static list of values."""

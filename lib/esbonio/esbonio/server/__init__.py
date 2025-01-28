@@ -6,6 +6,7 @@ from .events import EventSource
 from .feature import CompletionConfig
 from .feature import CompletionContext
 from .feature import CompletionTrigger
+from .feature import DocumentLinkContext
 from .feature import LanguageFeature
 from .server import EsbonioLanguageServer
 from .server import EsbonioWorkspace
@@ -19,6 +20,7 @@ __all__ = (
     "CompletionConfig",
     "CompletionContext",
     "CompletionTrigger",
+    "DocumentLinkContext",
     "EsbonioLanguageServer",
     "EsbonioWorkspace",
     "EventSource",

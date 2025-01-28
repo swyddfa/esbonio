@@ -24,6 +24,11 @@ if typing.TYPE_CHECKING:
         Coroutine[Any, Any, Optional[list[types.CompletionItem]]],
     ]
 
+    DocumentLinkResult = Union[
+        Optional[list[types.DocumentLink]],
+        Coroutine[Any, Any, Optional[list[types.DocumentLink]]],
+    ]
+
     DocumentSymbolResult = Union[
         Optional[list[types.DocumentSymbol]],
         Coroutine[Any, Any, Optional[list[types.DocumentSymbol]]],
@@ -84,6 +89,9 @@ class LanguageFeature:
 
     def completion(self, context: CompletionContext) -> CompletionResult:
         """Called when a completion request matches one of the specified triggers."""
+
+    def document_link(self, context: DocumentLinkContext) -> DocumentLinkResult:
+        """Called when a document link request is recieved."""
 
     def document_symbol(
         self, params: types.DocumentSymbolParams
@@ -301,3 +309,29 @@ class CompletionContext:
             return []
 
         return capabilities.value_set
+
+
+@attrs.define
+class DocumentLinkContext:
+    """Captures the context within which a document link request has been made."""
+
+    uri: Uri
+    """The uri for the document in which the completion request was made."""
+
+    doc: TextDocument
+    """The document within which the document link request was made."""
+
+    capabilities: types.ClientCapabilities
+    """The client's capabilities"""
+
+    def __repr__(self):
+        return f"DocumentLinkContext<{self.uri}>"
+
+    @property
+    def tooltip_support(self) -> bool:
+        """Indicates if the client supports tooltips."""
+        return get_capability(
+            self.capabilities,
+            "text_document.document_link.tooltip_support",
+            False,
+        )
