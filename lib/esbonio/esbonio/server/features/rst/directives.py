@@ -106,6 +106,48 @@ class RstDirectives(server.LanguageFeature):
 
         return None
 
+    async def document_link(
+        self, context: server.DocumentLinkContext
+    ) -> list[types.DocumentLink] | None:
+        links = []
+
+        for line, text in enumerate(context.doc.lines):
+            for match in RST_DIRECTIVE.finditer(text):
+                if "::" not in match.group("directive"):
+                    continue
+
+                if not (argument := match.group("argument")):
+                    continue
+
+                name = match.group("name")
+                target = await self.directives.resolve_argument_link(
+                    context, name, argument
+                )
+
+                if target is None:
+                    continue
+
+                tooltip = None
+                if isinstance(target, tuple):
+                    target, tooltip = target
+
+                idx = match.group(0).index(argument)
+                start = match.start() + idx
+                end = start + len(argument)
+
+                links.append(
+                    types.DocumentLink(
+                        target=target,
+                        tooltip=tooltip if context.tooltip_support else None,
+                        range=types.Range(
+                            start=types.Position(line=line, character=start),
+                            end=types.Position(line=line, character=end),
+                        ),
+                    )
+                )
+
+        return links if len(links) > 0 else None
+
 
 def esbonio_setup(esbonio: server.EsbonioLanguageServer, directives: DirectiveFeature):
     rst_directives = RstDirectives(directives, esbonio)
