@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import pathlib
 import typing
 
@@ -70,12 +71,43 @@ class ValuesProvider(DirectiveArgumentProvider):
 class FilepathProvider(DirectiveArgumentProvider):
     """Argument provider for filepaths."""
 
-    def suggest_arguments(  # type: ignore[override]
+    def resolve_argument_link(
+        self,
+        context: server.DocumentLinkContext,
+        argument: str,
+        *,
+        root: str = "/",
+        pattern: str | None = None,
+        **kwargs,
+    ) -> None | str | tuple[str, str | None]:
+        """Given a directive's argument, resolve a link for it if possible.
+
+        Parameters
+        ----------
+        root
+           If the user provides an absolute path, resolve the link relative to this directory.
+        """
+
+        if argument.startswith("/"):
+            # Be sure to remove the leading '/', otherwise `argument` will wipe out the
+            # root when concatenated.
+            path = pathlib.Path(root, argument[1:])
+        else:
+            cwd = pathlib.Path(context.uri).parent
+            path = cwd / argument
+
+        uri = server.Uri.for_file(os.path.normpath(path))
+        tooltip = "Path exists" if path.exists() else "Path does NOT exist"
+
+        return str(uri), tooltip
+
+    def suggest_arguments(
         self,
         context: server.CompletionContext,
         *,
         root: str = "/",
         pattern: str | None = None,
+        **kwargs,
     ) -> list[lsp.CompletionItem]:
         """Given a completion context, suggest files (or folders) that may be used.
 
@@ -92,7 +124,7 @@ class FilepathProvider(DirectiveArgumentProvider):
         list[lsp.CompletionItem]
            A list of completion items to suggest.
         """
-        uri = server.Uri.parse(context.doc.uri)
+        uri = context.uri
         cwd = pathlib.Path(uri).parent
 
         if (partial := context.match.group("argument")) and partial.startswith("/"):
