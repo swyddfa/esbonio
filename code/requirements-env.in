@@ -16,7 +16,7 @@ sphinx==7.*
 
 # Since we advertise MyST support we probably should include it so that it works out of the box.
 # v3 supports most of the Python versions we currently support (missing official 3.13 support though)
-myst-parser==3.*
+myst-parser==4.*
 
 # There's an argument to be made to include some of the most popular themes/extensions here.
 # However, these two packages alone bloat the install size of the extension dramatically!
