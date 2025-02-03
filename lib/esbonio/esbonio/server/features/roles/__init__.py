@@ -8,6 +8,9 @@ from lsprotocol import types as lsp
 from esbonio import server
 from esbonio.sphinx_agent import types
 
+from . import providers
+from .providers import RoleTargetProvider
+
 if typing.TYPE_CHECKING:
     from collections.abc import Coroutine
     from typing import Any
@@ -40,20 +43,6 @@ class RoleProvider:
         return None
 
 
-class RoleTargetProvider:
-    """Base class for role target providers."""
-
-    def suggest_targets(
-        self, context: server.CompletionContext, **kwargs
-    ) -> (
-        list[lsp.CompletionItem]
-        | None
-        | Coroutine[Any, Any, list[lsp.CompletionItem] | None]
-    ):
-        """Givem a completion context, suggest role targets that may be used."""
-        return None
-
-
 class RolesFeature(server.LanguageFeature):
     """Backend support for roles.
 
@@ -77,7 +66,7 @@ class RolesFeature(server.LanguageFeature):
         """
         self._role_providers[id(provider)] = provider
 
-    def add_target_provider(self, name: str, provider: RoleTargetProvider):
+    def add_role_target_provider(self, name: str, provider: RoleTargetProvider):
         """Register a role target provider.
 
         Parameters
@@ -153,6 +142,57 @@ class RolesFeature(server.LanguageFeature):
 
         return None
 
+    async def resolve_target_link(
+        self, context: server.DocumentLinkContext, role_name: str, argument: str
+    ) -> None | str | tuple[str, str | None]:
+        """Given a role target, resolve the corresponding document uri, if possible.
+
+        Parameters
+        ----------
+        context
+           The document link context
+
+        role_name
+           The role to suggest  for
+        """
+        if (role := await self.get_role(context.uri, role_name)) is None:
+            self.logger.debug("Unknown role '%s'", role_name)
+            return None
+
+        if not role.target_providers:
+            return None
+
+        self.logger.debug(
+            "Resolving target link for role: '%s' (%s)",
+            role.name,
+            role.implementation,
+        )
+
+        for spec in role.target_providers:
+            if (provider := self._target_providers.get(spec.name)) is None:
+                self.logger.error("Unknown target provider: '%s'", spec.name)
+                continue
+
+            try:
+                result: None | str | tuple[str, str | None] = None
+
+                aresult = provider.resolve_target_link(context, argument, **spec.kwargs)
+                if inspect.isawaitable(aresult):
+                    result = await aresult
+                else:
+                    result = aresult
+
+                if result is not None:
+                    return result
+
+            except Exception:
+                name = type(provider).__name__
+                self.logger.error(
+                    "Error in '%s.resolve_target_link'", name, exc_info=True
+                )
+
+        return None
+
     async def suggest_targets(
         self, context: server.CompletionContext, role_name: str
     ) -> list[lsp.CompletionItem]:
@@ -186,6 +226,8 @@ class RolesFeature(server.LanguageFeature):
                 aresult = provider.suggest_targets(context, **spec.kwargs)
                 if inspect.isawaitable(aresult):
                     result = await aresult
+                else:
+                    result = aresult
 
                 if result is not None:
                     targets.extend(result)
@@ -199,4 +241,6 @@ class RolesFeature(server.LanguageFeature):
 
 def esbonio_setup(server: server.EsbonioLanguageServer):
     roles = RolesFeature(server)
+    roles.add_role_target_provider("filepath", providers.FilepathProvider(server))
+
     server.add_feature(roles)
