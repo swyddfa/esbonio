@@ -165,6 +165,9 @@ class DirectiveFeature(server.LanguageFeature):
             self.logger.debug("Unknown directive '%s'", directive_name)
             return None
 
+        if not directive.argument_providers:
+            return None
+
         self.logger.debug(
             "Resolving argument link for directive: '%s' (%s)",
             directive.name,
@@ -187,7 +190,8 @@ class DirectiveFeature(server.LanguageFeature):
                 else:
                     result = aresult
 
-                return result
+                if result is not None:
+                    return result
 
             except Exception:
                 name = type(provider).__name__

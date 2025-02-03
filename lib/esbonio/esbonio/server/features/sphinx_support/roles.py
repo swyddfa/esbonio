@@ -175,4 +175,4 @@ def esbonio_setup(
     )
 
     roles_feature.add_role_provider(role_provider)
-    roles_feature.add_target_provider("objects", obj_provider)
+    roles_feature.add_role_target_provider("objects", obj_provider)

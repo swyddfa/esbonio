@@ -132,6 +132,12 @@ async def test_rst_role_completions(
         (":doc:`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
         (":std:doc:`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
         (
+            ":download:`./",
+            {"roles.rst", "directives.rst", "domains", "domains.rst"},
+            set(),
+        ),
+        (":download:`../", {"conf.py", "demo_rst.rst", "demo_myst.md"}, set()),
+        (
             ":class:`",
             LOCAL_PY_CLASSES,
             PYTHON_PY_CLASSES | SPHINX_PY_CLASSES,
@@ -328,6 +334,8 @@ async def test_myst_role_completions(
         ("{std:ref}`", {"genindex", "modindex", "rst-roles-completion"}, set()),
         ("{doc}`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
         ("{std:doc}`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
+        ("{download}`./", {"roles.md", "directives.md"}, set()),
+        ("{download}`../", {"conf.py", "demo_rst.rst", "demo_myst.md"}, set()),
         (
             "{class}`",
             LOCAL_PY_CLASSES,
