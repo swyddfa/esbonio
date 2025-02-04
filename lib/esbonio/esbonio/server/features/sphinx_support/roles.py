@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import os
+import pathlib
 import typing
 
 from lsprotocol import types as lsp
@@ -34,12 +36,51 @@ class ObjectsProvider(roles.RoleTargetProvider):
         self.manager = manager
         self.logger = logger
 
-    async def suggest_targets(  # type: ignore[override]
+    async def resolve_target_link(
+        self,
+        context: server.DocumentLinkContext,
+        target: str,
+        *,
+        obj_types: list[str],
+        projects: list[str] | None,
+        **kwargs,
+    ) -> None | str | tuple[str, str | None]:
+        self.logger.debug("%s %s %s %s", context, target, obj_types, projects)
+
+        if projects is None and "std:doc" in obj_types:
+            # Other roles like :ref: do not make sense as the ``textDocument/documentLink``
+            # api doesn't support specific locations in a file like goto definition does.
+            return await self._resolve_doc_link(context, target)
+
+        return super().resolve_target_link(context, target, **kwargs)
+
+    async def _resolve_doc_link(
+        self, context: server.DocumentLinkContext, target: str
+    ) -> None | str | tuple[str, str | None]:
+        """Resolve ``textDocument/documentLink`` requests for local ``:doc:`` references."""
+
+        if (project := self.manager.get_project(context.uri)) is None:
+            return None
+
+        if target.startswith("/"):
+            docname = target[1:]
+
+        elif (result := await project.uri_to_docname(context.uri)) is None:
+            self.logger.debug("Unable to find docname for uri: %r", context.uri)
+            return None
+
+        else:
+            docname = os.path.normpath(pathlib.Path(result).parent / target)
+
+        return await project.docname_to_uri(docname)
+
+    async def suggest_targets(
         self,
         context: server.CompletionContext,
         *,
         obj_types: list[str],
         projects: list[str] | None,
+        **kwargs,
     ) -> list[lsp.CompletionItem] | None:
         #  TODO: Handle .. currentmodule
 
