@@ -1,3 +1,12 @@
+## v0.96.2 - 2025-02-08
+
+### Misc
+
+- Change the default logging level to ``info``
+
+  Update bundled version of the language server to `1.0.0b10` ([#964](https://github.com/swyddfa/esbonio/issues/964))
+
+
 ## v0.96.1 - 2025-01-14
 
 ### Enhancements
