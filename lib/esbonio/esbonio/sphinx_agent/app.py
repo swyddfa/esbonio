@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import logging
 import pathlib
+import sys
 import typing
 
 from sphinx.application import Sphinx as _Sphinx
@@ -287,11 +288,16 @@ def try_run_init(app: Sphinx, init_fn, *args, **kwargs):
         init_fn(*args, **kwargs)
     except ThemeError as exc:
         # Fallback to the default theme.
-        kwargs.setdefault("confoverrides", {})["html_theme"] = "alabaster"
+        print(f"ThemeError: {exc}", file=sys.stderr)  # noqa: T201
+
+        fallback_theme = "alabaster"
+        kwargs.setdefault("confoverrides", {})["html_theme"] = fallback_theme
         kwargs["confoverrides"]["html_theme_options"] = {}
 
         app._esbonio_retry_count += 1
         report_theme_error(app, exc)
+
+        print(f"Retrying with html_theme = {fallback_theme!r}\n", file=sys.stderr)  # noqa: T201
         try_run_init(app, init_fn, *args, **kwargs)
     except Exception:
         logger.exception("Unable to initialize Sphinx")
