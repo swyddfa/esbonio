@@ -32,7 +32,12 @@ class RoleTargetProvider:
 
     def resolve_target_link(
         self, context: server.DocumentLinkContext, target: str, **kwargs
-    ) -> None | str | tuple[str, str | None]:
+    ) -> (
+        str
+        | None
+        | tuple[str, str | None]
+        | Coroutine[Any, Any, str | None | tuple[str, str | None]]
+    ):
         """Resolve a document link request for the given role target.
 
         Parameters
