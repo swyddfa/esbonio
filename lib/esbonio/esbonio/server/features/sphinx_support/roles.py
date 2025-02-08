@@ -142,11 +142,18 @@ class ObjectsProvider(roles.RoleTargetProvider):
 
         for name, display, type_ in await cursor.fetchall():
             kind = TARGET_KINDS.get(type_, lsp.CompletionItemKind.Reference)
+
+            insert_text = None
+            if type_ == "doc":
+                # Insert an absolute reference, this way the suggestion is always correct.
+                insert_text = f"/{name}"
+
             items.append(
                 lsp.CompletionItem(
                     label=name,
                     detail=None if display == "-" else display,
                     kind=kind,
+                    insert_text=insert_text,
                 ),
             )
 
