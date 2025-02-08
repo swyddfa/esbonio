@@ -1,12 +1,33 @@
 # Roles
 
-The language server has extensive support for roles.
+This page provides an overview of the features Esbonio provides to make working with {external+myst:std:ref}`MyST Roles <syntax/roles>` easier.
 
 (myst-roles-completion)=
 ## Completion
 
-The most obvious feature is the completion suggestions, try inserting a `{ref}` role on the next line that links to the ``Completion`` heading above.
+The most obvious feature is the completion suggestions, try inserting a `{ref}` role on the next line that links to the `myst-roles-completion` label defined above.
 
 % Add your reference here...
 
-Notice how VSCode automatically presented you with a list of all the directives you can use in this Sphinx project?
+In addition to `:ref:` labels, `esbonio` supports suggesting values for many other types of target
+
+- Local docnames for the {external:rst:role}`doc` role
+- Local filenames for the {external:rst:role}`download` role
+- Python objects for roles like {external:rst:role}`py:class`, {external:rst:role}`py:func` and more!
+- Targets defined in *other* Sphinx documentation sites for the {external:rst:role}`external` role!
+  See {external:std:ref}`ext-intersphinx` for more details
+
+Feel free to experiment with each of the roles mentioned above!
+
+## Document Links
+
+Many text editors will automatically detect links to webpages e.g. https://sphinx-doc.org and make them clickable.
+The [textDocument/documentLink](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentLink) request allows language servers to do the same.
+
+When it makes sense to, `esbonio` will add clickable links to many role targets, including
+
+- {doc}`Local docname references </rst/roles>`
+- Local files {download}`./roles.md`
+- Intersphinx references e.g. {external:std:ref}`logging-exceptions`
+
+See for yourself by pressing `Ctrl` +Clicking one of the above references
