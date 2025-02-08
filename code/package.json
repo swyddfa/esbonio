@@ -262,7 +262,7 @@
                     "esbonio.logging.level": {
                         "scope": "window",
                         "type": "string",
-                        "default": "error",
+                        "default": "info",
                         "enum": [
                             "critical",
                             "fatal",
