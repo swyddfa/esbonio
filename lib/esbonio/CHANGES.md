@@ -1,3 +1,35 @@
+## v1.0.0b10 - 2025-02-08
+
+### Features
+
+- [`textDocument/documentLink`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentLink) requests are once again supported for the following roles are directives
+
+  - `.. image::`
+  - `.. figure::`
+  - `.. include::`
+  - `.. literainclude::`
+  - `:download:`
+  - `:doc:`
+  - All `:external:*` roles (i.e. intersphinx references)
+
+  Both reStructuredText and MyST syntax is supported.
+
+  ([#956](https://github.com/swyddfa/esbonio/issues/956))
+
+### Enhancements
+
+- Filepath completion suggestions are now provided for the `:download:` role ([#956](https://github.com/swyddfa/esbonio/issues/956))
+
+### Fixes
+
+- The preview should no longer lose its scroll state when reloading a page that was opened at a specific anchor tag (e.g. `#heading-name`) ([#788](https://github.com/swyddfa/esbonio/issues/788))
+- The server should now ensure that all `window/workDoneProgress` tokens are cleaned up ([#802](https://github.com/swyddfa/esbonio/issues/802))
+- The configuration system should now produce a lot less log noise ([#904](https://github.com/swyddfa/esbonio/issues/904))
+- The sphinx agent will now directly inject the `webview.js` script into the page alongside the line number markers.
+  This means features like synchronised scrolling should continue to work, even if the current theme ignores the JS files provided by Sphinx. ([#942](https://github.com/swyddfa/esbonio/issues/942))
+- When expanding the `${venv}` config variable, the server should no longer accidentally follow symlinks back to the base Python installation ([#945](https://github.com/swyddfa/esbonio/issues/945))
+
+
 ## v1.0.0b9 - 2025-01-14
 
 ### Features
