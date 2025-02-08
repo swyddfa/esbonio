@@ -39,6 +39,30 @@ class Project:
     def load_as(self, o: str, t: type[T]) -> T:
         return self.converter.structure(json.loads(o), t)
 
+    async def uri_to_docname(self, uri: str | Uri) -> str | None:
+        """Given a uri, look up the corresponding Sphinx docname."""
+        db = await self.get_db()
+
+        query = "SELECT docname FROM files WHERE uri = ?"
+        cursor = await db.execute(query, (str(uri),))
+
+        if (result := await cursor.fetchone()) is None:
+            return None
+
+        return result[0]
+
+    async def docname_to_uri(self, docname: str) -> str | None:
+        """Given a Sphinx docname, lookup the corresponding uri"""
+        db = await self.get_db()
+
+        query = "SELECT uri FROM files WHERE docname = ?"
+        cursor = await db.execute(query, (docname,))
+
+        if (result := await cursor.fetchone()) is None:
+            return None
+
+        return result[0]
+
     async def get_src_uris(self) -> list[Uri]:
         """Return all known source uris."""
         db = await self.get_db()

@@ -132,6 +132,12 @@ async def test_rst_role_completions(
         (":doc:`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
         (":std:doc:`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
         (
+            ":download:`./",
+            {"roles.rst", "directives.rst", "domains", "domains.rst"},
+            set(),
+        ),
+        (":download:`../", {"conf.py", "demo_rst.rst", "demo_myst.md"}, set()),
+        (
             ":class:`",
             LOCAL_PY_CLASSES,
             PYTHON_PY_CLASSES | SPHINX_PY_CLASSES,
@@ -328,6 +334,8 @@ async def test_myst_role_completions(
         ("{std:ref}`", {"genindex", "modindex", "rst-roles-completion"}, set()),
         ("{doc}`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
         ("{std:doc}`", {"demo_myst", "demo_rst", "rst/domains/python"}, set()),
+        ("{download}`./", {"roles.md", "directives.md"}, set()),
+        ("{download}`../", {"conf.py", "demo_rst.rst", "demo_myst.md"}, set()),
         (
             "{class}`",
             LOCAL_PY_CLASSES,
@@ -427,3 +435,206 @@ async def test_myst_role_target_completions(
 
         assert expected == items & expected
         assert set() == items & unexpected
+
+
+@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.parametrize(
+    "filename,expected",
+    [
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            [
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#rst-roles",
+                    tooltip="Roles - Sphinx v",  # don't check for a precise version!
+                    range=types.Range(
+                        start=types.Position(line=3, character=121),
+                        end=types.Position(line=3, character=130),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/referencing.html#role-doc",
+                    tooltip="doc - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=16, character=45),
+                        end=types.Position(line=16, character=48),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/referencing.html#role-download",
+                    tooltip="download - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=17, character=46),
+                        end=types.Position(line=17, character=54),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/domains/python.html#role-py-class",
+                    tooltip="py:class - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=18, character=52),
+                        end=types.Position(line=18, character=60),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/domains/python.html#role-py-func",
+                    tooltip="py:func - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=18, character=83),
+                        end=types.Position(line=18, character=90),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#role-external",
+                    tooltip="external - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=19, character=84),
+                        end=types.Position(line=19, character=92),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#ext-intersphinx",
+                    tooltip="sphinx.ext.intersphinx – Link to other projects’ documentation - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=20, character=25),
+                        end=types.Position(line=20, character=40),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=32, character=34),
+                        end=types.Position(line=32, character=45),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="${ROOT}/rst/roles.rst",
+                    tooltip="Path exists",
+                    range=types.Range(
+                        start=types.Position(line=33, character=25),
+                        end=types.Position(line=33, character=36),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://docs.python.org/3/howto/logging.html#logging-exceptions",
+                    tooltip="Exceptions raised during logging - Python v",
+                    range=types.Range(
+                        start=types.Position(line=34, character=49),
+                        end=types.Position(line=34, character=67),
+                    ),
+                ),
+            ],
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            [
+                types.DocumentLink(
+                    target="https://myst-parser.readthedocs.io/en/latest/syntax/roles-and-directives.html#syntax-roles",
+                    tooltip="Roles - an in-line extension point - MyST Parser v",  # don't check for a precise version!
+                    range=types.Range(
+                        start=types.Position(line=2, character=121),
+                        end=types.Position(line=2, character=133),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/referencing.html#role-doc",
+                    tooltip="doc - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=13, character=45),
+                        end=types.Position(line=13, character=48),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/referencing.html#role-download",
+                    tooltip="download - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=14, character=46),
+                        end=types.Position(line=14, character=54),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/domains/python.html#role-py-class",
+                    tooltip="py:class - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=15, character=52),
+                        end=types.Position(line=15, character=60),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/domains/python.html#role-py-func",
+                    tooltip="py:func - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=15, character=83),
+                        end=types.Position(line=15, character=90),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#role-external",
+                    tooltip="external - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=16, character=84),
+                        end=types.Position(line=16, character=92),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/extensions/intersphinx.html#ext-intersphinx",
+                    tooltip="sphinx.ext.intersphinx – Link to other projects’ documentation - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=17, character=25),
+                        end=types.Position(line=17, character=40),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="${ROOT}/rst/roles.rst",
+                    range=types.Range(
+                        start=types.Position(line=28, character=34),
+                        end=types.Position(line=28, character=44),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="${ROOT}/myst/roles.md",
+                    tooltip="Path exists",
+                    range=types.Range(
+                        start=types.Position(line=29, character=25),
+                        end=types.Position(line=29, character=35),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://docs.python.org/3/howto/logging.html#logging-exceptions",
+                    tooltip="Exceptions raised during logging - Python v",
+                    range=types.Range(
+                        start=types.Position(line=30, character=49),
+                        end=types.Position(line=30, character=67),
+                    ),
+                ),
+            ],
+        ),
+    ],
+)
+async def test_role_document_links(
+    client: LanguageClient,
+    uri_for,
+    filename: list[str],
+    expected: list[types.DocumentLink],
+):
+    """Ensure that we handle ``textDocument/documentLink`` requests correctly."""
+
+    root_uri = str(uri_for("workspaces", "demo"))
+    test_uri = uri_for(*filename)
+
+    links = await client.text_document_document_link_async(
+        types.DocumentLinkParams(
+            text_document=types.TextDocumentIdentifier(uri=str(test_uri))
+        )
+    )
+
+    assert len(links) == len(expected)
+
+    for link, actual in zip(expected, links):
+        assert link.range == actual.range
+
+        target = link.target.replace("${ROOT}", root_uri)
+        assert target == actual.target
+
+        if link.tooltip is not None:
+            assert actual.tooltip.startswith(link.tooltip)

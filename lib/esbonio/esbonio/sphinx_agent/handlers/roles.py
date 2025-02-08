@@ -72,6 +72,8 @@ def index_roles(app: Sphinx):
 
         roles[name] = types.Role(name, get_impl_name(role))
 
+    _add_providers(app, roles)
+
     app.esbonio.db.ensure_table(ROLES_TABLE)
     app.esbonio.db.clear_table(ROLES_TABLE)
     app.esbonio.db.insert_values(
@@ -82,3 +84,13 @@ def index_roles(app: Sphinx):
 def setup(app: Sphinx):
     # Ensure that this runs as late as possibile
     app.connect("builder-inited", index_roles, priority=999)
+
+
+def _add_providers(app: Sphinx, roles: dict[str, types.Role]):
+    """Add provider definitions to built in role types we know about."""
+
+    filepath_provider = types.Role.TargetProvider("filepath", {"root": app.srcdir})
+
+    for name in ["download"]:
+        if (role := roles.get(name)) is not None:
+            role.target_providers = [filepath_provider]

@@ -148,6 +148,59 @@ class DirectiveFeature(server.LanguageFeature):
 
         return None
 
+    async def resolve_argument_link(
+        self, context: server.DocumentLinkContext, directive_name: str, argument: str
+    ) -> None | str | tuple[str, str | None]:
+        """Suggest directive arguments that may be used, given a completion context.
+
+        Parameters
+        ----------
+        context
+           The completion context
+
+        directive_name
+           The directive to suggest arguments for
+        """
+        if (directive := await self.get_directive(context.uri, directive_name)) is None:
+            self.logger.debug("Unknown directive '%s'", directive_name)
+            return None
+
+        if not directive.argument_providers:
+            return None
+
+        self.logger.debug(
+            "Resolving argument link for directive: '%s' (%s)",
+            directive.name,
+            directive.implementation,
+        )
+
+        for spec in directive.argument_providers:
+            if (provider := self._argument_providers.get(spec.name)) is None:
+                self.logger.error("Unknown argument provider: '%s'", spec.name)
+                continue
+
+            try:
+                result: None | str | tuple[str, str | None] = None
+
+                aresult = provider.resolve_argument_link(
+                    context, argument, **spec.kwargs
+                )
+                if inspect.isawaitable(aresult):
+                    result = await aresult
+                else:
+                    result = aresult
+
+                if result is not None:
+                    return result
+
+            except Exception:
+                name = type(provider).__name__
+                self.logger.error(
+                    "Error in '%s.resolve_argument_link'", name, exc_info=True
+                )
+
+        return None
+
     async def suggest_arguments(
         self, context: server.CompletionContext, directive_name: str
     ) -> list[lsp.CompletionItem]:

@@ -1,7 +1,7 @@
 Directives
 ==========
 
-The language server has extensive support for directives.
+This page provides an overview of the features Esbonio provides to make working with reStructuredText :external:std:ref:`rst-directives` easier.
 
 Completion
 ----------
@@ -10,17 +10,11 @@ The most obvious feature is the completion suggestions, try inserting a ``.. not
 
 .. Add your note here...
 
-Notice how VSCode automatically presented you with a list of all the directives you can use in this Sphinx project?
-
-Arguments
-^^^^^^^^^
-
-While directive names Just Work\ :sup:`TM`, Esbonio is only able to offer suggestions for specific argument types.
-By default Esbonio can provide suggestions for
+In addition to directive names, Esbonio supports suggesting values many kinds of arguments given to a directive, including.
 
 **Filepaths**
 
-Completing filepath arguments is supported for the following directives
+Completing local filepaths is supported for
 
 - `figure <https://docutils.sourceforge.io/docs/ref/rst/directives.html#figure>`__
 - `image <https://docutils.sourceforge.io/docs/ref/rst/directives.html#image>`__
@@ -31,7 +25,8 @@ Completing filepath arguments is supported for the following directives
 
 **Pygments Lexers**
 
-Sphinx uses the `pygments <https://pygments.org/>`__ library for its syntax highlighting, Esbonio will offer the names of available lexers as suggestions for the following directives.
+Sphinx uses the `pygments <https://pygments.org/>`__ library for its syntax highlighting.
+Esbonio can offer the names of available lexers as suggestions for the following directives.
 
 - :external+sphinx:rst:dir:`code`
 - :external+sphinx:rst:dir:`code-block`
@@ -39,3 +34,17 @@ Sphinx uses the `pygments <https://pygments.org/>`__ library for its syntax high
 - :external+sphinx:rst:dir:`sourcecode`
 
 .. Try inserting a code block on the next line...
+
+Document Links
+--------------
+
+Many text editors will automatically detect links to webpages e.g. https://sphinx-doc.org and make them clickable.
+The `textDocument/documentLink <https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#textDocument_documentLink>`__ request allows language servers to do the same.
+
+When it makes sense to, ``esbonio`` will add clickable links to many directive arguments, including
+
+- Local files
+
+  .. code-block:: rst
+
+     .. include:: ./directives.rst

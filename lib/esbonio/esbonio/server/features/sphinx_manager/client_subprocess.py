@@ -267,13 +267,17 @@ class SubprocessSphinxClient(JsonRPCClient):
             content_overrides=content_overrides or {},
         )
 
-        self._building = True
+        self._set_state(ClientState.Building)
         try:
             result = await self.protocol.send_request_async("sphinx/build", params)
-        finally:
-            self._building = False
+            self._set_state(ClientState.Running)
 
-        return result
+            return result
+        except Exception as exc:
+            self.exception = exc
+            self._set_state(ClientState.Errored)
+
+            raise
 
 
 async def forward_stderr(server: asyncio.subprocess.Process):

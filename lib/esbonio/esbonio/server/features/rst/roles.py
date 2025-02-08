@@ -124,6 +124,48 @@ class RstRoles(server.LanguageFeature):
 
         return None
 
+    async def document_link(
+        self, context: server.DocumentLinkContext
+    ) -> list[types.DocumentLink] | None:
+        links = []
+
+        for line, text in enumerate(context.doc.lines):
+            for match in RST_ROLE.finditer(text):
+                if not (target := match.group("label")):
+                    continue
+
+                name = match.group("name")
+                link_target = await self.roles.resolve_target_link(
+                    context, name, target
+                )
+
+                if link_target is None:
+                    continue
+
+                tooltip = None
+                if isinstance(link_target, tuple):
+                    link_target, tooltip = link_target
+
+                char = "<" if match.group("alias") is not None else "`"
+                search = f"{char}{target}"
+
+                idx = match.group(0).index(search) + 1
+                start = match.start() + idx
+                end = start + len(target)
+
+                links.append(
+                    types.DocumentLink(
+                        target=link_target,
+                        tooltip=tooltip if context.tooltip_support else None,
+                        range=types.Range(
+                            start=types.Position(line=line, character=start),
+                            end=types.Position(line=line, character=end),
+                        ),
+                    )
+                )
+
+        return links if len(links) > 0 else None
+
 
 def esbonio_setup(esbonio: server.EsbonioLanguageServer, roles: RolesFeature):
     rst_roles = RstRoles(roles, esbonio)

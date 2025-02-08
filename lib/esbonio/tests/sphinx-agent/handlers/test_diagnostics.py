@@ -47,7 +47,7 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
     index_uri = uri_for("workspaces/demo/index.rst")
     conf_uri = uri_for("workspaces/demo/conf.py")
 
-    message = "image file not readable: not-an-image.png"
+    message = "undefined label: 'not-a-real-reference'"
 
     expected = {
         index_uri: [
@@ -73,8 +73,8 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
                 message="no theme named 'furo' found",
                 severity=types.DiagnosticSeverity.Error,
                 range=types.Range(
-                    start=types.Position(line=41, character=0),
-                    end=types.Position(line=41, character=19),
+                    start=types.Position(line=42, character=0),
+                    end=types.Position(line=42, character=19),
                 ),
             ),
         ],
@@ -93,8 +93,8 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
                 message=message,
                 severity=types.DiagnosticSeverity.Warning,
                 range=types.Range(
-                    start=types.Position(line=0, character=0),
-                    end=types.Position(line=1, character=0),
+                    start=types.Position(line=4, character=0),
+                    end=types.Position(line=5, character=0),
                 ),
             ),
         ],

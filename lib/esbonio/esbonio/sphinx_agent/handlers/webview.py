@@ -15,6 +15,7 @@ if typing.TYPE_CHECKING:
 
 
 STATIC_DIR = (pathlib.Path(__file__).parent.parent / "static").resolve()
+WEBVIEW_JS = (STATIC_DIR / "webview.js").read_text()
 ALLOWED_MODULES = {"docutils.nodes", "sphinx.addnodes"}
 
 
@@ -60,6 +61,13 @@ def visit_source_locations(self, node):
 
     self.body.append("</div>")
 
+    # Inline the JS code we need to enable sync scrolling.
+    #
+    # Yes this "bloats" every page in the generated docs, but is generally more robust
+    # see: https://github.com/swyddfa/esbonio/issues/810
+    #      https://github.com/swyddfa/esbonio/issues/942
+    self.body.append(f"<script>{WEBVIEW_JS}</script>")
+
 
 def depart_source_locations(self, node): ...
 
@@ -98,13 +106,6 @@ class SourceLocationTransform(Transform):
 
 
 def setup(app: Sphinx):
-    # Inline the JS code we need to enable sync scrolling.
-    #
-    # Yes this "bloats" every page in the generated docs, but is generally more robust
-    # see: https://github.com/swyddfa/esbonio/issues/810
-    webview_js = STATIC_DIR / "webview.js"
-    app.add_js_file(None, body=webview_js.read_text())
-
     app.add_node(
         source_locations, html=(visit_source_locations, depart_source_locations)
     )

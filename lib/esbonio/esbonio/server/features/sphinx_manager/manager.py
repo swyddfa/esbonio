@@ -81,7 +81,7 @@ class SphinxBuildTriggers:
     on_save: bool = attrs.field(default=True)
     """Trigger a build when a file is saved."""
 
-    on_change: bool | float = attrs.field(default=2.0)
+    on_change: Union[bool, float] = attrs.field(default=2.0)
     """Trigger a build each time a file has changed, with a configurable delay."""
 
 
@@ -220,8 +220,8 @@ class SphinxManager(server.LanguageFeature):
         if client is None:
             return
 
-        if client.state != ClientState.Running:
-            self.logger.debug("Skipping build, state is: %s", client.state)
+        if client.state not in {ClientState.Running}:
+            self.logger.debug("Skipping build, client is %s", client.state)
             return
 
         if (project := self.project_manager.get_project(uri)) is None:
@@ -240,20 +240,17 @@ class SphinxManager(server.LanguageFeature):
             if saved_version < doc_version:
                 content_overrides[str(src_uri)] = doc.source
 
-        await self.start_progress(client)
-
         try:
             result = await client.build(content_overrides=content_overrides)
+
+            # Notify listeners.
+            self._events.trigger("build", client, result)
+
         except Exception as exc:
             self.server.window_show_message(
                 lsp.ShowMessageParams(message=f"{exc}", type=lsp.MessageType.Error)
             )
             return
-        finally:
-            self.stop_progress(client)
-
-        # Notify listeners.
-        self._events.trigger("build", client, result)
 
     async def restart_client(self, client_id: str):
         """Restart the client with the given id"""
@@ -368,6 +365,12 @@ class SphinxManager(server.LanguageFeature):
                     AppCreatedNotification(id=client.id, application=sphinx_info),
                 )
 
+        if old_state == ClientState.Building:
+            self.stop_progress(client)
+
+        if new_state == ClientState.Building:
+            self.server.run_task(self.start_progress(client))
+
         if new_state == ClientState.Errored:
             error = ""
             detail = ""
@@ -389,6 +392,11 @@ class SphinxManager(server.LanguageFeature):
     async def start_progress(self, client: SphinxClient):
         """Start reporting work done progress for the given client."""
 
+        # Make sure any existing progress tokens are cleaned up
+        if (existing := self._progress_tokens.get(client.id)) is not None:
+            self.logger.warning("Overwriting existing progress token: %r!", existing)
+            self.stop_progress(client)
+
         token = str(uuid.uuid4())
         self.logger.debug("Starting progress: '%s'", token)
 
@@ -408,6 +416,7 @@ class SphinxManager(server.LanguageFeature):
         if (token := self._progress_tokens.pop(client.id, None)) is None:
             return
 
+        self.logger.debug("Ending progress: %r", token)
         self.server.work_done_progress.end(
             token, lsp.WorkDoneProgressEnd(message="Finished")
         )

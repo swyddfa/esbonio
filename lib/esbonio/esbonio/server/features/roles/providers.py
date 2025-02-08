@@ -13,68 +13,51 @@ if typing.TYPE_CHECKING:
     from typing import Any
 
 
-class DirectiveArgumentProvider:
-    """Base class for directive argument providers."""
+class RoleTargetProvider:
+    """Base class for role target providers."""
 
     def __init__(self, esbonio: server.EsbonioLanguageServer):
         self.converter = esbonio.converter
         self.logger = esbonio.logger.getChild(self.__class__.__name__)
 
-    def suggest_arguments(
+    def suggest_targets(
         self, context: server.CompletionContext, **kwargs
     ) -> (
         list[lsp.CompletionItem]
         | None
         | Coroutine[Any, Any, list[lsp.CompletionItem] | None]
     ):
-        """Given a completion context, suggest directive arguments that may be used."""
+        """Givem a completion context, suggest role targets that may be used."""
         return None
 
-    def resolve_argument_link(
-        self, context: server.DocumentLinkContext, argument: str, **kwargs
-    ) -> None | str | tuple[str, str | None]:
-        """Resolve a document link request for the given argument.
+    def resolve_target_link(
+        self, context: server.DocumentLinkContext, target: str, **kwargs
+    ) -> (
+        str
+        | None
+        | tuple[str, str | None]
+        | Coroutine[Any, Any, str | None | tuple[str, str | None]]
+    ):
+        """Resolve a document link request for the given role target.
 
         Parameters
         ----------
         context
            The context of the document link request
 
-        argument
-           The argument to resolve the link for
+        target
+           The target to resolve the link for
         """
         return None
 
 
-class ValuesProvider(DirectiveArgumentProvider):
-    """Simple completions provider that supports a static list of values."""
+class FilepathProvider(RoleTargetProvider):
+    """Target provider for filepaths."""
 
-    def suggest_arguments(  # type: ignore[override]
-        self, context: server.CompletionContext, *, values: list[str | dict[str, Any]]
-    ) -> list[lsp.CompletionItem]:
-        """Given a completion context, suggest directive arguments that may be used."""
-        result: list[lsp.CompletionItem] = []
-
-        for value in values:
-            if isinstance(value, str):
-                result.append(lsp.CompletionItem(label=value))
-                continue
-
-            try:
-                result.append(self.converter.structure(value, lsp.CompletionItem))
-            except Exception:
-                self.logger.exception("Unable to create CompletionItem")
-
-        return result
-
-
-class FilepathProvider(DirectiveArgumentProvider):
-    """Argument provider for filepaths."""
-
-    def resolve_argument_link(
+    def resolve_target_link(
         self,
         context: server.DocumentLinkContext,
-        argument: str,
+        target: str,
         *,
         root: str = "/",
         pattern: str | None = None,
@@ -88,20 +71,20 @@ class FilepathProvider(DirectiveArgumentProvider):
            If the user provides an absolute path, resolve the link relative to this directory.
         """
 
-        if argument.startswith("/"):
-            # Be sure to remove the leading '/', otherwise `argument` will wipe out the
+        if target.startswith("/"):
+            # Be sure to remove the leading '/', otherwise `target` will wipe out the
             # root when concatenated.
-            path = pathlib.Path(root, argument[1:])
+            path = pathlib.Path(root, target[1:])
         else:
             cwd = pathlib.Path(context.uri).parent
-            path = cwd / argument
+            path = cwd / target
 
         uri = server.Uri.for_file(os.path.normpath(path))
         tooltip = "Path exists" if path.exists() else "Path does NOT exist"
 
         return str(uri), tooltip
 
-    def suggest_arguments(
+    def suggest_targets(
         self,
         context: server.CompletionContext,
         *,
@@ -127,7 +110,7 @@ class FilepathProvider(DirectiveArgumentProvider):
         uri = context.uri
         cwd = pathlib.Path(uri).parent
 
-        if (partial := context.match.group("argument")) and partial.startswith("/"):
+        if (partial := context.match.group("label")) and partial.startswith("/"):
             candidate_dir = pathlib.Path(root)
 
             # Be sure to remove the leading '/', otherwise partial will wipe out the
@@ -157,7 +140,6 @@ class FilepathProvider(DirectiveArgumentProvider):
         Also bear in mind that this function must play nice with both role target and
         directive argument completions.
         """
-
         new_text = f"{path.name}"
         kind = (
             lsp.CompletionItemKind.Folder
@@ -165,32 +147,35 @@ class FilepathProvider(DirectiveArgumentProvider):
             else lsp.CompletionItemKind.File
         )
 
-        if (start := self._find_start_char(context)) == -1:
-            insert_text = new_text
-            filter_text = None
-            text_edit = None
-        else:
-            start += 1
-            _, end = context.match.span()
-            prefix = context.match.group(0)[start:]
+        # TODO: Mkae this work
+        # if (start := self._find_start_char(context)) == -1:
+        #     insert_text = new_text
+        #     filter_text = None
+        #     text_edit = None
+        # else:
+        #     start += 1
+        #     _, end = context.match.span()
+        #     prefix = context.match.group(0)[start:end]
 
-            insert_text = None
-            filter_text = f"{prefix}{new_text}"  # Needed so VSCode will actually show the results.
+        #     self.logger.debug(f"{context.match.group(0)}, {start=}, {end=}, {prefix=}")
 
-            text_edit = lsp.TextEdit(
-                range=lsp.Range(
-                    start=lsp.Position(line=context.position.line, character=start),
-                    end=lsp.Position(line=context.position.line, character=end),
-                ),
-                new_text=new_text,
-            )
+        #     insert_text = None
+        #     filter_text = f"{prefix}{new_text}"  # Needed so VSCode will actually show the results.
+
+        #     text_edit = lsp.TextEdit(
+        #         range=lsp.Range(
+        #             start=lsp.Position(line=context.position.line, character=start),
+        #             end=lsp.Position(line=context.position.line, character=end),
+        #         ),
+        #         new_text=new_text,
+        #     )
 
         return lsp.CompletionItem(
             label=new_text,
             kind=kind,
-            insert_text=insert_text,
-            filter_text=filter_text,
-            text_edit=text_edit,
+            # insert_text=insert_text,
+            # filter_text=filter_text,
+            # text_edit=text_edit,
         )
 
     def _find_start_char(self, context: server.CompletionContext) -> int:
