@@ -4,6 +4,10 @@
 
 - Expose the `esbonio.sphinx.buildTriggers` configuration option ([#935](https://github.com/swyddfa/esbonio/issues/935))
 
+### Misc
+
+- Update bundled version of the language server to `1.0.0b9` ([#944](https://github.com/swyddfa/esbonio/issues/944))
+
 
 ## v0.96.0 - 2024-10-20
 
