@@ -27,10 +27,8 @@ async def test_rst_document_diagnostic(client: LanguageClient, uri_for):
 
     assert report.kind == "full"
 
-    if sphinx_version[0] >= 8:
-        message = "image file not readable: not-an-image.png [image.not_readable]"
-    else:
-        message = "image file not readable: not-an-image.png"
+    category = " [ref.ref]" if sphinx_version[0] >= 8 else ""
+    message = f"undefined label: 'not-a-real-reference'{category}"
 
     # We will only check the diagnostic message, full details will be handled by other
     # test cases.
@@ -54,10 +52,8 @@ async def test_myst_document_diagnostic(client: LanguageClient, uri_for):
 
     assert report.kind == "full"
 
-    if sphinx_version[0] >= 8:
-        message = "image file not readable: not-an-image.png [image.not_readable]"
-    else:
-        message = "image file not readable: not-an-image.png"
+    category = " [ref.ref]" if sphinx_version[0] >= 8 else ""
+    message = f"undefined label: 'not-a-real-reference'{category}"
 
     # We will only check the diagnostic message, full details will be handled by other
     # test cases.
@@ -74,10 +70,8 @@ async def test_workspace_diagnostic(client: LanguageClient, uri_for):
         types.WorkspaceDiagnosticParams(previous_result_ids=[])
     )
 
-    if sphinx_version[0] >= 8:
-        message = "image file not readable: not-an-image.png [image.not_readable]"
-    else:
-        message = "image file not readable: not-an-image.png"
+    category = " [ref.ref]" if sphinx_version[0] >= 8 else ""
+    message = f"undefined label: 'not-a-real-reference'{category}"
 
     workspace_uri = uri_for("workspaces", "demo")
     expected = {
@@ -180,10 +174,8 @@ async def test_publish_diagnostics(pub_client: LanguageClient, uri_for):
     """Ensure that the server publishes the diagnostics it finds"""
     workspace_uri = uri_for("workspaces", "demo")
 
-    if sphinx_version[0] >= 8:
-        message = "image file not readable: not-an-image.png [image.not_readable]"
-    else:
-        message = "image file not readable: not-an-image.png"
+    category = " [ref.ref]" if sphinx_version[0] >= 8 else ""
+    message = f"undefined label: 'not-a-real-reference'{category}"
 
     expected = {
         str(workspace_uri / "rst" / "diagnostics.rst"): {message},
