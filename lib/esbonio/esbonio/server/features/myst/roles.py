@@ -119,7 +119,10 @@ class MystRoles(server.LanguageFeature):
                 if isinstance(link_target, tuple):
                     link_target, tooltip = link_target
 
-                idx = match.group(0).index(target)
+                char = "<" if match.group("alias") is not None else "`"
+                search = f"{char}{target}"
+
+                idx = match.group(0).index(search) + 1
                 start = match.start() + idx
                 end = start + len(target)
 

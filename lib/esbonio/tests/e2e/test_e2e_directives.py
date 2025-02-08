@@ -262,3 +262,160 @@ async def test_myst_directive_completions(
 
         assert expected == items & expected
         assert set() == items & unexpected
+
+
+@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.parametrize(
+    "filename,expected",
+    [
+        (
+            ["workspaces", "demo", "rst", "directives.rst"],
+            [
+                types.DocumentLink(
+                    target="${ROOT}/rst/directives.rst",
+                    tooltip="Path exists",
+                    range=types.Range(
+                        start=types.Position(line=49, character=18),
+                        end=types.Position(line=49, character=34),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html#rst-directives",
+                    tooltip="Directives - Sphinx v",  # don't check for a precise version!
+                    range=types.Range(
+                        start=types.Position(line=3, character=121),
+                        end=types.Position(line=3, character=135),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-literalinclude",
+                    tooltip="literalinclude - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=21, character=28),
+                        end=types.Position(line=21, character=42),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-code",
+                    tooltip="code - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=30, character=28),
+                        end=types.Position(line=30, character=32),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-code-block",
+                    tooltip="code-block - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=31, character=28),
+                        end=types.Position(line=31, character=38),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-highlight",
+                    tooltip="highlight - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=32, character=28),
+                        end=types.Position(line=32, character=37),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-sourcecode",
+                    tooltip="sourcecode - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=33, character=28),
+                        end=types.Position(line=33, character=38),
+                    ),
+                ),
+            ],
+        ),
+        (
+            ["workspaces", "demo", "myst", "directives.md"],
+            [
+                types.DocumentLink(
+                    target="${ROOT}/myst/directives.md",
+                    tooltip="Path exists",
+                    range=types.Range(
+                        start=types.Position(line=47, character=15),
+                        end=types.Position(line=47, character=30),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://myst-parser.readthedocs.io/en/latest/syntax/roles-and-directives.html#syntax-directives",
+                    tooltip="Directives - a block-level extension point - MyST Parser v",
+                    range=types.Range(
+                        start=types.Position(line=2, character=126),
+                        end=types.Position(line=2, character=143),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-literalinclude",
+                    tooltip="literalinclude - Sphinx v",  # don't check for a precise version!
+                    range=types.Range(
+                        start=types.Position(line=19, character=28),
+                        end=types.Position(line=19, character=42),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-code",
+                    tooltip="code - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=28, character=28),
+                        end=types.Position(line=28, character=32),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-code-block",
+                    tooltip="code-block - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=29, character=28),
+                        end=types.Position(line=29, character=38),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-highlight",
+                    tooltip="highlight - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=30, character=28),
+                        end=types.Position(line=30, character=37),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="https://www.sphinx-doc.org/en/master/usage/restructuredtext/directives.html#directive-sourcecode",
+                    tooltip="sourcecode - Sphinx v",
+                    range=types.Range(
+                        start=types.Position(line=31, character=28),
+                        end=types.Position(line=31, character=38),
+                    ),
+                ),
+            ],
+        ),
+    ],
+)
+async def test_directive_document_links(
+    client: LanguageClient,
+    uri_for,
+    filename: list[str],
+    expected: list[types.DocumentLink],
+):
+    """Ensure that we handle ``textDocument/documentLink`` requests correctly."""
+
+    root_uri = str(uri_for("workspaces", "demo"))
+    test_uri = uri_for(*filename)
+
+    links = await client.text_document_document_link_async(
+        types.DocumentLinkParams(
+            text_document=types.TextDocumentIdentifier(uri=str(test_uri))
+        )
+    )
+
+    assert len(links) == len(expected)
+
+    for link, actual in zip(expected, links):
+        assert link.range == actual.range
+
+        target = link.target.replace("${ROOT}", root_uri)
+        assert target == actual.target
+
+        if link.tooltip is not None:
+            assert actual.tooltip.startswith(link.tooltip)

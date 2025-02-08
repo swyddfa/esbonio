@@ -35,6 +35,10 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                             ]
                         ),
                     ),
+                    # Signal documetLink tooltip support
+                    document_link=types.DocumentLinkClientCapabilities(
+                        tooltip_support=True,
+                    ),
                     # Signal pull diagnostic support
                     diagnostic=types.DiagnosticClientCapabilities(
                         dynamic_registration=False
