@@ -28,6 +28,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "env", ".tox", "README.m
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "sphinx": ("https://www.sphinx-doc.org/en/master", None),
+    "myst": ("https://myst-parser.readthedocs.io/en/latest", None),
 }
 
 

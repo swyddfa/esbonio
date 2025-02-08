@@ -73,8 +73,8 @@ async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri
                 message="no theme named 'furo' found",
                 severity=types.DiagnosticSeverity.Error,
                 range=types.Range(
-                    start=types.Position(line=41, character=0),
-                    end=types.Position(line=41, character=19),
+                    start=types.Position(line=42, character=0),
+                    end=types.Position(line=42, character=19),
                 ),
             ),
         ],
