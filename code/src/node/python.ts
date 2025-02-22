@@ -25,7 +25,23 @@ export class PythonManager {
     }
   }
 
+  /**
+   * Get the Python command to use.
+   *
+   * In order of priority:
+   * 1. `ESBONIO_SERVER_PYCMD` environment variable
+   * 2. User configured Python path
+   * 3. Active Python environment from the Python extension
+   *
+   * @param scopeUri Determines the scope to get the Python interperter for when using the Python extension
+   * @returns
+   */
   async getCmd(scopeUri?: vscode.Uri): Promise<string[] | undefined> {
+
+    if (process.env.ESBONIO_SERVER_PYCMD) {
+      return [process.env.ESBONIO_SERVER_PYCMD]
+    }
+
     let userPython = vscode.workspace.getConfiguration("esbonio", scopeUri).get<string>("server.pythonPath")
     if (userPython) {
 

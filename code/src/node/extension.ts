@@ -10,7 +10,11 @@ import { SphinxProcessProvider } from "./processTreeView";
 let esbonio: EsbonioClient
 let logger: OutputChannelLogger
 
-export async function activate(context: vscode.ExtensionContext) {
+export interface EsbonioExtension {
+  client: EsbonioClient
+}
+
+export async function activate(context: vscode.ExtensionContext): Promise<EsbonioExtension> {
   let channel = vscode.window.createOutputChannel("Esbonio", "esbonio-log-output")
   let logLevel = vscode.workspace.getConfiguration('esbonio').get<string>('logging.level')
 
@@ -29,6 +33,8 @@ export async function activate(context: vscode.ExtensionContext) {
   if (config.get("enabled")) {
     await esbonio.start()
   }
+
+  return { client: esbonio }
 }
 
 /**

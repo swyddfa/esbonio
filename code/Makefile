@@ -6,6 +6,12 @@ ESBONIO ?= --pre esbonio
 clean:
 	rm -r bundled node_modules dist
 
+.PHONY: test
+test: dev-deps $(NPM)
+	-test -d dist && rm -r dist
+	$(NPX) tsc -p .
+	$(NPM) run test
+
 .PHONY: watch
 watch: dev-deps $(NPM)
 	-test -d dist && rm -r dist

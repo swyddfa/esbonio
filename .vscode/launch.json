@@ -18,6 +18,17 @@
             "preLaunchTask": "${defaultBuildTask}",
         },
         {
+            "name": "VSCode Extension Tests",
+            "type": "extensionHost",
+            "request": "launch",
+            "runtimeExecutable": "${execPath}",
+            "testConfiguration": "${workspaceFolder}/code/.vscode-test.js",
+            "args": [
+              "--extensionDevelopmentPath=${workspaceFolder}/code",
+            ],
+            "outFiles": ["${workspaceFolder}/code/dist/test/**/*.js"]
+        },
+        {
             "name": "pytest: esbonio",
             "type": "debugpy",
             "request": "launch",
