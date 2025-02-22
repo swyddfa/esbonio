@@ -18,12 +18,6 @@ updates:
       interval: "monthly"
 
   - package-ecosystem: "pip"
-    directory: "/code"
-    target-branch: "develop"
-    schedule:
-      interval: "monthly"
-
-  - package-ecosystem: "pip"
     directory: "/lib/esbonio/tests/workspaces/demo"
     target-branch: "develop"
     schedule:
