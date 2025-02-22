@@ -68,3 +68,35 @@ jobs:
         path: code/*.vsix
         if-no-files-found: error
         retention-days: 7
+
+  test:
+    name: "Python v${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: 'actions/setup-node@v4'
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        cache-dependency-path: 'code/package-lock.json'
+
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        allow-prereleases: true
+
+    - run: |
+        cd code/
+        make dev-deps
+        npx tsc -p .
+
+        xvfb-run -a npm run test
+      name: Run Tests
