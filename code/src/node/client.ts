@@ -131,9 +131,7 @@ export interface AppCreatedNotification {
 
 export class EsbonioClient {
 
-  private client?: LanguageClient
-
-  private devtools?: vscode.TaskExecution
+  public server?: LanguageClient
 
   private handlers: Map<string, any[]>
 
@@ -153,18 +151,9 @@ export class EsbonioClient {
       vscode.commands.registerCommand(Commands.RESTART_SERVER, async () => await this.restartServer())
     )
 
-    // Unset devtools task when it finishes.
-    context.subscriptions.push(
-      vscode.tasks.onDidEndTask((event) => {
-        if (event.execution === this.devtools) {
-          this.devtools = undefined
-        }
-      })
-    )
-
     // React to environment changes in the Python extension
     python.addHandler(Events.PYTHON_ENV_CHANGE, (_event: ActiveEnvironmentPathChangeEvent) => {
-      this.client?.sendNotification("workspace/didChangeConfiguration", { settings: null })
+      this.server?.sendNotification("workspace/didChangeConfiguration", { settings: null })
     })
   }
 
@@ -182,19 +171,19 @@ export class EsbonioClient {
   async start(): Promise<void> {
 
     try {
-      this.client = await this.getStdioClient()
+      this.server = await this.getStdioClient()
     } catch (err) {
       this.logger.error(`${err}`)
       return
     }
 
-    if (!this.client) {
+    if (!this.server) {
       return
     }
 
     try {
       this.logger.info("Starting Language Server")
-      await this.client.start()
+      await this.server.start()
       this.callHandlers(Events.SERVER_START, undefined)
     } catch (err) {
       this.logger.error(`${err}`)
@@ -219,9 +208,9 @@ export class EsbonioClient {
    */
   async stop() {
 
-    if (this.client && this.client.state === State.Running) {
+    if (this.server && this.server.state === State.Running) {
       this.callHandlers(Events.SERVER_STOP, undefined)
-      await this.client.stop()
+      await this.server.stop()
     }
 
     return
@@ -304,7 +293,7 @@ export class EsbonioClient {
 
 
   public scrollView(uri: vscode.Uri, line: number) {
-    this.client?.sendNotification(Notifications.VIEW_SCROLL, {
+    this.server?.sendNotification(Notifications.VIEW_SCROLL, {
       uri: uri.toString(), line: line
     })
   }

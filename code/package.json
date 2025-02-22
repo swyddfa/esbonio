@@ -22,7 +22,8 @@
         "deploy-vsce": "vsce publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "deploy-ovsx": "ovsx publish --pre-release -i *.vsix --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
         "package": "vsce package --pre-release --baseImagesUrl https://github.com/swyddfa/esbonio/raw/release/code/",
-        "vscode:prepublish": "npm run compile"
+        "vscode:prepublish": "npm run compile",
+        "test": "vscode-test"
     },
     "main": "dist/node/extension.js",
     "extensionDependencies": [
@@ -37,8 +38,10 @@
     "devDependencies": {
         "@types/node": "^18",
         "@types/vscode": "1.82.0",
+        "@vscode/test-cli": "^0.0.10",
+        "@vscode/test-electron": "^2.4.1",
         "@vscode/vsce": "^3.2.2",
-        "esbuild": "^0.24.2",
+        "esbuild": "^0.25.0",
         "ovsx": "^0.10.1",
         "typescript": "^5.7.3"
     },
