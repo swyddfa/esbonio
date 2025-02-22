@@ -1,3 +1,10 @@
+## v0.96.3 - 2025-02-22
+
+### Fixes
+
+- Add missing `exceptiongroup` package ([#965](https://github.com/swyddfa/esbonio/issues/965))
+
+
 ## v0.96.2 - 2025-02-08
 
 ### Misc
