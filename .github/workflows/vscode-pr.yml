@@ -98,5 +98,10 @@ jobs:
         make dev-deps
         npx tsc -p .
 
+        # Force the extension to use this version of Python
+        python --version
+        export ESBONIO_SERVER_PYCMD=$(command -v python)
+        echo $ESBONIO_SERVER_PYCMD
+
         xvfb-run -a npm run test
       name: Run Tests
