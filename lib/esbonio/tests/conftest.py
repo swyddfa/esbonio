@@ -19,6 +19,21 @@ def pytest_addoption(parser):
     )
 
 
+@pytest.hookimpl(tryfirst=True)
+def pytest_report_header(config: pytest.Config):
+    """Report additional information in pytest's output header"""
+    lines = []
+
+    try:
+        from sphinx import __version__
+
+        lines.append(f"sphinx: v{__version__}")
+    except ImportError:
+        lines.append("sphinx: none")
+
+    return lines
+
+
 @pytest.fixture(scope="session")
 def uri_for():
     """Helper function for returning the uri for a given file in the ``tests/``
