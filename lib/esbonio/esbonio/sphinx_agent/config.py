@@ -158,9 +158,8 @@ class SphinxConfig:
         # the configuration variables here, before finally calling resolve() on the
         # remaining paths below.
         for name, value in dataclasses.asdict(self).items():
-            if not isinstance(value, str):
-                continue
-
+            # value can sometimes be Sphinx's `_StrPath` helper
+            value = str(value)
             if (match := VARIABLE.match(value)) is None:
                 continue
 
