@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import pathlib
 import typing
 from http.server import HTTPServer
 from http.server import SimpleHTTPRequestHandler
@@ -16,13 +17,28 @@ if typing.TYPE_CHECKING:
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
-    def __init__(self, *args, logger: logging.Logger, directory: str, **kwargs) -> None:
+    def __init__(
+        self, *args, logger: logging.Logger, build_mapping: dict[str, Uri], **kwargs
+    ) -> None:
         self.logger = logger
-        super().__init__(*args, directory=directory, **kwargs)
+        self.build_mapping = build_mapping
+        super().__init__(*args, **kwargs)
 
     def translate_path(self, path: str) -> str:
-        result = super().translate_path(path)
-        # self.logger.debug("Translate: '%s' -> '%s'", path, result)
+        url = Uri.parse(f"http://{path}")
+        urlpath = pathlib.Path(url.path[1:] if url.path.startswith("/") else url.path)
+
+        if (build_uri := self.build_mapping.get(urlpath.parts[0])) is not None:
+            if (build_dir := build_uri.fs_path) is None:
+                return "/this/is/not/a/real/path"
+
+            self.directory = build_dir
+            fpath = str(pathlib.Path(*urlpath.parts[1:]))
+            result = super().translate_path(fpath)
+        else:
+            result = "/this/is/not/a/real/path"
+
+        # self.logger.debug("Translate: %r -> %r", path, result)
         return result
 
     def log_message(self, format: str, *args: Any) -> None:
@@ -37,20 +53,14 @@ class RequestHandlerFactory:
     produce a request handler based on the current situation.
     """
 
-    def __init__(self, logger: logging.Logger, build_uri: Uri | None = None):
+    def __init__(self, logger: logging.Logger):
         self.logger = logger
-        self.build_uri = build_uri
+        self.build_mapping: dict[str, Uri] = {}
 
     def __call__(self, *args, **kwargs):
-        if self.build_uri is None:
-            raise ValueError("No build directory set")
-
-        if (build_dir := self.build_uri.fs_path) is None:
-            raise ValueError(
-                "Unable to determine build dir from uri: '%s'", self.build_uri
-            )
-
-        return RequestHandler(*args, logger=self.logger, directory=build_dir, **kwargs)
+        return RequestHandler(
+            *args, logger=self.logger, build_mapping=self.build_mapping, **kwargs
+        )
 
 
 class PreviewServer:
@@ -93,12 +103,13 @@ class PreviewServer:
         return self._server.server_port
 
     @property
-    def build_uri(self):
-        return self._handler_factory.build_uri
+    def build_mapping(self) -> dict[str, Uri]:
+        """A mapping from client id to build directory."""
+        return self._handler_factory.build_mapping
 
-    @build_uri.setter
-    def build_uri(self, value):
-        self._handler_factory.build_uri = value
+    @build_mapping.setter
+    def build_mapping(self, value: dict[str, Uri]):
+        self._handler_factory.build_mapping = value
 
     async def start(self):
         """Start the server."""
