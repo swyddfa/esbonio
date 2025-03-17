@@ -23,6 +23,11 @@ class RstDirectives(server.LanguageFeature):
         characters={".", "`"},
     )
 
+    definition_trigger = server.DefinitionTrigger(
+        patterns=[RST_DIRECTIVE],
+        languages={"rst"},
+    )
+
     def initialized(self, params: types.InitializedParams):
         """Called once the initial handshake between client and server has finished."""
         self.configuration.subscribe(
@@ -103,6 +108,26 @@ class RstDirectives(server.LanguageFeature):
 
         if len(items) > 0:
             return items
+
+        return None
+
+    async def definition(
+        self, context: server.DefinitionContext
+    ) -> list[types.Location] | None:
+        """Find the definition of the requested item"""
+        directive = context.match.group("name")
+        argument = context.match.group("argument")
+
+        if not argument:
+            return None
+
+        start = context.match.group(0).index(argument)
+        end = start + len(argument)
+
+        if start <= context.position.character <= end:
+            return await self.directives.find_argument_definition(
+                context, directive, argument
+            )
 
         return None
 
