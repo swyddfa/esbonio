@@ -30,6 +30,21 @@ class DirectiveArgumentProvider:
         """Given a completion context, suggest directive arguments that may be used."""
         return None
 
+    def find_argument_definition(
+        self, context: server.DefinitionContext, argument: str, **kwargs
+    ) -> list[lsp.Location] | None:
+        """Find the definition(s) for the given directive argument.
+
+        Parameters
+        ----------
+        context
+           The context of the definition request
+
+        argument
+           The argument to find the definition for
+        """
+        return None
+
     def resolve_argument_link(
         self, context: server.DocumentLinkContext, argument: str, **kwargs
     ) -> None | str | tuple[str, str | None]:
