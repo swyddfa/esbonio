@@ -275,6 +275,46 @@ def _configure_completion(server: EsbonioLanguageServer):
         # return feature.completion_resolve(item)
         return item
 
+    @server.feature(types.TEXT_DOCUMENT_DEFINITION)
+    async def on_definition(ls: EsbonioLanguageServer, params: types.DefinitionParams):
+        uri = params.text_document.uri
+        pos = params.position
+        doc = ls.workspace.get_text_document(uri)
+        language = ls.get_language_at(doc, pos)
+
+        definitions = []
+
+        for cls, feature in ls:
+            if not feature.definition_trigger:
+                continue
+
+            context = feature.definition_trigger(
+                uri=Uri.parse(uri),
+                params=params,
+                document=doc,
+                language=language,
+                client_capabilities=ls.client_capabilities,
+            )
+
+            if context is None:
+                continue
+
+            ls.logger.debug("%s", context)
+            name = f"{cls.__name__}"
+
+            try:
+                result = feature.definition(context)
+                if inspect.isawaitable(result):
+                    result = await result
+            except Exception:
+                ls.logger.exception("Error in '%s.definition' handler", name)
+                continue
+
+            if result is not None:
+                definitions.extend(result)
+
+        return definitions if len(definitions) > 0 else None
+
 
 async def call_features(ls: EsbonioLanguageServer, method: str, *args, **kwargs):
     """Call all features."""

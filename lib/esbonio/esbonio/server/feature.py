@@ -24,6 +24,11 @@ if typing.TYPE_CHECKING:
         Coroutine[Any, Any, Optional[list[types.CompletionItem]]],
     ]
 
+    DefinitionResult = Union[
+        Optional[list[types.Location]],
+        Coroutine[Any, Any, Optional[list[types.Location]]],
+    ]
+
     DocumentLinkResult = Union[
         Optional[list[types.DocumentLink]],
         Coroutine[Any, Any, Optional[list[types.DocumentLink]]],
@@ -89,6 +94,11 @@ class LanguageFeature:
 
     def completion(self, context: CompletionContext) -> CompletionResult:
         """Called when a completion request matches one of the specified triggers."""
+
+    definition_trigger: DefinitionTrigger | None = None
+
+    def definition(self, context: DefinitionContext) -> DefinitionResult:
+        """Called when a definition request matches one of the specified triggers."""
 
     def document_link(self, context: DocumentLinkContext) -> DocumentLinkResult:
         """Called when a document link request is recieved."""
@@ -238,7 +248,7 @@ class CompletionContext:
 
     def __repr__(self):
         p = f"{self.position.line}:{self.position.character}"
-        return f"CompletionContext<{self.doc.uri}:{p} -- {self.match}>"
+        return f"CompletionContext<{self.uri}:{p} -- {self.match}>"
 
     @property
     def commit_characters_support(self) -> bool:
@@ -309,6 +319,106 @@ class CompletionContext:
             return []
 
         return capabilities.value_set
+
+
+@attrs.define
+class DefinitionTrigger:
+    """Define when the feature's definition method should be called."""
+
+    patterns: list[re.Pattern]
+    """A list of regular expressions to try"""
+
+    languages: set[str] = attrs.field(factory=set)
+    """Languages in which the completion trigger should fire.
+
+    If empty, the document's language will be ignored.
+    """
+
+    def __call__(
+        self,
+        uri: Uri,
+        params: types.DefinitionParams,
+        document: TextDocument,
+        language: str,
+        client_capabilities: types.ClientCapabilities,
+    ) -> DefinitionContext | None:
+        """Determine if this definition trigger should fire.
+
+        Parameters
+        ----------
+        uri
+           The uri of the document in which the completion request was made
+
+        params
+           The definition params sent from the client
+
+        document
+           The document in which the completion request was made
+
+        language
+           The language at the point where the definition request was made
+
+        client_capabilities
+           The client's capabilities
+
+        Returns
+        -------
+        Optional[DefinitionContext]
+           A definition context, if this trigger has fired
+        """
+
+        if len(self.languages) > 0 and language not in self.languages:
+            return None
+
+        try:
+            line = document.lines[params.position.line]
+        except IndexError:
+            line = ""
+
+        for pattern in self.patterns:
+            for match in pattern.finditer(line):
+                # Only trigger if the position of the request is within the match.
+                start, stop = match.span()
+                if not (start <= params.position.character <= stop):
+                    continue
+
+                return DefinitionContext(
+                    uri=uri,
+                    doc=document,
+                    match=match,
+                    position=params.position,
+                    language=language,
+                    capabilities=client_capabilities,
+                )
+
+        return None
+
+
+@attrs.define
+class DefinitionContext:
+    """Captures the context within which a definition request has been made."""
+
+    uri: Uri
+    """The uri for the document in which the definition request was made"""
+
+    doc: TextDocument
+    """The document within which the definition request was made"""
+
+    match: re.Match
+    """The match object describing the site of the definition request."""
+
+    position: types.Position
+    """The position at which the definition request was made."""
+
+    language: str
+    """The language where the definition request was made."""
+
+    capabilities: types.ClientCapabilities
+    """The client's capabilities."""
+
+    def __repr__(self):
+        p = f"{self.position.line}:{self.position.character}"
+        return f"DefinitionContext<{self.uri}:{p} ({self.language}) -- {self.match}>"
 
 
 @attrs.define
