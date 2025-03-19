@@ -11,11 +11,6 @@ from esbonio import server
 if typing.TYPE_CHECKING:
     from collections.abc import Coroutine
     from typing import Any
-    from typing import Protocol
-
-    # TODO: Move somewhere more central?
-    class ContextUri(Protocol):
-        uri: server.Uri
 
 
 class DirectiveArgumentProvider:
@@ -244,7 +239,7 @@ class FilepathProvider(DirectiveArgumentProvider):
         return idx
 
     def _resolve_path(
-        self, context: ContextUri, argument: str, root: str
+        self, context: server.UriContext, argument: str, root: str
     ) -> pathlib.Path:
         if argument.startswith("/"):
             # Be sure to remove the leading '/', otherwise `argument` will wipe out the

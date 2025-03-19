@@ -15,6 +15,7 @@ if typing.TYPE_CHECKING:
     from collections.abc import Coroutine
     from typing import Any
     from typing import Optional
+    from typing import Protocol
     from typing import Union
 
     from .server import EsbonioLanguageServer
@@ -48,6 +49,9 @@ if typing.TYPE_CHECKING:
         Optional[list[types.WorkspaceSymbol]],
         Coroutine[Any, Any, Optional[list[types.WorkspaceSymbol]]],
     ]
+
+    class UriContext(Protocol):
+        uri: Uri
 
 
 class LanguageFeature:
