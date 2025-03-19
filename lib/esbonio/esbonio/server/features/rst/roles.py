@@ -24,6 +24,11 @@ class RstRoles(server.LanguageFeature):
         characters={":", "`", "<", "/"},
     )
 
+    definition_trigger = server.DefinitionTrigger(
+        patterns=[RST_ROLE],
+        languages={"rst"},
+    )
+
     def initialized(self, params: types.InitializedParams):
         """Called once the initial handshake between client and server has finished."""
         self.configuration.subscribe(
@@ -121,6 +126,26 @@ class RstRoles(server.LanguageFeature):
 
         if len(items) > 0:
             return items
+
+        return None
+
+    async def definition(
+        self, context: server.DefinitionContext
+    ) -> list[types.Location] | None:
+        """Find the definition of the requested item"""
+        role = context.match.group("name")
+        target = context.match.group("target")
+        label = context.match.group("label")
+
+        if not label:
+            return None
+
+        idx = context.match.group(0).index(target)
+        start = context.match.start() + idx
+        end = start + len(target)
+
+        if start <= context.position.character <= end:
+            return await self.roles.find_target_definition(context, role, label)
 
         return None
 
