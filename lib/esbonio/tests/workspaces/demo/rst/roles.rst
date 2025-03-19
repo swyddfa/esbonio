@@ -35,3 +35,13 @@ When it makes sense to, ``esbonio`` will add clickable links to many role target
 - Intersphinx references e.g. :external:std:ref:`logging-exceptions`
 
 See for yourself by :kbd:`Ctrl`\ +Clicking one of the above references
+
+GoTo ...
+--------
+
+... Definition
+^^^^^^^^^^^^^^
+
+Esbonio supports GoTo Definition requests for role targets, including
+
+- Local files :download:`./roles.rst`
