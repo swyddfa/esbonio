@@ -56,9 +56,9 @@ ignore = [
   "SIM115", # Use key in dict
   "SIM118", # Use key in dict
   "SLF001", # private member access
-  "TCH001", # move import to type checking block
-  "TCH002", # move import to type checking block
-  "TCH003", # move import to type checking block
+  "TC001",  # move import to type checking block
+  "TC002",  # move import to type checking block
+  "TC003",  # move import to type checking block
   "TID252", # Absolute vs relative imports
   "TRY300", # Move statement to else block
 ]
