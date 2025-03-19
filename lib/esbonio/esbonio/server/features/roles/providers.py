@@ -30,6 +30,21 @@ class RoleTargetProvider:
         """Givem a completion context, suggest role targets that may be used."""
         return None
 
+    def find_target_definition(
+        self, context: server.DefinitionContext, target: str, **kwargs
+    ) -> list[lsp.Location] | None:
+        """Find the definition(s) for the given role target.
+
+        Parameters
+        ----------
+        context
+           The context of the definition request
+
+        target
+           The target to find the definition for
+        """
+        return None
+
     def resolve_target_link(
         self, context: server.DocumentLinkContext, target: str, **kwargs
     ) -> (
