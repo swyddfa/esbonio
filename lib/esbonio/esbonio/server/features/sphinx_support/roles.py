@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import logging
 import os
 import pathlib
@@ -13,6 +14,8 @@ from esbonio.server.features.project_manager import ProjectManager
 from esbonio.sphinx_agent import types
 
 if typing.TYPE_CHECKING:
+    import cattrs
+
     from esbonio.server import Uri
     from esbonio.server.features.project_manager import Project
 
@@ -32,9 +35,70 @@ TARGET_KINDS = {
 class ObjectsProvider(roles.RoleTargetProvider):
     """Expose domain objects as potential role targets"""
 
-    def __init__(self, logger: logging.Logger, manager: ProjectManager):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        converter: cattrs.Converter,
+        manager: ProjectManager,
+    ):
         self.manager = manager
         self.logger = logger
+        self.converter = converter
+
+    async def find_target_definition(  # type: ignore
+        self,
+        context: server.DefinitionContext,
+        target: str,
+        *,
+        obj_types: list[str] | None,
+        projects: list[str] | None,
+        **kwargs,
+    ) -> list[lsp.Location] | None:
+        """Find the definition(s) for the given role target."""
+        if obj_types is None:
+            self.logger.debug("Unable to find definitions, missing object types!")
+            return None
+
+        if projects is not None:
+            # does not make sense for intersphinx targets...
+            return None
+
+        if (project := self.manager.get_project(context.uri)) is None:
+            return None
+
+        self.logger.debug("%r, %r, %r, %r", context, target, obj_types, projects)
+        db = await project.get_db()
+        query = (
+            "SELECT "  # noqa: S608
+            '  location '
+            "FROM objects "
+            f'WHERE printf("%s:%s", objects.domain, objects.objtype) in ({", ".join("?" for _ in obj_types)})'
+            "       AND objects.name = ?"
+        )
+
+        # Hack for absolute docnames...
+        if "std:doc" in obj_types and target.startswith("/"):
+            target = target[1:]
+
+        cursor = await db.execute(query, (*obj_types, target))
+        if (result := await cursor.fetchall()) is None:
+            return None
+
+        locations: list[lsp.Location] = []
+
+        for item, *_ in result:
+            if item is None:
+                continue
+
+            try:
+                obj = json.loads(item)
+                locations.append(self.converter.structure(obj, lsp.Location))
+            except Exception:
+                self.logger.exception(
+                    "Unable to construct Location instance from value: %r", item
+                )
+
+        return locations
 
     async def resolve_target_link(
         self,
@@ -98,8 +162,8 @@ class ObjectsProvider(roles.RoleTargetProvider):
         return uri, f"{display} - {source}"
 
     async def _resolve_doc_link(
-        self, context: server.DocumentLinkContext, target: str
-    ) -> None | str | tuple[str, str | None]:
+        self, context: server.UriContext, target: str
+    ) -> str | None:
         """Resolve ``textDocument/documentLink`` requests for local ``:doc:`` references."""
 
         if (project := self.manager.get_project(context.uri)) is None:
@@ -266,7 +330,7 @@ def esbonio_setup(
 ):
     role_provider = SphinxRoles(project_manager)
     obj_provider = ObjectsProvider(
-        esbonio.logger.getChild("ObjectsProvider"), project_manager
+        esbonio.logger.getChild("ObjectsProvider"), esbonio.converter, project_manager
     )
 
     roles_feature.add_role_provider(role_provider)

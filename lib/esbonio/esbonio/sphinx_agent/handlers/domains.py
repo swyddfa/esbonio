@@ -120,8 +120,8 @@ class DomainObjects:
                 types.Location(
                     uri=str(types.Uri.for_file(source)),
                     range=types.Range(
-                        start=types.Position(line=line, character=0),
-                        end=types.Position(line=line + 1, character=0),
+                        start=types.Position(line=line - 1, character=0),
+                        end=types.Position(line=line, character=0),
                     ),
                 )
             )
