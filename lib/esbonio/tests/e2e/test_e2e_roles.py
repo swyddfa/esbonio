@@ -531,6 +531,13 @@ async def test_myst_role_target_completions(
                         end=types.Position(line=46, character=36),
                     ),
                 ),
+                types.DocumentLink(
+                    target="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=47, character=18),
+                        end=types.Position(line=47, character=29),
+                    ),
+                ),
             ],
         ),
         (
@@ -623,6 +630,13 @@ async def test_myst_role_target_completions(
                         end=types.Position(line=40, character=35),
                     ),
                 ),
+                types.DocumentLink(
+                    target="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=41, character=18),
+                        end=types.Position(line=41, character=29),
+                    ),
+                ),
             ],
         ),
     ],
@@ -680,6 +694,45 @@ async def test_role_document_links(
             ],
         ),
         (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            types.Position(line=47, character=22),
+            [
+                types.Location(
+                    uri="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=0, character=0),
+                        end=types.Position(line=1, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            types.Position(line=48, character=28),
+            [
+                types.Location(
+                    uri="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=4, character=0),
+                        end=types.Position(line=5, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            types.Position(line=49, character=38),
+            [
+                types.Location(
+                    uri="${ROOT}/rst/domains/python.rst",
+                    range=types.Range(
+                        start=types.Position(line=52, character=0),
+                        end=types.Position(line=53, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
             ["workspaces", "demo", "myst", "roles.md"],
             # Requests for the role itself should return nothing
             types.Position(line=40, character=19),
@@ -694,6 +747,45 @@ async def test_role_document_links(
                     range=types.Range(
                         start=types.Position(line=0, character=0),
                         end=types.Position(line=1, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            types.Position(line=41, character=22),
+            [
+                types.Location(
+                    uri="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=0, character=0),
+                        end=types.Position(line=1, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            types.Position(line=42, character=28),
+            [
+                types.Location(
+                    uri="${ROOT}/rst/roles.rst",
+                    range=types.Range(
+                        start=types.Position(line=5, character=0),
+                        end=types.Position(line=6, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            types.Position(line=43, character=28),
+            [
+                types.Location(
+                    uri="${ROOT}/rst/domains/python.rst",
+                    range=types.Range(
+                        start=types.Position(line=52, character=0),
+                        end=types.Position(line=53, character=0),
                     ),
                 )
             ],
