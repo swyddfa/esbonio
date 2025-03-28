@@ -11,7 +11,7 @@
 [Sphinx]: https://www.sphinx-doc.org/en/master/
 [Language Server]: https://langserver.org/
 
-Esbonio aims to make it easier to work with [reStructuredText] tools such as [Sphinx] by providing a [Language Server] to enhance your editing experience.
+Esbonio aims to make it easier to work with [Sphinx] by providing a [Language Server] to enhance your editing experience.
 The Esbonio project is made up from a number of sub-projects
 
 
@@ -19,50 +19,58 @@ The Esbonio project is made up from a number of sub-projects
 
 [![PyPI](https://img.shields.io/pypi/v/esbonio?style=flat-square)![PyPI - Downloads](https://img.shields.io/pypi/dm/esbonio?style=flat-square)](https://pypistats.org/packages/esbonio)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/lib/esbonio/LICENSE)
 
+The language server aids the writing process by resolving references, providing completion suggestions and highlighting errors.
+It ensures your local build is always up to date, allowing you to preview your changes in (almost!) real-time.
+The server itself can even be extended to better suit the needs of your project.
+
 The language server provides the following features.
 
 **Completion**
-
 <p align="center">
   <img src="./resources/images/completion-demo.gif" alt="Completion Suggestions Demo"></img>
 </p>
 
-**Definitions**
+<details>
+  <summary>Diagnostics</summary>
+  <p align="center">
+    <img src="./resources/images/diagnostic-sphinx-errors-demo.png" alt="Diagnostics Demo"></img>
+  </p>
+</details>
 
-<p align="center">
-  <img src="./resources/images/definition-demo.gif" alt="Goto Definition Demo"></img>
-</p>
+<details>
+  <summary>Goto Definition</summary>
+  <p align="center">
+    <img src="./resources/images/definition-demo.png" alt="Goto Definition Demo"></img>
+  </p>
+</details>
 
-**Diagnostics**
+<details>
+  <summary>Goto Implementation</summary>
+  <p align="center">
+    <img src="./resources/images/implementation-demo.gif" alt="Implementations Demo"></img>
+  </p>
+</details>
 
-<p align="center">
-  <img src="./resources/images/diagnostic-sphinx-errors-demo.png" alt="Diagnostics Demo"></img>
-</p>
+<details>
+  <summary>Document Links</summary>
+  <p align="center">
+    <img src="./resources/images/document-links-demo.png" alt="Document Links Demo"></img>
+  </p>
+</details>
 
-**Document Links**
+<details>
+  <summary>Document & Workspace Symbols</summary>
+  <p align="center">
+    <img src="./resources/images/document-workspace-symbols-demo.png" alt="Document & Workspace Symbols Demo"></img>
+  </p>
+</details>
 
-<p align="center">
-  <img src="./resources/images/document-links-demo.png" alt="Document Links Demo"></img>
-</p>
-
-
-**Document & Workspace Symbols**
-
-<p align="center">
-  <img src="./resources/images/document-workspace-symbols-demo.png" alt="Document & Workspace Symbols Demo"></img>
-</p>
-
-**Hover**
-
-<p align="center">
-  <img src="./resources/images/hover-demo.png" alt="Hover Demo"></img>
-</p>
-
-**Implementations**
-
-<p align="center">
-  <img src="./resources/images/implementation-demo.gif" alt="Implementations Demo"></img>
-</p>
+<details>
+  <summary>Hover</summary>
+  <p align="center">
+    <img src="./resources/images/hover-demo.png" alt="Hover Demo"></img>
+  </p>
+</details>
 
 
 ## `code/` - A VSCode extension for editing Sphinx projects

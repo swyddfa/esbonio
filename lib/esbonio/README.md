@@ -15,7 +15,7 @@ The language server provides the following features
 
 ## Definitions
 
-![Definition Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/definition-demo.gif)
+![Definition Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/definition-demo.png)
 
 ## Diagnostics
 
