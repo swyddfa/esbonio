@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import typing
 
+from docutils import nodes
 from sphinx import addnodes
 
 from .. import types
@@ -48,6 +49,8 @@ class DomainObjects:
 
         # Needs to run late, but before the handler in ./roles.py
         app.connect("builder-inited", self.init_db, priority=998)
+
+        app.connect("doctree-read", self.doctree_read)
         app.connect("object-description-transform", self.object_defined)
         app.connect("build-finished", self.commit)
 
@@ -59,6 +62,31 @@ class DomainObjects:
         for domain in app.env.domains.values():
             index_domain_directives(app, domain)
             index_domain_roles(app, domain, project_names)
+
+    def doctree_read(self, app: Sphinx, doctree: nodes.document):
+        """Extract information from the given doctree.
+
+        Currently only used to get the location of ``:ref:`` targets
+        """
+        for node in doctree.traverse(condition=nodes.target):
+            if (label := node.attributes.get("refid")) is None:
+                continue
+
+            if (source := node.source) is None or (line := node.line) is None:
+                continue
+
+            location = as_json(
+                types.Location(
+                    uri=str(types.Uri.for_file(source)),
+                    range=types.Range(
+                        start=types.Position(line=line - 1, character=0),
+                        end=types.Position(line=line, character=0),
+                    ),
+                )
+            )
+
+            key = (label, "std", "label", app.env.docname)
+            self._info[key] = ("", location)
 
     def commit(self, app, exc):
         """Commit changes to the database.
@@ -75,8 +103,8 @@ class DomainObjects:
 
         for name, domain in app.env.domains.items():
             for objname, dispname, objtype, docname, _, _ in domain.get_objects():
-                desc, location = self._info.get(
-                    (objname, name, objtype, docname), (None, None)
+                desc, location = self._get_object_details(
+                    app, objname, name, objtype, docname
                 )
 
                 if objname == (display := str(dispname)):
@@ -88,6 +116,28 @@ class DomainObjects:
 
         app.esbonio.db.insert_values(OBJECTS_TABLE, rows)
         self._info.clear()
+
+    def _get_object_details(
+        self, app: Sphinx, objname: str, domain: str, objtype: str, docname: str
+    ) -> tuple[str | None, str | None]:
+        """Get additional details about the given object."""
+        desc, location = self._info.get(
+            (objname, domain, objtype, docname), (None, None)
+        )
+
+        if location is None and f"{domain}:{objtype}" == "std:doc":
+            docpath = app.env.doc2path(objname)
+            location = as_json(
+                types.Location(
+                    uri=str(types.Uri.for_file(docpath)),
+                    range=types.Range(
+                        start=types.Position(line=0, character=0),
+                        end=types.Position(line=1, character=0),
+                    ),
+                )
+            )
+
+        return desc, location
 
     def object_defined(
         self, app: Sphinx, domain: str, objtype: str, content: addnodes.desc_content

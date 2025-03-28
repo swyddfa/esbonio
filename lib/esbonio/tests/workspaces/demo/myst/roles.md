@@ -39,3 +39,6 @@ See for yourself by pressing `Ctrl` +Clicking one of the above references
 Esbonio supports GoTo Definition requests for role targets, including
 
 - Local files {download}`./roles.md`
+- Documents {doc}`/myst/roles`
+- References {ref}`rst-roles-completion`
+- Python objects {py:class}`counters.pattern.PatternCounter`
