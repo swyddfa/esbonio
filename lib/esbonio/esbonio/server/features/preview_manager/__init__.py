@@ -121,6 +121,7 @@ class PreviewManager(server.LanguageFeature):
             self.preview.build_mapping = self.build_mapping
 
         self.config = config
+        self.webview.config = config
         self.server.run_task(self.show_preview_uri())
 
     async def on_build(self, client: SphinxClient, result):

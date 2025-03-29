@@ -84,6 +84,9 @@ class WebviewServer(JsonRPCServer):
         if not self.connected or self._view_in_control:
             return
 
+        if self.config.synchronize_scroll not in {"bothWays", "editorWithPreview"}:
+            return
+
         # If the editor is already in control, reset the cooldown
         if self._editor_in_control:
             self._editor_in_control.cancel()
@@ -156,6 +159,9 @@ def make_ws_server(
     def on_scroll(ls: WebviewServer, params):
         """Called by the webview to scroll the editor."""
         if not server.connected or server._editor_in_control:
+            return
+
+        if ls.config.synchronize_scroll not in {"bothWays", "previewWithEditor"}:
             return
 
         # If the view is already in control, reset the cooldown.
