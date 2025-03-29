@@ -223,19 +223,19 @@
                     "esbonio.preview.bind": {
                         "scope": "window",
                         "type": "string",
-                        "default": null,
+                        "default": "localhost",
                         "description": "The network interface to bind the preview server to."
                     },
                     "esbonio.preview.httpPort": {
                         "scope": "window",
                         "type": "integer",
-                        "default": null,
+                        "default": 0,
                         "description": "The port number to bind the HTTP server to.\nIf 0, a random port number will be chosen"
                     },
                     "esbonio.preview.wsPort": {
                         "scope": "window",
                         "type": "integer",
-                        "default": null,
+                        "default": 0,
                         "description": "The port number to bind the WebSocket server to.\nIf 0, a random port number will be chosen"
                     },
                     "esbonio.preview.synchronizeScroll": {
