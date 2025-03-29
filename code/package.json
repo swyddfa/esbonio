@@ -237,6 +237,24 @@
                         "type": "integer",
                         "default": null,
                         "description": "The port number to bind the WebSocket server to.\nIf 0, a random port number will be chosen"
+                    },
+                    "esbonio.preview.synchronizeScroll": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "bothWays",
+                        "enum": [
+                            "bothWays",
+                            "editorWithPreview",
+                            "previewWithEditor",
+                            "disabled"
+                        ],
+                        "enumDescriptions": [
+                            "Synchronized scrolling will work both ways",
+                            "Scrolling the editor will automatically scroll the preview pane",
+                            "Scrolling the preview pane will automatically scroll the editor",
+                            "Synchronized scrolling is disabled"
+                        ],
+                        "description": "Control how synchronized scrolling behaves"
                     }
                 }
             },
