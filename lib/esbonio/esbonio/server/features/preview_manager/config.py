@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+from typing import Literal
+
 import attrs
+
+SyncScrollOptions = Literal[
+    "bothWays", "editorWithPreview", "previewWithEditor", "disabled"
+]
 
 
 @attrs.define
@@ -17,6 +23,9 @@ class PreviewConfig:
     ws_port: int = attrs.field(default=0)
     """The port to host the WebSocket server on. If ``0`` a random port number will be
     chosen"""
+
+    synchronize_scroll: SyncScrollOptions = attrs.field(default="bothWays")
+    """Control how synchronised scrolling works"""
 
     show_line_markers: bool = attrs.field(default=False)
     """If set, render the source line markers in the preview"""
