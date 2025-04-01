@@ -343,21 +343,33 @@ Preview
 The following options control the behavior of the preview
 
 .. esbonio:config:: esbonio.preview.bind
-   :scope: project
+   :scope: global
    :type: string
 
    The network interface to bind the preview server to.
 
 .. esbonio:config:: esbonio.preview.httpPort
-   :scope: project
+   :scope: global
    :type: integer
 
    The port number to bind the HTTP server to.
    If ``0`` (the default), a random port number will be chosen
 
 .. esbonio:config:: esbonio.preview.wsPort
-   :scope: project
+   :scope: global
    :type: integer
 
    The port number to bind the WebSocket server to.
    If ``0`` (the default), a random port number will be chosen
+
+.. esbonio:config:: esbonio.preview.synchronizeScroll
+   :scope: global
+   :type: string
+
+   Controls how synchronized scrolling behaves.
+   The valid options are
+
+   - ``bothWays`` (default): Scrolling in either the editor or preview window will update the other window
+   - ``editorWithPreview``: Scrolling the editor window will update the preview window, but not vice-versa
+   - ``previewWithEditor``: Scrolling the preview window will update the editor window, but not vice-versa
+   - ``disabled``: Disable any form of synchronized scrolling
