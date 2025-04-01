@@ -26,9 +26,12 @@ export class PreviewManager {
 
   constructor(
     private logger: OutputChannelLogger,
-    private context: vscode.ExtensionContext,
+    context: vscode.ExtensionContext,
     private client: EsbonioClient
   ) {
+    context.subscriptions.push(
+      vscode.commands.registerCommand(Commands.SET_SCROLL_BEHAVIOUR, this.setScrollBehaviour, this)
+    )
     context.subscriptions.push(
       vscode.commands.registerTextEditorCommand(Commands.OPEN_PREVIEW, this.openPreview, this)
     )
@@ -68,6 +71,32 @@ export class PreviewManager {
         this.currentUri = uri
       }
     )
+  }
+
+
+  async setScrollBehaviour() {
+    let selection = await vscode.window.showQuickPick(
+      [
+        { label: "$(arrow-swap) Synchronize Scrolling Both Ways", value: "bothWays"},
+        { label: "$(arrow-right) Synchronize Editor Scrolling with Preview", value: "editorWithPreview"},
+        { label: "$(arrow-left) Synchronize Preview Scrolling with Editor", value: "previewWithEditor"},
+        { label: "$(x) Disable Synchronized Scrolling", value: "disabled"},
+      ],
+      {title: "Set Synchronized Scrolling Behavior"},
+    )
+    if (!selection) {
+      return
+    }
+
+    this.logger.debug(`Setting sync scroll behavior: '${selection.value}'`)
+    let config = vscode.workspace.getConfiguration("esbonio.preview")
+
+    try {
+      await config.update("synchronizeScroll", selection.value, vscode.ConfigurationTarget.Workspace)
+    } catch (err) {
+      this.logger.error(`Unable to update config: ${err}`)
+      return
+    }
   }
 
   async openPreview(editor: vscode.TextEditor) {

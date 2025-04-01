@@ -78,6 +78,12 @@
                 "category": "Esbonio"
             },
             {
+                "command": "esbonio.preview.setScrollingBehavior",
+                "title": "Set Synchronized Scrolling Behavior",
+                "icon": "$(settings)",
+                "category": "Esbonio"
+            },
+            {
                 "command": "esbonio.server.restart",
                 "title": "Restart Language Server",
                 "category": "Esbonio",
@@ -468,6 +474,11 @@
                     "alt": "esbonio.preview.open",
                     "group": "navigation",
                     "when": "resourceLangId == restructuredtext || resourceLangId == markdown"
+                },
+                {
+                    "command": "esbonio.preview.setScrollingBehavior",
+                    "group": "navigation",
+                    "when": "activeWebviewPanelId == 'esbonioPreview'"
                 }
             ],
             "view/title": [
