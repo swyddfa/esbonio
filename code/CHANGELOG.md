@@ -1,3 +1,16 @@
+## v0.96.4 - 2025-04-02
+
+### Enhancements
+
+- Expose `esbonio.preview.synchronizeScroll` setting.
+
+  Add interactive `esbonio.preview.setScrollingBehavior` command to easily switch between valid options. ([#979](https://github.com/swyddfa/esbonio/issues/979))
+
+### Misc
+
+- Update bundlded version of the language server to `1.0.0b11` ([#983](https://github.com/swyddfa/esbonio/issues/983))
+
+
 ## v0.96.3 - 2025-02-22
 
 ### Fixes
