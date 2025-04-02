@@ -48,3 +48,15 @@ When it makes sense to, `esbonio` will add clickable links to many directive arg
   ```{include} ./directives.md
   ```
   ````
+## GoTo...
+
+### ... Definition
+
+Esbonio supports GoTo Definition requests for directive arguments, including:
+
+- Local files
+
+  ````markdown
+  ```{include} ./symbols.md
+  ```
+  ````

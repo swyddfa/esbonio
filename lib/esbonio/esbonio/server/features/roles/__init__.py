@@ -142,8 +142,63 @@ class RolesFeature(server.LanguageFeature):
 
         return None
 
+    async def find_target_definition(
+        self, context: server.DefinitionContext, role_name: str, target: str
+    ) -> list[lsp.Location] | None:
+        """Find the definition of the role's target.
+
+        Parameters
+        ----------
+        context
+           The definition context
+
+        role_name
+           The role to find the target definition for
+
+        target
+           The role's target
+
+        Returns
+        -------
+        list[lsp.Location] | None
+           The target's definition(s), if known
+        """
+        if (role := await self.get_role(context.uri, role_name)) is None:
+            self.logger.debug("Unknown role '%s'", role_name)
+            return None
+
+        if not role.target_providers:
+            return None
+
+        self.logger.debug(
+            "Finding target definition for role: '%s' (%s)",
+            role.name,
+            role.implementation,
+        )
+
+        for spec in role.target_providers:
+            if (provider := self._target_providers.get(spec.name)) is None:
+                self.logger.error("Unknown target provider: '%s'", spec.name)
+                continue
+
+            try:
+                result = provider.find_target_definition(context, target, **spec.kwargs)
+                if inspect.isawaitable(result):
+                    result = await result
+
+                if result is not None:
+                    return result
+
+            except Exception:
+                name = type(provider).__name__
+                self.logger.error(
+                    "Error in '%s.find_target_definition'", name, exc_info=True
+                )
+
+        return None
+
     async def resolve_target_link(
-        self, context: server.DocumentLinkContext, role_name: str, argument: str
+        self, context: server.DocumentLinkContext, role_name: str, target: str
     ) -> None | str | tuple[str, str | None]:
         """Given a role target, resolve the corresponding document uri, if possible.
 
@@ -153,7 +208,10 @@ class RolesFeature(server.LanguageFeature):
            The document link context
 
         role_name
-           The role to suggest  for
+           The role to resolve the target for
+
+        target
+           The target to resolve
         """
         if (role := await self.get_role(context.uri, role_name)) is None:
             self.logger.debug("Unknown role '%s'", role_name)
@@ -176,7 +234,7 @@ class RolesFeature(server.LanguageFeature):
             try:
                 result: None | str | tuple[str, str | None] = None
 
-                aresult = provider.resolve_target_link(context, argument, **spec.kwargs)
+                aresult = provider.resolve_target_link(context, target, **spec.kwargs)
                 if inspect.isawaitable(aresult):
                     result = await aresult
                 else:

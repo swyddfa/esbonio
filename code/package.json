@@ -32,7 +32,7 @@
     ],
     "dependencies": {
         "@vscode/python-extension": "^1.0.5",
-        "semver": "^7.7.0",
+        "semver": "^7.7.1",
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
@@ -40,10 +40,10 @@
         "@types/vscode": "1.82.0",
         "@vscode/test-cli": "^0.0.10",
         "@vscode/test-electron": "^2.4.1",
-        "@vscode/vsce": "^3.2.2",
-        "esbuild": "^0.25.0",
+        "@vscode/vsce": "^3.3.2",
+        "esbuild": "^0.25.2",
         "ovsx": "^0.10.1",
-        "typescript": "^5.7.3"
+        "typescript": "^5.8.2"
     },
     "engines": {
         "vscode": "^1.82.0"
@@ -75,6 +75,12 @@
                 "command": "esbonio.preview.openSide",
                 "title": "Preview Documentation in Split Window",
                 "icon": "$(book)",
+                "category": "Esbonio"
+            },
+            {
+                "command": "esbonio.preview.setScrollingBehavior",
+                "title": "Set Synchronized Scrolling Behavior",
+                "icon": "$(settings)",
                 "category": "Esbonio"
             },
             {
@@ -223,20 +229,38 @@
                     "esbonio.preview.bind": {
                         "scope": "window",
                         "type": "string",
-                        "default": null,
+                        "default": "localhost",
                         "description": "The network interface to bind the preview server to."
                     },
                     "esbonio.preview.httpPort": {
                         "scope": "window",
                         "type": "integer",
-                        "default": null,
+                        "default": 0,
                         "description": "The port number to bind the HTTP server to.\nIf 0, a random port number will be chosen"
                     },
                     "esbonio.preview.wsPort": {
                         "scope": "window",
                         "type": "integer",
-                        "default": null,
+                        "default": 0,
                         "description": "The port number to bind the WebSocket server to.\nIf 0, a random port number will be chosen"
+                    },
+                    "esbonio.preview.synchronizeScroll": {
+                        "scope": "window",
+                        "type": "string",
+                        "default": "bothWays",
+                        "enum": [
+                            "bothWays",
+                            "editorWithPreview",
+                            "previewWithEditor",
+                            "disabled"
+                        ],
+                        "enumDescriptions": [
+                            "Synchronized scrolling will work both ways",
+                            "Scrolling the editor will automatically scroll the preview pane",
+                            "Scrolling the preview pane will automatically scroll the editor",
+                            "Synchronized scrolling is disabled"
+                        ],
+                        "description": "Control how synchronized scrolling behaves"
                     }
                 }
             },
@@ -450,6 +474,11 @@
                     "alt": "esbonio.preview.open",
                     "group": "navigation",
                     "when": "resourceLangId == restructuredtext || resourceLangId == markdown"
+                },
+                {
+                    "command": "esbonio.preview.setScrollingBehavior",
+                    "group": "navigation",
+                    "when": "activeWebviewPanelId == 'esbonioPreview'"
                 }
             ],
             "view/title": [

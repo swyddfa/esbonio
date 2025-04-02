@@ -30,6 +30,21 @@ class DirectiveArgumentProvider:
         """Given a completion context, suggest directive arguments that may be used."""
         return None
 
+    def find_argument_definition(
+        self, context: server.DefinitionContext, argument: str, **kwargs
+    ) -> list[lsp.Location] | None:
+        """Find the definition(s) for the given directive argument.
+
+        Parameters
+        ----------
+        context
+           The context of the definition request
+
+        argument
+           The argument to find the definition for
+        """
+        return None
+
     def resolve_argument_link(
         self, context: server.DocumentLinkContext, argument: str, **kwargs
     ) -> None | str | tuple[str, str | None]:
@@ -87,19 +102,36 @@ class FilepathProvider(DirectiveArgumentProvider):
         root
            If the user provides an absolute path, resolve the link relative to this directory.
         """
-
-        if argument.startswith("/"):
-            # Be sure to remove the leading '/', otherwise `argument` will wipe out the
-            # root when concatenated.
-            path = pathlib.Path(root, argument[1:])
-        else:
-            cwd = pathlib.Path(context.uri).parent
-            path = cwd / argument
-
+        path = self._resolve_path(context, argument, root)
         uri = server.Uri.for_file(os.path.normpath(path))
         tooltip = "Path exists" if path.exists() else "Path does NOT exist"
 
         return str(uri), tooltip
+
+    def find_argument_definition(
+        self,
+        context: server.DefinitionContext,
+        argument: str,
+        *,
+        root: str = "/",
+        pattern: str | None = None,
+        **kwargs,
+    ) -> list[lsp.Location] | None:
+        path = self._resolve_path(context, argument, root)
+        uri = server.Uri.for_file(os.path.normpath(path))
+
+        if not uri:
+            return None
+
+        return [
+            lsp.Location(
+                uri=str(uri),
+                range=lsp.Range(
+                    start=lsp.Position(line=0, character=0),
+                    end=lsp.Position(line=1, character=0),
+                ),
+            )
+        ]
 
     def suggest_arguments(
         self,
@@ -205,3 +237,16 @@ class FilepathProvider(DirectiveArgumentProvider):
             idx = next_idx
 
         return idx
+
+    def _resolve_path(
+        self, context: server.UriContext, argument: str, root: str
+    ) -> pathlib.Path:
+        if argument.startswith("/"):
+            # Be sure to remove the leading '/', otherwise `argument` will wipe out the
+            # root when concatenated.
+            path = pathlib.Path(root, argument[1:])
+        else:
+            cwd = pathlib.Path(context.uri).parent
+            path = cwd / argument
+
+        return path

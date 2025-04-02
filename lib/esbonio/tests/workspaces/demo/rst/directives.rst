@@ -48,3 +48,17 @@ When it makes sense to, ``esbonio`` will add clickable links to many directive a
   .. code-block:: rst
 
      .. include:: ./directives.rst
+
+GoTo ...
+--------
+
+... Definition
+^^^^^^^^^^^^^^
+
+Esbonio supports GoTo Definition requests for directive arguments, including
+
+- Local files
+
+  .. code-block:: rst
+
+     .. include:: ./symbols.rst

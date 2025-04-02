@@ -523,6 +523,21 @@ async def test_myst_role_target_completions(
                         end=types.Position(line=34, character=67),
                     ),
                 ),
+                types.DocumentLink(
+                    target="${ROOT}/rst/roles.rst",
+                    tooltip="Path exists",
+                    range=types.Range(
+                        start=types.Position(line=46, character=25),
+                        end=types.Position(line=46, character=36),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=47, character=18),
+                        end=types.Position(line=47, character=29),
+                    ),
+                ),
             ],
         ),
         (
@@ -607,6 +622,21 @@ async def test_myst_role_target_completions(
                         end=types.Position(line=30, character=67),
                     ),
                 ),
+                types.DocumentLink(
+                    target="${ROOT}/myst/roles.md",
+                    tooltip="Path exists",
+                    range=types.Range(
+                        start=types.Position(line=40, character=25),
+                        end=types.Position(line=40, character=35),
+                    ),
+                ),
+                types.DocumentLink(
+                    target="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=41, character=18),
+                        end=types.Position(line=41, character=29),
+                    ),
+                ),
             ],
         ),
     ],
@@ -638,3 +668,178 @@ async def test_role_document_links(
 
         if link.tooltip is not None:
             assert actual.tooltip.startswith(link.tooltip)
+
+
+@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.parametrize(
+    "filename,position,expected",
+    [
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            # Requests for the role itself should return nothing
+            types.Position(line=46, character=18),
+            None,
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            types.Position(line=46, character=29),
+            [
+                types.Location(
+                    uri="${ROOT}/rst/roles.rst",
+                    range=types.Range(
+                        start=types.Position(line=0, character=0),
+                        end=types.Position(line=1, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            types.Position(line=47, character=22),
+            [
+                types.Location(
+                    uri="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=0, character=0),
+                        end=types.Position(line=1, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            types.Position(line=48, character=28),
+            [
+                types.Location(
+                    uri="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=4, character=0),
+                        end=types.Position(line=5, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            types.Position(line=49, character=38),
+            [
+                types.Location(
+                    uri="${ROOT}/rst/domains/python.rst",
+                    range=types.Range(
+                        start=types.Position(line=52, character=0),
+                        end=types.Position(line=53, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            # Requests for the role itself should return nothing
+            types.Position(line=40, character=19),
+            None,
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            types.Position(line=40, character=31),
+            [
+                types.Location(
+                    uri="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=0, character=0),
+                        end=types.Position(line=1, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            types.Position(line=41, character=22),
+            [
+                types.Location(
+                    uri="${ROOT}/myst/roles.md",
+                    range=types.Range(
+                        start=types.Position(line=0, character=0),
+                        end=types.Position(line=1, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            types.Position(line=42, character=28),
+            [
+                types.Location(
+                    uri="${ROOT}/rst/roles.rst",
+                    range=types.Range(
+                        start=types.Position(line=5, character=0),
+                        end=types.Position(line=6, character=0),
+                    ),
+                )
+            ],
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            types.Position(line=43, character=28),
+            [
+                types.Location(
+                    uri="${ROOT}/rst/domains/python.rst",
+                    range=types.Range(
+                        start=types.Position(line=52, character=0),
+                        end=types.Position(line=53, character=0),
+                    ),
+                )
+            ],
+        ),
+    ],
+)
+async def test_role_target_definitions(
+    client: LanguageClient,
+    uri_for,
+    filename: list[str],
+    position: types.Position,
+    expected: list[types.Location] | None,
+):
+    """Ensure that we handle ``textDocument/definition`` requests correctly for
+    role targets."""
+
+    root_uri = str(uri_for("workspaces", "demo"))
+    test_uri = uri_for(*filename)
+
+    fpath = pathlib.Path(test_uri)
+    contents = fpath.read_text()
+
+    # Open the file - needed so that esbonio can correctly determine the language_id of
+    # the document. Strictly speaking, you could probably consider the fact that this is
+    # necessary to be a bug... but 99% of the time I'm fairly sure the client will have
+    # done this before making the goto definition call.
+    client.text_document_did_open(
+        types.DidOpenTextDocumentParams(
+            text_document=types.TextDocumentItem(
+                uri=str(test_uri),
+                language_id="restructuredtext"
+                if fpath.suffix == ".rst"
+                else "markdown",
+                version=1,
+                text=contents,
+            )
+        )
+    )
+
+    definitions = await client.text_document_definition_async(
+        types.DefinitionParams(
+            text_document=types.TextDocumentIdentifier(uri=str(test_uri)),
+            position=position,
+        )
+    )
+
+    if expected is None:
+        assert definitions is None
+
+    else:
+        assert len(definitions) == len(expected)
+
+        location: types.Location
+        for location, actual in zip(expected, definitions):
+            expected_uri = location.uri.replace("${ROOT}", root_uri)
+            assert expected_uri == actual.uri
+            assert location.range == actual.range

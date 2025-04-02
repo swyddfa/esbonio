@@ -148,18 +148,76 @@ class DirectiveFeature(server.LanguageFeature):
 
         return None
 
-    async def resolve_argument_link(
-        self, context: server.DocumentLinkContext, directive_name: str, argument: str
-    ) -> None | str | tuple[str, str | None]:
-        """Suggest directive arguments that may be used, given a completion context.
+    async def find_argument_definition(
+        self, context: server.DefinitionContext, directive_name: str, argument: str
+    ) -> list[lsp.Location] | None:
+        """Find the definition of the directive's argument.
 
         Parameters
         ----------
         context
-           The completion context
+           The definition context
 
         directive_name
-           The directive to suggest arguments for
+           The directive to find the argument definition for
+
+        argument
+           The directive's argument
+
+        Returns
+        -------
+        list[lsp.Location] | None
+           The argument's defintion(s), if known
+        """
+        if (directive := await self.get_directive(context.uri, directive_name)) is None:
+            self.logger.debug("Unknown directive '%s'", directive_name)
+            return None
+
+        if not directive.argument_providers:
+            return None
+
+        self.logger.debug(
+            "Finding argument defintion for directive: '%s' (%s)",
+            directive.name,
+            directive.implementation,
+        )
+
+        for spec in directive.argument_providers:
+            if (provider := self._argument_providers.get(spec.name)) is None:
+                self.logger.error("Unknown argument provider: '%s'", spec.name)
+                continue
+
+            try:
+                result = provider.find_argument_definition(
+                    context, argument, **spec.kwargs
+                )
+                if inspect.isawaitable(result):
+                    result = await result
+
+                if result is not None:
+                    return result
+
+            except Exception:
+                name = type(provider).__name__
+                self.logger.exception("Error in '%s.find_argument_definition'", name)
+
+        return None
+
+    async def resolve_argument_link(
+        self, context: server.DocumentLinkContext, directive_name: str, argument: str
+    ) -> None | str | tuple[str, str | None]:
+        """Resolve the link to the given directive argument, if possible.
+
+        Parameters
+        ----------
+        context
+           The document link context
+
+        directive_name
+           The directive to resolve the argument for
+
+        argument
+           The directive's argument
         """
         if (directive := await self.get_directive(context.uri, directive_name)) is None:
             self.logger.debug("Unknown directive '%s'", directive_name)
