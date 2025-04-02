@@ -28,7 +28,7 @@ if typing.TYPE_CHECKING:
 
     from .feature import LanguageFeature
 
-__version__ = "1.0.0b10"
+__version__ = "1.0.0b11"
 T = TypeVar("T")
 LF = TypeVar("LF", bound="LanguageFeature")
 

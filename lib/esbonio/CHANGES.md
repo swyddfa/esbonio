@@ -1,3 +1,20 @@
+## v1.0.0b11 - 2025-04-02
+
+### Features
+
+- Re-implement `textDocument/definition` support ([#978](https://github.com/swyddfa/esbonio/issues/978))
+
+### Enhancements
+
+- Introduce `esbonio.preview.synchronizeScroll` setting ([#979](https://github.com/swyddfa/esbonio/issues/979))
+
+### Fixes
+
+- The webview should now automatically reconnect with the server when the connection is lost. ([#646](https://github.com/swyddfa/esbonio/issues/646))
+- Previews should no longer fail to update when switching between projects that produce identical output filenames ([#951](https://github.com/swyddfa/esbonio/issues/951))
+- Fix `${defaultBuildDir}` expansion for recent Sphinx versions ([#970](https://github.com/swyddfa/esbonio/issues/970))
+
+
 ## v1.0.0b10 - 2025-02-08
 
 ### Features
