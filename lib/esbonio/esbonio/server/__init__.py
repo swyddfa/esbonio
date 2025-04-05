@@ -13,6 +13,8 @@ from .feature import CompletionTrigger
 from .feature import DefinitionContext
 from .feature import DefinitionTrigger
 from .feature import DocumentLinkContext
+from .feature import HoverContext
+from .feature import HoverTrigger
 from .feature import LanguageFeature
 from .server import EsbonioLanguageServer
 from .server import EsbonioWorkspace
@@ -35,6 +37,8 @@ __all__ = (
     "EsbonioLanguageServer",
     "EsbonioWorkspace",
     "EventSource",
+    "HoverContext",
+    "HoverTrigger",
     "LanguageFeature",
     "Uri",
     "create_language_server",
