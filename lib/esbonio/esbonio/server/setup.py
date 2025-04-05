@@ -38,7 +38,7 @@ def create_language_server(
 
     _register_lsp_methods(server)
     _register_completion(server)
-
+    _register_hover(server)
     return server
 
 
@@ -333,6 +333,48 @@ def _register_pull_diagnostics(server: EsbonioLanguageServer):
             )
 
         return types.WorkspaceDiagnosticReport(items=reports)
+
+
+def _register_hover(server: EsbonioLanguageServer):
+    """Configure the handlers for documentation hovers."""
+
+    @server.feature(types.TEXT_DOCUMENT_HOVER)
+    async def on_hover(ls: EsbonioLanguageServer, params: types.HoverParams):
+        uri = params.text_document.uri
+        pos = params.position
+        doc = ls.workspace.get_text_document(uri)
+        language = ls.get_language_at(doc, pos)
+
+        for cls, feature in ls:
+            if not feature.hover_trigger:
+                continue
+
+            context = feature.hover_trigger(
+                uri=Uri.parse(uri),
+                params=params,
+                document=doc,
+                language=language,
+                client_capabilities=ls.client_capabilities,
+            )
+
+            if context is None:
+                continue
+
+            ls.logger.debug("%s", context)
+            name = f"{cls.__name__}"
+
+            try:
+                result = feature.hover(context)
+                if inspect.isawaitable(result):
+                    result = await result
+            except Exception:
+                ls.logger.exception("Error in '%s.hover' handler", name)
+                continue
+
+            if result is not None:
+                return result
+
+        return None
 
 
 async def call_features(ls: EsbonioLanguageServer, method: str, *args, **kwargs):
