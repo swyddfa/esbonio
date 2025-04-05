@@ -9,8 +9,6 @@ from ..types import Uri
 from ..util import as_json
 
 if typing.TYPE_CHECKING:
-    from typing import Any
-
     from sphinx.config import Config
 
 
@@ -27,12 +25,13 @@ CONFIG_TABLE = Database.Table(
     "config",
     [
         Database.Column(name="name", dtype="TEXT"),
-        Database.Column(name="scope", dtype="TEXT"),
         Database.Column(name="value", dtype="TEXT"),
     ],
 )
 
 IGNORED_CONFIG_NAMES = {
+    # Declared private by Sphinx in `68af0ac2b`
+    "_options",
     # Deprecated/removed in v3.5 and the backwards compatibility code causes issues when
     # dumping the config
     "html_add_permalinks",
@@ -44,42 +43,22 @@ def init_db(app: Sphinx, config: Config):
     app.esbonio.db.ensure_table(CONFIG_TABLE)
 
 
-def value_to_db(name: str, item: Any) -> tuple[str, str, Any]:
-    """Convert a single value to its DB representation"""
-
-    try:
-        (value, scope, _) = item
-        return (name, scope, as_json(value))
-    except Exception:
-        return (name, "", as_json(item))
-
-
 def dump_config(app: Sphinx, *args):
     """Dump the user's config into the db so that the parent language server can inspect
     it."""
     app.esbonio.db.clear_table(CONFIG_TABLE)
 
-    values: list[tuple[str, str, str]] = []
+    values: list[tuple[str, str]] = []
     config = app.config.__getstate__()
-
-    # For some reason, most config values are nested under 'values'
-    config_values = config.pop("values", {})
-
-    for name, item in config_values.items():
-        if name in IGNORED_CONFIG_NAMES:
-            continue
-
-        try:
-            values.append(value_to_db(name, item))
-        except Exception as exc:
-            logger.debug(f"Unable to dump config value: {name!r}: {exc}")
 
     for name, item in config.items():
         if name in IGNORED_CONFIG_NAMES:
             continue
 
         try:
-            values.append(value_to_db(name, item))
+            values.append(
+                (name, as_json(item)),
+            )
         except Exception as exc:
             logger.debug(f"Unable to dump config value: {name!r}: {exc}")
 
