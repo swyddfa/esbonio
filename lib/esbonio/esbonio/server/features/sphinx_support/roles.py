@@ -70,7 +70,7 @@ class ObjectsProvider(roles.RoleTargetProvider):
         db = await project.get_db()
         query = (
             "SELECT "  # noqa: S608
-            '  location '
+            "  location "
             "FROM objects "
             f'WHERE printf("%s:%s", objects.domain, objects.objtype) in ({", ".join("?" for _ in obj_types)})'
             "       AND objects.name = ?"
@@ -143,8 +143,8 @@ class ObjectsProvider(roles.RoleTargetProvider):
             "SELECT "  # noqa: S608
             '  printf("%s%s", intersphinx_projects.uri, objects.docname) as uri,'
             '  printf("%s v%s", intersphinx_projects.name, intersphinx_projects.version) as source,'
-            '  objects.name,'
-            '  objects.display '
+            "  objects.name,"
+            "  objects.display "
             "FROM objects JOIN intersphinx_projects "
             "ON objects.project = intersphinx_projects.id "
             f"WHERE objects.project in ({', '.join('?' for _ in projects)}) "

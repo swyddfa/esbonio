@@ -72,7 +72,7 @@ async def test_intersphinx_domain_discovery(
 
     db = await project.get_db()
     cursor = await db.execute(
-        "SELECT name FROM objects " "WHERE domain = ? AND objtype = ? AND project = ?",
+        "SELECT name FROM objects WHERE domain = ? AND objtype = ? AND project = ?",
         (domain, objtype, projname),
     )
 
