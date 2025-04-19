@@ -30,18 +30,16 @@ class PreviewManager(server.LanguageFeature):
         super().__init__(server)
         self.sphinx = sphinx
         self.sphinx.add_listener("build", self.on_build)
+        """The sphinx manager."""
+
+        self.built_clients: set[str] = set()
+        """Keeps track of which clients run a build at least once."""
 
         self.build_path: Optional[str] = None
-        """Used to construct the preview url, this holds the path to the build file
-        containing the content from the current src file. (Relative to the build
-        directory for the project.)"""
+        """The filepath we are currently displaying."""
 
-        self.active_client: Optional[str] = None
-        """Used to construct the preview url, holds the client id for the project we
-        are currently previewing."""
-
-        self.build_mapping: dict[str, Uri] = {}
-        """Used by the server itself, maps client ids to build directories."""
+        self.build_uri: Optional[Uri] = None
+        """The uri of the build dir we are currently serving from."""
 
         self.config = PreviewConfig()
         """The current configuration."""
@@ -110,7 +108,7 @@ class PreviewManager(server.LanguageFeature):
         # (Re)create the http server
         if self.preview is None:
             self.preview = make_http_server(self.server, config)
-            self.preview.build_mapping = self.build_mapping
+            self.preview.build_uri = self.build_uri
 
         elif (
             config.bind != self.preview.config.bind
@@ -118,7 +116,7 @@ class PreviewManager(server.LanguageFeature):
         ):
             self.preview.stop()
             self.preview = make_http_server(self.server, config)
-            self.preview.build_mapping = self.build_mapping
+            self.preview.build_uri = self.build_uri
 
         self.config = config
         self.webview.config = config
@@ -126,16 +124,13 @@ class PreviewManager(server.LanguageFeature):
 
     async def on_build(self, client: SphinxClient, result):
         """Called whenever a sphinx build completes."""
-        self.build_mapping[client.id] = client.build_uri
-
-        if self.preview is not None:
-            self.preview.build_mapping = self.build_mapping
+        self.built_clients.add(client.id)
 
         if self.webview is None or self.preview is None:
             return
 
         # Only refresh the view if the project we are previewing was built.
-        if client.id != self.active_client:
+        if client.build_uri != self.preview.build_uri:
             return
 
         self.logger.debug("Refreshing preview")
@@ -165,7 +160,7 @@ class PreviewManager(server.LanguageFeature):
 
         if (build_path := await project.get_build_path(src_uri)) is None:
             # The client might not have built the project yet.
-            if client.id not in self.build_mapping and retry is True:
+            if client.id not in self.built_clients and retry is True:
                 # Only retry this once.
                 await self.sphinx.trigger_build(src_uri)
                 return await self.preview_file(params, retry=False)
@@ -175,13 +170,9 @@ class PreviewManager(server.LanguageFeature):
                     src_uri,
                 )
                 return None
-        self.build_path = build_path
-        self.active_client = client.id
 
-        # If the language server has restarted, but there are cached build results
-        # we might not have added the client to the build mapping yet, so let's do
-        # it here also.
-        self.build_mapping[self.active_client] = client.build_uri
+        self.build_path = build_path
+        self.build_uri = self.preview.build_uri = client.build_uri
 
         if (uri := await self.show_preview_uri()) is None:
             return None
@@ -192,10 +183,7 @@ class PreviewManager(server.LanguageFeature):
         """Show the preview uri in the client using a ``window/showDocument`` request.
         Also return the final uri."""
 
-        if self.webview is None or self.preview is None:
-            return None
-
-        if self.build_path is None or self.active_client is None:
+        if self.webview is None or self.preview is None or self.build_path is None:
             return None
 
         server = await self.preview
@@ -210,7 +198,7 @@ class PreviewManager(server.LanguageFeature):
         uri = Uri.create(
             scheme="http",
             authority=f"{host}:{server.port}",
-            path=f"{self.active_client}/{self.build_path}",
+            path=self.build_path,
             query=urlencode(query_params),
         )
         self.logger.info("Preview available at: %s", uri.as_string(encode=False))
