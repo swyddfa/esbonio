@@ -115,7 +115,7 @@ class DomainObjects:
                 )
 
         app.esbonio.db.insert_values(OBJECTS_TABLE, rows)
-        self._info.clear()
+        # self._info.clear()
 
     def _get_object_details(
         self, app: Sphinx, objname: str, domain: str, objtype: str, docname: str
