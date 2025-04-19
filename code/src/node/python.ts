@@ -71,13 +71,13 @@ export class PythonManager {
 
     let activeEnv = await this.python.environments.resolveEnvironment(activeEnvPath)
     if (!activeEnv) {
-      this.logger.debug("Unable to resolve environment")
+      this.logger.error(`Python extension: Unable to resolve environment '${activeEnvPath.path}'`)
       return
     }
 
     let pythonUri = activeEnv.executable.uri
     if (!pythonUri) {
-      this.logger.debug("URI of Python executable is undefined...")
+      this.logger.error("Python extension: URI of Python executable is undefined...")
       return
     }
 
