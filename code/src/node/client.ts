@@ -153,7 +153,11 @@ export class EsbonioClient {
 
     // React to environment changes in the Python extension
     python.addHandler(Events.PYTHON_ENV_CHANGE, (_event: ActiveEnvironmentPathChangeEvent) => {
-      this.server?.sendNotification("workspace/didChangeConfiguration", { settings: null })
+
+      let states = [State.Running, State.Starting]
+      if (!this.server || !states.includes(this.server.state)) {
+        this.start()
+      }
     })
   }
 
