@@ -25,6 +25,14 @@ class RequestHandler(SimpleHTTPRequestHandler):
         # self.logger.debug("Translate: '%s' -> '%s'", path, result)
         return result
 
+    def end_headers(self):
+        # Instruct the client not to cache the response.
+        #
+        # See: https://github.com/swyddfa/esbonio/issues/951
+        #      https://github.com/swyddfa/esbonio/issues/987
+        self.send_header("Cache-Control", "no-store")
+        return super().end_headers()
+
     def log_message(self, format: str, *args: Any) -> None:
         self.logger.debug(format, *args)
 
