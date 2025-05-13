@@ -312,6 +312,7 @@ export class PreviewManager {
     iframe {
       height: 100%;
       width: 100%;
+      border: none;
     }
 
     #status {
