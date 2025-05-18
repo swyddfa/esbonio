@@ -50,9 +50,7 @@ def docs_workspace(uri_for):
 async def server_manager(demo_workspace: Uri, docs_workspace):
     """An instance of the language server and sphinx manager to use for the test."""
 
-    loop = asyncio.get_running_loop()
-
-    esbonio = create_language_server(EsbonioLanguageServer, [], loop=loop)
+    esbonio = create_language_server(EsbonioLanguageServer, [])
     esbonio.protocol.set_writer(io.BytesIO())
 
     project_manager = ProjectManager(esbonio)

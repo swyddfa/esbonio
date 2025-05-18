@@ -32,9 +32,9 @@ class ColorConfig:
 
 
 @pytest.fixture
-def server(event_loop):
+def server():
     """Return a server instance for testing."""
-    _server = EsbonioLanguageServer(loop=event_loop)
+    _server = EsbonioLanguageServer()
     return _server
 
 
