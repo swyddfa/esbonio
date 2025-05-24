@@ -172,5 +172,8 @@ Esbonio will open the corresponding section where you will be taken on a tour th
    :ref:`lsp-configure-sphinx-build-env`
       Esbonio is able to work with more than just virtual environments, this guide will show you how to integrate it with other environment managers like poetry.
 
+   :ref:`lsp-configure-sphinx-build-cmd`
+      This guide will provide more examples of the ``esbonio.sphinx.buildCommand`` option
+
    :ref:`editor-integration`
       This section provides details on how to integrate Esbonio with other text editors

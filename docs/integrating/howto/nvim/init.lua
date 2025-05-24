@@ -15,9 +15,10 @@ vim.lsp.config('esbonio', {
   settings = {
     esbonio = {
       -- sphinx = {
+      --   See: See: https://docs.esbon.io/en/latest/lsp/howto/configure-the-sphinx-build-cmd.html
       --   buildCommand = { 'sphinx-build', '-M', 'dirhtml', '.', './_build' },
       --
-      --   See: https://docs.esbon.io/en/latest/lsp/howto/use-esbonio-with.html
+      --   See: https://docs.esbon.io/en/latest/lsp/howto/configure-the-sphinx-build-env.html
       --   pythonCommand = { 'hatch', '-e', 'docs', 'run', 'python' },
       -- },
       -- logging = {

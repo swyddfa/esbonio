@@ -41,7 +41,7 @@ The recommended way to do this is via your project's ``pyproject.toml`` file, fo
 
 .. tip::
 
-   See :ref:`lsp-configure-sphinx-build-env` and :ref:`lsp-configure-python` guides for more examples of these settings.
+   See :ref:`lsp-configure-sphinx-build-env` and :ref:`lsp-configure-sphinx-build-cmd` guides for more examples of these settings.
 
 If you don't have a ``pyproject.toml`` file, or would prefer to set these options directly in neovim you can include a ``settings`` table
 
@@ -72,7 +72,7 @@ Example
 -------
 
 See the ``init.lua`` file below for a complete, minimal example configuration.
-You can download it :download:`here <./nvim/init.lua>` and load it by running ``nvim -u init.lua``.
+If you want to try it out, you can download it :download:`here <./nvim/init.lua>` and load it by running the command ``nvim -u init.lua``.
 
 .. literalinclude:: ./nvim/init.lua
    :language: lua
