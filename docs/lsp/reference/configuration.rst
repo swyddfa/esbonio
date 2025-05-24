@@ -261,7 +261,7 @@ The following options control the creation and management of background Sphinx p
 
      ["hatch", "-e", "docs", "run", "python"]
 
-   For more examples see :ref:`lsp-use-with`
+   For more examples see :ref:`lsp-configure-sphinx-build-env`
 
 .. esbonio:config:: esbonio.sphinx.cwd
    :scope: project
