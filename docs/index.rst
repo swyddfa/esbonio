@@ -18,6 +18,7 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
       :text-align: center
       :link: lsp-getting-started
       :link-type: ref
+      :columns: 12
 
       Using Esbonio for the first time within VSCode.
 
@@ -26,7 +27,7 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
       :link: lsp-howto
       :link-type: ref
 
-      Step-by-step guides on integrating Esbonio with other text editors.
+      Short, focused guides on how to achieve a specific outcome with Esbonio
 
    .. grid-item-card:: Reference
       :text-align: center
@@ -34,6 +35,13 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
       :link-type: ref
 
       Configuration options, API documentation, architecture diagrams and more.
+
+   .. grid-item-card:: Editor Integration
+      :text-align: center
+      :link: editor-integration
+      :link-type: ref
+
+      Guides on integrating Esbonio with other text editors.
 
    .. grid-item-card:: Extending
       :text-align: center
