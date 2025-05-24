@@ -360,6 +360,7 @@ class SphinxManager(server.LanguageFeature):
         if old_state == ClientState.Starting and new_state == ClientState.Running:
             if (sphinx_info := client.sphinx_info) is not None:
                 self.project_manager.register_project(scope, client.db)
+                self._events.trigger("app-created", client)
                 self.server.protocol.notify(
                     "sphinx/appCreated",
                     AppCreatedNotification(id=client.id, application=sphinx_info),
