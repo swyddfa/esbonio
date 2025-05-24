@@ -10,110 +10,139 @@ This guide covers how to setup ``esbonio`` with Neovim's built-in language clien
 Installation
 ------------
 
-Install the language server using `pipx <https://pipx.pypa.io/stable/>`__::
+.. include:: /_includes/installation.rst
 
-   pipx install esbonio
+.. _integrate-nvim-config:
 
 Configuration
 -------------
 
-The
-`nvim-lspconfig <https://github.com/neovim/nvim-lspconfig>`_
-plugin provides a
-`base configuration <https://github.com/neovim/nvim-lspconfig/blob/master/lua/lspconfig/server_configurations/esbonio.lua>`__
-for the language server.
+Every Neovim configuration is unique, so we provide just a minimal example configuration that uses the ``vim.lsp.config()`` mechanism introduced in Neovim v0.11.
+See the :ref:`integrate-nvim-tips` section below for examples on how you might want to extend your configuration once you have the basics setup.
 
-It's recommeded that any configuration settings specific to your project (such as your ``sphinx-build`` command) are stored in your project's ``pyproject.toml`` file.
-Settings specific to you (such as your Python environment) are provided via the ``settings`` table passed to ``lspconfig.esbonio.setup {}``.
+The following configuration should be all you need to instruct Neovim to launch the ``esbonio`` language server within your Sphinx projects.
 
 .. code-block:: lua
 
-   lspconfig.esbonio.setup {
-     settings = {
-       sphinx = {
-         pythonCommand = { "/path/to/project/.venv/bin/python" },
-       }
-     }
-   }
+   vim.lsp.config('esbonio', {
+     cmd = {'esbonio'},
+     filetypes = { 'rst' }, -- or 'markdown' if you use MyST
+     root_markers = { '.git' },
+   })
+   vim.lsp.enable('esbonio')
 
-.. important::
+However, to be useful you will also need to ensure that the :esbonio:conf:`esbonio.sphinx.pythonCommand` and :esbonio:conf:`esbonio.sphinx.buildCommand` options are configured for your project.
+The recommended way to do this is via your project's ``pyproject.toml`` file, for example
 
-   You must provide a value for :esbonio:conf:`esbonio.sphinx.pythonCommand` so that ``esbonio`` can build your documentation correctly.
+.. literalinclude:: /pyproject.toml
+   :language: toml
+   :start-at: [tool.esbonio.sphinx]
+   :end-at: pythonCommand
 
-See :ref:`lsp-configuration` for a complete reference of all configuration options supported by the server.
+.. tip::
 
-.. _lsp-nvim-python-discovery:
+   See :ref:`lsp-use-with` and :ref:`lsp-configure-python` guides for more examples of these settings.
 
-Python Discovery
-^^^^^^^^^^^^^^^^
+If you don't have a ``pyproject.toml`` file, or would prefer to set these options directly in neovim you can include a ``settings`` table
 
-The most important setting to get right is to give ``esbonio`` the correct Python environment to use when building your documentation.
-
-The simplest option is to hardcode the right environment into your configuration as the example above shows.
-However, if you change between projects often, constantly updating this value in your configuration is going to get tedious very quickly.
-
-Another option is to include a function in your configuration that will automatically choose the correct one for you.
-For example the ``find_venv`` function below implements the following discovery rules.
-
-- If ``nvim`` is launched with a virtual environment active, use it, otherwise
-- Look for a virtual environment located within the project's git repository
-
-.. literalinclude:: ./editors/nvim-lspconfig/init.vim
-   :language: lua
-   :start-at: function find_venv()
-   :end-before: lspconfig
-
-Be sure to pass the result of such a function to the server
 
 .. code-block:: lua
 
-   lspconfig.esbonio.setup {
+   vim.lsp.config('esbonio', {
+     cmd = {'esbonio'},
+     filetypes = { 'rst' }, -- or 'markdown' if you use MyST
+     root_markers = { '.git' },
      settings = {
-       sphinx = { pythonCommand = find_venv() }
-     }
-   }
+       esbonio = {
+         sphinx = {
+           buildCommand = {'sphinx-build', '-M', 'dirhtml', '.', '${defaultBuildDir}'},
+           pythonCommand = {'hatch', '-e', 'docs', 'run', 'python'},
+         }
+       },
+     },
+   })
+   vim.lsp.enable('esbonio')
+
+The ``settings`` table can be used to set any configuration value supported by the server.
+See the :ref:`Configuration Reference <lsp-configuration>` for details on all available options.
+
+.. _integrate-nvim-example:
 
 Example
 -------
 
-.. admonition:: Do you use Nix?
+See the ``init.lua`` file below for a complete, minimal example configuration.
+You can download it :download:`here <./nvim/init.lua>` and load it by running ``nvim -u init.lua``.
 
-   If you have the `Nix <https://nixos.org/>`__ package manager on your machine you can try out our example configuration with the following command::
+.. literalinclude:: ./nvim/init.lua
+   :language: lua
 
-      nix run github:swyddfa/esbonio#nvim
+.. _integrate-nvim-tips:
 
-There is an opionated, ready out of the box example configuration you can try, or at least get inspiration from.
-This configuration includes:
+Tips and Tricks
+---------------
 
-- Automatic python environment discovery (using the example logic in `lsp-nvim-python-discovery`_)
-- Live preview and synchronized scrolling
-- A VSCode style log output window (using `toggleterm`_ and `lsp-devtools`_)
-- Notifications and progress updates via `fidget`_
-- "Standard" neovim plugins including `telescope`_
+**sphinx-build progress notifications**
 
-.. _fidget: https://github.com/j-hui/fidget.nvim
-.. _lsp-devtools: https://github.com/swyddfa/esbonio
-.. _telescope: https://github.com/nvim-telescope/telescope.nvim
-.. _toggleterm: https://github.com/akinsho/toggleterm.nvim
+``esbonio`` uses the :lsp:`window/workDoneProgress/create` mechanism to report the progress of background Sphinx builds.
+You can use a plugin like `fidget <https://github.com/j-hui/fidget.nvim>`__ to provide a UI for these.
 
-.. dropdown:: Show Example Config
-
-   You can also :download:`download <./editors/nvim-lspconfig/init.vim>` this file
-
-   .. literalinclude:: ./editors/nvim-lspconfig/init.vim
-      :language: vim
-
+.. _integrate-nvim-troubleshoot:
 
 Troubleshooting
 ---------------
 
-You will also have to increase the LSP logging level in Neovim itself.
+The ``:checkhealth vim.lsp`` command will show you details about your current configuration
 
-.. code-block:: vim
+.. dropdown:: :checkhealth vim.lsp
 
-   lua << EOF
-   vim.lsp.set_log_level("debug")
-   EOF
+   .. code-block::
 
-You can then open the log file with the command ``:LspLog``.
-See `here <https://github.com/neovim/nvim-lspconfig/#troubleshooting>`_ for more details.
+      vim.lsp:                                     require("vim.lsp.health").check()
+
+      - LSP log level : DEBUG
+      - ⚠️ WARNING Log level DEBUG will cause degraded performance and high disk usage
+      - Log path: /var/home/username/.local/state/nvim/lsp.log
+      - Log size: 267 KB
+
+      vim.lsp: Active Clients ~
+      - esbonio (id: 1)
+        - Version: 1.0.0b11
+        - Root directory: /tmp/rst
+        - Command: { "esbonio" }
+        - Settings: {
+            esbonio = {
+              logging = {
+                level = "debug"
+              },
+              sphinx = {
+                buildCommand = { "sphinx-build", ".", "./_build" },
+                pythonCommand = { "python" }
+              }
+            }
+          }
+        - Attached buffers: 1
+
+      vim.lsp: Enabled Configurations ~
+      - esbonio:
+        - cmd: { "esbonio" }
+        - filetypes: rst
+        - root_markers: .git
+        - settings: {
+            esbonio = {
+              logging = {
+                level = "debug"
+              },
+              sphinx = {
+                buildCommand = { "sphinx-build", ".", "./_build" },
+                pythonCommand = { "python" }
+              }
+            }
+          }
+
+
+      vim.lsp: File Watcher ~
+      - file watching "(workspace/didChangeWatchedFiles)" disabled on all clients
+
+      vim.lsp: Position Encodings ~
+      - No buffers contain mixed position encodings
