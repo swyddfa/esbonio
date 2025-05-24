@@ -23,6 +23,10 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
     workspace_uri = uri_for("workspaces", "demo")
     test_uri = workspace_uri / "index.rst"
 
+    @lsp_client.feature(types.WORKSPACE_DIAGNOSTIC_REFRESH)
+    def _(lc: LanguageClient, params):
+        print(f"{types.WORKSPACE_DIAGNOSTIC_REFRESH} requsted", sys.stderr)
+
     await lsp_client.initialize_session(
         types.InitializeParams(
             capabilities=types.ClientCapabilities(
@@ -42,6 +46,11 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                     # Signal pull diagnostic support
                     diagnostic=types.DiagnosticClientCapabilities(
                         dynamic_registration=False
+                    ),
+                ),
+                workspace=types.WorkspaceClientCapabilities(
+                    diagnostics=types.DiagnosticWorkspaceClientCapabilities(
+                        refresh_support=True,
                     ),
                 ),
                 # Signal workDoneProgress/create support.
