@@ -16,7 +16,6 @@ DIAGNOSTICS_TABLE = Database.Table(
 
 def init_db(app: Sphinx, config: Config):
     app.esbonio.db.ensure_table(DIAGNOSTICS_TABLE)
-    sync_diagnostics(app)
 
 
 def clear_diagnostics(app: Sphinx, docname: str, source):
