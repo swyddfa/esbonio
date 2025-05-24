@@ -240,13 +240,8 @@ The following options control the creation and management of background Sphinx p
 
      ["sphinx-build", "-M", "dirhtml", "docs", "${defaultBuildDir}", "--fail-on-warning"]
 
-   This can contain any valid :external+sphinx:std:doc:`man/sphinx-build` argument however, the following arguments will be ignored and have no effect.
+   For more information, see :ref:`lsp-configure-sphinx-build-cmd`
 
-   - ``--color``, ``-P``, ``--pdb``
-
-   Additionally, this option supports the following variables
-
-   - ``${defaultBuildDir}``: Expands to esbonio's default choice of build directory
 
 .. esbonio:config:: esbonio.sphinx.pythonCommand
    :scope: project
@@ -286,25 +281,7 @@ The following options control the creation and management of background Sphinx p
    This option can be used to override values set in the project's ``conf.py`` file.
    This can be used to replace both the :option:`sphinx-build -D <sphinx:sphinx-build.-D>` and :option:`sphinx-build -A <sphinx:sphinx-build.-A>` cli options.
 
-   For example the cli argument ``-Dlanguage=cy`` overrides a project's language, the equivalent setting using the ``configOverrides`` setting would be
-
-   .. code-block:: json
-
-      {
-         "esbonio.sphinx.configOverrides": {
-            "language": "cy"
-         }
-      }
-
-   Simiarly the argument ``-Adocstitle=ProjectName`` overrides the value of the ``docstitle`` variable inside HTML templates, the equivalent setting using ``configOverrides`` would be
-
-   .. code-block:: json
-
-      {
-         "esbonio.sphinx.configOverrides": {
-            "html_context.docstitle": "ProjectName"
-         }
-      }
+   See :ref:`lsp-configure-sphinx-build-cmd` for details
 
 .. esbonio:config:: esbonio.sphinx.buildTriggers
    :scope: global
