@@ -41,7 +41,7 @@ The recommended way to do this is via your project's ``pyproject.toml`` file, fo
 
 .. tip::
 
-   See :ref:`lsp-use-with` and :ref:`lsp-configure-python` guides for more examples of these settings.
+   See :ref:`lsp-configure-sphinx-build-env` and :ref:`lsp-configure-python` guides for more examples of these settings.
 
 If you don't have a ``pyproject.toml`` file, or would prefer to set these options directly in neovim you can include a ``settings`` table
 
