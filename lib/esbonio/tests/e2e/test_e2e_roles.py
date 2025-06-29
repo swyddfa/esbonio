@@ -856,6 +856,12 @@ async def test_role_target_definitions(
             None,
         ),
         (
+            ["workspaces", "demo", "myst", "roles.md"],
+            # Requests for the role itself should return nothing
+            types.Position(line=53, character=10),
+            None,
+        ),
+        (
             ["workspaces", "demo", "rst", "roles.rst"],
             # Requests for the role itself should return nothing
             types.Position(line=60, character=26),
@@ -867,6 +873,21 @@ async def test_role_target_definitions(
                 range=types.Range(
                     start=types.Position(line=60, character=14),
                     end=types.Position(line=60, character=47),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            # Requests for the role itself should return nothing
+            types.Position(line=53, character=26),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="This counter implementation counts",
+                ),
+                range=types.Range(
+                    start=types.Position(line=53, character=14),
+                    end=types.Position(line=53, character=47),
                 ),
             ),
         ),
@@ -886,6 +907,21 @@ async def test_role_target_definitions(
             ),
         ),
         (
+            ["workspaces", "demo", "myst", "roles.md"],
+            # Requests for the role itself should return nothing
+            types.Position(line=54, character=15),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="Helper for creating a PatternCounter",
+                ),
+                range=types.Range(
+                    start=types.Position(line=54, character=13),
+                    end=types.Position(line=54, character=54),
+                ),
+            ),
+        ),
+        (
             ["workspaces", "demo", "rst", "roles.rst"],
             # Requests for the role itself should return nothing
             types.Position(line=62, character=43),
@@ -897,6 +933,21 @@ async def test_role_target_definitions(
                 range=types.Range(
                     start=types.Position(line=62, character=9),
                     end=types.Position(line=62, character=43),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            # Requests for the role itself should return nothing
+            types.Position(line=55, character=43),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="The default pattern used",
+                ),
+                range=types.Range(
+                    start=types.Position(line=55, character=12),
+                    end=types.Position(line=55, character=46),
                 ),
             ),
         ),
