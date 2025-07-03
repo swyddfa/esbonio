@@ -93,6 +93,14 @@ class ManagerConfig:
     """Options controlling when to trigger a Sphinx build."""
 
 
+@attrs.define
+class RestartSphinxParams:
+    """Parameters for the ``esbonio.sphinx.restart`` command"""
+
+    id: str
+    """The id of the sphinx client to restart"""
+
+
 class SphinxManager(server.LanguageFeature):
     """Responsible for managing Sphinx application instances."""
 
