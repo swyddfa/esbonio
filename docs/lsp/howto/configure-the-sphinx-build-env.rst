@@ -1,15 +1,20 @@
-.. _lsp-use-with:
+.. _lsp-configure-sphinx-build-env:
 
-How To Use Esbonio With...
-==========================
+How To Configure the Sphinx Build Environment
+=============================================
 
-There are (almost!) as many ways to manage a Python environment as there are packages on PyPi!
-This guide outlines how to configure ``esbonio`` to use the right environment for your project.
+Esbonio works by creating a background Sphinx process which it can use to build your documentation and extract information from it.
+This of course, requires ``esbonio`` being able to execute this process within the correct Python environment.
+
+Since there are many ways to define and manage Python environments, ``esbonio`` needs you to tell it how to run the ``python`` command so that it has access to the correct dependencies.
+This is typically done by setting the :esbonio:conf:`esbonio.sphinx.pythonCommand` in your project's ``pyproject.toml`` file.
+
+Below are some examples on how you would set this option depending on your choice of environment manager tool.
 
 Hatch
 -----
 
-If for example, you used `hatch <https://hatch.pypa.io/latest/>`__ to define an environment in which you build your documentation
+If you use `hatch <https://hatch.pypa.io/latest/>`__ to define the environment in which you build your documentation
 
 .. code-block:: toml
 

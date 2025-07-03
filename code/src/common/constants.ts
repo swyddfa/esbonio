@@ -15,6 +15,8 @@ export namespace Commands {
   export const SET_SCROLL_BEHAVIOUR = "esbonio.preview.setScrollingBehavior"
 
   export const RESTART_SERVER = "esbonio.server.restart"
+
+  export const PYTHON_SELECT_INTERPRETER = "python.setInterpreter"
 }
 
 /**

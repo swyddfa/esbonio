@@ -164,6 +164,39 @@ class MystRoles(server.LanguageFeature):
 
         return links if len(links) > 0 else None
 
+    hover_trigger = server.HoverTrigger(
+        patterns=[MYST_ROLE],
+        languages={"markdown"},
+    )
+
+    async def hover(self, context: server.HoverContext) -> types.Hover | None:
+        """Find the hover text of the requested item"""
+        role = context.match.group("name")
+        target = context.match.group("target")
+        label = context.match.group("label")
+
+        if not label:
+            return None
+
+        idx = context.match.group(0).index(target)
+        start = context.match.start() + idx
+        end = start + len(target)
+
+        if start <= context.position.character <= end:
+            if (text := await self.roles.hover_target(context, role, label)) is None:
+                return None
+        else:
+            return None
+
+        linum = context.position.line
+        return types.Hover(
+            contents=types.MarkupContent(kind=types.MarkupKind.Markdown, value=text),
+            range=types.Range(
+                start=types.Position(line=linum, character=start),
+                end=types.Position(line=linum, character=end),
+            ),
+        )
+
 
 def esbonio_setup(esbonio: server.EsbonioLanguageServer, roles: RolesFeature):
     rst_roles = MystRoles(roles, esbonio)

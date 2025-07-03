@@ -290,9 +290,9 @@ def check_document_symbol(actual: types.DocumentSymbol, expected: types.Document
         return
 
     assert actual.children is not None
-    assert len(actual.children) == len(
-        expected.children
-    ), f"Children mismatch in symbol '{actual.name}'"
+    assert len(actual.children) == len(expected.children), (
+        f"Children mismatch in symbol '{actual.name}'"
+    )
 
     for actual_child, expected_child in zip(actual.children, expected.children):
         check_document_symbol(actual_child, expected_child)

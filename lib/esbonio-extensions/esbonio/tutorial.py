@@ -558,7 +558,7 @@ class Tutorial(Builder):
         basename = f"{docpath.stem}-soln"
 
         for idx, soln in enumerate(doctree.traverse(condition=solution)):
-            name = f"{basename}-{idx+1:02d}.py"
+            name = f"{basename}-{idx + 1:02d}.py"
             destination = pathlib.Path("resources", docpath.with_suffix(""), name)
             refuri = relative_uri(src, str(destination))
 

@@ -142,6 +142,59 @@ class RolesFeature(server.LanguageFeature):
 
         return None
 
+    async def hover_target(
+        self, context: server.HoverContext, role_name: str, target: str
+    ) -> str | None:
+        """Return the hover text for the role's target.
+
+        Parameters
+        ----------
+        context
+           The hover context
+
+        role_name
+           The role to get the hover text for
+
+        target
+           The role's target
+
+        Returns
+        -------
+        str | None
+           The target's hover, if known
+        """
+        if (role := await self.get_role(context.uri, role_name)) is None:
+            self.logger.debug("Unknown role '%s'", role_name)
+            return None
+
+        if not role.target_providers:
+            return None
+
+        self.logger.debug(
+            "Finding target hover for role: '%s' (%s)",
+            role.name,
+            role.implementation,
+        )
+
+        for spec in role.target_providers:
+            if (provider := self._target_providers.get(spec.name)) is None:
+                self.logger.error("Unknown target provider: '%s'", spec.name)
+                continue
+
+            try:
+                result = provider.hover_target(context, target, **spec.kwargs)
+                if inspect.isawaitable(result):
+                    result = await result
+
+                if result is not None:
+                    return result
+
+            except Exception:
+                name = type(provider).__name__
+                self.logger.error("Error in '%s.hover_target'", name, exc_info=True)
+
+        return None
+
     async def find_target_definition(
         self, context: server.DefinitionContext, role_name: str, target: str
     ) -> list[lsp.Location] | None:

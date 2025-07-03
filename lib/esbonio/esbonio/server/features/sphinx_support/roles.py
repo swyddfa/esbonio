@@ -70,7 +70,7 @@ class ObjectsProvider(roles.RoleTargetProvider):
         db = await project.get_db()
         query = (
             "SELECT "  # noqa: S608
-            '  location '
+            "  location "
             "FROM objects "
             f'WHERE printf("%s:%s", objects.domain, objects.objtype) in ({", ".join("?" for _ in obj_types)})'
             "       AND objects.name = ?"
@@ -99,6 +99,49 @@ class ObjectsProvider(roles.RoleTargetProvider):
                 )
 
         return locations
+
+    async def hover_target(  # type: ignore
+        self,
+        context: server.HoverContext,
+        target: str,
+        *,
+        obj_types: list[str] | None,
+        projects: list[str] | None,
+        **kwargs,
+    ) -> str | None:
+        """Find the hover text for the given role target."""
+        if obj_types is None:
+            self.logger.debug("Unable to find hover text, missing object types!")
+            return None
+
+        if (project := self.manager.get_project(context.uri)) is None:
+            return None
+
+        self.logger.debug("%r, %r, %r, %r", context, target, obj_types, projects)
+        db = await project.get_db()
+        query = (
+            "SELECT "  # noqa: S608
+            "  description "
+            "FROM objects "
+            f'WHERE printf("%s:%s", objects.domain, objects.objtype) in ({", ".join("?" for _ in obj_types)})'
+            "       AND objects.name = ?"
+        )
+
+        # Hack for absolute docnames...
+        if "std:doc" in obj_types and target.startswith("/"):
+            target = target[1:]
+
+        cursor = await db.execute(query, (*obj_types, target))
+        if (result := await cursor.fetchall()) is None:
+            return None
+
+        for item, *_ in result:
+            if item is None:
+                continue
+
+            return item
+
+        return None
 
     async def resolve_target_link(
         self,
@@ -143,8 +186,8 @@ class ObjectsProvider(roles.RoleTargetProvider):
             "SELECT "  # noqa: S608
             '  printf("%s%s", intersphinx_projects.uri, objects.docname) as uri,'
             '  printf("%s v%s", intersphinx_projects.name, intersphinx_projects.version) as source,'
-            '  objects.name,'
-            '  objects.display '
+            "  objects.name,"
+            "  objects.display "
             "FROM objects JOIN intersphinx_projects "
             "ON objects.project = intersphinx_projects.id "
             f"WHERE objects.project in ({', '.join('?' for _ in projects)}) "

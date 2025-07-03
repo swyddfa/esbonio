@@ -5,8 +5,8 @@ ifeq ($(strip $(ARCH)),)
 $(error Unable to determine platform architecture)
 endif
 
-NODE_VERSION := 20.18.0
-UV_VERSION := 0.5.21
+NODE_VERSION := 20.19.3
+UV_VERSION := 0.7.15
 
 UV ?= $(shell command -v uv)
 UVX ?= $(shell command -v uvx)
@@ -32,7 +32,7 @@ $(UV):
 endif
 
 # The versions of Python we support
-PYXX_versions := 3.9 3.10 3.11 3.12 3.13
+PYXX_versions := 3.9 3.10 3.11 3.12 3.13 3.14
 
 # Our default Python version
 PY_VERSION := 3.13

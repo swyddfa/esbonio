@@ -12,7 +12,7 @@ async def refresh_diagnostics(
     server: EsbonioLanguageServer,
     projects: ProjectManager,
     client: SphinxClient,
-    result,
+    *args,
 ):
     """Refresh sphinx diagnostics."""
     if (project := projects.get_project(client.src_uri)) is None:
@@ -36,6 +36,9 @@ def esbonio_setup(
     sphinx_manager: SphinxManager,
     project_manager: ProjectManager,
 ):
+    sphinx_manager.add_listener(
+        "app-created", partial(refresh_diagnostics, server, project_manager)
+    )
     sphinx_manager.add_listener(
         "build", partial(refresh_diagnostics, server, project_manager)
     )

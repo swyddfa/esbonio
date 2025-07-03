@@ -292,14 +292,23 @@ class EsbonioLanguageServer(LanguageServer):
         return ""
 
     def sync_diagnostics(self) -> None:
-        """Update the client with the currently stored diagnostics.
+        """Update the client with the currently stored diagnostics using
+        a ``textDocument/publishDiagnostics`` notification.
 
-        When the client supports the pull diagnostics model, this is a no-op.
+        When using the pull diagnostics model, this triggers a
+        ``workspace/diagnostic/refresh`` request instead.
         """
-        pull_support = get_capability(
-            self.client_capabilities, "text_document.diagnostic", None
+        diagnostic_provider = self.server_capabilities.diagnostic_provider
+        workspace_diagnostic = get_capability(
+            self.client_capabilities,
+            "workspace.diagnostics",
+            types.DiagnosticWorkspaceClientCapabilities(),
         )
-        if pull_support is not None:
+
+        if diagnostic_provider is not None:
+            if workspace_diagnostic.refresh_support:
+                # Signal to the client that is should ask again for more diagnostics
+                self.workspace_diagnostic_refresh(None)
             return
 
         uris = {uri for _, uri in self._diagnostics.keys()}

@@ -6,22 +6,21 @@ from docutils.parsers.rst import directives
 from sphinx import addnodes
 from sphinx.application import Sphinx
 from sphinx.directives import ObjectDescription
-from sphinx.domains import Domain
-from sphinx.domains import ObjType
+from sphinx.domains import Domain, ObjType
 from sphinx.roles import XRefRole
-from sphinx.util.nodes import make_id
-from sphinx.util.nodes import make_refnode
+from sphinx.util.logging import getLogger
+from sphinx.util.nodes import make_id, make_refnode
 
 if typing.TYPE_CHECKING:
-    from typing import Dict
-    from typing import Optional
-    from typing import Tuple
+    from typing import Dict, Optional, Tuple
 
     from docutils.nodes import Element
     from sphinx.addnodes import pending_xref
     from sphinx.builders import Builder
     from sphinx.environment import BuildEnvironment
     from sphinx.util.typing import OptionSpec
+
+logger = getLogger("esbonio.domain")
 
 
 def config_scope(argument: str):
@@ -66,6 +65,7 @@ class ConfigValue(ObjectDescription[str]):
         signode["ids"].append(node_id)
 
         domain: EsbonioDomain = self.env.domains["esbonio"]
+        logger.debug("Add config_value: %r", name)
         domain.config_values[name] = (self.env.docname, node_id)
 
 
@@ -85,6 +85,7 @@ class Command(ObjectDescription[str]):
         signode["ids"].append(node_id)
 
         domain: EsbonioDomain = self.env.domains["esbonio"]
+        logger.debug("Add command: %r", name)
         domain.commands[name] = (self.env.docname, node_id)
 
 
@@ -127,17 +128,23 @@ class EsbonioDomain(Domain):
         env: BuildEnvironment,
         fromdocname: str,
         builder: Builder,
-        type: str,
+        typ: str,
         target: str,
         node: pending_xref,
         contnode: Element,
-    ) -> Optional[Element]:
+    ) -> Element | None:
         """Resolve cross references"""
 
-        if (entry := self.config_values.get(target, None)) is None:
+        if typ == "conf":
+            obj_store = self.config_values
+        elif typ == "cmd":
+            obj_store = self.commands
+        else:
+            logger.error("Unable to resolve %r (%s), unknown type %r", target, typ, typ)
             return None
 
-        if (entry := self.commands.get(target, None)) is None:
+        if (entry := obj_store.get(target, None)) is None:
+            logger.debug("Unable to resolve %r (%s), entry is None", target, typ)
             return None
 
         return make_refnode(

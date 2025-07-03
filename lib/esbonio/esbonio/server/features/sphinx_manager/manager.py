@@ -93,6 +93,14 @@ class ManagerConfig:
     """Options controlling when to trigger a Sphinx build."""
 
 
+@attrs.define
+class RestartSphinxParams:
+    """Parameters for the ``esbonio.sphinx.restart`` command"""
+
+    id: str
+    """The id of the sphinx client to restart"""
+
+
 class SphinxManager(server.LanguageFeature):
     """Responsible for managing Sphinx application instances."""
 
@@ -360,6 +368,7 @@ class SphinxManager(server.LanguageFeature):
         if old_state == ClientState.Starting and new_state == ClientState.Running:
             if (sphinx_info := client.sphinx_info) is not None:
                 self.project_manager.register_project(scope, client.db)
+                self._events.trigger("app-created", client)
                 self.server.protocol.notify(
                     "sphinx/appCreated",
                     AppCreatedNotification(id=client.id, application=sphinx_info),

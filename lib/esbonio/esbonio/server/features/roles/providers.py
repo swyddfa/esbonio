@@ -20,6 +20,12 @@ class RoleTargetProvider:
         self.converter = esbonio.converter
         self.logger = esbonio.logger.getChild(self.__class__.__name__)
 
+    def hover_target(
+        self, context: server.HoverContext, target: str, **kwargs
+    ) -> str | None | Coroutine[Any, Any, str | None]:
+        """Return the hover text for the given target"""
+        return None
+
     def suggest_targets(
         self, context: server.CompletionContext, **kwargs
     ) -> (

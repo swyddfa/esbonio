@@ -153,7 +153,11 @@ export class EsbonioClient {
 
     // React to environment changes in the Python extension
     python.addHandler(Events.PYTHON_ENV_CHANGE, (_event: ActiveEnvironmentPathChangeEvent) => {
-      this.server?.sendNotification("workspace/didChangeConfiguration", { settings: null })
+
+      let states = [State.Running, State.Starting]
+      if (!this.server || !states.includes(this.server.state)) {
+        this.start()
+      }
     })
   }
 
@@ -233,6 +237,14 @@ export class EsbonioClient {
 
     let pythonCommand = await this.python.getCmd()
     if (!pythonCommand) {
+      let message = `Unable to start the Esbonio server as a compatible Python interpreter could not be found.
+        Please select an interpreter using the Python extension, or set the esbonio.server.pythonPath setting.`
+
+      let result = await vscode.window.showErrorMessage(message, 'Select Interpreter')
+      if (result === 'Select Interpreter') {
+        await vscode.commands.executeCommand(Commands.PYTHON_SELECT_INTERPRETER)
+      }
+
       return
     }
 

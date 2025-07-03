@@ -14,7 +14,7 @@ The `esbonio` language server aims to make it easier to work with [Sphinx](https
 ### Live Preview
 
 The extension can show a live HTML preview of the documentation, so the preview contents change whenever the document is updated.
-Syncronised scrolling between the source and preview is also supported.
+Synchronised scrolling between the source and preview is also supported.
 
 ![HTML Preview](../resources/images/vscode-preview-demo.gif)
 
@@ -26,7 +26,7 @@ The language server can provide completion suggestions in various contexts
 
 ### Goto Definition
 
-Goto definition is currently implemented for objects linked to by `:ref:` and `:doc:` roles
+Goto definition is implemented for objects linked to by `:ref:` and `:doc:` roles
 
 ![Goto Definition Demo](../resources/images/definition-demo.png)
 
@@ -54,27 +54,34 @@ You can also search for symbols within the workspace using the `Ctrl+T` shortcut
 
 ![Document & Worspace Symbols](../resources/images/document-workspace-symbols-demo.png)
 
+### Sphinx Process Management
+
+The extension provides a UI to help visualise and manage the background Sphinx processes used by the server.
+
+![Sphinx process view](../resources/images/sphinx-process-view.png)
+
 ## Setup
+
+It's recommended to follow the [Getting Started](https://docs.esbon.io/en/latest/lsp/getting-started.html) tutorial if you are using Esbonio for the first time however, to summarize.
 
 The `esbonio` language server is bundled with this extension, so there is no need to install it separately.
 However, the server will need access the Python environment you use to build your documentation.
 
-1. Open the folder containing your documentation project in VSCode, (opening a single file without an active workspace is not currently supported and will lead to errors).
+1. Open the folder containing your documentation project in VSCode, (using the extension without an active workspace is not supported).
 
-1. Using the `Python: Select Interpreter` command from the Python extension, choose the environment you use to build your documentation.
-   (You might be required to run the `Esbonio: Restart Language Server` command for it to take effect).
-
-   Alternatively, you can set the `esbonio.sphinx.pythonCommand` option to override the python interpreter used.
+1. Set the `esbonio.sphinx.pythonCommand` option to select the Python environment used to build your documentation.
+   See [this guide](https://docs.esbon.io/en/latest/lsp/howto/use-esbonio-with.html) for more details on its use.
 
 1. Open a reStructuredText or markdown file from your Sphinx project.
 
-1. Sphinx build output will be available in Esbonio's `Output` view in VSCode's panel.
+If necessary, Sphinx build output will be available in Esbonio's `Output` view in the VSCode panel.
+When troubleshooting, it's recommended to set the `esbonio.logging.level` option to `debug`
 
 ## Dependent Extensions
 
 Esbonio relies on the following extensions
 
-- By default, Esbonio relies on the offical [Python Extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) to configure the environment in which it builds your documentation.
+- The offical [Python Extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) is used to locate a Python interpreter compatible with the ``esbonio`` language server.
 
 - The [MyST Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=chrisjsewell.myst-tml-syntax) extension provides syntax highlighting rules for MyST flavoured markdown.
 

@@ -21,6 +21,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Documentation",
     "Topic :: Documentation :: Sphinx",
 ]
@@ -28,7 +29,7 @@ dependencies = [
     "aiosqlite",
     "platformdirs",
     "docutils",
-    "pygls>=2.0a2",
+    "pygls>=2.0a4",
     "tomli ; python_version<'3.11'",
     "websockets",
 ]

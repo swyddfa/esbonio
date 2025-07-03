@@ -18,6 +18,3 @@ dependencies = [
 
 [tool.hatch.envs.docs.env-vars]
 UV_PRERELEASE = "allow"
-
-[tool.hatch.envs.docs.scripts]
-build = "sphinx-build -M dirhtml . ./_build"
