@@ -1,3 +1,22 @@
+## v1.0.0b12 - 2025-07-03
+
+### Features
+
+- Re-implement support for hover requests, where the hover reveals the documentation behind cross-references like ```:class:`HoverContext` ``` ([#1008](https://github.com/swyddfa/esbonio/issues/1008))
+
+### Fixes
+
+- Rather than trying to generate unique urls across projects (which broke many links), the preview server now sets the `Cache-Control` header in an attempt to ensure the preview always updates correctly. ([#951](https://github.com/swyddfa/esbonio/issues/951), [#987](https://github.com/swyddfa/esbonio/issues/987))
+- The sphinx agent no longer crashes when saving a configuration value that is a list containing exactly three items ([#969](https://github.com/swyddfa/esbonio/issues/969))
+- Improve diagnostic experience in editors like neovim which do not support `workspace/diagnostic/refresh` requests ([#998](https://github.com/swyddfa/esbonio/issues/998))
+
+### Misc
+
+- Update to pygls v2.0.0a4
+
+  Add support for Python 3.14 ([#1007](https://github.com/swyddfa/esbonio/issues/1007))
+
+
 ## v1.0.0b11 - 2025-04-02
 
 ### Features
