@@ -7,6 +7,7 @@ from .client import ClientState
 from .client import SphinxClient
 from .client_subprocess import make_subprocess_sphinx_client
 from .config import SphinxConfig
+from .manager import RestartSphinxParams
 from .manager import SphinxManager
 
 __all__ = [
@@ -22,11 +23,8 @@ def esbonio_setup(server: EsbonioLanguageServer, project_manager: ProjectManager
     server.add_feature(manager)
 
     @server.command("esbonio.sphinx.restart")
-    async def restart_client(ls: EsbonioLanguageServer, params, *args):
+    async def restart_client(
+        ls: EsbonioLanguageServer, params: RestartSphinxParams, *args
+    ):
         ls.logger.debug("esbonio.sphinx.restart: %s", params)
-
-        for item in params:
-            if item is None:
-                continue
-
-            await manager.restart_client(item["id"])
+        await manager.restart_client(params.id)

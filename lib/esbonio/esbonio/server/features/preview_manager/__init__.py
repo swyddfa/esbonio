@@ -2,6 +2,7 @@ from typing import Any
 from typing import Optional
 from urllib.parse import urlencode
 
+import attrs
 from lsprotocol import types
 from pygls.capabilities import get_capability
 
@@ -16,6 +17,11 @@ from .preview import PreviewServer
 from .preview import make_http_server
 from .webview import WebviewServer
 from .webview import make_ws_server
+
+
+@attrs.define
+class PreviewFileParams:
+    uri: str
 
 
 class PreviewManager(server.LanguageFeature):
@@ -144,12 +150,12 @@ class PreviewManager(server.LanguageFeature):
 
         self.webview.scroll(uri, line)
 
-    async def preview_file(self, params, retry=True):
+    async def preview_file(self, params: PreviewFileParams, retry=True):
         if self.preview is None:
             return None
 
         # Always check the fully resolved uri.
-        src_uri = Uri.parse(params["uri"]).resolve()
+        src_uri = Uri.parse(params.uri).resolve()
         self.logger.debug("Previewing file: '%s'", src_uri)
 
         if (client := await self.sphinx.get_client(src_uri)) is None:
@@ -227,5 +233,5 @@ def esbonio_setup(
         await manager.scroll_view(params.uri, params.line)
 
     @esbonio.command("esbonio.server.previewFile")
-    async def preview_file(ls: server.EsbonioLanguageServer, *args):
-        return await manager.preview_file(args[0][0])
+    async def preview_file(ls: server.EsbonioLanguageServer, params: PreviewFileParams):
+        return await manager.preview_file(params)
