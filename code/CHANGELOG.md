@@ -1,3 +1,21 @@
+## v0.96.5 - 2025-07-03
+
+### Enhancements
+
+- If there is not already a server running and the user changes their Python env, the extension will automatically try to start the server.
+  This should make recovering from a missing Python interpreter easier ([#988](https://github.com/swyddfa/esbonio/issues/988))
+- Remove border around the preview pane's `<iframe>` by @qwertychouskie ([#999](https://github.com/swyddfa/esbonio/issues/999))
+
+### Fixes
+
+- The extension no longer silently does nothing if it cannot locate a compatible Python interpreter.
+  Instead it uses an error notification to inform the user and given them the option of selecting an interpreter via the Python extension. ([#988](https://github.com/swyddfa/esbonio/issues/988))
+
+### Misc
+
+- Update esbonio to `1.0b12` ([#1009](https://github.com/swyddfa/esbonio/issues/1009))
+
+
 ## v0.96.4 - 2025-04-02
 
 ### Enhancements
