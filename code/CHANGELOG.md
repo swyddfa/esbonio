@@ -1,3 +1,10 @@
+## v0.96.6 - 2025-07-07
+
+### Misc
+
+- Actually update `esbonio` to `v1.0b12` ([#1014](https://github.com/swyddfa/esbonio/issues/1014))
+
+
 ## v0.96.5 - 2025-07-03
 
 ### Enhancements
