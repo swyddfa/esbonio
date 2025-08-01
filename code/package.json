@@ -43,7 +43,7 @@
         "@vscode/vsce": "^3.6.0",
         "esbuild": "^0.25.5",
         "ovsx": "^0.10.4",
-        "typescript": "^5.8.3"
+        "typescript": "^5.9.2"
     },
     "engines": {
         "vscode": "^1.82.0"
