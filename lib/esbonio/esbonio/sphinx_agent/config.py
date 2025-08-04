@@ -25,7 +25,7 @@ class SphinxConfig:
     src_dir: str
     """The directory containing the project's source."""
 
-    conf_dir: str
+    conf_dir: str | None
     """The directory containing the project's ``conf.py``."""
 
     build_dir: str
@@ -147,8 +147,10 @@ class SphinxConfig:
         #
         # Resolving these paths here, should ensure that the agent always
         # reports the true location of any given directory.
-        conf_dir = pathlib.Path(self.conf_dir).resolve()
-        self.conf_dir = str(conf_dir)
+        conf_dir = None
+        if self.conf_dir is not None:
+            conf_dir = pathlib.Path(self.conf_dir).resolve()
+            self.conf_dir = str(conf_dir)
 
         # Resolve any config variables.
         #
@@ -174,7 +176,7 @@ class SphinxConfig:
 
         return {
             "buildername": self.builder_name,
-            "confdir": str(conf_dir),
+            "confdir": str(conf_dir) if conf_dir is not None else None,
             "confoverrides": self.config_overrides,
             "doctreedir": str(doctree_dir),
             "freshenv": self.force_full_build,
@@ -199,7 +201,8 @@ class SphinxConfig:
                     "missing context value: 'cacheDir'"
                 )
 
-            project = hashlib.md5(self.conf_dir.encode()).hexdigest()  # noqa: S324
+            dirname = self.conf_dir or self.src_dir
+            project = hashlib.md5(dirname.encode()).hexdigest()  # noqa: S324
             return str(pathlib.Path(cache_dir, project))
 
         raise ValueError(f"Unknown configuration variable {name!r}")

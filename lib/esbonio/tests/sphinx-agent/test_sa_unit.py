@@ -40,8 +40,8 @@ def application_args(**kwargs) -> dict[str, Any]:
     }
 
     for arg in ("srcdir", "outdir", "confdir", "doctreedir"):
-        if arg in kwargs:
-            kwargs[arg] = str(pathlib.Path(kwargs[arg]).resolve())
+        if arg in kwargs and (value := kwargs[arg]) is not None:
+            kwargs[arg] = str(pathlib.Path(value).resolve())
 
     # Order matters, kwargs will override any keys found in defaults.
     return {**defaults, **kwargs}
@@ -55,6 +55,16 @@ def application_args(**kwargs) -> dict[str, Any]:
             application_args(
                 srcdir="src",
                 confdir="src",
+                outdir=os.path.join("out", "html"),
+                doctreedir=os.path.join("out", "doctrees"),
+                buildername="html",
+            ),
+        ),
+        (
+            ["-M", "html", "src", "out", "-C"],
+            application_args(
+                srcdir="src",
+                confdir=None,
                 outdir=os.path.join("out", "html"),
                 doctreedir=os.path.join("out", "doctrees"),
                 buildername="html",
@@ -247,6 +257,16 @@ def application_args(**kwargs) -> dict[str, Any]:
             application_args(
                 srcdir="src",
                 confdir="src",
+                outdir="out",
+                doctreedir=os.path.join("out", ".doctrees"),
+                buildername="html",
+            ),
+        ),
+        (
+            ["-b", "html", "src", "out", "-C"],
+            application_args(
+                srcdir="src",
+                confdir=None,
                 outdir="out",
                 doctreedir=os.path.join("out", ".doctrees"),
                 buildername="html",
@@ -474,6 +494,21 @@ def test_cli_arg_handling(args: list[str], expected: dict[str, Any]):
             },
         ),
         (
+            ["-M", "html", "src", "${defaultBuildDir}", "-C"],
+            application_args(
+                srcdir="src",
+                confdir=None,
+                outdir=os.sep + os.path.join("path", "to", "cache", "<HASH>", "html"),
+                doctreedir=(
+                    os.sep + os.path.join("path", "to", "cache", "<HASH>", "doctrees")
+                ),
+                buildername="html",
+            ),
+            {
+                "cacheDir": os.sep + os.sep.join(["path", "to", "cache"]),
+            },
+        ),
+        (
             ["-M", "html", "src", "${defaultBuildDir}"],
             application_args(
                 srcdir="src",
@@ -493,6 +528,21 @@ def test_cli_arg_handling(args: list[str], expected: dict[str, Any]):
             application_args(
                 srcdir="src",
                 confdir="src",
+                outdir=os.sep + os.sep.join(["path", "to", "cache", "<HASH>"]),
+                doctreedir=(
+                    os.sep + os.path.join("path", "to", "cache", r"<HASH>", ".doctrees")
+                ),
+                buildername="html",
+            ),
+            {
+                "cacheDir": os.sep + os.sep.join(["path", "to", "cache"]),
+            },
+        ),
+        (
+            ["-b", "html", "src", "${defaultBuildDir}", "-C"],
+            application_args(
+                srcdir="src",
+                confdir=None,
                 outdir=os.sep + os.sep.join(["path", "to", "cache", "<HASH>"]),
                 doctreedir=(
                     os.sep + os.path.join("path", "to", "cache", r"<HASH>", ".doctrees")
@@ -539,7 +589,8 @@ def test_cli_default_build_dir(
     assert actual.pop("warning") == sys.stderr
 
     # Compute the expected hash now that the confdir has been resolved
-    ehash = hashlib.md5(config.conf_dir.encode()).hexdigest()
+    dirname = config.conf_dir or config.src_dir
+    ehash = hashlib.md5(dirname.encode()).hexdigest()
     expected["outdir"] = expected["outdir"].replace("<HASH>", ehash)
     expected["doctreedir"] = expected["doctreedir"].replace("<HASH>", ehash)
 
