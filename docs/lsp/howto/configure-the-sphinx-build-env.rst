@@ -90,6 +90,49 @@ Then you should set :esbonio:conf:`esbonio.sphinx.pythonCommand` to
    [tool.esbonio.sphinx]
    pythonCommand = ["poetry", "run", "python"]
 
+uv
+---
+
+If you use `uv <https://docs.astral.sh/uv/>`__ and a ``pyproject.toml`` file to manage your dependencies
+
+.. code-block:: toml
+
+   [project]
+   dependencies = [
+       "attrs>=24.3.0",
+       "cattrs>=23.1.2",
+       "lsprotocol==2025.0.0",
+   ]
+
+   [dependency-groups]
+   docs = [
+       "furo>=2024.8.6",
+       "myst-parser>=2.0",
+       "sphinx>=7.1.2",
+       "sphinx-design>=0.5.0",
+   ]
+
+Then you should set :esbonio:conf:`esbonio.sphinx.pythonCommand` to
+
+.. code-block:: toml
+
+   [tool.esbonio.sphinx]
+   pythonCommand = ["uv", "run", "--group", "docs", "python"]
+
+Alternatively, you can specify the dependencies direct in the ``uv run`` command
+
+.. code-block:: toml
+
+   [tool.esbonio.sphinx]
+   pythonCommand = [
+       "uv", "run", "--no-project",
+       "--with", "sphinx",
+       "--with", "myst-parser",
+       "python"
+   ]
+
+Just don't forget the ``--no-project`` flag, otherwise ``uv`` will attempt to include dependencies from the ``pyproject.toml`` file also!
+
 venv / virtualenv
 -----------------
 
