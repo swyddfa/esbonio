@@ -204,7 +204,7 @@ def _register_lsp_methods(server: EsbonioLanguageServer):
         ls.logger.debug("%s: %s", types.WORKSPACE_DID_CHANGE_WATCHED_FILES, params)
         # TODO: Handle deleted files.
         paths = [pathlib.Path(Uri.parse(event.uri)) for event in params.changes]
-        await ls.configuration.update_file_configuration(paths)
+        ls.configuration.update_file_configuration(paths)
 
 
 def _register_completion(server: EsbonioLanguageServer):
