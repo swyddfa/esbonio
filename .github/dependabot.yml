@@ -10,15 +10,37 @@ updates:
     target-branch: "develop"
     schedule:
       interval: "monthly"
+    groups:
+      actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: "npm"
     directory: "/code"
     target-branch: "develop"
     schedule:
       interval: "monthly"
+    groups:
+      vscode-ext:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "pip"
+    directory: "/code"
+    target-branch: "develop"
+    schedule:
+      interval: "monthly"
+    groups:
+      vscode-envs:
+        patterns:
+          - "*"
 
   - package-ecosystem: "pip"
     directory: "/lib/esbonio/tests/workspaces/demo"
     target-branch: "develop"
     schedule:
       interval: "monthly"
+    groups:
+      demo-docs:
+        patterns:
+          - "*"
