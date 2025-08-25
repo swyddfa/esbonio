@@ -200,7 +200,7 @@ def mk_uri(path: str) -> str:
             None,
         ),
         (  # If no python command provided, and no fallback env
-            # available, the configuration is invalid
+            # available, fallback to the server's environment
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
@@ -209,7 +209,12 @@ def mk_uri(path: str) -> str:
                 cwd=CWD,
                 python_path=PYPATH,
             ),
-            None,
+            SphinxConfig(
+                python_command=[sys.executable],
+                build_command=BUILD_CMD,
+                cwd=CWD,
+                python_path=PYPATH,
+            ),
         ),
         (  # If no python command provided, but there is a fallback env
             # use that

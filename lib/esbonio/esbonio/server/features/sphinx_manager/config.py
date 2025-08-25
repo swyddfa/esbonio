@@ -210,8 +210,11 @@ class SphinxConfig:
 
         if len(python_command := list(self.python_command)) == 0:
             if self.fallback_env is None:
-                logger.error("No python command configured")
-                return [], []
+                logger.warning(
+                    "No pythonCommand or fallbackCommand configured! "
+                    "Reusing the server's environment."
+                )
+                return [sys.executable], python_path
 
             if not (fallback_env := pathlib.Path(self.fallback_env)).exists():
                 logger.error(
