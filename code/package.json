@@ -199,27 +199,23 @@
                     },
                     "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
+                        "type": "object",
                         "default": null,
-                        "description": "The command to use when launching the Python interpreter for the process hosting the Sphinx application."
-                    },
-                    "esbonio.sphinx.cwd": {
-                        "scope": "resource",
-                        "type": "string",
-                        "default": null,
-                        "description": "The working directory from which to launch the Sphinx process. If not set, this will default to the root of the workspace folder containing the project."
-                    },
-                    "esbonio.sphinx.envPassthrough": {
-                        "scope": "resource",
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "default": null,
-                        "description": "A list of environment variables to pass through to the Sphinx process."
+                        "description": "Instructions on how to launch the background Sphinx process for the project",
+                        "properties": {
+                            "command": {
+                                "type": "array",
+                                "description": "The Python command to use when launching the background Sphinx process."
+                            },
+                            "cwd": {
+                                "type": "string",
+                                "description": "The working directory in which to launch the background Sphinx process."
+                            },
+                            "env": {
+                                "type": "object",
+                                "description": "Environment variables to set/override for the background Sphinx process."
+                            }
+                        }
                     }
                 }
             },
@@ -406,15 +402,6 @@
                         "default": false,
                         "description": "Enable lsp-devtools integration for sphinx agent instances."
                     },
-                    "esbonio.sphinx.pythonPath": {
-                        "scope": "resource",
-                        "type": "array",
-                        "items": {
-                            "type": "string"
-                        },
-                        "default": [],
-                        "description": "List of paths to use when constructing the value of PYTHONPATH. Used to inject the sphinx agent into the target environment."
-                    },
                     "esbonio.preview.showLineMarkers": {
                         "scope": "resource",
                         "type": "boolean",
@@ -500,7 +487,8 @@
             "explorer": [
                 {
                     "id": "sphinxProcesses",
-                    "name": "Sphinx Processes"
+                    "name": "Sphinx Processes",
+                    "icon": "$(server-process)"
                 }
             ]
         },

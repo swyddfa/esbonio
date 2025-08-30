@@ -24,18 +24,30 @@ export interface SphinxClientConfig {
   /**
    * The python command used to launch the client
    */
-  pythonCommand: string[]
+  pythonCommand: PythonCommand
 
   /**
    * The sphinx-build command in use
    */
   buildCommand: string[]
 
+}
+
+export interface PythonCommand {
   /**
-   * The working directory of the client
+   * The command that was invoked
+   */
+  command: string[]
+
+  /**
+   * The environment variables the command was launched with
+   */
+  env: { [key: string]: string }
+
+  /**
+   * The working directory the command was launched in
    */
   cwd: string
-
 }
 
 export interface ClientCreatedNotification {
@@ -297,7 +309,7 @@ export class EsbonioClient {
       'esbonio',
       'Esbonio Language Server',
       server,
-      this.getLanguageClientOptions(config)
+      this.getLanguageClientOptions(pythonCommand, config)
     )
     this.registerHandlers(client)
     return client
@@ -335,7 +347,7 @@ export class EsbonioClient {
    * Returns the LanguageClient options that are common to both modes of
    * transport.
    */
-  private getLanguageClientOptions(config: vscode.WorkspaceConfiguration): LanguageClientOptions {
+  private getLanguageClientOptions(pythonCommand: string[], config: vscode.WorkspaceConfiguration): LanguageClientOptions {
     let documentSelector = config.get<TextDocumentFilter[]>("server.documentSelector")
     if (!documentSelector || documentSelector.length === 0) {
       documentSelector = Server.DEFAULT_SELECTOR
@@ -348,8 +360,14 @@ export class EsbonioClient {
         maxRestartCount: 0
       },
       initializationOptions: {
+        // Fallback sphinx configuration
         sphinx: {
-          fallbackEnv: vscode.Uri.joinPath(this.extensionUri, "bundled", "env").fsPath,
+          pythonCommand: {
+            command: [...pythonCommand, "-S"],
+            env: {
+              PYTHONPATH: vscode.Uri.joinPath(this.extensionUri, "bundled", "env").fsPath
+            }
+          }
         }
       },
       middleware: {
