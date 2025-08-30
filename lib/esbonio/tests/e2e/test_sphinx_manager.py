@@ -111,18 +111,26 @@ async def test_get_client(
     """Ensure that we can create a SphinxClient correctly."""
 
     _, manager = await server_manager(
-        init_options=dict(
-            esbonio=dict(
-                sphinx=dict(
-                    pythonCommand=[sys.executable],
-                    buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
-                    configOverrides={
-                        "html_theme": "alabaster",
-                        "html_theme_options": {},
-                    },
+        workspace_config={
+            str(demo_workspace): dict(
+                esbonio=dict(
+                    sphinx=dict(
+                        pythonCommand=[sys.executable],
+                        buildCommand=[
+                            "sphinx-build",
+                            "-M",
+                            "dirhtml",
+                            ".",
+                            str(tmp_path),
+                        ],
+                        configOverrides={
+                            "html_theme": "alabaster",
+                            "html_theme_options": {},
+                        },
+                    ),
                 ),
             ),
-        ),
+        },
     )
 
     result = await manager.get_client(demo_workspace / "index.rst")
@@ -161,13 +169,15 @@ async def test_get_client_with_error(
     """Ensure that we correctly handle the case where there is an error with the client."""
 
     _, manager = await server_manager(
-        init_options=dict(
-            esbonio=dict(
-                sphinx=dict(
-                    pythonCommand=["/not/a/real/env/python"],
+        workspace_config={
+            str(demo_workspace): dict(
+                esbonio=dict(
+                    sphinx=dict(
+                        pythonCommand=["/not/a/real/env/python"],
+                    ),
                 ),
             ),
-        ),
+        },
     )
 
     result = await manager.get_client(demo_workspace / "index.rst")
@@ -213,18 +223,26 @@ async def test_get_client_with_many_uris(
     single client instance."""
 
     _, manager = await server_manager(
-        init_options=dict(
-            esbonio=dict(
-                sphinx=dict(
-                    pythonCommand=[sys.executable],
-                    buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
-                    configOverrides={
-                        "html_theme": "alabaster",
-                        "html_theme_options": {},
-                    },
+        workspace_config={
+            str(demo_workspace): dict(
+                esbonio=dict(
+                    sphinx=dict(
+                        pythonCommand=[sys.executable],
+                        buildCommand=[
+                            "sphinx-build",
+                            "-M",
+                            "dirhtml",
+                            ".",
+                            str(tmp_path),
+                        ],
+                        configOverrides={
+                            "html_theme": "alabaster",
+                            "html_theme_options": {},
+                        },
+                    ),
                 ),
             ),
-        ),
+        },
     )
 
     src_uris = [Uri.for_file(f) for f in pathlib.Path(demo_workspace).glob("**/*.rst")]
@@ -349,18 +367,26 @@ async def test_updated_config(
     the SphinxClient is recreated."""
 
     server, manager = await server_manager(
-        init_options=dict(
-            esbonio=dict(
-                sphinx=dict(
-                    pythonCommand=[sys.executable],
-                    buildCommand=["sphinx-build", "-M", "dirhtml", ".", str(tmp_path)],
-                    configOverrides={
-                        "html_theme": "alabaster",
-                        "html_theme_options": {},
-                    },
+        workspace_config={
+            str(demo_workspace): dict(
+                esbonio=dict(
+                    sphinx=dict(
+                        pythonCommand=[sys.executable],
+                        buildCommand=[
+                            "sphinx-build",
+                            "-M",
+                            "dirhtml",
+                            ".",
+                            str(tmp_path),
+                        ],
+                        configOverrides={
+                            "html_theme": "alabaster",
+                            "html_theme_options": {},
+                        },
+                    ),
                 ),
             ),
-        ),
+        }
     )
 
     result = await manager.get_client(demo_workspace / "index.rst")
@@ -389,9 +415,14 @@ async def test_updated_config(
     assert client.builder == "dirhtml"
 
     # Now update the configuration
-    server.configuration._initialization_options["esbonio"]["sphinx"][
-        "buildCommand"
-    ] = ["sphinx-build", "-M", "html", ".", str(tmp_path)]
+    wkspace_config = server.configuration._workspace_config[str(demo_workspace)]
+    wkspace_config["esbonio"]["sphinx"]["buildCommand"] = [
+        "sphinx-build",
+        "-M",
+        "html",
+        ".",
+        str(tmp_path),
+    ]
     server.configuration._notify_subscriptions()
 
     # Give the async tasks chance to complete.

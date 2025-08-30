@@ -19,13 +19,30 @@ TEST_DIR = pathlib.Path(__file__).parent.parent
 )
 async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
     """The "main" client to use for our tests."""
-    build_dir = tmp_path_factory.mktemp("build")
     workspace_uri = uri_for("workspaces", "demo")
     test_uri = workspace_uri / "index.rst"
 
+    # Override the project configuration so that builds are written into a temporary folder
+    build_dir = tmp_path_factory.mktemp("build")
+    lsp_client.set_configuration({"logging": {"level": "debug"}}, section="esbonio")
+    lsp_client.set_configuration(
+        {
+            "buildCommand": [
+                "sphinx-build",
+                "-M",
+                "html",
+                workspace_uri.fs_path,
+                str(build_dir),
+            ],
+            "pythonCommand": [sys.executable],
+        },
+        section="esbonio.sphinx",
+        scope_uri=str(workspace_uri),
+    )
+
     @lsp_client.feature(types.WORKSPACE_DIAGNOSTIC_REFRESH)
     def _(lc: LanguageClient, params):
-        print(f"{types.WORKSPACE_DIAGNOSTIC_REFRESH} requsted", sys.stderr)
+        print(f"{types.WORKSPACE_DIAGNOSTIC_REFRESH} requsted", file=sys.stderr)
 
     await lsp_client.initialize_session(
         types.InitializeParams(
@@ -49,6 +66,7 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                     ),
                 ),
                 workspace=types.WorkspaceClientCapabilities(
+                    configuration=True,
                     diagnostics=types.DiagnosticWorkspaceClientCapabilities(
                         refresh_support=True,
                     ),
@@ -58,19 +76,6 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                     work_done_progress=True,
                 ),
             ),
-            initialization_options={
-                "logging": {"level": "debug"},
-                "sphinx": {
-                    "buildCommand": [
-                        "sphinx-build",
-                        "-M",
-                        "html",
-                        workspace_uri.fs_path,
-                        str(build_dir),
-                    ],
-                    "pythonCommand": [sys.executable],
-                },
-            },
             workspace_folders=[
                 types.WorkspaceFolder(uri=str(workspace_uri), name="demo"),
             ],
