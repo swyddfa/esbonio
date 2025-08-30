@@ -99,6 +99,11 @@ class ConfigurationContext:
         for name in attrs.fields_dict(type(config)):
             value = getattr(config, name)
 
+            # Recurse into sub-fields
+            if attrs.has(type(value)):
+                setattr(config, name, self.expand(value))
+                continue
+
             # For now, we only support variables that are a string.
             if not isinstance(value, str):
                 continue
