@@ -2,7 +2,7 @@ import * as vscode from 'vscode'
 import { Notifications, Events } from "../common/constants";
 import { OutputChannelLogger } from '../common/log'
 
-import { AppCreatedNotification, ClientCreatedNotification, ClientDestroyedNotification, ClientErroredNotification, EsbonioClient, SphinxClientConfig, SphinxInfo } from './client';
+import { AppCreatedNotification, ClientCreatedNotification, ClientDestroyedNotification, ClientErroredNotification, EsbonioClient, PythonCommand, SphinxClientConfig, SphinxInfo } from './client';
 
 /**
  * Tree View provider that visualises the Sphinx processes currently
@@ -101,10 +101,10 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
 
       case 'python':
         let pyCmd: string[] = []
-        element.command?.forEach(c => pyCmd.push(`- ${c}`))
+        element.command?.command.forEach(c => pyCmd.push(`- ${c}`))
 
         return {
-          label: element.command?.join(' '),
+          label: element.command?.command.join(' '),
           iconPath: vscode.ThemeIcon.File,
           tooltip: new vscode.MarkdownString(`**Python Command**\n  ${pyCmd.join('\n  ')}`),
           resourceUri: vscode.Uri.parse('file:///test.py'),  // Needed to pull in the icon for Python
@@ -146,7 +146,7 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
     if (!element) {
       for (let process of this.sphinxClients.values()) {
 
-        let cwd = process.config.cwd
+        let cwd = process.config.pythonCommand.cwd
         let node: ProcessContainerNode = { kind: 'container', name: cwd, path: cwd }
         result.push(node)
       }
@@ -157,7 +157,7 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
     switch (element.kind) {
       case 'container':
         for (let [id, process] of this.sphinxClients.entries()) {
-          if (element.name === process.config.cwd) {
+          if (element.name === process.config.pythonCommand.cwd) {
             let node: SphinxProcessNode = { kind: 'sphinxProcess', id: id }
             result.push(node)
           }
@@ -279,7 +279,7 @@ type ProcessTreeNode = ProcessContainerNode | SphinxProcessNode | SphinxBuilderN
  */
 interface PythonCommandNode {
   kind: 'python'
-  command: string[] | undefined
+  command: PythonCommand | undefined
 }
 
 /**
