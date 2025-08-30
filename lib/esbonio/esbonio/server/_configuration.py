@@ -383,7 +383,7 @@ class Configuration:
 
         # Combine and resolve all the config sources - order matters!
         config = _merge_configs(
-            file_config, workspace_config, self._initialization_options
+            self._initialization_options, file_config, workspace_config
         )
         # self.logger.debug("Full config: %s", json.dumps(config, indent=2))
 
