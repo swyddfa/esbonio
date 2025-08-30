@@ -11,6 +11,8 @@ from pygls.workspace import Workspace
 
 from esbonio.server import Uri
 from esbonio.server.features.sphinx_manager import SphinxConfig
+from esbonio.server.features.sphinx_manager import SubProcess
+from esbonio.server.features.sphinx_manager.config import get_module_path
 
 logger = logging.getLogger(__name__)
 
@@ -19,11 +21,11 @@ logger = logging.getLogger(__name__)
 PYTHON_CMD = ["/bin/python"]
 BUILD_CMD = ["sphinx-build", "-M", "html", "src", "dest"]
 PYPATH = [pathlib.Path("/path/to/site-packages/esbonio")]
-
-if IS_WIN:
-    CWD = r"c:\path\to\workspace"
-else:
-    CWD = "/path/to/workspace"
+ENV = {
+    "PYTHONUNBUFFERED": "1",
+    "PYTHONPATH": str(get_module_path("esbonio.sphinx_agent")),
+}
+CWD = r"c:\path\to\workspace" if IS_WIN else "/path/to/workspace"
 
 
 # The value of FALLBACK_ENV must actually exist somewhere on the filesystem
@@ -42,16 +44,12 @@ def mk_uri(path: str) -> str:
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD, cwd=CWD),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD, cwd=CWD, env=ENV),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
         ),
         (  # If no cwd is given, and there is no available workspace root the config
@@ -59,9 +57,8 @@ def mk_uri(path: str) -> str:
             "file:///path/to/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
             ),
             None,
         ),
@@ -70,31 +67,24 @@ def mk_uri(path: str) -> str:
             "file:///path/to/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD, cwd=CWD),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
-                cwd=CWD,
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD, cwd=CWD, env=ENV),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
-                cwd=CWD,
             ),
         ),
         pytest.param(  # If only a ``root_uri`` is given use that.
             "file:///path/to/workspace/file.rst",
             Workspace(mk_uri(CWD)),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD, cwd=CWD, env=ENV),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
-                cwd=CWD,
             ),
             marks=pytest.mark.skipif(IS_WIN, reason="windows"),
         ),
@@ -102,15 +92,12 @@ def mk_uri(path: str) -> str:
             "file:///c:/path/to/workspace/file.rst",
             Workspace(mk_uri(CWD)),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD, cwd=CWD, env=ENV),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
-                cwd=CWD,
             ),
             marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
@@ -118,9 +105,8 @@ def mk_uri(path: str) -> str:
             "file:///path/to/other/workspace/file.rst",
             Workspace(mk_uri(CWD)),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
             ),
             None,
         ),
@@ -131,15 +117,12 @@ def mk_uri(path: str) -> str:
                 workspace_folders=[WorkspaceFolder(mk_uri(CWD), "workspace")],
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD, cwd=CWD, env=ENV),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
-                cwd=CWD,
             ),
             marks=pytest.mark.skipif(IS_WIN, reason="windows"),
         ),
@@ -150,15 +133,12 @@ def mk_uri(path: str) -> str:
                 workspace_folders=[WorkspaceFolder(mk_uri(CWD), "workspace")],
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD, cwd=CWD, env=ENV),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
-                cwd=CWD,
             ),
             marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
@@ -172,15 +152,16 @@ def mk_uri(path: str) -> str:
                 ],
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(
+                    command=PYTHON_CMD,
+                    cwd=os.path.join(".", "path", "to", "workspace-b")[1:],
+                    env=ENV,
+                ),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
-                cwd=os.path.join(".", "path", "to", "workspace-b")[1:],
             ),
         ),
         (  # Again, make sure the requested uri resides within the workspace.
@@ -193,63 +174,84 @@ def mk_uri(path: str) -> str:
                 ],
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(command=PYTHON_CMD),
                 build_command=BUILD_CMD,
-                python_path=PYPATH,
             ),
             None,
         ),
-        (  # If no python command provided, and no fallback env
-            # available, fallback to the server's environment
+        (  # If no python command provided, fallback to the server's environment
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=[],
+                python_command=SubProcess(command=[], cwd=CWD),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=[sys.executable],
+                python_command=SubProcess(command=[sys.executable], cwd=CWD, env=ENV),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
         ),
-        (  # If no python command provided, but there is a fallback env
-            # use that
+        (  # Allow the user to specify extra envrionment variables
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=[],
-                fallback_env=FALLBACK_ENV,
+                python_command=SubProcess(
+                    command=PYTHON_CMD, cwd=CWD, env={"MY_VAR": "some-value"}
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=[sys.executable, "-S"],
+                python_command=SubProcess(
+                    command=PYTHON_CMD,
+                    cwd=CWD,
+                    env={
+                        **ENV,
+                        "MY_VAR": "some-value",
+                    },
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=[PYPATH[0], pathlib.Path(FALLBACK_ENV)],
             ),
         ),
-        (  # If a fallback_env is available, but the user has provided their
-            # own python_command, we should really use that.
+        (  # Or override existing variables in the envrionment
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=PYTHON_CMD,
-                fallback_env=FALLBACK_ENV,
+                python_command=SubProcess(
+                    command=PYTHON_CMD, cwd=CWD, env={"HOME": "/home/not-really-a-user"}
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=PYTHON_CMD,
+                python_command=SubProcess(
+                    command=PYTHON_CMD,
+                    cwd=CWD,
+                    env={
+                        **ENV,
+                        "HOME": "/home/not-really-a-user",
+                    },
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
+            ),
+        ),
+        (  # But if the user sets their own PYTHONPATH, be sure to include it alongside our own
+            "file:///path/to/workspace/file.rst",
+            Workspace(None),
+            SphinxConfig(
+                python_command=SubProcess(
+                    command=PYTHON_CMD, cwd=CWD, env={"PYTHONPATH": "/extra/py/path"}
+                ),
+                build_command=BUILD_CMD,
+            ),
+            SphinxConfig(
+                python_command=SubProcess(
+                    command=PYTHON_CMD,
+                    cwd=CWD,
+                    env={
+                        **ENV,
+                        "PYTHONPATH": f"{ENV['PYTHONPATH']}{os.pathsep}/extra/py/path",
+                    },
+                ),
+                build_command=BUILD_CMD,
             ),
         ),
         pytest.param(
@@ -258,16 +260,14 @@ def mk_uri(path: str) -> str:
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=["${venv:/path/to/env}"],
+                python_command=SubProcess(command=["${venv:/path/to/env}"], cwd=CWD),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["/path/to/env/bin/python"],
+                python_command=SubProcess(
+                    command=["/path/to/env/bin/python"], cwd=CWD, env=ENV
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             marks=pytest.mark.skipif(IS_WIN, reason="windows"),
         ),
@@ -277,16 +277,14 @@ def mk_uri(path: str) -> str:
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=["${venv:c:/path/to/env}"],
+                python_command=SubProcess(command=["${venv:c:/path/to/env}"], cwd=CWD),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["c:\\path\\to\\env\\Scripts\\python.exe"],
+                python_command=SubProcess(
+                    command=["c:\\path\\to\\env\\Scripts\\python.exe"], cwd=CWD, env=ENV
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
@@ -296,16 +294,16 @@ def mk_uri(path: str) -> str:
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=["${venv:c:\\path\\to\\env}"],
+                python_command=SubProcess(
+                    command=["${venv:c:\\path\\to\\env}"], cwd=CWD
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["c:\\path\\to\\env\\Scripts\\python.exe"],
+                python_command=SubProcess(
+                    command=["c:\\path\\to\\env\\Scripts\\python.exe"], cwd=CWD, env=ENV
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
@@ -315,16 +313,14 @@ def mk_uri(path: str) -> str:
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=["${venv:env}"],
+                python_command=SubProcess(command=["${venv:env}"], cwd=CWD),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["/path/to/workspace/env/bin/python"],
+                python_command=SubProcess(
+                    command=["/path/to/workspace/env/bin/python"], cwd=CWD, env=ENV
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             marks=pytest.mark.skipif(IS_WIN, reason="windows"),
         ),
@@ -334,16 +330,16 @@ def mk_uri(path: str) -> str:
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=["${venv:env}"],
+                python_command=SubProcess(command=["${venv:env}"], cwd=CWD),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["c:\\path\\to\\workspace\\env\\Scripts\\python.exe"],
+                python_command=SubProcess(
+                    command=["c:\\path\\to\\workspace\\env\\Scripts\\python.exe"],
+                    cwd=CWD,
+                    env=ENV,
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
@@ -353,16 +349,14 @@ def mk_uri(path: str) -> str:
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=["${venv:../env}"],
+                python_command=SubProcess(command=["${venv:../env}"], cwd=CWD),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["/path/to/env/bin/python"],
+                python_command=SubProcess(
+                    command=["/path/to/env/bin/python"], cwd=CWD, env=ENV
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             marks=pytest.mark.skipif(IS_WIN, reason="windows"),
         ),
@@ -372,16 +366,14 @@ def mk_uri(path: str) -> str:
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=["${venv:../env}"],
+                python_command=SubProcess(command=["${venv:../env}"], cwd=CWD),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["c:\\path\\to\\env\\Scripts\\python.exe"],
+                python_command=SubProcess(
+                    command=["c:\\path\\to\\env\\Scripts\\python.exe"], cwd=CWD, env=ENV
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
@@ -391,16 +383,14 @@ def mk_uri(path: str) -> str:
             "file:///path/to/workspace/file.rst",
             Workspace(None),
             SphinxConfig(
-                python_command=["${venv:..\\env}"],
+                python_command=SubProcess(command=["${venv:..\\env}"], cwd=CWD),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             SphinxConfig(
-                python_command=["c:\\path\\to\\env\\Scripts\\python.exe"],
+                python_command=SubProcess(
+                    command=["c:\\path\\to\\env\\Scripts\\python.exe"], cwd=CWD, env=ENV
+                ),
                 build_command=BUILD_CMD,
-                cwd=CWD,
-                python_path=PYPATH,
             ),
             marks=pytest.mark.skipif(not IS_WIN, reason="windows only"),
         ),
@@ -429,4 +419,21 @@ def test_resolve(
        The expected outcome
     """
     actual = config.resolve(Uri.parse(uri), workspace, logger)
-    assert actual == expected
+
+    if expected is None:
+        assert actual is None
+        return
+
+    assert actual is not None
+    assert actual.enable_dev_tools == expected.enable_dev_tools
+    assert actual.build_command == expected.build_command
+    assert actual.config_overrides == expected.config_overrides
+
+    assert actual.python_command.command == expected.python_command.command
+    assert actual.python_command.cwd == expected.python_command.cwd
+
+    # Since we pass through the current environment, check each expected key individually
+    for varname in expected.python_command.env:
+        assert (
+            actual.python_command.env[varname] == expected.python_command.env[varname]
+        )
