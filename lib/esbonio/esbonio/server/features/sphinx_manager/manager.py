@@ -16,6 +16,7 @@ from esbonio.sphinx_agent import types
 
 from .client import ClientState
 from .config import SphinxConfig
+from .config import SubProcess
 
 if typing.TYPE_CHECKING:
     from typing import Callable
@@ -143,9 +144,11 @@ class SphinxManager(server.LanguageFeature):
     def initialized(self, params: lsp.InitializedParams):
         """Called once the initial handshake between client and server has finished."""
 
-        self.server.converter.register_structure_hook(
-            Union[bool, float], lambda obj, _: obj
+        self.converter.register_structure_hook(Union[bool, float], lambda obj, _: obj)
+        self.converter.register_structure_hook(
+            SubProcess, _structure_list_or_subprocess
         )
+
         self.configuration.subscribe(
             "esbonio.sphinx", ManagerConfig, self.update_configuration
         )
@@ -447,3 +450,12 @@ class SphinxManager(server.LanguageFeature):
                 cancellable=False,
             ),
         )
+
+
+def _structure_list_or_subprocess(obj, _):
+    """Structure hook that can automatically upgrade a simple python command e.g.
+    ``["/bin/python"]`` to a SubProcess instance."""
+    if isinstance(obj, list):
+        return SubProcess(command=obj)
+
+    return SubProcess(**obj)
