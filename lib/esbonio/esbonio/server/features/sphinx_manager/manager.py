@@ -141,7 +141,7 @@ class SphinxManager(server.LanguageFeature):
     def add_listener(self, event: str, handler):
         self._events.add_listener(event, handler)
 
-    def initialized(self, params: lsp.InitializedParams):
+    def initialize(self, params: lsp.InitializeParams):
         """Called once the initial handshake between client and server has finished."""
 
         self.converter.register_structure_hook(Union[bool, float], lambda obj, _: obj)
