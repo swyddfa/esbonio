@@ -70,6 +70,7 @@ def _register_lsp_methods(server: EsbonioLanguageServer):
     ):
         await ls.initialized(params)
         await call_features(ls, "initialized", params)
+        ls.ready.set_result(True)
 
     @server.feature(types.SHUTDOWN)
     async def on_shutdown(ls: EsbonioLanguageServer, params: None):
