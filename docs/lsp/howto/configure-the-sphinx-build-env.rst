@@ -7,14 +7,18 @@ Esbonio works by creating a background Sphinx process which it can use to build 
 This of course, requires ``esbonio`` being able to execute this process within the correct Python environment.
 
 Since there are many ways to define and manage Python environments, ``esbonio`` needs you to tell it how to run the ``python`` command so that it has access to the correct dependencies.
-This is typically done by setting the :esbonio:conf:`esbonio.sphinx.pythonCommand` in your project's ``pyproject.toml`` file.
+This is typically done by setting the :esbonio:conf:`esbonio.sphinx.pythonCommand` option in your project's ``pyproject.toml`` file.
 
-Below are some examples on how you would set this option depending on your choice of environment manager tool.
+Basic Usage
+-----------
+
+Most of the time providing just the command to invoke as a list of strings is all that is required.
+Below are some examples on how you would set the :esbonio:conf:`esbonio.sphinx.pythonCommand` option depending on your choice of environment manager tool.
 
 Hatch
------
+^^^^^
 
-If you use `hatch <https://hatch.pypa.io/latest/>`__ to define the environment in which you build your documentation
+If you use `hatch <https://hatch.pypa.io/latest/>`__ to define your environments
 
 .. code-block:: toml
 
@@ -25,7 +29,6 @@ If you use `hatch <https://hatch.pypa.io/latest/>`__ to define the environment i
       "furo",
       "myst-parser",
    ]
-   scripts.build = "sphinx-build -M dirhtml . ./_build"
 
 Then you should set :esbonio:conf:`esbonio.sphinx.pythonCommand` to
 
@@ -35,7 +38,7 @@ Then you should set :esbonio:conf:`esbonio.sphinx.pythonCommand` to
    pythonCommand = ["hatch", "-e", "docs", "run", "python"]
 
 Pipenv
-------
+^^^^^^
 
 If your project uses `Pipenv <https://pipenv.pypa.io/en/latest/index.html>`__ for its dependency management
 
@@ -59,7 +62,7 @@ Then :esbonio:conf:`esbonio.sphinx.pythonCommand` should be set to
    pythonCommand = ["pipenv", "run", "python"]
 
 Poetry
-------
+^^^^^^
 
 Given a set of dependencies managed through `Poetry <https://python-poetry.org/>`__
 
@@ -91,7 +94,7 @@ Then you should set :esbonio:conf:`esbonio.sphinx.pythonCommand` to
    pythonCommand = ["poetry", "run", "python"]
 
 uv
----
+^^^
 
 If you use `uv <https://docs.astral.sh/uv/>`__ and a ``pyproject.toml`` file to manage your dependencies
 
@@ -119,7 +122,7 @@ Then you should set :esbonio:conf:`esbonio.sphinx.pythonCommand` to
    [tool.esbonio.sphinx]
    pythonCommand = ["uv", "run", "--group", "docs", "python"]
 
-Alternatively, you can specify the dependencies direct in the ``uv run`` command
+Alternatively, you can specify the dependencies direct with a ``uv run`` command
 
 .. code-block:: toml
 
@@ -131,14 +134,10 @@ Alternatively, you can specify the dependencies direct in the ``uv run`` command
        "python"
    ]
 
-Just don't forget the ``--no-project`` flag, otherwise ``uv`` will attempt to include dependencies from the ``pyproject.toml`` file also!
+Don't forget the ``--no-project`` flag, otherwise ``uv`` will attempt to include dependencies from the ``pyproject.toml`` file also!
 
 venv / virtualenv
------------------
-
-.. tip::
-
-   Virtual environments are not portable between machines or even Python versions, which means the best place to set the :esbonio:conf:`esbonio.sphinx.pythonCommand` option is in your language client, rather than your project's ``pyproject.toml``.
+^^^^^^^^^^^^^^^^^
 
 Assuming you already have an envrionment that you use to build your documentation
 
@@ -197,3 +196,41 @@ Then your ``pyproject.toml`` might look something like the following.
 
    [tool.esbonio.sphinx]
    pythonCommand = ["${venv:../venv}"]
+
+Advanced Usage
+--------------
+
+There are situations where you might need more control over how the background Sphinx process is launched.
+In which case :esbonio:conf:`esbonio.sphinx.pythonCommand` accepts an object allowing you to provide additional information.
+
+Environment Variables
+^^^^^^^^^^^^^^^^^^^^^
+
+If you need to set additional environment variables you can provide an ``env`` dictionary alongside the ``command``
+
+.. code-block:: toml
+
+   [tool.esbonio.sphinx.pythonCommand]
+   command = ["uv", "run", "python"]
+   env = { MY_ENV_VAR = "value" }
+
+Working Directory
+^^^^^^^^^^^^^^^^^
+
+By default, ``esbonio`` will launch the background process from the directory containing your ``pyproject.toml`` file.
+To change this you can provide the ``cwd`` option alongside your ``command``
+
+.. code-block:: toml
+
+   [tool.esbonio.sphinx.pythonCommand]
+   command = ["uv", "run", "python"]
+   cwd = "/path/to/docs"
+
+To specify a path relative to the location of your ``pyproject.toml`` file, use the ``${scopeFsPath}`` variable
+
+
+.. code-block:: toml
+
+   [tool.esbonio.sphinx.pythonCommand]
+   command = ["uv", "run", "python"]
+   cwd = "${scopeFsPath}/docs"
