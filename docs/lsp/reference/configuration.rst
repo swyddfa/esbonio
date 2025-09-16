@@ -18,12 +18,12 @@ The language server supports reading configuration values from the following sou
 ===================================  ==========================  =====
 (Priortiy) Source                    Supported Scopes            Notes
 ===================================  ==========================  =====
-\(1) ``initialzationOptions``        ``global``, ``project``     Settings for multiple projects are not supported.
-\(2) :lsp:`workspace/configuration`  ``global``, ``project``
-\(3) ``pyproject.toml`` files        ``project``
+\(1) :lsp:`workspace/configuration`  ``global``, ``project``
+\(2) ``pyproject.toml`` files        ``project``
+\(3) ``initialzationOptions``        ``global``, ``project``     Settings for multiple projects are not supported.
 ===================================  ==========================  =====
 
-When determining the value to assign to a particular configuration option, Esbonio will merge options given by the sources in order of descending priority i.e. ``initializationOptions`` will override all other sources.
+When determining the value to assign to a particular configuration option, Esbonio will merge options given by the sources in order of descending priority i.e. options set via :lsp:`workspace/configuration` requests will override all other sources.
 
 Options
 -------
@@ -230,49 +230,57 @@ Name                        Description
 Sphinx
 ^^^^^^
 
-The following options control the creation and management of background Sphinx process by the server.
+The following options control the creation and management of background Sphinx process used by the server
+
+.. tab-set::
+
+   .. tab-item:: pyproject.toml
+      :sync: pyproject
+
+      .. code-block:: toml
+
+         [tool.esbonio.sphinx]
+         buildCommand = ["sphinx-build", "-M", "dirhtml", "docs", "docs/_build"]
+         configOverrides = { html_theme = "alabaster", language = "cy" }
+         pythonCommand = ["uv", "run", "python"]
+
+         # Alternatively for more control over how the background Sphinx process is launched.
+         #
+         # [tool.esbonio.sphinx.pythonCommand]
+         # command = ["hatch", "-e", "docs", "run", "python"]
+         # cwd = "${scopeFsPath}/docs"
+         # env = {MYENVVAR = "value"}
+
+   .. tab-item:: settings.json (VSCode only)
+      :sync: vscode
+
+      .. code-block:: json
+
+         {
+           "esbonio.sphinx.buildCommand": [
+              "sphinx-build", "-M", "dirhtml", "docs", "docs/_build"
+           ],
+           "esbonio.sphinx.configOverrides": {
+               "html_theme": "alabaster",
+               "language": "cy",
+           },
+           "esbonio.sphinx.pythonCommand": {
+              "command": ["uv", "run", "python"],
+              "cwd": "${scopeFsPath}",
+              "env": {
+                  "MYENVVAR": "value"
+              }
+           }
+
+           "esbonio.sphinx.buildTriggers": { "onSave": true, "onChange": 2.0 }
+         }
 
 .. esbonio:config:: esbonio.sphinx.buildCommand
    :scope: project
    :type: string[]
 
-   The ``sphinx-build`` command ``esbonio`` should use when building your documentation, for example::
-
-     ["sphinx-build", "-M", "dirhtml", "docs", "${defaultBuildDir}", "--fail-on-warning"]
-
+   The ``sphinx-build`` command ``esbonio`` should use when building your documentation
    For more information, see :ref:`lsp-configure-sphinx-build-cmd`
-
-
-.. esbonio:config:: esbonio.sphinx.pythonCommand
-   :scope: project
-   :type: string[]
-
-   Used to select the Python environment ``esbonio`` should use when building your documentation.
-   This can be as simple as the full path to the Python executable in your virtual environment::
-
-     ["/home/user/Projects/example/venv/bin/python"]
-
-   Or a complex command with a number of options and arguments::
-
-     ["hatch", "-e", "docs", "run", "python"]
-
-   For more examples see :ref:`lsp-configure-sphinx-build-env`
-
-.. esbonio:config:: esbonio.sphinx.cwd
-   :scope: project
-   :type: string
-
-   The working directory from which to launch the Sphinx process.
-   If not set
-
-   - ``esbonio`` will use the directory containing the "closest" ``pyproject.toml`` file.
-   - If no ``pyproject.toml`` file can be found, ``esbonio`` will use workspace folder containing the project.
-
-.. esbonio:config:: esbonio.sphinx.envPassthrough
-   :scope: project
-   :type: string[]
-
-   A list of environment variables to pass through to the Sphinx process.
 
 .. esbonio:config:: esbonio.sphinx.configOverrides
    :scope: project
@@ -283,6 +291,39 @@ The following options control the creation and management of background Sphinx p
 
    See :ref:`lsp-configure-sphinx-build-cmd` for details
 
+.. esbonio:config:: esbonio.sphinx.pythonCommand
+   :scope: project
+   :type: string[]
+
+   Instructs ``esbonio`` how to launch the Python interpreter it uses for the background Sphinx process.
+   Use this option to ensure that the correct Python environment for your documentation is selected.
+
+   This can be as simple as the full path to the Python executable in your virtual environment::
+
+     ["/home/user/Projects/example/venv/bin/python"]
+
+   Or a complex command with a number of options and arguments::
+
+     ["hatch", "-e", "docs", "run", "python"]
+
+   For more examples see :ref:`lsp-configure-sphinx-build-env`
+
+.. esbonio:config:: esbonio.sphinx.pythonCommand.cwd
+   :scope: project
+   :type: string
+
+   The working directory from which to launch the Sphinx process.
+   If not set
+
+   - ``esbonio`` will use the directory containing the closest ``pyproject.toml`` file.
+   - If no ``pyproject.toml`` file can be found, ``esbonio`` will use workspace folder containing the project.
+
+.. esbonio:config:: esbonio.sphinx.pythonCommand.env
+   :scope: project
+   :type: object
+
+   Additional environment variables to set for the background Sphinx process
+
 .. esbonio:config:: esbonio.sphinx.buildTriggers
    :scope: global
    :type: object
@@ -290,14 +331,18 @@ The following options control the creation and management of background Sphinx p
    This option controls when the language server rebuilds your documentation.
    The server's default configuration is equivalent to setting
 
-   .. code-block:: json
+   .. tab-set::
 
-      {
-        "esbonio.sphinx.buildTriggers": {
-          "onSave": true,
-          "onChange": 2.0,
-        }
-      }
+      .. tab-item:: VSCode
+
+         .. code-block:: json
+
+            {
+              "esbonio.sphinx.buildTriggers": {
+                "onSave": true,
+                "onChange": 2.0,
+              }
+            }
 
    where ``esbonio`` will rebuild each time you save a file, or each time you modify a file after a delay of 2 seconds.
 
@@ -317,7 +362,20 @@ The following options control the creation and management of background Sphinx p
 Preview
 ^^^^^^^
 
-The following options control the behavior of the preview
+The following options control the behavior of the HTML preview
+
+.. tab-set::
+
+   .. tab-item:: settings.json (VSCode only)
+
+      .. code-block:: json
+
+         {
+             "esbonio.preview.bind": "localhost",
+             "esbonio.preview.httpPort": 1234,
+             "esbonio.preview.wsPort": 0,
+             "esbonio.preview.synchronizeScroll": "bothWays",
+         }
 
 .. esbonio:config:: esbonio.preview.bind
    :scope: global
