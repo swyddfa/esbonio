@@ -72,6 +72,12 @@ jobs:
   test:
     name: "Python v${{ matrix.python-version }}"
     runs-on: ubuntu-latest
+    # container:
+    #   image: ghcr.io/swyddfa/esbonio-devenv
+    #   credentials:
+    #      username: ${{ github.actor }}
+    #      password: ${{ secrets.github_token }}
+
     timeout-minutes: 20
     strategy:
       fail-fast: false
@@ -94,7 +100,7 @@ jobs:
         allow-prereleases: true
 
     - run: |
-        cd code/
+        cd code
         make dev-deps
         npx tsc -p .
 
