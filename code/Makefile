@@ -2,12 +2,14 @@ include ../.devcontainer/tools.mk
 
 ESBONIO ?= --pre esbonio
 
+export PATH := $(BIN):$(PATH)
+
 .PHONY: clean
 clean:
 	rm -r bundled node_modules dist
 
 .PHONY: test
-test: dev-deps $(NPM)
+test: dev-deps | $(NPM)
 	-test -d dist && rm -r dist
 	$(NPX) tsc -p .
 	$(NPM) run test
