@@ -19,15 +19,12 @@ T = TypeVar("T")
 
 if typing.TYPE_CHECKING:
     from collections.abc import Awaitable
+    from collections.abc import Callable
     from typing import Any
-    from typing import Callable
-    from typing import Union
 
     from .server import EsbonioLanguageServer
 
-    ConfigurationCallback = Callable[
-        ["ConfigChangeEvent"], Union[Awaitable[None], None]
-    ]
+    ConfigurationCallback = Callable[["ConfigChangeEvent"], Awaitable[None] | None]
 
 
 try:
@@ -495,7 +492,7 @@ class Configuration:
             self.logger.error("Unable to get workspace configuration", exc_info=True)
             return
 
-        for scope, result in zip(scopes, results):
+        for scope, result in zip(scopes, results, strict=False):
             self.logger.debug(
                 "Workspace '%s' configuration: %s", scope, json.dumps(result, indent=2)
             )

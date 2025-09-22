@@ -22,9 +22,9 @@ from . import Uri
 from ._configuration import Configuration
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Coroutine
     from typing import Any
-    from typing import Callable
 
     from .feature import LanguageFeature
 

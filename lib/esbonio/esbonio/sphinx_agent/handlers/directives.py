@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import importlib
 import inspect
-from typing import Optional
 
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives as docutils_directives
@@ -31,7 +30,7 @@ def get_impl_name(directive: type[Directive]) -> str:
         return f"{directive.__module__}.{directive.__class__.__name__}"
 
 
-def get_impl_location(impl: type[Directive]) -> Optional[str]:
+def get_impl_location(impl: type[Directive]) -> str | None:
     """Get the implementation location of the given directive"""
 
     try:

@@ -8,8 +8,6 @@ import re
 import sys
 from typing import Any
 from typing import Literal
-from typing import Optional
-from typing import Union
 from unittest import mock
 
 from sphinx.application import Sphinx
@@ -46,7 +44,7 @@ class SphinxConfig:
     keep_going: bool = dataclasses.field(default=False)
     """Continue building when errors (from warnings) are encountered."""
 
-    num_jobs: Union[Literal["auto"], int] = dataclasses.field(default=1)
+    num_jobs: Literal["auto"] | int = dataclasses.field(default=1)
     """The number of jobs to use for parallel builds."""
 
     quiet: bool = dataclasses.field(default=False)
@@ -61,7 +59,7 @@ class SphinxConfig:
     verbosity: int = dataclasses.field(default=0)
     """The verbosity of Sphinx's output."""
 
-    version: Optional[str] = dataclasses.field(default=None)
+    version: str | None = dataclasses.field(default=None)
     """Sphinx's version number."""
 
     warning_is_error: bool = dataclasses.field(default=False)
@@ -110,7 +108,7 @@ class SphinxConfig:
         keys = signature.parameters.keys()
 
         values = m_Sphinx.call_args[0]
-        sphinx_args = {k: v for k, v in zip(keys, values)}
+        sphinx_args = {k: v for k, v in zip(keys, values, strict=False)}
 
         # Sphinx 8.1 changed the way arguments are passed to the `Sphinx` class.
         # See: https://github.com/swyddfa/esbonio/issues/912

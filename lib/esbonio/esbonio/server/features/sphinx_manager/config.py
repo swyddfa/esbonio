@@ -8,8 +8,6 @@ import pathlib
 import re
 import sys
 from typing import Any
-from typing import Optional
-from typing import Union
 
 import attrs
 from pygls import IS_WIN
@@ -20,7 +18,7 @@ from esbonio.server import Uri
 VARIABLE = re.compile(r"\$\{([^}]+)\}")
 
 
-def get_module_path(module: str) -> Optional[pathlib.Path]:
+def get_module_path(module: str) -> pathlib.Path | None:
     """Return the path to the directory containing the given module name.
 
     Parameters
@@ -61,7 +59,7 @@ class SubProcess:
 
     def resolve(
         self, uri: Uri, workspace: Workspace, logger: logging.Logger
-    ) -> Optional[SubProcess]:
+    ) -> SubProcess | None:
         """Resolve the configuration based on user provided values.
 
         Parameters
@@ -122,7 +120,7 @@ class SubProcess:
         command = [_resolve_variable(c, cwd) for c in command]
         return command
 
-    def _resolve_env(self, logger: logging.Logger) -> Optional[dict[str, str]]:
+    def _resolve_env(self, logger: logging.Logger) -> dict[str, str] | None:
         """Construct the environment variables to set for the process.
 
         Using the ``PYTHONPATH`` environment variable, we can inject additional Python
@@ -145,7 +143,7 @@ class SubProcess:
             logger.error("Unable to locate the `esbonio.sphinx_agent` module")
             return None
 
-        python_path: list[Union[pathlib.Path, str]] = [sphinx_agent]
+        python_path: list[pathlib.Path | str] = [sphinx_agent]
 
         if len(pypath := self.env.get("PYTHONPATH", "")) > 0:
             python_path.append(pypath)
@@ -170,7 +168,7 @@ class SubProcess:
 
     def _resolve_cwd(
         self, uri: Uri, workspace: Workspace, logger: logging.Logger
-    ) -> Optional[str]:
+    ) -> str | None:
         """Determine the working directory from which to launch the Sphinx agent.
 
         Parameters
@@ -249,7 +247,7 @@ class SphinxConfig:
         uri: Uri,
         workspace: Workspace,
         logger: logging.Logger,
-    ) -> Optional[SphinxConfig]:
+    ) -> SphinxConfig | None:
         """Resolve the configuration based on user provided values.
 
         Parameters

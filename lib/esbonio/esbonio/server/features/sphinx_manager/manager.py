@@ -19,7 +19,7 @@ from .config import SphinxConfig
 from .config import SubProcess
 
 if typing.TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     from esbonio.server.features.project_manager import ProjectManager
 
@@ -82,7 +82,7 @@ class SphinxBuildTriggers:
     on_save: bool = attrs.field(default=True)
     """Trigger a build when a file is saved."""
 
-    on_change: Union[bool, float] = attrs.field(default=2.0)
+    on_change: bool | float = attrs.field(default=2.0)
     """Trigger a build each time a file has changed, with a configurable delay."""
 
 

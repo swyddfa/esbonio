@@ -10,17 +10,16 @@ from lsprotocol import types
 from esbonio import server
 
 if typing.TYPE_CHECKING:
-    from typing import Callable
-    from typing import Optional
+    from collections.abc import Callable
 
     from esbonio.sphinx_agent.types import Directive
 
     DirectiveRenderer = Callable[
-        [server.CompletionContext, Directive], Optional[types.CompletionItem]
+        [server.CompletionContext, Directive], types.CompletionItem | None
     ]
 
     DirectiveArgumentRenderer = Callable[
-        [server.CompletionContext, types.CompletionItem], Optional[types.CompletionItem]
+        [server.CompletionContext, types.CompletionItem], types.CompletionItem | None
     ]
 
 

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 import pytest
 from lsprotocol import types
 from pytest_lsp import LanguageClient
@@ -14,7 +12,7 @@ def document_symbol(
     kind: types.SymbolKind,
     range: str,
     selection_range: str = "",
-    children: Optional[list[types.DocumentSymbol]] = None,
+    children: list[types.DocumentSymbol] | None = None,
     detail: str = "",
 ) -> types.DocumentSymbol:
     """Helper for defining symbol instances."""
@@ -99,7 +97,7 @@ async def test_document_symbols(
     client: LanguageClient,
     uri_for,
     filepath: list[str],
-    expected: Optional[list[types.DocumentSymbol]],
+    expected: list[types.DocumentSymbol] | None,
 ):
     """Ensure that we handle ``textDocument/documentSymbols`` requests correctly."""
 
@@ -115,7 +113,7 @@ async def test_document_symbols(
 
     else:
         assert len(actual) == len(expected)
-        for actual_symbol, expected_symbol in zip(actual, expected):
+        for actual_symbol, expected_symbol in zip(actual, expected, strict=False):
             check_document_symbol(actual_symbol, expected_symbol)
 
 
@@ -247,7 +245,7 @@ async def test_workspace_symbols(
     client: LanguageClient,
     query: str,
     uri_for,
-    expected: Optional[set[tuple[str, str, str, types.SymbolKind, str]]],
+    expected: set[tuple[str, str, str, types.SymbolKind, str]] | None,
 ):
     """Ensure that we handle ``workspace/symbol`` requests correctly."""
 
@@ -294,5 +292,7 @@ def check_document_symbol(actual: types.DocumentSymbol, expected: types.Document
         f"Children mismatch in symbol '{actual.name}'"
     )
 
-    for actual_child, expected_child in zip(actual.children, expected.children):
+    for actual_child, expected_child in zip(
+        actual.children, expected.children, strict=False
+    ):
         check_document_symbol(actual_child, expected_child)

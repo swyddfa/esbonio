@@ -4,7 +4,6 @@ import logging
 import pathlib
 import sys
 from typing import Any
-from typing import Union
 
 from sphinx.locale import _TranslationProxy
 
@@ -37,7 +36,7 @@ def format_message(data: Any) -> str:
     return f"Content-Length: {content_length}\r\n\r\n{content}"
 
 
-def send_error(id: Union[str, int], code: int, message: str, data=None):
+def send_error(id: str | int, code: int, message: str, data=None):
     send_message(
         dict(
             id=id,

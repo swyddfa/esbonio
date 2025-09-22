@@ -41,10 +41,10 @@ class PreviewManager(server.LanguageFeature):
         self.built_clients: set[str] = set()
         """Keeps track of which clients run a build at least once."""
 
-        self.build_path: Optional[str] = None
+        self.build_path: str | None = None
         """The filepath we are currently displaying."""
 
-        self.build_uri: Optional[Uri] = None
+        self.build_uri: Uri | None = None
         """The uri of the build dir we are currently serving from."""
 
         self.config = PreviewConfig()
@@ -53,10 +53,10 @@ class PreviewManager(server.LanguageFeature):
         self.projects = projects
         """The project manager."""
 
-        self.preview: Optional[PreviewServer] = None
+        self.preview: PreviewServer | None = None
         """The http server for serving the built files"""
 
-        self.webview: Optional[WebviewServer] = None
+        self.webview: WebviewServer | None = None
         """The server for controlling the webview."""
 
     @property
@@ -185,7 +185,7 @@ class PreviewManager(server.LanguageFeature):
 
         return {"uri": uri.as_string(encode=False)}
 
-    async def show_preview_uri(self) -> Optional[Uri]:
+    async def show_preview_uri(self) -> Uri | None:
         """Show the preview uri in the client using a ``window/showDocument`` request.
         Also return the final uri."""
 
