@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import itertools
 from typing import Any
-from typing import Optional
 from typing import TypeVar
 
 import attrs
@@ -430,7 +429,7 @@ def test_get_configuration(
     file_config: dict[str, Any],
     section: str,
     spec: type[T],
-    scope: Optional[str],
+    scope: str | None,
     expected: T,
 ):
     """Ensure that we can get configuration values correctly.

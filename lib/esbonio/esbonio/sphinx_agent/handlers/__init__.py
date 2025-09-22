@@ -5,7 +5,7 @@ import logging
 import sys
 import traceback
 import typing
-from typing import Callable
+from collections.abc import Callable
 from typing import Optional
 
 import sphinx.application
@@ -37,7 +37,7 @@ class SphinxHandler:
     """Responsible for implementing the JSON-RPC API exposed by the Sphinx agent."""
 
     def __init__(self):
-        self.app: Optional[Sphinx] = None
+        self.app: Sphinx | None = None
         """The sphinx application instance"""
 
         self._content_overrides: dict[Uri, str] = {}
@@ -45,7 +45,7 @@ class SphinxHandler:
 
         self._handlers: dict[str, tuple[type, Callable]] = self._register_handlers()
 
-    def get(self, method: str) -> Optional[tuple[type, Callable]]:
+    def get(self, method: str) -> tuple[type, Callable] | None:
         """Return the handler for the given method - if possible.
 
         Parameters

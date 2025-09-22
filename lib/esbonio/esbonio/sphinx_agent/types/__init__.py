@@ -55,7 +55,7 @@ Symbol = tuple[  # Represents either a document symbol or workspace symbol depen
     int,  # kind
     str,  # detail
     str,  # range - as json object
-    Optional[int],  # parent_id
+    int | None,  # parent_id
     int,  # order_id
 ]
 
@@ -82,7 +82,7 @@ class CreateApplicationParams:
 class CreateApplicationRequest:
     """A ``sphinx/createApp`` request."""
 
-    id: Union[int, str]
+    id: int | str
 
     params: CreateApplicationParams
 
@@ -118,7 +118,7 @@ class SphinxInfo:
 class CreateApplicationResponse:
     """A ``sphinx/createApp`` response."""
 
-    id: Union[int, str]
+    id: int | str
 
     result: SphinxInfo
 
@@ -148,7 +148,7 @@ class BuildResult:
 class BuildRequest:
     """A ``sphinx/build`` request."""
 
-    id: Union[int, str]
+    id: int | str
 
     params: BuildParams
 
@@ -161,7 +161,7 @@ class BuildRequest:
 class BuildResponse:
     """A ``sphinx/build`` response."""
 
-    id: Union[int, str]
+    id: int | str
 
     result: BuildResult
 
@@ -190,9 +190,9 @@ class LogMessage:
 
 @dataclasses.dataclass
 class ProgressParams:
-    message: Optional[str] = None
+    message: str | None = None
 
-    percentage: Optional[int] = None
+    percentage: int | None = None
 
 
 @dataclasses.dataclass

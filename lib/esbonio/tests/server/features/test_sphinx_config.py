@@ -2,7 +2,6 @@ import logging
 import os
 import pathlib
 import sys
-from typing import Optional
 
 import pytest
 from lsprotocol.types import WorkspaceFolder
@@ -400,7 +399,7 @@ def test_resolve(
     uri: str,
     workspace: Workspace,
     config: SphinxConfig,
-    expected: Optional[SphinxConfig],
+    expected: SphinxConfig | None,
 ):
     """Ensure that we can resolve a user's configuration correctly.
 
