@@ -660,7 +660,7 @@ async def test_role_document_links(
 
     assert len(links) == len(expected)
 
-    for link, actual in zip(expected, links):
+    for link, actual in zip(expected, links, strict=False):
         assert link.range == actual.range
 
         target = link.target.replace("${ROOT}", root_uri)
@@ -839,7 +839,7 @@ async def test_role_target_definitions(
         assert len(definitions) == len(expected)
 
         location: types.Location
-        for location, actual in zip(expected, definitions):
+        for location, actual in zip(expected, definitions, strict=False):
             expected_uri = location.uri.replace("${ROOT}", root_uri)
             assert expected_uri == actual.uri
             assert location.range == actual.range
@@ -963,7 +963,6 @@ async def test_role_target_hover(
     """Ensure that we handle ``textDocument/hover`` requests correctly for
     role targets."""
 
-    root_uri = str(uri_for("workspaces", "demo"))
     test_uri = uri_for(*filename)
 
     fpath = pathlib.Path(test_uri)

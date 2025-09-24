@@ -12,9 +12,10 @@ clean-env: | $(HATCH)
 dist: $(HATCH)
 	$(HATCH) $(HATCH_ARGS) build
 
+
 .PHONY: lint
 lint: | $(UVX)
-	$(UVX) pre-commit run --all-files
+	$(UVX) pre-commit run --all-files $(HOOK)
 
 .PHONY: test
 test: ARGS ?= -i py=$(shell $(PY) -c 'import sys;v=sys.version_info;print(f"{v.major}.{v.minor}")')
