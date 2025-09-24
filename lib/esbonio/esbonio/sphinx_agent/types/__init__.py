@@ -8,8 +8,6 @@ from __future__ import annotations
 
 import dataclasses
 from typing import Any
-from typing import Optional
-from typing import Union
 
 from .directives import MYST_DIRECTIVE
 from .directives import RST_DIRECTIVE

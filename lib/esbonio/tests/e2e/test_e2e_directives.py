@@ -427,7 +427,7 @@ async def test_directive_document_links(
 
     assert len(links) == len(expected)
 
-    for link, actual in zip(expected, links):
+    for link, actual in zip(expected, links, strict=False):
         assert link.range == actual.range
 
         target = link.target.replace("${ROOT}", root_uri)
@@ -528,7 +528,7 @@ async def test_directive_argument_definitions(
         assert len(definitions) == len(expected)
 
         location: types.Location
-        for location, actual in zip(expected, definitions):
+        for location, actual in zip(expected, definitions, strict=False):
             expected_uri = location.uri.replace("${ROOT}", root_uri)
             assert expected_uri == actual.uri
             assert location.range == actual.range

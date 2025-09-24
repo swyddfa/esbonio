@@ -6,7 +6,6 @@ import sys
 import traceback
 import typing
 from collections.abc import Callable
-from typing import Optional
 
 import sphinx.application
 from sphinx import __version__ as __sphinx_version__

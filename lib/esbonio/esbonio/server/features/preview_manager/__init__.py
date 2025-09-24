@@ -1,5 +1,4 @@
 from typing import Any
-from typing import Optional
 from urllib.parse import urlencode
 
 import attrs

@@ -15,12 +15,12 @@ repos:
   hooks:
   - id: ruff
     name: ruff (esbonio)
-    args: [--fix]
+    args: [--fix, --output-format, concise]
     files: 'lib/esbonio/.*\.py'
 
   - id: ruff
     name: ruff (esbonio-extensions)
-    args: [--fix]
+    args: [--fix, --output-format, concise]
     files: 'lib/esbonio-extensions/.*\.py'
 
   - id: ruff-format

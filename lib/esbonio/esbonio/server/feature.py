@@ -14,46 +14,40 @@ if typing.TYPE_CHECKING:
     import re
     from collections.abc import Coroutine
     from typing import Any
-    from typing import Optional
     from typing import Protocol
-    from typing import Union
 
     from .server import EsbonioLanguageServer
 
-    CompletionResult = Union[
-        Optional[list[types.CompletionItem]],
-        Coroutine[Any, Any, Optional[list[types.CompletionItem]]],
-    ]
+    CompletionResult = (
+        None
+        | list[types.CompletionItem]
+        | Coroutine[Any, Any, list[types.CompletionItem] | None]
+    )
 
-    DefinitionResult = Union[
-        Optional[list[types.Location]],
-        Coroutine[Any, Any, Optional[list[types.Location]]],
-    ]
+    DefinitionResult = (
+        None | list[types.Location] | Coroutine[Any, Any, list[types.Location] | None]
+    )
 
-    DocumentLinkResult = Union[
-        Optional[list[types.DocumentLink]],
-        Coroutine[Any, Any, Optional[list[types.DocumentLink]]],
-    ]
+    DocumentLinkResult = (
+        None
+        | list[types.DocumentLink]
+        | Coroutine[Any, Any, list[types.DocumentLink] | None]
+    )
 
-    DocumentSymbolResult = Union[
-        Optional[list[types.DocumentSymbol]],
-        Coroutine[Any, Any, Optional[list[types.DocumentSymbol]]],
-    ]
+    DocumentSymbolResult = (
+        None
+        | list[types.DocumentSymbol]
+        | Coroutine[Any, Any, list[types.DocumentSymbol] | None]
+    )
 
-    HoverResult = Union[
-        Optional[types.Hover],
-        Coroutine[Any, Any, Optional[types.Hover]],
-    ]
+    HoverResult = None | types.Hover | Coroutine[Any, Any, types.Hover | None]
+    MaybeAsyncNone = None | Coroutine[Any, Any, None]
 
-    MaybeAsyncNone = Union[
-        None,
-        Coroutine[Any, Any, None],
-    ]
-
-    WorkspaceSymbolResult = Union[
-        Optional[list[types.WorkspaceSymbol]],
-        Coroutine[Any, Any, Optional[list[types.WorkspaceSymbol]]],
-    ]
+    WorkspaceSymbolResult = (
+        None
+        | list[types.WorkspaceSymbol]
+        | Coroutine[Any, Any, list[types.WorkspaceSymbol] | None]
+    )
 
     class UriContext(Protocol):
         uri: Uri

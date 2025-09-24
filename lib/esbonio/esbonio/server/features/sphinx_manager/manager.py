@@ -5,7 +5,6 @@ import traceback
 import typing
 import uuid
 from functools import partial
-from typing import Union
 
 import attrs
 import lsprotocol.types as lsp
@@ -144,7 +143,7 @@ class SphinxManager(server.LanguageFeature):
     def initialize(self, params: lsp.InitializeParams):
         """Called once the initial handshake between client and server has finished."""
 
-        self.converter.register_structure_hook(Union[bool, float], lambda obj, _: obj)
+        self.converter.register_structure_hook(bool | float, lambda obj, _: obj)
         self.converter.register_structure_hook(
             SubProcess, _structure_list_or_subprocess
         )
