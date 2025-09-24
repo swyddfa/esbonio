@@ -71,7 +71,7 @@ def update_symbols(app: Sphinx, docname: str, source):
         document = publisher.document
 
     visitor = SymbolVisitor(document)
-    document.walkabout(visitor)
+    document.walkabout(visitor)  # type: ignore[union-attr]
 
     uri = str(types.Uri.for_file(app.env.doc2path(docname, base=True)).resolve())
     symbols = [(uri, *s) for s in visitor.symbols]

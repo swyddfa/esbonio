@@ -14,6 +14,7 @@ from esbonio.server.features.sphinx_manager.client_subprocess import (
     make_test_sphinx_client,
 )
 from esbonio.server.features.sphinx_manager.config import SphinxConfig
+from esbonio.server.features.sphinx_manager.config import SubProcess
 
 logger = logging.getLogger("__name__")
 
@@ -32,7 +33,7 @@ async def test_create_application(uri_for):
         ],
     )
     config = SphinxConfig(
-        python_command=[sys.executable],
+        python_command=SubProcess(command=[sys.executable]),
         config_overrides={
             "html_theme": "alabaster",
             "html_theme_options": {},
@@ -81,7 +82,7 @@ async def test_create_application_error(uri_for, tmp_path_factory):
 
     conf_dir = uri_for("workspaces", "demo-error").fs_path
     config = SphinxConfig(
-        python_command=[sys.executable],
+        python_command=SubProcess(command=[sys.executable]),
         build_command=[
             "sphinx-build",
             "-b",
