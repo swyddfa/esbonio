@@ -280,10 +280,12 @@ class CompletionContext:
     @property
     def documentation_formats(self) -> list[types.MarkupKind]:
         """The list of documentation formats supported by the client."""
-        return get_capability(
-            self.capabilities,
-            "text_document.completion.completion_item.documentation_format",
-            [],
+        return list(
+            get_capability(
+                self.capabilities,
+                "text_document.completion.completion_item.documentation_format",
+                [],
+            )
         )
 
     @property
@@ -326,7 +328,7 @@ class CompletionContext:
         if not capabilities:
             return []
 
-        return capabilities.value_set
+        return list(capabilities.value_set)
 
 
 @attrs.define

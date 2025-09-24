@@ -267,11 +267,8 @@ class SphinxConfig:
            The fully resolved config object to use.
            If ``None``, a valid configuration could not be created.
         """
-
-        if isinstance(python_command := self.python_command, list):
-            python_command = SubProcess(command=python_command)
-
-        if (python_command := python_command.resolve(uri, workspace, logger)) is None:
+        python_command = self.python_command.resolve(uri, workspace, logger)
+        if python_command is None:
             return None
 
         build_command = self._resolve_build_command(uri, logger)

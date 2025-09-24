@@ -16,6 +16,7 @@ from esbonio.server.features.sphinx_manager.client_subprocess import (
     make_test_sphinx_client,
 )
 from esbonio.server.features.sphinx_manager.config import SphinxConfig
+from esbonio.server.features.sphinx_manager.config import SubProcess
 
 logger = logging.getLogger(__name__)
 STATIC_DIR = (
@@ -83,7 +84,7 @@ async def client_build_error(uri_for, tmp_path_factory):
 
     conf_dir = uri_for("workspaces", "demo-error-build").fs_path
     config = SphinxConfig(
-        python_command=[sys.executable],
+        python_command=SubProcess(command=[sys.executable]),
         build_command=[
             "sphinx-build",
             "-b",
