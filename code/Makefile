@@ -74,5 +74,5 @@ bundled/env/.installed: requirements-env.txt | $(PY310)
 	touch $@
 
 node_modules/.installed: package.json package-lock.json | $(NPM)
-	$(NPM) ci
+	(test -f $@ && $(NPM) install) || $(NPM) ci
 	touch $@
