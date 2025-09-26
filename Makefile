@@ -1,13 +1,13 @@
 include .devcontainer/tools.mk
 
-.PHONY: lint enable-pre-commit disable-pre-commit
+.PHONY: lint
+lint: $(UVX)
+	$(UVX) pre-commit run --all-files
 
-lint: $(PRE_COMMIT)
-	$(PRE_COMMIT) run --all-files
+.PHONY: enable-pre-commit
+enable-pre-commit: $(UVX)
+	$(UVX) pre-commit install
 
-
-enable-pre-commit: $(PRE_COMMIT)
-	$(PRE_COMMIT) install
-
-disable-pre-commit: $(PRE_COMMIT)
-	$(PRE_COMMIT) uninstall
+.PHONY: disable-pre-commit
+disable-pre-commit: $(UVX)
+	$(UVX) pre-commit uninstall
