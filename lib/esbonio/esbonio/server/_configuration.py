@@ -15,7 +15,7 @@ from pygls.capabilities import get_capability
 
 from . import Uri
 
-T = TypeVar("T")
+T = TypeVar("T", bound=attrs.AttrsInstance)
 
 if typing.TYPE_CHECKING:
     from collections.abc import Awaitable
@@ -91,7 +91,7 @@ class ConfigurationContext:
         uri = Uri.parse(self.scope)
         return uri.fs_path
 
-    def expand(self, config: attrs.AttrsInstance) -> attrs.AttrsInstance:
+    def expand(self, config: T) -> T:
         """Expand any configuration variables in the given config value."""
         for name in attrs.fields_dict(type(config)):
             value = getattr(config, name)
