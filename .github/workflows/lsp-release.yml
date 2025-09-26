@@ -14,7 +14,7 @@ jobs:
       lsp: ${{steps.check-lsp.outputs.build}}
       code: ${{steps.check-code.outputs.build}}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
       with:
         fetch-depth: 0
 
@@ -57,9 +57,9 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: "3.10"
 
@@ -110,15 +110,15 @@ jobs:
       (needs.lsp-release.result == 'success' || needs.lsp-release.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-    - uses: 'actions/checkout@v4'
+    - uses: 'actions/checkout@v5'
 
-    - uses: 'actions/setup-node@v4'
+    - uses: 'actions/setup-node@v5'
       with:
         node-version: 20.x
         cache: 'npm'
         cache-dependency-path: 'code/package-lock.json'
 
-    - uses: 'actions/setup-python@v5'
+    - uses: 'actions/setup-python@v6'
       with:
         # This must be the minimum Python version we support
         python-version: "3.10"
@@ -174,15 +174,15 @@ jobs:
     environment:
       name: vscode-marketplace
     steps:
-    - uses: 'actions/checkout@v4'
+    - uses: 'actions/checkout@v5'
 
-    - uses: 'actions/setup-node@v4'
+    - uses: 'actions/setup-node@v5'
       with:
         node-version: 20.x
         cache: 'npm'
         cache-dependency-path: 'code/package-lock.json'
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v5
       name: 'Download Extension'
       with:
         name: 'vsix'
@@ -204,15 +204,15 @@ jobs:
     environment:
       name: open-vsx
     steps:
-    - uses: 'actions/checkout@v4'
+    - uses: 'actions/checkout@v5'
 
-    - uses: 'actions/setup-node@v4'
+    - uses: 'actions/setup-node@v5'
       with:
         node-version: 20.x
         cache: 'npm'
         cache-dependency-path: 'code/package-lock.json'
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v5
       name: 'Download Extension'
       with:
         name: 'vsix'
