@@ -64,7 +64,9 @@ ifeq ($$(strip $$(PY$(subst .,,$1))),)
 PY$(subst .,,$1) := $$(BIN)/python$1
 
 $$(PY$(subst .,,$1)): | $$(UV)
-	$$(UV) python find $1 || $$(UV) python install $1
+	$$(UV) python find $1 > /dev/null || $$(UV) python install $1
+	# Sometimes uv links the executable on install... sometimes it doesn't?
+	test -f $$@ || ln -s $$$$($$(UV) python find $1) $$@
 	$$@ --version
 
 endif
