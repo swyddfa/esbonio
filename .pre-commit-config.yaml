@@ -37,7 +37,13 @@ repos:
   - id: mypy
     name: mypy (scripts)
     files: 'scripts/.*\.py'
-    exclude: 'scripts/.*_documentation\.py'
+    exclude: 'scripts/.*_(documentation|index)\.py'
+
+  - id: mypy
+    name: mypy (scripts/update_docutils_index.py)
+    files: 'scripts/.*\.py'
+    additional_dependencies:
+    - types-docutils
 
   - id: mypy
     name: mypy (esbonio)
