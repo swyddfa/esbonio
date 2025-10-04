@@ -26,3 +26,10 @@ test: $(HATCH) $(PY)
 .PHONY: release
 release: $(TOWNCRIER) $(HATCH) $(PY)
 	$(PY) ../scripts/make_release.py lsp
+
+
+# Update the index of known roles and directives, including their docs, options and arguments.
+update-index: esbonio/sphinx_agent/handlers/docutils.json
+
+esbonio/sphinx_agent/handlers/docutils.json: $(UV)
+	$(UV) run ../../scripts/update_docutils_index.py -o $@
