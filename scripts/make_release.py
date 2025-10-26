@@ -108,10 +108,9 @@ COMPONENTS: Dict[str, Component] = {
         ),
         Component(
             name="vscode",
-            # Everything is a beta version bump until we make a proper release
-            bump_breaking="minor",
-            bump_minor="minor",
-            bump_patch="patch",
+            bump_breaking="major",
+            bump_minor="major",
+            bump_patch="major",
             commit_prefix="Esbonio VSCode Extension Release v",
             src=str(REPO / "code"),
             tag_prefix="esbonio-vscode-extension-v",
