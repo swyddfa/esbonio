@@ -11,7 +11,7 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Alex Carney", email = "alcarneyme@gmail.com" }]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
@@ -42,7 +42,7 @@ dependencies = [
 esbonio = "esbonio.server.cli:main"
 
 [project.optional-dependencies]
-typecheck = ["mypy", "pytest-lsp>=1.0b0", "types-docutils", "types-pygments"]
+typecheck = ["mypy", "pytest-lsp>=1.0", "types-docutils", "types-pygments"]
 
 [tool.coverage.run]
 parallel = true
