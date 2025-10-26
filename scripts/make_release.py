@@ -16,9 +16,7 @@ import re
 import subprocess
 import sys
 from datetime import datetime
-from typing import Dict
-from typing import Optional
-from typing import TypedDict
+from typing import Dict, Optional, TypedDict
 
 IS_CI = "CI" in os.environ
 IS_PR = os.environ.get("GITHUB_REF", "").startswith("refs/pull/")
@@ -101,10 +99,9 @@ COMPONENTS: Dict[str, Component] = {
         ),
         Component(
             name="lsp",
-            # Everything is a beta version bump until we make a proper release
-            bump_breaking="b",
-            bump_minor="b",
-            bump_patch="b",
+            bump_breaking="release",
+            bump_minor="release",
+            bump_patch="release",
             commit_prefix="Esbonio Language Server Release v",
             src=str(REPO / "lib/esbonio"),
             tag_prefix="esbonio-language-server-v",
