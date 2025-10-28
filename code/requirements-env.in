@@ -1,5 +1,4 @@
 # This file is used to generate requirements-env.txt.
-#
 # Run the command below to manually upgrade packages in requirements-env.txt:
 #
 # $ make requirements-env.txt
