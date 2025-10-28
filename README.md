@@ -88,9 +88,9 @@ For that reason, the Esbonio extension tries to integrate into the wider VSCode 
 
 ### Dependent Extensions
 
-Esbonio depends on the following extensions
+Esbonio relies on the following extensions
 
-- By default, Esbonio relies on the offical [Python Extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) to configure the environment in which it builds your documentation.
+- The offical [Python Extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) is used to locate a Python interpreter compatible with the ``esbonio`` language server.
 
 - The [MyST Syntax Highlighting](https://marketplace.visualstudio.com/items?itemName=chrisjsewell.myst-tml-syntax) extension provides syntax highlighting rules for MyST flavoured markdown.
 
