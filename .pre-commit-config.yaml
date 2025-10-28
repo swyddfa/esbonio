@@ -4,23 +4,23 @@ ci:
 repos:
 
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v5.0.0
+  rev: v6.0.0
   hooks:
   - id: check-yaml
   - id: end-of-file-fixer
   - id: trailing-whitespace
 
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.11.4
+  rev: v0.13.3
   hooks:
   - id: ruff
     name: ruff (esbonio)
-    args: [--fix]
+    args: [--fix, --output-format, concise]
     files: 'lib/esbonio/.*\.py'
 
   - id: ruff
     name: ruff (esbonio-extensions)
-    args: [--fix]
+    args: [--fix, --output-format, concise]
     files: 'lib/esbonio-extensions/.*\.py'
 
   - id: ruff-format
@@ -32,7 +32,7 @@ repos:
     files: 'lib/esbonio-extensions/.*\.py'
 
 - repo: https://github.com/pre-commit/mirrors-mypy
-  rev: 'v1.15.0'
+  rev: 'v1.18.2'
   hooks:
   - id: mypy
     name: mypy (scripts)

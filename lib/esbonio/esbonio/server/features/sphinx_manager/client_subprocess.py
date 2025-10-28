@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import pathlib
-import subprocess
 import sys
 import typing
 from uuid import uuid4
@@ -80,10 +78,10 @@ class SubprocessSphinxClient(JsonRPCClient):
         self._events = EventSource(self.logger)
         """The sphinx client can emit events."""
 
-        self._startup_task: asyncio.Task | None = None
+        self._startup_task: asyncio.Task[Any] | None = None
         """The startup task."""
 
-        self._stderr_forwarder: asyncio.Task | None = None
+        self._stderr_forwarder: asyncio.Task[Any] | None = None
         """A task that forwards the server's stderr to the test process."""
 
     def __repr__(self):
@@ -204,11 +202,10 @@ class SubprocessSphinxClient(JsonRPCClient):
 
         try:
             self._set_state(ClientState.Starting)
-            command = get_start_command(self.config, self.logger)
-            env = get_sphinx_env(self.config)
+            sphinx = self.config.sphinx_command
 
-            self.logger.debug("Starting sphinx agent: %s", " ".join(command))
-            await self.start_io(*command, env=env, cwd=self.config.cwd)
+            self.logger.debug("Python command: %r", sphinx.command)
+            await self.start_io(*sphinx.command, env=sphinx.env, cwd=sphinx.cwd)
 
             params = types.CreateApplicationParams(
                 command=self.config.build_command,
@@ -337,49 +334,3 @@ def make_test_sphinx_client(config: SphinxConfig) -> SubprocessSphinxClient:
         logger.info("%s", params)
 
     return client
-
-
-def get_sphinx_env(config: SphinxConfig) -> dict[str, str]:
-    """Return the set of environment variables to use with the Sphinx process."""
-
-    env = {
-        "PYTHONUNBUFFERED": "1",
-        "PYTHONPATH": os.pathsep.join([str(p) for p in config.python_path]),
-    }
-    for envname, value in os.environ.items():
-        # Don't pass any vars we've explictly set.
-        if envname in env:
-            continue
-
-        env[envname] = value
-
-    return env
-
-
-def get_start_command(config: SphinxConfig, logger: logging.Logger):
-    """Return the command to use to start the sphinx agent."""
-
-    command = []
-
-    if len(config.python_command) == 0:
-        raise ValueError("No python environment configured")
-
-    if config.enable_dev_tools:
-        # Assumes that the user has `lsp-devtools` available on their PATH
-        # TODO: Windows support
-        result = subprocess.run(
-            ["command", "-v", "lsp-devtools"],  # noqa: S607
-            capture_output=True,
-            check=False,
-        )
-
-        if result.returncode == 0:
-            lsp_devtools = result.stdout.decode("utf8").strip()
-            command.extend([lsp_devtools, "agent", "--"])
-
-        else:
-            stderr = result.stderr.decode("utf8").strip()
-            logger.debug("Unable to locate lsp-devtools command\n%s", stderr)
-
-    command.extend([*config.python_command, "-m", "sphinx_agent"])
-    return command

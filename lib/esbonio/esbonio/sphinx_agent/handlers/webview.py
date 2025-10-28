@@ -88,18 +88,20 @@ class SourceLocationTransform(Transform):
         source_nodes = self.document.traverse(condition=has_source)
 
         for idx, node in enumerate(source_nodes):
-            if node.line > current_line or node.source != current_source:
+            node_line = node.line or 0
+
+            if node_line > current_line or node.source != current_source:
                 uri, linum = source_to_uri_and_linum(f"{node.source}:{node.line}")
 
                 if uri is None or linum is None:
                     continue
 
                 source_index[idx] = (str(uri), linum)
-                node["classes"].extend(["esbonio-marker", f"esbonio-marker-{idx}"])
+                node["classes"].extend(["esbonio-marker", f"esbonio-marker-{idx}"])  # type: ignore[index]
 
                 # Use the source and line reported by docutils.
                 # Just in case source_to_uri_and_linum doesn't handle things correctly
-                current_line = node.line
+                current_line = node_line
                 current_source = node.source
 
         self.document.children.append(source_locations("", index=source_index))

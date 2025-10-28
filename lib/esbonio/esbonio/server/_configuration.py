@@ -15,19 +15,16 @@ from pygls.capabilities import get_capability
 
 from . import Uri
 
-T = TypeVar("T")
+T = TypeVar("T", bound=attrs.AttrsInstance)
 
 if typing.TYPE_CHECKING:
     from collections.abc import Awaitable
+    from collections.abc import Callable
     from typing import Any
-    from typing import Callable
-    from typing import Union
 
     from .server import EsbonioLanguageServer
 
-    ConfigurationCallback = Callable[
-        ["ConfigChangeEvent"], Union[Awaitable[None], None]
-    ]
+    ConfigurationCallback = Callable[["ConfigChangeEvent"], Awaitable[None] | None]
 
 
 try:
@@ -94,10 +91,15 @@ class ConfigurationContext:
         uri = Uri.parse(self.scope)
         return uri.fs_path
 
-    def expand(self, config: attrs.AttrsInstance) -> attrs.AttrsInstance:
+    def expand(self, config: T) -> T:
         """Expand any configuration variables in the given config value."""
         for name in attrs.fields_dict(type(config)):
             value = getattr(config, name)
+
+            # Recurse into sub-fields
+            if attrs.has(type(value)):
+                setattr(config, name, self.expand(value))
+                continue
 
             # For now, we only support variables that are a string.
             if not isinstance(value, str):
@@ -378,7 +380,7 @@ class Configuration:
 
         # Combine and resolve all the config sources - order matters!
         config = _merge_configs(
-            file_config, workspace_config, self._initialization_options
+            self._initialization_options, file_config, workspace_config
         )
         # self.logger.debug("Full config: %s", json.dumps(config, indent=2))
 
@@ -490,7 +492,7 @@ class Configuration:
             self.logger.error("Unable to get workspace configuration", exc_info=True)
             return
 
-        for scope, result in zip(scopes, results):
+        for scope, result in zip(scopes, results, strict=False):
             self.logger.debug(
                 "Workspace '%s' configuration: %s", scope, json.dumps(result, indent=2)
             )

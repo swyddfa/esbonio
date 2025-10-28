@@ -4,7 +4,6 @@ import sys
 import warnings
 from collections.abc import Sequence
 from logging.handlers import MemoryHandler
-from typing import Optional
 
 from pygls.protocol import default_converter
 
@@ -58,7 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     return cli
 
 
-def main(argv: Optional[Sequence[str]] = None):
+def main(argv: Sequence[str] | None = None):
     cli = build_parser()
     args = cli.parse_args(argv)
 

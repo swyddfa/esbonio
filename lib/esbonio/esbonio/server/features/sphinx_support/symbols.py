@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Optional
 
 from lsprotocol import types
 
@@ -21,7 +20,7 @@ class SphinxSymbols(LanguageFeature):
 
     async def document_symbol(
         self, params: types.DocumentSymbolParams
-    ) -> Optional[list[types.DocumentSymbol]]:
+    ) -> list[types.DocumentSymbol] | None:
         """Called when a document symbols request is received."""
 
         uri = Uri.parse(params.text_document.uri)
@@ -60,7 +59,7 @@ class SphinxSymbols(LanguageFeature):
 
     async def workspace_symbol(
         self, params: types.WorkspaceSymbolParams
-    ) -> Optional[list[types.WorkspaceSymbol]]:
+    ) -> list[types.WorkspaceSymbol] | None:
         """Called when a workspace symbol request is received."""
 
         tasks = []

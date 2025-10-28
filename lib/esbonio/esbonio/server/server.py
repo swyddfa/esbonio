@@ -22,9 +22,9 @@ from . import Uri
 from ._configuration import Configuration
 
 if typing.TYPE_CHECKING:
+    from collections.abc import Callable
     from collections.abc import Coroutine
     from typing import Any
-    from typing import Callable
 
     from .feature import LanguageFeature
 
@@ -152,7 +152,6 @@ class EsbonioLanguageServer(LanguageServer):
             self._register_did_change_configuration_handler(),
             self._register_did_change_watched_files_handler(),
         )
-        self._ready.set_result(True)
 
     def lsp_shutdown(self, params: None):
         """Called when the server is instructed to ``shutdown`` by the client."""

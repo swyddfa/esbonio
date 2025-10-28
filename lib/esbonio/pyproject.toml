@@ -7,16 +7,15 @@ name = "esbonio"
 dynamic = ["version"]
 description = "A language server for sphinx/docutils based documentation projects."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "Alex Carney", email = "alcarneyme@gmail.com" }]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -29,7 +28,7 @@ dependencies = [
     "aiosqlite",
     "platformdirs",
     "docutils",
-    "pygls>=2.0a4",
+    "pygls>=2.0",
     "tomli ; python_version<'3.11'",
     "websockets",
 ]
@@ -43,7 +42,7 @@ dependencies = [
 esbonio = "esbonio.server.cli:main"
 
 [project.optional-dependencies]
-typecheck = ["mypy", "pytest-lsp>=1.0b0", "types-docutils", "types-pygments"]
+typecheck = ["mypy", "pytest-lsp>=1.0", "types-docutils", "types-pygments"]
 
 [tool.coverage.run]
 parallel = true
@@ -72,7 +71,7 @@ check_untyped_defs = true
 venv = ".env"
 include = ["esbonio"]
 
-pythonVersion = "3.9"
+pythonVersion = "3.10"
 pythonPlatform = "All"
 
 [tool.towncrier]

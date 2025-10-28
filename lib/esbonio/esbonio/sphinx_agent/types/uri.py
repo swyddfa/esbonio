@@ -4,9 +4,7 @@ import dataclasses
 import os
 import pathlib
 import re
-from typing import Callable
-from typing import Optional
-from typing import Union
+from collections.abc import Callable
 from urllib import parse
 
 IS_WIN = os.name == "nt"
@@ -143,7 +141,7 @@ class Uri:
         return Uri.for_file(pathlib.Path(self).resolve())
 
     @classmethod
-    def for_file(cls, filepath: Union[str, os.PathLike[str]]) -> Uri:
+    def for_file(cls, filepath: str | os.PathLike[str]) -> Uri:
         """Create a uri based on the given filepath."""
 
         fpath = os.fspath(filepath)
@@ -159,7 +157,7 @@ class Uri:
         return cls.create(scheme="file", authority=authority, path=fpath)
 
     @property
-    def fs_path(self) -> Optional[str]:
+    def fs_path(self) -> str | None:
         """Return the equivalent fs path."""
         return self.as_fs_path()
 
@@ -207,7 +205,7 @@ class Uri:
 
         return self.where(path=new_path)
 
-    def as_fs_path(self, preserve_case: bool = False) -> Optional[str]:
+    def as_fs_path(self, preserve_case: bool = False) -> str | None:
         """Return the file system path correspondin with this uri."""
         if self.path:
             path = _normalize_path(self.path, preserve_case)

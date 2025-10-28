@@ -5,7 +5,6 @@ import traceback
 import typing
 import uuid
 from functools import partial
-from typing import Union
 
 import attrs
 import lsprotocol.types as lsp
@@ -16,9 +15,10 @@ from esbonio.sphinx_agent import types
 
 from .client import ClientState
 from .config import SphinxConfig
+from .config import SubProcess
 
 if typing.TYPE_CHECKING:
-    from typing import Callable
+    from collections.abc import Callable
 
     from esbonio.server.features.project_manager import ProjectManager
 
@@ -81,7 +81,7 @@ class SphinxBuildTriggers:
     on_save: bool = attrs.field(default=True)
     """Trigger a build when a file is saved."""
 
-    on_change: Union[bool, float] = attrs.field(default=2.0)
+    on_change: bool | float = attrs.field(default=2.0)
     """Trigger a build each time a file has changed, with a configurable delay."""
 
 
@@ -140,12 +140,14 @@ class SphinxManager(server.LanguageFeature):
     def add_listener(self, event: str, handler):
         self._events.add_listener(event, handler)
 
-    def initialized(self, params: lsp.InitializedParams):
+    def initialize(self, params: lsp.InitializeParams):
         """Called once the initial handshake between client and server has finished."""
 
-        self.server.converter.register_structure_hook(
-            Union[bool, float], lambda obj, _: obj
+        self.converter.register_structure_hook(bool | float, lambda obj, _: obj)
+        self.converter.register_structure_hook(
+            SubProcess, _structure_list_or_subprocess
         )
+
         self.configuration.subscribe(
             "esbonio.sphinx", ManagerConfig, self.update_configuration
         )
@@ -447,3 +449,12 @@ class SphinxManager(server.LanguageFeature):
                 cancellable=False,
             ),
         )
+
+
+def _structure_list_or_subprocess(obj, _):
+    """Structure hook that can automatically upgrade a simple python command e.g.
+    ``["/bin/python"]`` to a SubProcess instance."""
+    if isinstance(obj, list):
+        return SubProcess(command=obj)
+
+    return SubProcess(**obj)

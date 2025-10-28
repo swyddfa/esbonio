@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import functools
 import logging
+from collections.abc import Callable
 from collections.abc import Iterable
 from collections.abc import Iterator
 from types import TracebackType
 from typing import Any
-from typing import Callable
-from typing import Optional
 from typing import TypeVar
 
 from . import types
@@ -34,7 +33,7 @@ def status_iterator(
     color: str = "",
     length: int = 0,
     verbosity: int = 0,
-    stringify_func: Optional[Callable[[Any], str]] = None,
+    stringify_func: Callable[[Any], str] | None = None,
 ) -> Iterator[T]:
     """Used to override Sphinx's version of this function.
     Sends progress reports to the client as well as the usual logs.
@@ -79,9 +78,9 @@ class progress_message:
 
     def __exit__(
         self,
-        typ: Optional[type[BaseException]],
-        val: Optional[BaseException],
-        tb: Optional[TracebackType],
+        typ: type[BaseException] | None,
+        val: BaseException | None,
+        tb: TracebackType | None,
     ) -> bool:
         from sphinx.locale import __
         from sphinx.util.logging import NAMESPACE

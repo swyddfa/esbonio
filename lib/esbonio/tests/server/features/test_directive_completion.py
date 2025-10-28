@@ -19,7 +19,7 @@ if typing.TYPE_CHECKING:
 
 
 VSCODE = "visual-studio-code"
-NVIM = "neovim"
+NVIM = "neovim@0.10.0"
 PATTERNS = {"rst": RST_DIRECTIVE, "markdown": MYST_DIRECTIVE}
 
 

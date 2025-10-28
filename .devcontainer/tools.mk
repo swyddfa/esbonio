@@ -5,8 +5,8 @@ ifeq ($(strip $(ARCH)),)
 $(error Unable to determine platform architecture)
 endif
 
-NODE_VERSION := 20.19.3
-UV_VERSION := 0.7.15
+NODE_VERSION := 20.19.5
+UV_VERSION := 0.8.22
 
 UV ?= $(shell command -v uv)
 UVX ?= $(shell command -v uvx)
@@ -32,7 +32,7 @@ $(UV):
 endif
 
 # The versions of Python we support
-PYXX_versions := 3.9 3.10 3.11 3.12 3.13 3.14
+PYXX_versions := 3.10 3.11 3.12 3.13 3.14
 
 # Our default Python version
 PY_VERSION := 3.13
@@ -64,9 +64,9 @@ ifeq ($$(strip $$(PY$(subst .,,$1))),)
 PY$(subst .,,$1) := $$(BIN)/python$1
 
 $$(PY$(subst .,,$1)): | $$(UV)
-	$$(UV) python find $1 || $$(UV) python install $1
-	ln -s $$$$($$(UV) python find $1) $$@
-
+	$$(UV) python find $1 > /dev/null || $$(UV) python install $1
+	# Sometimes uv links the executable on install... sometimes it doesn't?
+	test -f $$@ || ln -s $$$$($$(UV) python find $1) $$@
 	$$@ --version
 
 endif

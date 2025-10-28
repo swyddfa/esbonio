@@ -122,7 +122,7 @@ class Database:
         if len(existing.columns) != len(table.columns):
             self._create_table(table)
         else:
-            for existing_col, col in zip(existing.columns, table.columns):
+            for existing_col, col in zip(existing.columns, table.columns, strict=False):
                 if existing_col.name != col.name or existing_col.dtype != col.dtype:
                     self._create_table(table)
                     break

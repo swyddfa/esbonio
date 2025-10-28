@@ -101,9 +101,30 @@ async def test_workspace_diagnostic(client: LanguageClient, uri_for):
 async def pub_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
     """A client that does **not** support the pull-diagnostics model."""
 
-    build_dir = tmp_path_factory.mktemp("build")
     workspace_uri = uri_for("workspaces", "demo")
     test_uri = workspace_uri / "rst" / "diagnostics.rst"
+
+    # Override the project configuration so that builds are written into a temporary folder
+    build_dir = tmp_path_factory.mktemp("build")
+    lsp_client.set_configuration({"logging": {"level": "debug"}}, section="esbonio")
+    lsp_client.set_configuration(
+        {
+            "buildCommand": [
+                "sphinx-build",
+                "-M",
+                "html",
+                workspace_uri.fs_path,
+                str(build_dir),
+            ],
+            "configOverrides": {
+                "html_theme": "alabaster",
+                "html_theme_options": {},
+            },
+            "pythonCommand": [sys.executable],
+        },
+        section="esbonio.sphinx",
+        scope_uri=str(workspace_uri),
+    )
 
     await lsp_client.initialize_session(
         types.InitializeParams(
@@ -112,24 +133,8 @@ async def pub_client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
                 window=types.WindowClientCapabilities(
                     work_done_progress=True,
                 ),
+                workspace=types.WorkspaceClientCapabilities(configuration=True),
             ),
-            initialization_options={
-                "logging": {"level": "debug"},
-                "sphinx": {
-                    "buildCommand": [
-                        "sphinx-build",
-                        "-M",
-                        "html",
-                        workspace_uri.fs_path,
-                        str(build_dir),
-                    ],
-                    "configOverrides": {
-                        "html_theme": "alabaster",
-                        "html_theme_options": {},
-                    },
-                    "pythonCommand": [sys.executable],
-                },
-            },
             workspace_folders=[
                 types.WorkspaceFolder(uri=str(workspace_uri), name="demo"),
             ],

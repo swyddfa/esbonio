@@ -17,6 +17,7 @@ from esbonio.server.features.sphinx_manager.client_subprocess import (
     make_test_sphinx_client,
 )
 from esbonio.server.features.sphinx_manager.config import SphinxConfig
+from esbonio.server.features.sphinx_manager.config import SubProcess
 from esbonio.server.features.sphinx_manager.config import get_module_path
 from esbonio.sphinx_agent.app import Sphinx
 
@@ -44,7 +45,7 @@ async def client(request, uri_for, build_dir):
     )
     config = SphinxConfig(
         enable_dev_tools=request.config.getoption("enable_devtools"),
-        python_command=[sys.executable],
+        python_command=SubProcess(command=[sys.executable]),
         build_command=[
             "sphinx-build",
             "-M",

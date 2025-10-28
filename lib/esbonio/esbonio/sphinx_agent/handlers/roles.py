@@ -1,6 +1,5 @@
 import inspect
 from typing import Any
-from typing import Optional
 
 from docutils.parsers.rst import roles as docutils_roles
 
@@ -27,7 +26,7 @@ def get_impl_name(role: Any) -> str:
         return f"{role.__module__}.{role.__class__.__name__}"
 
 
-def get_impl_location(impl: Any) -> Optional[types.Location]:
+def get_impl_location(impl: Any) -> types.Location | None:
     """Get the implementation location of the given role"""
 
     try:

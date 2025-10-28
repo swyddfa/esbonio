@@ -7,7 +7,6 @@ import logging.config
 import textwrap
 from logging.handlers import MemoryHandler
 from typing import Any
-from typing import Optional
 
 import attrs
 from lsprotocol import types
@@ -45,19 +44,19 @@ class WindowLogMessageHandler(logging.Handler):
 class LoggerConfiguration:
     """Configuration options for a given logger."""
 
-    level: Optional[str] = attrs.field(default=None)
+    level: str | None = attrs.field(default=None)
     """The logging level to use, if not set the default logging level will be used."""
 
-    format: Optional[str] = attrs.field(default=None)
+    format: str | None = attrs.field(default=None)
     """The log format to use, if not set the default logging level will be used."""
 
-    filepath: Optional[str] = attrs.field(default=None)
+    filepath: str | None = attrs.field(default=None)
     """If set log to a file"""
 
-    stderr: Optional[bool] = attrs.field(default=None)
+    stderr: bool | None = attrs.field(default=None)
     """If True, log to stderr, if not set the default value will be used."""
 
-    window: Optional[bool] = attrs.field(default=None)
+    window: bool | None = attrs.field(default=None)
     """If True, send message as a ``window/logMessage`` notification, if not set the
     default value will be used"""
 
@@ -164,9 +163,9 @@ class LoggingConfigBuilder:
         name: str,
         level: str,
         format: str,
-        filepath: Optional[str],
+        filepath: str | None,
         stderr: bool,
-        window: Optional[server.EsbonioLanguageServer],
+        window: server.EsbonioLanguageServer | None,
     ):
         """Add a configuration for the given logger
 
@@ -229,7 +228,7 @@ class LoggingConfig:
     format: str = attrs.field(default="[%(name)s] %(message)s")
     """The log format string to use."""
 
-    filepath: Optional[str] = attrs.field(default=None)
+    filepath: str | None = attrs.field(default=None)
     """If set, log to a file by default"""
 
     stderr: bool = attrs.field(default=True)
