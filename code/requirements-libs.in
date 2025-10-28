@@ -1,17 +1,20 @@
 # This file is used to generate requirements-libs.txt.
+# Run the command below to upgrade packages in requirements-libs.txt:
 #
-# Only run the commands below to manually upgrade packages in requirements-libs.txt:
-# NOTE: Use the minimum version of Python we support when running these commands (currently 3.9)
+# $ uv pip compile --generate-hashes --upgrade --python-version 3.10 --output-file requirements-libs.txt requirements-libs.in
 #
-# 1) python -m pip install pip-tools
-# 2) pip-compile --generate-hashes --upgrade ./requirements-libs.in
+# Alternatively, using the Makefile
 #
-# To install the environment specified in requirements-libs.txt (again using the minimum supported python)
+# $ make requirements-libs.txt
 #
-# 3) python -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements-libs.txt
+# To install the environment specified in requirements-libs.txt (using the minimum supported python)
+#
+# $ python -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements-libs.txt
+#
+#
 aiosqlite
 docutils
 platformdirs
-pygls>=2a4
+pygls>=2.0
 tomli
 websockets
