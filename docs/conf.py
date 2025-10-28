@@ -15,14 +15,13 @@ sys.path.insert(0, os.path.abspath("../lib/esbonio-extensions"))
 sys.path.insert(0, os.path.abspath("../lib/esbonio"))
 sys.path.insert(0, os.path.abspath("./ext"))
 
+import esbonio.server
 from docutils.parsers.rst import nodes
 from sphinx.application import Sphinx
 
-import esbonio.server
-
 # -- Project information -----------------------------------------------------
 project = "Esbonio"
-copyright = "2024"
+copyright = "2025"
 author = "the Esbonio project"
 release = esbonio.server.__version__
 
@@ -82,10 +81,6 @@ html_theme_options = {
     "source_repository": "https://github.com/swyddfa/esbonio/",
     "source_branch": BRANCH,
     "source_directory": "docs/",
-    "announcement": (
-        "This is the documentation for the in-development 1.0 release of the language server. "
-        '<a href="/en/esbonio-language-server-v0.16.4">Click here</a> to view the documentation for the current stable version'
-    ),
 }
 
 
