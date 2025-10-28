@@ -3,11 +3,6 @@
 How To Migrate to v1
 ====================
 
-.. note::
-
-   Since v1.0 is still under development, some features from ``0.x`` may still be missing.
-   Also the details in this guide may change over time.
-
 This guide covers the breaking changes between the ``v0.x`` and ``v1.x`` versions of the language server and how to adapt to them.
 
 .. highlight:: console
@@ -23,10 +18,27 @@ In ``v1.x`` Sphinx is now run in a separate process so this is no longer necessa
    (env) $ pip uninstall esbonio
 
 Instead, you can now have a single, global installation that is reused across projects.
-It's recommended that you use `pipx <https://pipx.pypa.io/stable/>`__ to manage this installation for you::
+It's recommended that you use tools like
+`pipx <https://pipx.pypa.io/stable/>`__
+or
+`uv <https://docs.astral.sh/uv/>`__
+to manage this installation for you
 
-   $ pipx install esbonio   # Installs esbonio globally in an isolated environment
-   $ pipx upgrade esbonio   # Upgrade esbonio and its dependencies
+.. tab-set::
+
+   .. tab-item:: pipx
+
+      .. code-block:: console
+
+         $ pipx install esbonio   # Installs esbonio globally in an isolated environment
+         $ pipx upgrade esbonio   # Upgrade esbonio and its dependencies
+
+   .. tab-item:: uv
+
+      .. code-block:: console
+
+         $ uv tool install esbonio    # Installs esbonio globally in an isolated environment
+         $ uv tool upgrade esbonio    # Upgrade esbonio and its dependencies
 
 .. note::
 
@@ -88,3 +100,11 @@ The following table outlines the configuration options that have been removed in
 | - ``esbonio.server.updateBehavior``     |                                                 |                                                              |
 | - ``esbonio.server.updateFrequency``    |                                                 |                                                              |
 +-----------------------------------------+-------------------------------------------------+--------------------------------------------------------------+
+
+.. seealso::
+
+   :ref:`lsp-configure-sphinx-build-cmd`
+      Guide on how to configure Esbonio to use the correct Sphinx build command for your project.
+
+   :ref:`lsp-configure-sphinx-build-env`
+      Guide on how to configure Esbonio to work with your project's documentation environment.
