@@ -9,9 +9,10 @@
 
 [reStructuredText]: https://docutils.sourceforge.io/rst.html
 [Sphinx]: https://www.sphinx-doc.org/en/master/
+[MySt Markdowm]: https://mystmd.org
 [Language Server]: https://langserver.org/
 
-Esbonio aims to make it easier to work with [Sphinx] by providing a [Language Server] to enhance your editing experience.
+Esbonio aims to make it easier to work with [Sphinx] or [MySt Markdown] by providing a [Language Server] to enhance your editing experience.
 The Esbonio project is made up from a number of sub-projects
 
 
