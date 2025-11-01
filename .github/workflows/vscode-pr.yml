@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: 'actions/checkout@v5'
 
-    - uses: 'actions/setup-node@v5'
+    - uses: 'actions/setup-node@v6'
       with:
         node-version: 20.x
         cache: 'npm'
@@ -62,7 +62,7 @@ jobs:
       name: Package Extension
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: 'vsix'
         path: code/*.vsix
@@ -87,7 +87,7 @@ jobs:
     steps:
     - uses: actions/checkout@v5
 
-    - uses: 'actions/setup-node@v5'
+    - uses: 'actions/setup-node@v6'
       with:
         node-version: 20.x
         cache: 'npm'
