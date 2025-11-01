@@ -32,16 +32,16 @@
     ],
     "dependencies": {
         "@vscode/python-extension": "^1.0.6",
-        "semver": "^7.7.2",
+        "semver": "^7.7.3",
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
         "@types/node": "^20",
         "@types/vscode": "1.82.0",
-        "@vscode/test-cli": "^0.0.11",
+        "@vscode/test-cli": "^0.0.12",
         "@vscode/test-electron": "^2.5.2",
         "@vscode/vsce": "^3.6.2",
-        "esbuild": "^0.25.10",
+        "esbuild": "^0.25.11",
         "ovsx": "^0.10.6",
         "typescript": "^5.9.3"
     },
