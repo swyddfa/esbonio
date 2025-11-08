@@ -279,8 +279,13 @@ The following options control the creation and management of background Sphinx p
    :scope: project
    :type: string[]
 
-   The ``sphinx-build`` command ``esbonio`` should use when building your documentation
+   The ``sphinx-build`` command line arguments ``esbonio`` should use when building your documentation.
    For more information, see :ref:`lsp-configure-sphinx-build-cmd`
+
+   .. note::
+
+      This must be the genuine command line for ``sphinx-build``.
+      Wrapper scripts around ``sphinx-build`` are not supported.
 
 .. esbonio:config:: esbonio.sphinx.configOverrides
    :scope: project
