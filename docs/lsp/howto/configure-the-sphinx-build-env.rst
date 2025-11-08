@@ -9,6 +9,11 @@ This of course, requires ``esbonio`` being able to execute this process within t
 Since there are many ways to define and manage Python environments, ``esbonio`` needs you to tell it how to run the ``python`` command so that it has access to the correct dependencies.
 This is typically done by setting the :esbonio:conf:`esbonio.sphinx.pythonCommand` option in your project's ``pyproject.toml`` file.
 
+If the command is not ``python``, then it must accept additional parameters (e.g. ``-M sphinx``) and pass these to the Python interpreter.
+
+``esbonio`` sets the environment variable ``PYTHONPATH`` for the python interpreter, therefore, the command must not replace or clear ``PYTHONPATH``.
+It may, however, extend the environment variable with additional entries.
+
 Basic Usage
 -----------
 
