@@ -19,6 +19,9 @@ Of course, the ``sphinx-build`` command you use with your project may be differe
    [tool.esbonio.sphinx]
    buildCommand = ["sphinx-build", "-M", "html", "docs", "${defaultBuildDir}", "--nitpicky", "--verbose"]
 
+:esbonio:conf:`esbonio.sphinx.buildCommand` must be the genuine command line for ``sphinx-build``.
+Wrapper scripts around ``sphinx-build``, e.g. a Makefile, are not supported.
+
 .. admonition:: Why use ``${defaultBuildDir}``?
 
    There are two main reasons why ``esbonio`` will store its build output in your user's cache directory by default.
