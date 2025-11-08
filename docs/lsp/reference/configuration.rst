@@ -311,7 +311,7 @@ The following options control the creation and management of background Sphinx p
 
      ["hatch", "-e", "docs", "run", "python"]
 
-   If the command is not ``python``, then it must accept additional parameters (e.g. ``-M sphinx``) and pass these to the Python interpreter.
+   If the command is not ``python``, then it must accept additional parameters (e.g. ``-m sphinx``) and pass these to the Python interpreter.
    The command must not replace or clear the environment variable ``PYTHONPATH``, it may, however, extend it with additional entries.
 
    For more examples see :ref:`lsp-configure-sphinx-build-env`
