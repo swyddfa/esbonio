@@ -19,6 +19,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Esboni
   let logLevel = vscode.workspace.getConfiguration('esbonio').get<string>('logging.level')
 
   logger = new OutputChannelLogger(channel, logLevel)
+  logger.debug('Extension activated')
 
   let python = await getPythonExtension()
   let pythonManager = new PythonManager(python, logger, context)
@@ -31,6 +32,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Esboni
 
   let config = vscode.workspace.getConfiguration("esbonio.server")
   if (config.get("enabled")) {
+    logger.debug("Starting server from activate()")
     await esbonio.start()
   }
 
@@ -50,6 +52,7 @@ async function getPythonExtension(): Promise<PythonExtension | undefined> {
 }
 
 export function deactivate(): Thenable<void> | undefined {
+  logger.debug('Extension deactivated')
   if (!esbonio) {
     return undefined
   }
