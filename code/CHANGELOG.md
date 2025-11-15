@@ -1,3 +1,27 @@
+## v1.0.0 - 2025-10-28
+
+### Enhancements
+
+- `esbonio.sphinx.pythonCommand` is now an object with with following fields
+
+  - `command`: This list of strings from the original esbonio.sphinx.pythonCommand.
+  - `env`: A dictionary allowing you to add/override environment variables passed to the sphinx process
+  - `cwd`: A string allowing you to change the directory in which the sphinx process is launched.
+
+  ([#1024](https://github.com/swyddfa/esbonio/issues/1024))
+
+### Misc
+
+- The following options have been removed
+
+  - `esbonio.sphinx.envPassthrough`: For ages now, the language server passes through all environment variables to the sphinx process so this option has no use.
+  - `esbonio.sphinx.pythonPath`:  The original intent behind this option was to allow you to override the version of the sphinx agent. However, the better way to do this is just use a different version of esbonio.
+  - `esbonio.sphinx.cwd`: Use `esbonio.sphinx.pythonCommand.cwd`
+
+  ([#1027](https://github.com/swyddfa/esbonio/issues/1027))
+- Drop Python 3.9 support ([#1032](https://github.com/swyddfa/esbonio/issues/1032))
+
+
 ## v0.96.6 - 2025-07-07
 
 ### Misc

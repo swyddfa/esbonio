@@ -1,3 +1,43 @@
+## v1.0.0 - 2025-10-28
+
+### Enhancements
+
+- Add the `esbonio.sphinx.pythonCommand.env` option which can be used to set/override envrionment variables for the Sphinx process ([#469](https://github.com/swyddfa/esbonio/issues/469))
+- `esbonio.sphinx.pythonCommand` is now an object with with following fields
+
+  - `[esbonio.sphinx.pythonCommand.]command`: This list of strings from the original esbonio.sphinx.pythonCommand.
+  - `[esbonio.sphinx.pythonCommand.]env`: A dictionary allowing you to add/override environment variables passed to the sphinx process
+  - `[esbonio.sphinx.pythonCommand.]cwd`: A string allowing you to change the directory in which the sphinx process is launched.
+
+  95% of the time, the previous simple list of strings was sufficient to configure the process.
+  So the server will still accept a list of strings for `esbonio.sphinx.pythonCommand` and it will be automatically converted to the new object representation.
+
+  The server now treats ``initializationOptions`` as the lowest priority settings source, allowing clients to use them to provide fallback options.
+
+  ([#1024](https://github.com/swyddfa/esbonio/issues/1024))
+- If there is no `pythonCommand` configured, `esbonio` will now attempt to use the server's runtime environment as a fallback. ([#1027](https://github.com/swyddfa/esbonio/issues/1027))
+
+### Fixes
+
+- Passing the `-C` flag to `esbonio.sphinx.buildCommand` now works as expected ([#997](https://github.com/swyddfa/esbonio/issues/997))
+
+### Docs
+
+- Add guide on using the `-C` flag to `sphinx-build` to allow the use of esbonio with files that aren't in a Sphinx project. ([#997](https://github.com/swyddfa/esbonio/issues/997))
+
+### Misc
+
+- The following options have been removed
+
+  - `esbonio.sphinx.envPassthrough`: For ages now, the language server passes through all environment variables to the sphinx process so this option has no use.
+  - `esbonio.sphinx.pythonPath`:  The original intent behind this option was to allow you to override the version of the sphinx agent. However, the better way to do this is just use a different version of esbonio.
+  - `esbonio.sphinx.cwd`: Use `esbonio.sphinx.pythonCommand.cwd`
+  - `esbonio.sphinx.fallbackEnv`: This was a hack to allow the VSCode extension to provide a default environment in the absence of any user configuration, client's should set `esbonio.sphinx.pythonCommand` in their `initializationOptions`.
+
+  ([#1024](https://github.com/swyddfa/esbonio/issues/1024))
+- Drop Python 3.9 support ([#1032](https://github.com/swyddfa/esbonio/issues/1032))
+
+
 ## v1.0.0b12 - 2025-07-03
 
 ### Features
