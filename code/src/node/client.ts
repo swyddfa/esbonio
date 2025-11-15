@@ -166,8 +166,17 @@ export class EsbonioClient {
     // React to environment changes in the Python extension
     python.addHandler(Events.PYTHON_ENV_CHANGE, (_event: ActiveEnvironmentPathChangeEvent) => {
 
+      if (!this.server) {
+        logger.debug("No current server, starting from Python environment change handler.")
+        this.start()
+        return
+      }
+
       let states = [State.Running, State.Starting]
-      if (!this.server || !states.includes(this.server.state)) {
+      logger.debug(`Server state is ${State[this.server.state]}`)
+
+      if (!states.includes(this.server.state)) {
+        logger.debug(`(Re)starting from Python environment change handler.`)
         this.start()
       }
     })
@@ -185,6 +194,12 @@ export class EsbonioClient {
    * Start the language server.
    */
   async start(): Promise<void> {
+
+    let states = [State.Running, State.Starting]
+    if (this.server && states.includes(this.server.state)) {
+      this.logger.debug("Server is starting or already running, doing nothing.")
+      return
+    }
 
     try {
       this.server = await this.getStdioClient()
@@ -225,8 +240,10 @@ export class EsbonioClient {
   async stop() {
 
     if (this.server && this.server.state === State.Running) {
+      this.logger.info("Stopping Language Server")
       this.callHandlers(Events.SERVER_STOP, undefined)
       await this.server.stop()
+      this.server = undefined
     }
 
     return
