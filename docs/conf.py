@@ -21,7 +21,7 @@ from sphinx.application import Sphinx
 
 # -- Project information -----------------------------------------------------
 project = "Esbonio"
-copyright = "2025"
+copyright = "2026, Alex Carney"
 author = "the Esbonio project"
 release = esbonio.server.__version__
 
