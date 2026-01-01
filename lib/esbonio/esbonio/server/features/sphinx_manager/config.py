@@ -7,9 +7,10 @@ import os
 import pathlib
 import re
 import sys
-from typing import Any
+from typing import Any  # Type needed at runtime to enable cattrs structuring.
 
 import attrs
+import cattrs
 from pygls import IS_WIN
 from pygls.workspace import Workspace
 
@@ -222,7 +223,7 @@ class SphinxConfig:
     """The command to use when launching the python interpreter."""
 
     build_command: list[str] = attrs.field(factory=list)
-    """The sphinx-build command to use."""
+    """The sphinx-build arguments to use."""
 
     config_overrides: dict[str, Any] = attrs.field(factory=dict)
     """Overrides to apply to Sphinx's configuration."""
@@ -373,3 +374,59 @@ def _resolve_variable_venv(env: str, cwd: str) -> str:
         # don't want to do
         # https://github.com/swyddfa/esbonio/issues/945
         return os.path.normpath(envpath)
+
+
+def register_structure_hooks(converter: cattrs.Converter):
+    """Register additional structure hooks needed to parse the types defined in this
+    module."""
+    converter.register_structure_hook(bool | float, lambda obj, _: obj)
+
+    fields = {
+        a.name: cattrs.gen.override(
+            rename=sphinx_config_renames(a.name),
+            struct_hook=sphinx_config_struct_hooks(a.name),
+        )
+        for a in attrs.fields(SphinxConfig)
+    }
+
+    hook = cattrs.gen.make_dict_structure_fn(SphinxConfig, converter, **fields)
+
+    def _structure_sphinx_config(obj, typ):
+        """A wrapper around the ``cattrs.gen`` hook to implement multiple names mapping
+        to the same parameter."""
+
+        if (value := obj.pop("buildArguments", None)) is not None:
+            obj["buildCommand"] = value
+
+        return hook(obj, typ)
+
+    converter.register_structure_hook(SphinxConfig, _structure_sphinx_config)
+
+
+def sphinx_config_renames(field_name: str):
+    """Implement renames and aliases for field names on the SphinxConfig type."""
+
+    # To be consistent with all the other types, we need to re-implement the
+    # snake -> camel case conversion
+    first, *rest = field_name.split("_")
+    name = first + "".join(r.title() for r in rest)
+
+    return name
+
+
+def sphinx_config_struct_hooks(field_name: str):
+    """To play nice with the ``cattrs.gen`` infrastructure, this appears to best way to register
+    custom structure hooks for fields of the SphinxConfig class."""
+
+    if field_name != "python_command":
+        return None
+
+    def _structure_list_or_subprocess(obj: Any, typ: type[SubProcess]):
+        """Structure hook that can automatically upgrade a simple python command e.g.
+        ``["/bin/python"]`` to a SubProcess instance."""
+        if isinstance(obj, list):
+            return typ(command=obj)
+
+        return typ(**obj)
+
+    return _structure_list_or_subprocess
