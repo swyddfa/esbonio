@@ -275,7 +275,7 @@ The following options control the creation and management of background Sphinx p
            "esbonio.sphinx.buildTriggers": { "onSave": true, "onChange": 2.0 }
          }
 
-.. esbonio:config:: esbonio.sphinx.buildCommand
+.. esbonio:config:: esbonio.sphinx.buildArguments
    :scope: project
    :type: string[]
 
@@ -286,6 +286,13 @@ The following options control the creation and management of background Sphinx p
 
       This must be the genuine command line for ``sphinx-build``.
       Wrapper scripts around ``sphinx-build`` are not supported.
+
+.. esbonio:config:: esbonio.sphinx.buildCommand
+   :scope: project
+   :type: string[]
+
+   Alias for :esbonio:conf:`esbonio.sphinx.buildArguments`.
+   If both ``buildArguments`` and ``buildCommand`` are provided, the value for ``buildArguments`` will take priority.
 
 .. esbonio:config:: esbonio.sphinx.configOverrides
    :scope: project
