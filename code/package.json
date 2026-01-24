@@ -40,9 +40,9 @@
         "@types/vscode": "1.82.0",
         "@vscode/test-cli": "^0.0.12",
         "@vscode/test-electron": "^2.5.2",
-        "@vscode/vsce": "^3.6.2",
-        "esbuild": "^0.25.11",
-        "ovsx": "^0.10.6",
+        "@vscode/vsce": "^3.7.1",
+        "esbuild": "^0.27.2",
+        "ovsx": "^0.10.8",
         "typescript": "^5.9.3"
     },
     "engines": {
