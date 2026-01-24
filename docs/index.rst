@@ -80,6 +80,15 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
 
    contributing/*
 
+.. toctree::
+   :caption: About
+   :hidden:
+
+   about/changelog
+   about/glossary
+   about/versioning
+
+
 .. _Language Server: https://langserver.org/
 .. _Jupyter Notebooks: https://jupyter.org/
 .. _reStructuredText: https://docutils.sourceforge.io/rst.html
