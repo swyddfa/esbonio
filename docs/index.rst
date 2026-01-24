@@ -51,13 +51,12 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
       Documentation on extending the language server
 
 .. toctree::
-   :caption: Language Server
+   :caption: Usage
    :hidden:
 
-   lsp/getting-started
-   lsp/howto
-   lsp/reference
-   changelog
+   usage/getting-started
+   usage/howto
+   usage/reference
 
 .. toctree::
    :caption: Extending
@@ -72,24 +71,6 @@ The primary goal of Esbonio is to reduce the friction that comes from trying to 
 
    Getting Started <integrating/getting-started>
    integrating/previews
-
-Sphinx Extensions
------------------
-
-In addition to the language server, the Esbonio project provides a number of
-Sphinx extensions.
-
-- :doc:`/extensions/relevant_to`: Swap out sections of an article based on a chosen subject.
-- :doc:`/extensions/tutorial`: Export tutorial articles as `Jupyter Notebooks`_
-
-.. toctree::
-   :glob:
-   :maxdepth: 1
-   :caption: Sphinx Extensions
-   :hidden:
-
-   extensions/*
-
 
 .. toctree::
    :glob:
