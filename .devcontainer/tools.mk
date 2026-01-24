@@ -6,7 +6,7 @@ $(error Unable to determine platform architecture)
 endif
 
 NODE_VERSION := 22.22.0
-UV_VERSION := 0.8.22
+UV_VERSION := 0.9.26
 
 UV ?= $(shell command -v uv)
 UVX ?= $(shell command -v uvx)
@@ -35,7 +35,7 @@ endif
 PYXX_versions := 3.10 3.11 3.12 3.13 3.14
 
 # Our default Python version
-PY_VERSION := 3.13
+PY_VERSION := 3.14
 
 # This effectively defines a function `PYXX` that takes a Python version number
 # (e.g. 3.8) and expands it out into a common block of code that will ensure a
