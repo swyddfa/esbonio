@@ -5,18 +5,25 @@ Configuration
 
 Esbonio provides a flexible configuration system, allowing you to adapt the server to fit your project's needs.
 
-Scopes & Sources
-----------------
+.. _lsp-configuration-scopes:
+
+Scopes
+------
 
 Configuration values are assigned one of the following scopes
 
 - ``global``: For options that apply to the entire language server e.g. logging level.
 - ``project``: For options that apply to a single project e.g. a ``sphinx-build`` command.
 
+.. _lsp-configuration-sources:
+
+Sources
+-------
+
 The language server supports reading configuration values from the following sources.
 
 ===================================  ==========================  =====
-(Priortiy) Source                    Supported Scopes            Notes
+(Priortiy) Source                    Supported Config Scopes     Notes
 ===================================  ==========================  =====
 \(1) :lsp:`workspace/configuration`  ``global``, ``project``
 \(2) ``pyproject.toml`` files        ``project``
