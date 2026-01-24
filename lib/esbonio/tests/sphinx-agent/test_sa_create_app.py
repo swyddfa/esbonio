@@ -7,12 +7,8 @@ from pygls import IS_WIN
 from pygls.workspace import Workspace
 
 from esbonio.server.features.sphinx_manager.client import ClientState
-from esbonio.server.features.sphinx_manager.client_subprocess import (
-    SubprocessSphinxClient,
-)
-from esbonio.server.features.sphinx_manager.client_subprocess import (
-    make_test_sphinx_client,
-)
+from esbonio.server.features.sphinx_manager.client import SphinxClient
+from esbonio.server.features.sphinx_manager.client import make_test_sphinx_client
 from esbonio.server.features.sphinx_manager.config import SphinxConfig
 from esbonio.server.features.sphinx_manager.config import SubProcess
 
@@ -101,7 +97,7 @@ async def test_create_application_error(uri_for, tmp_path_factory):
     assert resolved is not None
 
     try:
-        client = await SubprocessSphinxClient(resolved)
+        client = await SphinxClient(resolved)
         assert client.state == ClientState.Errored
 
         message = "There is a programmable error in your configuration file:"

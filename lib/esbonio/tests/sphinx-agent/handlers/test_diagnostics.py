@@ -8,9 +8,7 @@ from pygls.protocol import default_converter
 
 from esbonio.server import Uri
 from esbonio.server.features.project_manager import Project
-from esbonio.server.features.sphinx_manager.client_subprocess import (
-    SubprocessSphinxClient,
-)
+from esbonio.server.features.sphinx_manager.client import SphinxClient
 from esbonio.sphinx_agent import types
 
 
@@ -39,7 +37,7 @@ def check_diagnostics(
 
 
 @pytest.mark.asyncio
-async def test_diagnostics(client: SubprocessSphinxClient, project: Project, uri_for):
+async def test_diagnostics(client: SphinxClient, project: Project, uri_for):
     """Ensure that the sphinx agent reports diagnostics collected during the build, and
     that they are correctly reset when fixed."""
     rst_diagnostics_uri = uri_for("workspaces/demo/rst/diagnostics.rst")
