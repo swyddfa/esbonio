@@ -72,5 +72,5 @@ jobs:
     - run: |
         cd lib/esbonio
 
-        hatch test -i py=${{ matrix.python-version }}
+        hatch test -c -i py=${{ matrix.python-version }}
       name: Run Tests
