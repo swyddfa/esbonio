@@ -20,7 +20,7 @@ from esbonio.server import create_language_server
 from esbonio.server.features.project_manager import ProjectManager
 from esbonio.server.features.sphinx_manager import ClientState
 from esbonio.server.features.sphinx_manager import SphinxManager
-from esbonio.server.features.sphinx_manager import make_subprocess_sphinx_client
+from esbonio.server.features.sphinx_manager import make_sphinx_client
 
 if typing.TYPE_CHECKING:
     from collections.abc import Coroutine
@@ -56,9 +56,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
     project_manager = ProjectManager(esbonio)
     esbonio.add_feature(project_manager)
 
-    sphinx_manager = SphinxManager(
-        make_subprocess_sphinx_client, project_manager, esbonio
-    )
+    sphinx_manager = SphinxManager(make_sphinx_client, project_manager, esbonio)
     esbonio.add_feature(sphinx_manager)
 
     async def initialize(

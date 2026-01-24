@@ -9,12 +9,8 @@ from pygls.exceptions import JsonRpcInternalError
 from pygls.workspace import Workspace
 
 from esbonio.server.features.sphinx_manager.client import ClientState
-from esbonio.server.features.sphinx_manager.client_subprocess import (
-    SubprocessSphinxClient,
-)
-from esbonio.server.features.sphinx_manager.client_subprocess import (
-    make_test_sphinx_client,
-)
+from esbonio.server.features.sphinx_manager.client import SphinxClient
+from esbonio.server.features.sphinx_manager.client import make_test_sphinx_client
 from esbonio.server.features.sphinx_manager.config import SphinxConfig
 from esbonio.server.features.sphinx_manager.config import SubProcess
 
@@ -25,7 +21,7 @@ STATIC_DIR = (
 
 
 @pytest.mark.asyncio
-async def test_build_includes_webview_js(client: SubprocessSphinxClient, uri_for):
+async def test_build_includes_webview_js(client: SphinxClient, uri_for):
     """Ensure that builds include the ``webview.js`` script."""
 
     out = client.build_uri
@@ -43,7 +39,7 @@ async def test_build_includes_webview_js(client: SubprocessSphinxClient, uri_for
 
 
 @pytest.mark.asyncio
-async def test_build_content_override(client: SubprocessSphinxClient, uri_for):
+async def test_build_content_override(client: SphinxClient, uri_for):
     """Ensure that we can override the contents of a given src file when
     required."""
 
@@ -107,7 +103,7 @@ async def client_build_error(uri_for, tmp_path_factory):
 
 
 @pytest.mark.asyncio(loop_scope="module")
-async def test_build_error(client_build_error: SubprocessSphinxClient):
+async def test_build_error(client_build_error: SphinxClient):
     """Ensure that when a build error occurs, useful information is reported."""
 
     with pytest.raises(
