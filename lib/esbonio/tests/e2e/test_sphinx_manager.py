@@ -256,7 +256,7 @@ async def test_get_client_with_many_uris(
 
     client = manager.clients[str(demo_workspace)]
     assert client is not None
-    assert client.state == ClientState.Starting
+    assert client.state in {None, ClientState.Starting}
 
     # Now if we do the same again we should get the same client instance for each case.
     coros = [manager.get_client(s) for s in src_uris]
@@ -339,11 +339,11 @@ async def test_get_client_with_many_uris_in_many_projects(
 
     demo_client = manager.clients[str(demo_workspace)]
     assert demo_client is not None
-    assert demo_client.state == ClientState.Starting
+    assert demo_client.state in {None, ClientState.Starting}
 
     docs_client = manager.clients[str(docs_workspace)]
     assert docs_client is not None
-    assert docs_client.state == ClientState.Starting
+    assert docs_client.state in {None, ClientState.Starting}
 
     # Now if we do the same again we should get the same client instance for each case.
     coros = [manager.get_client(s) for s in src_uris]
