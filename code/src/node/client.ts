@@ -66,6 +66,10 @@ export interface ClientCreatedNotification {
    */
   config: SphinxClientConfig
 
+  /**
+   * The client process id
+   */
+  pid: number
 }
 
 /**
@@ -104,6 +108,11 @@ export interface SphinxInfo {
    * Sphinx's version number
    */
   version: string
+
+  /**
+   * The version of Python Sphinx is running under
+   */
+  python: string
 
   /**
    * The Sphinx application object's confdir
