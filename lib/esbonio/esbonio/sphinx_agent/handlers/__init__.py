@@ -125,6 +125,7 @@ class SphinxHandler:
             id=request.id,
             result=types.SphinxInfo(
                 version=__sphinx_version__,
+                python=f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
                 conf_dir=str(self.app.confdir),
                 build_dir=str(self.app.outdir),
                 builder_name=self.app.builder.name,
