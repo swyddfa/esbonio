@@ -99,7 +99,7 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
           collapsibleState: vscode.TreeItemCollapsibleState.None
         }
 
-      case 'python':
+      case 'pythonCommand':
         let pyCmd: string[] = []
         element.command?.command.forEach(c => pyCmd.push(`- ${c}`))
 
@@ -107,6 +107,16 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
           label: element.command?.command.join(' '),
           iconPath: vscode.ThemeIcon.File,
           tooltip: new vscode.MarkdownString(`**Python Command**\n  ${pyCmd.join('\n  ')}`),
+          resourceUri: vscode.Uri.parse('file:///test.py'),  // Needed to pull in the icon for Python
+          contextValue: element.kind,
+          collapsibleState: vscode.TreeItemCollapsibleState.Collapsed
+        }
+
+      case 'python':
+        return {
+          label: `Python v${element.version}`,
+          iconPath: vscode.ThemeIcon.File,
+          tooltip: '',
           resourceUri: vscode.Uri.parse('file:///test.py'),  // Needed to pull in the icon for Python
           contextValue: element.kind,
           collapsibleState: vscode.TreeItemCollapsibleState.None
@@ -169,8 +179,8 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
           break
         }
 
-        let pythonNode: PythonCommandNode = { kind: 'python', command: client.config.pythonCommand }
-        result.push(pythonNode)
+        let pythonCmdNode: PythonCommandNode = { kind: 'pythonCommand', command: client.config.pythonCommand, python: client.app?.python }
+        result.push(pythonCmdNode)
 
         let commandNode: SphinxCommandNode = { kind: 'sphinxCommand', command: client.config.buildCommand }
         result.push(commandNode)
@@ -205,9 +215,13 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
         }
         break
 
+      case 'pythonCommand':
+        let pythonNode: PythonNode = { kind: 'python', version: element.python }
+        result.push(pythonNode)
+        break
+
       // The following node types have no children
       case 'sphinxCommand':
-      case 'python':
       case 'file':
     }
 
@@ -220,7 +234,7 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
    * @param params Information about the newly created client.
    */
   private clientCreated(params: ClientCreatedNotification) {
-    this.logger.debug(`sphinx/clientCreated: ${JSON.stringify(params.config, undefined, 2)}`)
+    this.logger.debug(`sphinx/clientCreated[${params.pid}]: ${JSON.stringify(params.config, undefined, 2)}`)
     this.sphinxClients.set(params.id, new SphinxProcess(params.config))
     this._onDidChangeTreeData.fire()
   }
@@ -272,14 +286,23 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
   }
 }
 
-type ProcessTreeNode = ProcessContainerNode | SphinxProcessNode | SphinxBuilderNode | SphinxCommandNode | PythonCommandNode | DirNode | FileNode
+type ProcessTreeNode = ProcessContainerNode | SphinxProcessNode | SphinxBuilderNode | SphinxCommandNode | PythonNode | PythonCommandNode | DirNode | FileNode
+
+/**
+ * Represents a Python node
+ */
+interface PythonNode {
+  kind: 'python'
+  version: string | undefined
+}
 
 /**
  * Represents a Python command
  */
 interface PythonCommandNode {
-  kind: 'python'
+  kind: 'pythonCommand'
   command: PythonCommand | undefined
+  python: string | undefined
 }
 
 /**
