@@ -40,6 +40,9 @@ class ClientCreatedNotification:
     config: SphinxConfig
     """The final configuration."""
 
+    pid: int
+    """The process id of the client process."""
+
 
 @attrs.define
 class AppCreatedNotification:
@@ -344,13 +347,9 @@ class SphinxManager(server.LanguageFeature):
             return
 
         self.clients[event.scope] = client = self.client_factory(self, resolved)
-        client.add_listener("state-change", partial(self._on_state_change, event.scope))
-
-        self.server.protocol.notify(
-            "sphinx/clientCreated",
-            ClientCreatedNotification(id=client.id, scope=event.scope, config=resolved),
-        )
         self.logger.debug("Client created for scope %s", event.scope)
+
+        client.add_listener("state-change", partial(self._on_state_change, event.scope))
 
         # Start the client
         await client
@@ -363,6 +362,14 @@ class SphinxManager(server.LanguageFeature):
         new_state: ClientState,
     ):
         """React to state changes in the client."""
+
+        if new_state == ClientState.Starting:
+            self.server.protocol.notify(
+                "sphinx/clientCreated",
+                ClientCreatedNotification(
+                    id=client.id, scope=scope, config=client.config, pid=client.pid
+                ),
+            )
 
         if old_state == ClientState.Starting and new_state == ClientState.Running:
             if (sphinx_info := client.sphinx_info) is not None:

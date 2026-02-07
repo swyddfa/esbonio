@@ -126,6 +126,15 @@ class SphinxClient(JsonRPCClient):
         return self.protocol._converter
 
     @property
+    def pid(self) -> int:
+        """The pid of the sphinx agent process, if no process is running this will
+        return ``0``."""
+        if self._server is None:
+            return 0
+
+        return self._server.pid
+
+    @property
     def builder(self) -> str:
         """The sphinx application's builder name"""
         if self.sphinx_info is None:
@@ -220,11 +229,12 @@ class SphinxClient(JsonRPCClient):
             return self
 
         try:
-            self._set_state(ClientState.Starting)
             sphinx = self.config.sphinx_command
 
             self.logger.debug("Python command: %r", sphinx.command)
             await self.start_io(*sphinx.command, env=sphinx.env, cwd=sphinx.cwd)
+
+            self._set_state(ClientState.Starting)
 
             params = types.CreateApplicationParams(
                 command=self.config.build_command,
