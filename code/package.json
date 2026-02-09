@@ -199,23 +199,33 @@
                     },
                     "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
-                        "type": "object",
-                        "default": null,
                         "description": "Instructions on how to launch the background Sphinx process for the project",
-                        "properties": {
-                            "command": {
+                        "default": null,
+                        "oneOf": [
+                            {
                                 "type": "array",
-                                "description": "The Python command to use when launching the background Sphinx process."
+                                "items": {
+                                    "type": "string"
+                                }
                             },
-                            "cwd": {
-                                "type": "string",
-                                "description": "The working directory in which to launch the background Sphinx process."
-                            },
-                            "env": {
+                            {
                                 "type": "object",
-                                "description": "Environment variables to set/override for the background Sphinx process."
+                                "properties": {
+                                    "command": {
+                                        "type": "array",
+                                        "description": "The Python command to use when launching the background Sphinx process."
+                                    },
+                                    "cwd": {
+                                        "type": "string",
+                                        "description": "The working directory in which to launch the background Sphinx process."
+                                    },
+                                    "env": {
+                                        "type": "object",
+                                        "description": "Environment variables to set/override for the background Sphinx process."
+                                    }
+                                }
                             }
-                        }
+                        ]
                     }
                 }
             },
