@@ -208,6 +208,21 @@ Advanced Usage
 There are situations where you might need more control over how the background Sphinx process is launched.
 In which case :esbonio:conf:`esbonio.sphinx.pythonCommand` accepts an object allowing you to provide additional information.
 
+.. warning::
+
+   If you use the VSCode extension, when using this expanded configuration format, you **must** provide a value for the ``PYTHONPATH`` environment variable (even if it is empty).
+   Otherwise the extension's fallback environment will take priority over your intended environment and will lead to unexpected results.
+
+   Example config:
+
+   .. code-block:: toml
+
+      [tool.esbonio.sphinx.pythonCommand]
+      command = ["uv", "run", "python"]
+      env = { PYTHONPATH = "", MY_ENV_VAR = "value" }
+
+   See `this issue <https://github.com/swyddfa/esbonio/issues/1074>`__ for more details.
+
 Environment Variables
 ^^^^^^^^^^^^^^^^^^^^^
 
