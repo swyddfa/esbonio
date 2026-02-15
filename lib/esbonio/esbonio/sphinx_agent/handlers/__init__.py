@@ -142,14 +142,14 @@ class SphinxHandler:
         is_building = set(docnames)
 
         for docname in env.found_docs - is_building:
-            uri = Uri.for_file(env.doc2path(docname, base=True))
+            uri = Uri.for_file(env.doc2path(docname, base=True)).resolve()
             if uri in self._content_overrides:
                 docnames.append(docname)
 
     def _cb_source_read(self, app: Sphinx, docname: str, source):
         """Called whenever sphinx reads a file from disk."""
 
-        uri = Uri.for_file(app.env.doc2path(docname, base=True))
+        uri = Uri.for_file(app.env.doc2path(docname, base=True)).resolve()
         if (content := self._content_overrides.get(uri, None)) is not None:
             source[0] = content
 
