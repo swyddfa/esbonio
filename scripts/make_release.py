@@ -147,6 +147,10 @@ def set_version(component: Component) -> str:
         print("New features found, doing minor release!")
         kind = component["bump_minor"]
 
+    elif len(list(changes.glob("*.enhancement.*"))) > 0:
+        print("Enhancements found, doing minor release!")
+        kind = component["bump_minor"]
+
     else:
         print("Doing patch release!")
         kind = component["bump_patch"]
