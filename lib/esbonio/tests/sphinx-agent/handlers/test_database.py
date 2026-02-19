@@ -1,9 +1,7 @@
 import pytest
 
 from esbonio.server.features.project_manager import Project
-from esbonio.server.features.sphinx_manager.client_subprocess import (
-    SubprocessSphinxClient,
-)
+from esbonio.server.features.sphinx_manager.client import SphinxClient
 
 
 def anuri(base, *args):
@@ -15,7 +13,7 @@ def anuri(base, *args):
 
 
 @pytest.mark.asyncio
-async def test_files_table(client: SubprocessSphinxClient, project: Project):
+async def test_files_table(client: SphinxClient, project: Project):
     """Ensure that we can correctly index all the files in the Sphinx project."""
 
     src = client.src_uri

@@ -99,9 +99,9 @@ COMPONENTS: Dict[str, Component] = {
         ),
         Component(
             name="lsp",
-            bump_breaking="release",
-            bump_minor="release",
-            bump_patch="release",
+            bump_breaking="major",
+            bump_minor="minor",
+            bump_patch="patch",
             commit_prefix="Esbonio Language Server Release v",
             src=str(REPO / "lib/esbonio"),
             tag_prefix="esbonio-language-server-v",
@@ -109,8 +109,8 @@ COMPONENTS: Dict[str, Component] = {
         Component(
             name="vscode",
             bump_breaking="major",
-            bump_minor="major",
-            bump_patch="major",
+            bump_minor="minor",
+            bump_patch="patch",
             commit_prefix="Esbonio VSCode Extension Release v",
             src=str(REPO / "code"),
             tag_prefix="esbonio-vscode-extension-v",
@@ -145,6 +145,10 @@ def set_version(component: Component) -> str:
 
     elif len(list(changes.glob("*.feature.*"))) > 0:
         print("New features found, doing minor release!")
+        kind = component["bump_minor"]
+
+    elif len(list(changes.glob("*.enhancement.*"))) > 0:
+        print("Enhancements found, doing minor release!")
         kind = component["bump_minor"]
 
     else:

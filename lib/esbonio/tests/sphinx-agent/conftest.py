@@ -10,12 +10,8 @@ from pygls.workspace import Workspace
 
 from esbonio.server.features.project_manager import Project
 from esbonio.server.features.sphinx_manager.client import ClientState
-from esbonio.server.features.sphinx_manager.client_subprocess import (
-    SubprocessSphinxClient,
-)
-from esbonio.server.features.sphinx_manager.client_subprocess import (
-    make_test_sphinx_client,
-)
+from esbonio.server.features.sphinx_manager.client import SphinxClient
+from esbonio.server.features.sphinx_manager.client import make_test_sphinx_client
 from esbonio.server.features.sphinx_manager.config import SphinxConfig
 from esbonio.server.features.sphinx_manager.config import SubProcess
 from esbonio.server.features.sphinx_manager.config import get_module_path
@@ -95,7 +91,7 @@ def app(client, build_dir):
 
 
 @pytest_asyncio.fixture
-async def project(client: SubprocessSphinxClient):
+async def project(client: SphinxClient):
     """The Sphinx project as captured by the database created by the Sphinx agent."""
     project = Project(client.db, default_converter())
 

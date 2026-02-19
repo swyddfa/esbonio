@@ -1,17 +1,25 @@
+from __future__ import annotations
+
 import logging
 import os
 import pathlib
 import sys
+import typing
 
 import pytest
-from lsprotocol.types import WorkspaceFolder
+from lsprotocol import types
 from pygls import IS_WIN
 from pygls.workspace import Workspace
 
+from esbonio.server import EsbonioLanguageServer
 from esbonio.server import Uri
 from esbonio.server.features.sphinx_manager import SphinxConfig
 from esbonio.server.features.sphinx_manager import SubProcess
 from esbonio.server.features.sphinx_manager.config import get_module_path
+from esbonio.server.features.sphinx_manager.config import register_structure_hooks
+
+if typing.TYPE_CHECKING:
+    from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +121,7 @@ def mk_uri(path: str) -> str:
             "file:///path/to/workspace/file.rst",
             Workspace(
                 "file:///path/to",
-                workspace_folders=[WorkspaceFolder(mk_uri(CWD), "workspace")],
+                workspace_folders=[types.WorkspaceFolder(mk_uri(CWD), "workspace")],
             ),
             SphinxConfig(
                 python_command=SubProcess(command=PYTHON_CMD),
@@ -129,7 +137,7 @@ def mk_uri(path: str) -> str:
             "file:///c:/path/to/workspace/file.rst",
             Workspace(
                 "file:///c:/path/to",
-                workspace_folders=[WorkspaceFolder(mk_uri(CWD), "workspace")],
+                workspace_folders=[types.WorkspaceFolder(mk_uri(CWD), "workspace")],
             ),
             SphinxConfig(
                 python_command=SubProcess(command=PYTHON_CMD),
@@ -146,8 +154,8 @@ def mk_uri(path: str) -> str:
             Workspace(
                 "file:///path/to",
                 workspace_folders=[
-                    WorkspaceFolder("file:///path/to/workspace-a", "workspace-a"),
-                    WorkspaceFolder("file:///path/to/workspace-b", "workspace-b"),
+                    types.WorkspaceFolder("file:///path/to/workspace-a", "workspace-a"),
+                    types.WorkspaceFolder("file:///path/to/workspace-b", "workspace-b"),
                 ],
             ),
             SphinxConfig(
@@ -168,8 +176,8 @@ def mk_uri(path: str) -> str:
             Workspace(
                 "file:///path/to",
                 workspace_folders=[
-                    WorkspaceFolder("file:///path/to/workspace-a", "workspace-a"),
-                    WorkspaceFolder("file:///path/to/workspace-b", "workspace-b"),
+                    types.WorkspaceFolder("file:///path/to/workspace-a", "workspace-a"),
+                    types.WorkspaceFolder("file:///path/to/workspace-b", "workspace-b"),
                 ],
             ),
             SphinxConfig(
@@ -436,3 +444,36 @@ def test_resolve(
         assert (
             actual.python_command.env[varname] == expected.python_command.env[varname]
         )
+
+
+@pytest.mark.parametrize(
+    "value, expected",
+    [
+        ({}, SphinxConfig()),
+        (
+            {"pythonCommand": ["/bin/python"]},
+            SphinxConfig(python_command=SubProcess(["/bin/python"])),
+        ),
+        (
+            {"pythonCommand": {"command": ["/bin/python"]}},
+            SphinxConfig(python_command=SubProcess(["/bin/python"])),
+        ),
+        (
+            {"buildCommand": ["-M", "html", "src", "dest"]},
+            SphinxConfig(build_command=["-M", "html", "src", "dest"]),
+        ),
+        (
+            {"buildArguments": ["-M", "html", "src", "dest"]},
+            SphinxConfig(build_command=["-M", "html", "src", "dest"]),
+        ),
+    ],
+)
+def test_structure_config(value: dict[str, Any], expected: SphinxConfig):
+    """Ensure that we can structure a SphinxConfig instance from raw configuration
+    values correctly."""
+
+    server = EsbonioLanguageServer()
+    register_structure_hooks(server.converter)
+
+    actual = server.converter.structure(value, SphinxConfig)
+    assert expected == actual

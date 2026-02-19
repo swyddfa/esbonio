@@ -5,7 +5,7 @@ from esbonio.server.features.project_manager import ProjectManager
 
 from .client import ClientState
 from .client import SphinxClient
-from .client_subprocess import make_subprocess_sphinx_client
+from .client import make_sphinx_client
 from .config import SphinxConfig
 from .config import SubProcess
 from .manager import RestartSphinxParams
@@ -21,7 +21,7 @@ __all__ = [
 
 
 def esbonio_setup(server: EsbonioLanguageServer, project_manager: ProjectManager):
-    manager = SphinxManager(make_subprocess_sphinx_client, project_manager, server)
+    manager = SphinxManager(make_sphinx_client, project_manager, server)
     server.add_feature(manager)
 
     @server.command("esbonio.sphinx.restart")

@@ -25,3 +25,8 @@ type = [
     { name = "Misc", directory = "misc", showcontent = true },
     { name = "Removed", directory = "removed", showcontent = true },
 ]
+
+# Needed for `hatch version` commands to work
+[build-system]
+requires = ["hatchling>=1.17.1"]
+build-backend = "hatchling.build"

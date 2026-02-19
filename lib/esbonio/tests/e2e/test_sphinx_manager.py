@@ -20,7 +20,7 @@ from esbonio.server import create_language_server
 from esbonio.server.features.project_manager import ProjectManager
 from esbonio.server.features.sphinx_manager import ClientState
 from esbonio.server.features.sphinx_manager import SphinxManager
-from esbonio.server.features.sphinx_manager import make_subprocess_sphinx_client
+from esbonio.server.features.sphinx_manager import make_sphinx_client
 
 if typing.TYPE_CHECKING:
     from collections.abc import Coroutine
@@ -56,9 +56,7 @@ async def server_manager(demo_workspace: Uri, docs_workspace):
     project_manager = ProjectManager(esbonio)
     esbonio.add_feature(project_manager)
 
-    sphinx_manager = SphinxManager(
-        make_subprocess_sphinx_client, project_manager, esbonio
-    )
+    sphinx_manager = SphinxManager(make_sphinx_client, project_manager, esbonio)
     esbonio.add_feature(sphinx_manager)
 
     async def initialize(
@@ -258,7 +256,7 @@ async def test_get_client_with_many_uris(
 
     client = manager.clients[str(demo_workspace)]
     assert client is not None
-    assert client.state == ClientState.Starting
+    assert client.state in {None, ClientState.Starting}
 
     # Now if we do the same again we should get the same client instance for each case.
     coros = [manager.get_client(s) for s in src_uris]
@@ -341,11 +339,11 @@ async def test_get_client_with_many_uris_in_many_projects(
 
     demo_client = manager.clients[str(demo_workspace)]
     assert demo_client is not None
-    assert demo_client.state == ClientState.Starting
+    assert demo_client.state in {None, ClientState.Starting}
 
     docs_client = manager.clients[str(docs_workspace)]
     assert docs_client is not None
-    assert docs_client.state == ClientState.Starting
+    assert docs_client.state in {None, ClientState.Starting}
 
     # Now if we do the same again we should get the same client instance for each case.
     coros = [manager.get_client(s) for s in src_uris]

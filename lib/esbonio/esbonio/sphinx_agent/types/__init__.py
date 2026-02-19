@@ -96,6 +96,9 @@ class SphinxInfo:
     version: str
     """The version of Sphinx being used."""
 
+    python: str
+    """The version of Python being used."""
+
     conf_dir: str
     """The folder containing the project's conf.py"""
 

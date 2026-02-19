@@ -5,18 +5,25 @@ Configuration
 
 Esbonio provides a flexible configuration system, allowing you to adapt the server to fit your project's needs.
 
-Scopes & Sources
-----------------
+.. _lsp-configuration-scopes:
+
+Scopes
+------
 
 Configuration values are assigned one of the following scopes
 
 - ``global``: For options that apply to the entire language server e.g. logging level.
 - ``project``: For options that apply to a single project e.g. a ``sphinx-build`` command.
 
+.. _lsp-configuration-sources:
+
+Sources
+-------
+
 The language server supports reading configuration values from the following sources.
 
 ===================================  ==========================  =====
-(Priortiy) Source                    Supported Scopes            Notes
+(Priortiy) Source                    Supported Config Scopes     Notes
 ===================================  ==========================  =====
 \(1) :lsp:`workspace/configuration`  ``global``, ``project``
 \(2) ``pyproject.toml`` files        ``project``
@@ -275,12 +282,24 @@ The following options control the creation and management of background Sphinx p
            "esbonio.sphinx.buildTriggers": { "onSave": true, "onChange": 2.0 }
          }
 
+.. esbonio:config:: esbonio.sphinx.buildArguments
+   :scope: project
+   :type: string[]
+
+   The ``sphinx-build`` command line arguments ``esbonio`` should use when building your documentation.
+   For more information, see :ref:`lsp-configure-sphinx-build-cmd`
+
+   .. note::
+
+      This must be the genuine command line for ``sphinx-build``.
+      Wrapper scripts around ``sphinx-build`` are not supported.
+
 .. esbonio:config:: esbonio.sphinx.buildCommand
    :scope: project
    :type: string[]
 
-   The ``sphinx-build`` command ``esbonio`` should use when building your documentation
-   For more information, see :ref:`lsp-configure-sphinx-build-cmd`
+   Alias for :esbonio:conf:`esbonio.sphinx.buildArguments`.
+   If both ``buildArguments`` and ``buildCommand`` are provided, the value for ``buildArguments`` will take priority.
 
 .. esbonio:config:: esbonio.sphinx.configOverrides
    :scope: project
@@ -305,6 +324,9 @@ The following options control the creation and management of background Sphinx p
    Or a complex command with a number of options and arguments::
 
      ["hatch", "-e", "docs", "run", "python"]
+
+   If the command is not ``python``, then it must accept additional parameters (e.g. ``-m sphinx``) and pass these to the Python interpreter.
+   The command must not replace or clear the environment variable ``PYTHONPATH``, it may, however, extend it with additional entries.
 
    For more examples see :ref:`lsp-configure-sphinx-build-env`
 

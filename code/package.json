@@ -32,17 +32,17 @@
     ],
     "dependencies": {
         "@vscode/python-extension": "^1.0.6",
-        "semver": "^7.7.2",
+        "semver": "^7.7.3",
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
-        "@types/node": "^20",
+        "@types/node": "^22",
         "@types/vscode": "1.82.0",
-        "@vscode/test-cli": "^0.0.11",
+        "@vscode/test-cli": "^0.0.12",
         "@vscode/test-electron": "^2.5.2",
-        "@vscode/vsce": "^3.6.2",
-        "esbuild": "^0.25.10",
-        "ovsx": "^0.10.6",
+        "@vscode/vsce": "^3.7.1",
+        "esbuild": "^0.27.2",
+        "ovsx": "^0.10.8",
         "typescript": "^5.9.3"
     },
     "engines": {
@@ -157,7 +157,7 @@
                         "scope": "window",
                         "type": "string",
                         "default": null,
-                        "description": "The path to the Python interpreter to use when running the Langague Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
+                        "description": "The path to the Python interpreter to use when running the Language Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
                     }
                 }
             },
@@ -199,23 +199,33 @@
                     },
                     "esbonio.sphinx.pythonCommand": {
                         "scope": "resource",
-                        "type": "object",
-                        "default": null,
                         "description": "Instructions on how to launch the background Sphinx process for the project",
-                        "properties": {
-                            "command": {
+                        "default": null,
+                        "oneOf": [
+                            {
                                 "type": "array",
-                                "description": "The Python command to use when launching the background Sphinx process."
+                                "items": {
+                                    "type": "string"
+                                }
                             },
-                            "cwd": {
-                                "type": "string",
-                                "description": "The working directory in which to launch the background Sphinx process."
-                            },
-                            "env": {
+                            {
                                 "type": "object",
-                                "description": "Environment variables to set/override for the background Sphinx process."
+                                "properties": {
+                                    "command": {
+                                        "type": "array",
+                                        "description": "The Python command to use when launching the background Sphinx process."
+                                    },
+                                    "cwd": {
+                                        "type": "string",
+                                        "description": "The working directory in which to launch the background Sphinx process."
+                                    },
+                                    "env": {
+                                        "type": "object",
+                                        "description": "Environment variables to set/override for the background Sphinx process."
+                                    }
+                                }
                             }
-                        }
+                        ]
                     }
                 }
             },
