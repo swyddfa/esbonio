@@ -1,3 +1,10 @@
+## v1.1.1 - 2026-02-19
+
+### Fixes
+
+- Rebuild extension to pull in correct version of `esbonio` ([#1081](https://github.com/swyddfa/esbonio/issues/1081))
+
+
 ## v1.1.0 - 2026-02-19
 
 ### Enhancements
