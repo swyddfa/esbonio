@@ -1,3 +1,27 @@
+## v1.1.0 - 2026-02-19
+
+### Enhancements
+
+- Introduce `esbonio.sphinx.buildArguments` as an alternative name for the `esbonio.sphinx.buildCommand` config option.
+
+  When options like `esbonio.sphinx.pythonCommand` exist, `esbonio.sphinx.buildCommand` suggests this can be an arbitrary command which is not true and is therefore misleading.
+  Both names will be available for the foreseable future, but `esbonio.sphinx.buildArguments` will be preferred and highlighted in documentation moving forward. ([#1052](https://github.com/swyddfa/esbonio/issues/1052))
+- The `sphinx/clientCreated` notification now reports the PID of the sphinx process.
+
+  The `sphinx/appCreated` notification now reports the Python version. ([#1075](https://github.com/swyddfa/esbonio/issues/1075))
+
+### Fixes
+
+- Fix the application of unsaved changes to Sphinx projects when the build is runnning on a symlinked directory by @JoHoenk ([#1079](https://github.com/swyddfa/esbonio/issues/1079))
+
+### Docs
+
+- Add page on Esbonio's versioning scheme and supported Python and Sphinx versions. ([#1052](https://github.com/swyddfa/esbonio/issues/1052))
+- Document sphinx project discovery. ([#1056](https://github.com/swyddfa/esbonio/issues/1056))
+- Document default ``sphinx-build`` argument selection (part of project discovery). ([#1057](https://github.com/swyddfa/esbonio/issues/1057))
+- Document edge case when using the advanced form of `esbonio.sphinx.pythonCommand` together with the VSCode extension (or any client that provides a fallback configuration via `initializationOptions`). ([#1074](https://github.com/swyddfa/esbonio/issues/1074))
+
+
 ## v1.0.0 - 2025-10-28
 
 ### Enhancements
