@@ -1,3 +1,15 @@
+## v1.1.0 - 2026-02-19
+
+### Enhancements
+
+- The Python interpreter version is now included in the Sphinx process tree. ([#1075](https://github.com/swyddfa/esbonio/issues/1075))
+- Update `esbonio` version to `v1.1.0` ([#1080](https://github.com/swyddfa/esbonio/issues/1080))
+
+### Fixes
+
+- VSCode will no longer incorrectly mark the simple form of `esbonio.sphinx.pythonCommand` as an error. ([#1074](https://github.com/swyddfa/esbonio/issues/1074))
+
+
 ## v1.0.0 - 2025-10-28
 
 ### Enhancements
