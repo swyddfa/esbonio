@@ -82,7 +82,7 @@ jobs:
         hatch build
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: 'dist'
         path: lib/esbonio/dist
@@ -151,7 +151,7 @@ jobs:
       name: Package Extension
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: 'vsix'
         path: code/*.vsix
@@ -182,7 +182,7 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'code/package-lock.json'
 
-    - uses: actions/download-artifact@v7
+    - uses: actions/download-artifact@v8
       name: 'Download Extension'
       with:
         name: 'vsix'
@@ -212,7 +212,7 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'code/package-lock.json'
 
-    - uses: actions/download-artifact@v7
+    - uses: actions/download-artifact@v8
       name: 'Download Extension'
       with:
         name: 'vsix'
