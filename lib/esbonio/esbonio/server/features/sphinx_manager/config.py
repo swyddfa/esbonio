@@ -427,6 +427,9 @@ def sphinx_config_struct_hooks(field_name: str):
         if isinstance(obj, list):
             return typ(command=obj)
 
+        if isinstance(obj, str):
+            return typ(command=[obj])
+
         return typ(**obj)
 
     return _structure_list_or_subprocess
