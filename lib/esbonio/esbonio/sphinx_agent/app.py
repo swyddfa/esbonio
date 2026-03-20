@@ -6,6 +6,8 @@ import pathlib
 import sys
 import typing
 
+from packaging.version import Version
+from sphinx import __version__ as __sphinx_version__
 from sphinx.application import Sphinx as _Sphinx
 from sphinx.errors import ThemeError
 from sphinx.util import console
@@ -15,6 +17,8 @@ from sphinx.util.logging import NAMESPACE as SPHINX_LOG_NAMESPACE
 from . import types
 from .database import Database
 from .log import DiagnosticFilter
+
+_SPHINX_9 = Version(__sphinx_version__) >= Version("9.0.0")
 
 if typing.TYPE_CHECKING:
     from typing import IO
@@ -35,9 +39,12 @@ logger = sphinx_logger.getChild("esbonio")
 sphinx_log_setup = sphinx_logging_module.setup
 
 
-def setup_logging(app: Sphinx, status: IO, warning: IO):
+def setup_logging(app: Sphinx, status: IO, warning: IO, verbosity=None):
     # Run the usual setup
-    sphinx_log_setup(app, status, warning)
+    if _SPHINX_9:
+        sphinx_log_setup(app, status, warning, verbosity=verbosity)
+    else:
+        sphinx_log_setup(app, status, warning)
 
     # Attach our diagnostic filter to the warning handler.
     for handler in sphinx_logger.handlers:
