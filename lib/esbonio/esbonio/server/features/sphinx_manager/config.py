@@ -389,7 +389,11 @@ def register_structure_hooks(converter: cattrs.Converter):
         for a in attrs.fields(SphinxConfig)
     }
 
-    hook = cattrs.gen.make_dict_structure_fn(SphinxConfig, converter, **fields)
+    hook = cattrs.gen.make_dict_structure_fn(
+        SphinxConfig,
+        converter,
+        **fields,  # type: ignore[arg-type]
+    )
 
     def _structure_sphinx_config(obj, typ):
         """A wrapper around the ``cattrs.gen`` hook to implement multiple names mapping
