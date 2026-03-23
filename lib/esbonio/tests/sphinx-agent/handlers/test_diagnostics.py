@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 from pygls.protocol import default_converter
+from sphinx import version_info as sphinx_version
 
 from esbonio.server import Uri
 from esbonio.server.features.project_manager import Project
@@ -23,17 +24,24 @@ def check_diagnostics(
     for k, ex_diags in expected.items():
         actual_diags = [converter.structure(d, types.Diagnostic) for d in actual[k]]
 
-        assert len(ex_diags) == len(actual_diags)
+        assert len(ex_diags) == len(actual_diags), (
+            f"Expected {len(ex_diags)} diagnostics for {k}, got {len(actual_diags)}"
+        )
 
-        for actual_diagnostic in actual_diags:
-            # Assumes ranges are unique
-            matches = [e for e in ex_diags if e.range == actual_diagnostic.range]
-            assert len(matches) == 1
+        for expected_diagnostic in ex_diags:
+            # Match by message prefix (diagnostics may be in the same range (line/column))
+            matches = [
+                a
+                for a in actual_diags
+                if a.message.startswith(expected_diagnostic.message)
+            ]
+            assert len(matches) == 1, (
+                f"Expected exactly one match for '{expected_diagnostic.message}' in {k}"
+            )
 
-            expected_diagnostic = matches[0]
-            assert actual_diagnostic.range == expected_diagnostic.range
+            actual_diagnostic = matches[0]
             assert actual_diagnostic.severity == expected_diagnostic.severity
-            assert actual_diagnostic.message.startswith(expected_diagnostic.message)
+            assert actual_diagnostic.range == expected_diagnostic.range
 
 
 @pytest.mark.asyncio
@@ -44,6 +52,7 @@ async def test_diagnostics(client: SphinxClient, project: Project, uri_for):
     myst_diagnostics_uri = uri_for("workspaces/demo/myst/diagnostics.md")
     index_uri = uri_for("workspaces/demo/index.rst")
     conf_uri = uri_for("workspaces/demo/conf.py")
+    python_uri = uri_for("workspaces/demo/rst/domains/python.rst")
 
     message = "undefined label: 'not-a-real-reference'"
 
@@ -97,6 +106,113 @@ async def test_diagnostics(client: SphinxClient, project: Project, uri_for):
             ),
         ],
     }
+    conf_diags_v9 = [
+        types.Diagnostic(
+            message="unknown role name: external+myst:std:ref",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=0, character=0),
+                end=types.Position(line=1, character=0),
+            ),
+        ),
+        types.Diagnostic(
+            message="unknown role name: external:std:ref",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=0, character=0),
+                end=types.Position(line=1, character=0),
+            ),
+        ),
+        types.Diagnostic(
+            message="unknown role name: external:rst:role",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=0, character=0),
+                end=types.Position(line=1, character=0),
+            ),
+        ),
+        types.Diagnostic(
+            message="unknown role name: external+sphinx:rst:dir",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=0, character=0),
+                end=types.Position(line=1, character=0),
+            ),
+        ),
+    ]
+    python_diags_v9 = [
+        types.Diagnostic(
+            message="duplicate object description of counters.pattern,",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=40, character=0),
+                end=types.Position(line=41, character=0),
+            ),
+        ),
+        types.Diagnostic(
+            message="duplicate object description of counters.pattern.NoMatchesError,",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=42, character=0),
+                end=types.Position(line=43, character=0),
+            ),
+        ),
+        types.Diagnostic(
+            message="duplicate object description of counters.pattern.count_numbers,",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=71, character=0),
+                end=types.Position(line=72, character=0),
+            ),
+        ),
+        types.Diagnostic(
+            message="duplicate object description of counters.pattern.PatternCounter.pattern,",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=61, character=0),
+                end=types.Position(line=62, character=0),
+            ),
+        ),
+        types.Diagnostic(
+            message="duplicate object description of counters.pattern.DEFAULT_PATTERN,",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=46, character=0),
+                end=types.Position(line=47, character=0),
+            ),
+        ),
+        types.Diagnostic(
+            message="duplicate object description of counters.pattern.PatternCounter.count,",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=66, character=0),
+                end=types.Position(line=67, character=0),
+            ),
+        ),
+        types.Diagnostic(
+            message="duplicate object description of counters.pattern.PatternCounter.fromstr,",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=57, character=0),
+                end=types.Position(line=58, character=0),
+            ),
+        ),
+        types.Diagnostic(
+            message="duplicate object description of counters.pattern.PatternCounter,",
+            severity=types.DiagnosticSeverity.Warning,
+            range=types.Range(
+                start=types.Position(line=52, character=0),
+                end=types.Position(line=53, character=0),
+            ),
+        ),
+    ]
+    if sphinx_version[0] >= 9:
+        expected[conf_uri].extend(conf_diags_v9)
+        expected.update(
+            {
+                python_uri: python_diags_v9,
+            }
+        )
 
     actual = await project.get_diagnostics()
     check_diagnostics(expected, actual)
