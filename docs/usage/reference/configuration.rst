@@ -319,7 +319,7 @@ The following options control the creation and management of background Sphinx p
 
    This can be as simple as the full path to the Python executable in your virtual environment::
 
-     ["/home/user/Projects/example/venv/bin/python"]
+     "/home/user/Projects/example/venv/bin/python"
 
    Or a complex command with a number of options and arguments::
 

@@ -173,14 +173,14 @@ Then set :esbonio:conf:`esbonio.sphinx.pythonCommand` to the full path to the ``
       .. code-block:: toml
 
          [tool.esbonio.sphinx]
-         pythonCommand = ["/home/user/Projects/myproject/venv/bin/python"]
+         pythonCommand = "/home/user/Projects/myproject/venv/bin/python"
 
    .. tab-item:: Windows
 
       .. code-block:: toml
 
          [tool.esbonio.sphinx]
-         pythonCommand = ["C:\\Users\\user\\Projects\\myproject\\venv\\Scripts\\python.exe"]
+         pythonCommand = "C:\\Users\\user\\Projects\\myproject\\venv\\Scripts\\python.exe"
 
 Alternatively, you can use the ``${venv:<path>}`` configuration variable, this allows you to provide just the path to the ``venv`` folder and ``esbonio`` will expand it to the correct path to the Python executable for your platform.
 ``<path>`` can either be an absolute path, or relative to the folder containing your ``pyproject.toml`` file.
@@ -200,7 +200,7 @@ Then your ``pyproject.toml`` might look something like the following.
 .. code-block:: toml
 
    [tool.esbonio.sphinx]
-   pythonCommand = ["${venv:../venv}"]
+   pythonCommand = "${venv:../venv}"
 
 Advanced Usage
 --------------
