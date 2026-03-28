@@ -12,3 +12,4 @@ This section contains a number of guides to help you get the most out of Esbonio
    Configure the Sphinx Build Environment <howto/configure-the-sphinx-build-env>
    Use Esbonio Without a Sphinx Project <howto/use-esbonio-without-sphinx-project>
    Migrate to v1 <howto/migrate-to-v1>
+   Migrate to v2 <howto/migrate-to-v2>
