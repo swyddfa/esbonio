@@ -2,12 +2,9 @@ from __future__ import annotations
 
 import logging
 import typing
-import warnings
-from typing import IO  # needed for typing.cast
 
 from docutils import nodes
 from docutils.core import Publisher
-from docutils.frontend import OptionParser
 from docutils.io import NullOutput
 from docutils.io import StringInput
 from docutils.parsers.rst import Directive
@@ -28,7 +25,6 @@ from . import sphinx_logger
 
 if typing.TYPE_CHECKING:
     from docutils.parsers import Parser
-    from sphinx.environment import BuildEnvironment
 
 SYMBOLS_TABLE = Database.Table(
     "symbols",
@@ -74,7 +70,7 @@ def update_symbols(app: Sphinx, docname: str, source):
             source_class=StringInput,
             destination=NullOutput(),
         )
-        publisher.settings = _get_settings(app.env, parser)
+        publisher.process_programmatic_settings(None, app.env.settings, None)
         publisher.set_source(source="\n".join(source), source_path=str(filename))
         publisher.publish()
         document = publisher.document  # type: ignore[assignment]
@@ -342,21 +338,6 @@ class SymbolVisitor(nodes.NodeVisitor):
         pass
 
 
-def _get_settings(env: BuildEnvironment, parser: Parser):
-    """Adapted from sphinx.util.docutils in Sphinx v9.1
-
-    See the original function for details on the DeprecationWarnings.
-    Expect this function to break in the future.
-    """
-    with warnings.catch_warnings():
-        option_parser = OptionParser(
-            components=[LoggingDoctreeReader, parser],
-            defaults={"traceback": True, "env": env},
-            read_config_files=True,
-        )
-        return option_parser.get_default_values()
-
-
 class DummyWriter(UnfilteredWriter):
     """Dervied from sphinx.io.SphinxDummyWriter"""
 
@@ -386,7 +367,7 @@ class LogReporter(Reporter):
         debug: bool,
         error_handler: str,
     ) -> None:
-        stream = typing.cast(IO, LogStream(logger))
+        stream = LogStream(logger)
         super().__init__(
             source,
             report_level,
