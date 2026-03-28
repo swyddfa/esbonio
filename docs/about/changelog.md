@@ -1,5 +1,5 @@
 # Changelog
 
-```{include} ../lib/esbonio/CHANGES.md
+```{include} ../../lib/esbonio/CHANGES.md
 :relative-images:
 ```
