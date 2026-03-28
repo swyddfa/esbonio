@@ -1,12 +1,21 @@
+from __future__ import annotations
+
 import logging
 import typing
-from typing import IO
+import warnings
+from typing import IO  # needed for typing.cast
 
 from docutils import nodes
+from docutils.core import Publisher
+from docutils.frontend import OptionParser
+from docutils.io import NullOutput
+from docutils.io import StringInput
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
-from packaging.version import Version
-from sphinx import __version__ as __sphinx_version__
+from docutils.readers.standalone import Reader
+from docutils.utils import Reporter
+from docutils.writers import UnfilteredWriter
+from sphinx import version_info as __sphinx_version__
 from sphinx.config import Config
 from sphinx.util import get_filetype
 from sphinx.util.docutils import CustomReSTDispatcher
@@ -17,17 +26,9 @@ from ..app import Sphinx
 from ..util import as_json
 from . import sphinx_logger
 
-_SPHINX_9 = Version(__sphinx_version__) >= Version("9.0.0")
-
-if _SPHINX_9:
-    from sphinx.util.docutils import _parse_str_to_doctree
-else:
-    from docutils.core import Publisher
-    from docutils.io import NullOutput
-    from docutils.io import StringInput
-    from docutils.readers.standalone import Reader
-    from docutils.utils import Reporter
-    from sphinx.io import SphinxDummyWriter
+if typing.TYPE_CHECKING:
+    from docutils.parsers import Parser
+    from sphinx.environment import BuildEnvironment
 
 SYMBOLS_TABLE = Database.Table(
     "symbols",
@@ -52,55 +53,28 @@ def init_db(app: Sphinx, config: Config):
     app.esbonio.db.ensure_table(SYMBOLS_TABLE)
 
 
+def try_update_symbols(app: Sphinx, docname: str, source):
+    try:
+        update_symbols(app, docname, source)
+    except Exception:
+        sphinx_logger.exception("Unable to update symbols in %r", docname)
+
+
 def update_symbols(app: Sphinx, docname: str, source):
-    """Update the symbols defined in the given file."""
-
-    filename = app.env.doc2path(docname)
-    filetype = get_filetype(app.config.source_suffix, filename)
-
-    parser = app.registry.create_source_parser(filetype, config=app.config, env=app.env)
-
-    with disable_roles_and_directives():
-        document = _parse_str_to_doctree(
-            "\n".join(source),
-            filename=filename,
-            default_settings=app.env.settings,
-            env=app.env,
-            parser=parser,
-        )
-
-    visitor = SymbolVisitor(document)
-    document.walkabout(visitor)  # type: ignore[union-attr]
-
-    uri = str(types.Uri.for_file(app.env.doc2path(docname, base=True)).resolve())
-    symbols = [(uri, *s) for s in visitor.symbols]
-
-    app.esbonio.db.clear_table(SYMBOLS_TABLE, uri=uri)
-    app.esbonio.db.insert_values(SYMBOLS_TABLE, symbols)
-
-
-def update_symbols_legacy(app: Sphinx, docname: str, source):
     """Update the symbols defined in the given file, Sphinx < 9."""
 
     filename = app.env.doc2path(docname)
-    filetype = get_filetype(app.config.source_suffix, filename)
-
-    reader = LoggingDoctreeReader(sphinx_logger)
-    parser = app.registry.create_source_parser(app, filetype)  # type: ignore[arg-type,call-arg,misc]
-
-    # Reuse the settings from Sphinx's publisher.
-    sphinx_pub = app.registry.get_publisher(app, filetype)  # type: ignore[attr-defined]
-    settings = sphinx_pub.settings
+    parser = _get_parser_for_docname(app, str(filename))
 
     with disable_roles_and_directives():
         publisher = Publisher(
             parser=parser,
-            reader=reader,
-            writer=SphinxDummyWriter(),  # type: ignore[abstract]
+            reader=LoggingDoctreeReader(sphinx_logger),
+            writer=DummyWriter(),  # type: ignore[abstract]
             source_class=StringInput,
             destination=NullOutput(),
         )
-        publisher.settings = settings
+        publisher.settings = _get_settings(app.env, parser)
         publisher.set_source(source="\n".join(source), source_path=str(filename))
         publisher.publish()
         document = publisher.document  # type: ignore[assignment]
@@ -115,6 +89,22 @@ def update_symbols_legacy(app: Sphinx, docname: str, source):
     app.esbonio.db.insert_values(SYMBOLS_TABLE, symbols)
 
 
+def _get_parser_for_docname(app: Sphinx, filename: str) -> Parser:
+    """Get the parser for the given docname, taking into account differences in Sphinx version."""
+
+    filetype = get_filetype(app.config.source_suffix, filename)
+
+    parser: Parser
+    if __sphinx_version__[0] >= 9:
+        parser = app.registry.create_source_parser(
+            filetype, config=app.config, env=app.env
+        )
+    else:
+        parser = app.registry.create_source_parser(app, filetype)  # type: ignore[arg-type,call-arg,misc]
+
+    return parser
+
+
 def setup(app: Sphinx):
     app.connect("config-inited", init_db)
 
@@ -124,11 +114,7 @@ def setup(app: Sphinx):
     # The only handler with a higher priority (i.e. 0), should be the handler we use
     # to override the contents of the file so that we stay in sync with the language
     # client.
-    app.connect(
-        "source-read",
-        update_symbols if _SPHINX_9 else update_symbols_legacy,
-        priority=1,
-    )
+    app.connect("source-read", try_update_symbols, priority=1)
 
     # TODO: Sphinx 7.x+ support
     # app.connect("include-read")
@@ -356,55 +342,79 @@ class SymbolVisitor(nodes.NodeVisitor):
         pass
 
 
-if not _SPHINX_9:
+def _get_settings(env: BuildEnvironment, parser: Parser):
+    """Adapted from sphinx.util.docutils in Sphinx v9.1
 
-    class LogStream:
-        def __init__(self, logger: logging.Logger):
-            self.logger = logger
+    See the original function for details on the DeprecationWarnings.
+    Expect this function to break in the future.
+    """
+    with warnings.catch_warnings():
+        option_parser = OptionParser(
+            components=[LoggingDoctreeReader, parser],
+            defaults={"traceback": True, "env": env},
+            read_config_files=True,
+        )
+        return option_parser.get_default_values()
 
-        def write(self, text: str):
-            self.logger.debug(text)
 
-    class LogReporter(Reporter):
-        """A docutils reporter that writes to the given logger."""
+class DummyWriter(UnfilteredWriter):
+    """Dervied from sphinx.io.SphinxDummyWriter"""
 
-        def __init__(
-            self,
-            logger: logging.Logger,
-            source: str,
-            report_level: int,
-            halt_level: int,
-            debug: bool,
-            error_handler: str,
-        ) -> None:
-            stream = typing.cast(IO, LogStream(logger))
-            super().__init__(
-                source,
-                report_level,
-                halt_level,
-                stream,
-                debug,
-                error_handler=error_handler,
-            )  # type: ignore
+    supported = ("html",)  # needed to keep "meta" nodes
 
-    class LoggingDoctreeReader(Reader):
-        """A reader that replaces the default reporter with one that redirects."""
+    def translate(self) -> None:
+        pass
 
-        def __init__(self, logger: logging.Logger, *args, **kwargs):
-            self.logger = logger
-            super().__init__(*args, **kwargs)
 
-        def new_document(self) -> nodes.document:
-            document = super().new_document()
+class LogStream:
+    def __init__(self, logger: logging.Logger):
+        self.logger = logger
 
-            reporter = document.reporter
-            document.reporter = LogReporter(
-                self.logger,
-                reporter.source,
-                reporter.report_level,
-                reporter.halt_level,
-                reporter.debug_flag,
-                reporter.error_handler,
-            )
+    def write(self, text: str):
+        self.logger.debug(text)
 
-            return document
+
+class LogReporter(Reporter):
+    """A docutils reporter that writes to the given logger."""
+
+    def __init__(
+        self,
+        logger: logging.Logger,
+        source: str,
+        report_level: int,
+        halt_level: int,
+        debug: bool,
+        error_handler: str,
+    ) -> None:
+        stream = typing.cast(IO, LogStream(logger))
+        super().__init__(
+            source,
+            report_level,
+            halt_level,
+            stream,
+            debug,
+            error_handler=error_handler,
+        )  # type: ignore
+
+
+class LoggingDoctreeReader(Reader):
+    """A reader that replaces the default reporter with one that writer to the given logger."""
+
+    def __init__(self, logger: logging.Logger, *args, **kwargs):
+        self.logger = logger
+        super().__init__(*args, **kwargs)
+
+    def new_document(self) -> nodes.document:
+        document = super().new_document()
+
+        reporter = document.reporter
+        document.reporter = LogReporter(
+            self.logger,
+            reporter.source,
+            reporter.report_level,
+            reporter.halt_level,
+            reporter.debug_flag,
+            reporter.error_handler,
+        )
+
+        return document

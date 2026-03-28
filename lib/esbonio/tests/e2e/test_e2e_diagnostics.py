@@ -80,8 +80,6 @@ async def test_workspace_diagnostic(client: LanguageClient, uri_for):
         "Could not import extension sphinx_design (exception: "
         "No module named 'sphinx_design')",
     )
-    if sphinx_version[0] >= 9:
-        expected_conf_py = (*expected_conf_py, "unknown role name: external")
 
     expected = {
         str(workspace_uri / "conf.py"): expected_conf_py,
@@ -89,15 +87,6 @@ async def test_workspace_diagnostic(client: LanguageClient, uri_for):
         str(workspace_uri / "rst" / "diagnostics.rst"): (message,),
         str(workspace_uri / "myst" / "diagnostics.md"): (message,),
     }
-
-    if sphinx_version[0] >= 9:
-        expected.update(
-            {
-                str(workspace_uri / "rst" / "domains" / "python.rst"): (
-                    "duplicate object description of counters.pattern",
-                )
-            }
-        )
 
     assert len(report.items) == len(expected)
     for item in report.items:
