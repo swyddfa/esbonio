@@ -1,6 +1,8 @@
 include ../.devcontainer/tools.mk
 
-ESBONIO ?= --pre esbonio
+ESBONIO ?= esbonio
+MIN_PYTHON ?= 3.10
+PIP ?= $(UV) run --no-project --python $(MIN_PYTHON) --with pip python -m pip
 
 export PATH := $(BIN):$(PATH)
 
@@ -53,24 +55,22 @@ dev-deps: node_modules/.installed bundled/libs/.installed bundled/env/.installed
 .PHONY: release-deps
 release-deps: node_modules/.installed bundled/libs/.installed bundled/env/.installed
 	-test -L bundled/libs/esbonio && rm bundled/libs/esbonio
-	test -d bundled/libs/esbonio-*.dist-info || $(PY310) -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade $(ESBONIO)
+	test -d bundled/libs/esbonio-*.dist-info || $(PIP) install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade $(ESBONIO)
 
 # Generic rule for converting requirements-*.in to requirements-*.txt
 %.txt: %.in | $(UV)
-	$(UV) pip compile --generate-hashes --upgrade --python-version 3.10 --output-file $@ $<
+	$(UV) pip compile --generate-hashes --upgrade --python-version $(MIN_PYTHON) --output-file $@ $<
 
 # Can't use uv for installation until --implementation py is supported
 # https://github.com/astral-sh/uv/issues/6246
-bundled/libs/.installed: requirements-libs.txt | $(PY310)
+bundled/libs/.installed: requirements-libs.txt | $(UV)
 	-test -d bundled/libs  && rm -r bundled/libs
-	$(PY310) --version
-	$(PY310) -m pip install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements-libs.txt
+	$(PIP) install -t ./bundled/libs --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements-libs.txt
 	touch $@
 
-bundled/env/.installed: requirements-env.txt | $(PY310)
+bundled/env/.installed: requirements-env.txt | $(UV)
 	-test -d bundled/env  && rm -r bundled/env
-	$(PY310) --version
-	$(PY310) -m pip install -t ./bundled/env --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements-env.txt
+	$(PIP) install -t ./bundled/env --no-cache-dir --implementation py --no-deps --upgrade -r ./requirements-env.txt
 	touch $@
 
 node_modules/.installed: package.json package-lock.json | $(NPM)
