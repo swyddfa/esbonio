@@ -1,9 +1,19 @@
+import { join } from "path";
+
 import * as vscode from 'vscode'
 import { PythonExtension } from '@vscode/python-extension';
 
 import { OutputChannelLogger } from "../common/log";
 import { Events } from '../common/constants';
+import { Executable } from 'vscode-languageclient/node';
 
+/**
+ * Represents the user's esbonio.server.pythonCommand setting.
+ */
+type UserPython = string | string[] | {
+  command: string[]
+  env: any
+}
 
 export class PythonManager {
   private handlers: Map<string, any[]>
@@ -11,7 +21,7 @@ export class PythonManager {
   constructor(
     private python: PythonExtension | undefined,
     private logger: OutputChannelLogger,
-    context: vscode.ExtensionContext
+    private context: vscode.ExtensionContext
   ) {
     this.handlers = new Map()
 
@@ -30,44 +40,79 @@ export class PythonManager {
    *
    * In order of priority:
    * 1. `ESBONIO_SERVER_PYCMD` environment variable
-   * 2. User configured Python path
+   * 2. User configured Python command
    * 3. Active Python environment from the Python extension
    *
    * @param scopeUri Determines the scope to get the Python interperter for when using the Python extension
    * @returns
    */
-  async getCmd(scopeUri?: vscode.Uri): Promise<string[] | undefined> {
+  async getServerOptions(scopeUri?: vscode.Uri): Promise<Executable | undefined> {
 
     if (process.env.ESBONIO_SERVER_PYCMD) {
-      return [process.env.ESBONIO_SERVER_PYCMD]
+      return await this.serverOptionsFromEnvironment()
     }
 
-    let userPython = vscode.workspace.getConfiguration("esbonio", scopeUri).get<string>("server.pythonPath")
+    let userPython = vscode.workspace.getConfiguration("esbonio", scopeUri).get<UserPython>("server.pythonCommand")
     if (userPython) {
-
-      // Support for ${workspaceRoot}/...
-      let match = userPython.match(/^\${(\w+)}/)
-      if (match && (match[1] === 'workspaceRoot' || match[1] === 'workspaceFolder')) {
-        let workspaceRoot = ""
-        let workspaceFolders = vscode.workspace.workspaceFolders
-
-        if (workspaceFolders) {
-          workspaceRoot = workspaceFolders[0].uri.fsPath
-        }
-
-        userPython = userPython.replace(match[0], workspaceRoot)
-      }
-
-      this.logger.debug(`Using user configured Python: ${userPython}`)
-      return [userPython]
+      return await this.serverOptionsFromUserPython(userPython)
     }
 
+    return await this.serverOptionsFromPythonExtension(scopeUri)
+  }
+
+  /**
+   * Pull the python command from the environment variable `ESBONIO_SERVER_PYCMD` and use
+   * the default environment.
+   * @returns ServerOptions
+   */
+  private async serverOptionsFromEnvironment(): Promise<Executable> {
+      this.logger.debug(`Using Python command from ESBONIO_SERVER_PYCMD`)
+      return {
+        command: process.env.ESBONIO_SERVER_PYCMD!,
+        args: ["-S"],  // Isolates the interpreter from its normal environment.
+        options: { env: this.getDefaultEnv() }
+      }
+  }
+
+  /**
+   * Return the ServerOptions constructed from the user's config.
+   * @param userPython The user's config
+   */
+  private async serverOptionsFromUserPython(userPython: UserPython): Promise<Executable> {
+    this.logger.debug(`Using Python command from user configuration`)
+    if (typeof userPython === 'string') {
+      return {
+        command: resolveConfVars(userPython),
+      }
+    }
+
+    if (Array.isArray(userPython)) {
+      userPython = userPython.map(cmd => resolveConfVars(cmd))
+      return {
+        command: userPython[0],
+        args: userPython.slice(1),
+      }
+    }
+
+    let command = userPython.command.map(cmd => resolveConfVars(cmd))
+    return {
+      command: command[0],
+      args: command.slice(1),
+      options: { env: {...userPython.env, ...process.env} }
+    }
+  }
+
+  /**
+   * Return the ServerOptions, grabbing an interpreter from the Python extension.
+   * @param scopeUri The config scope to interrogate the Python extension
+   */
+  private async serverOptionsFromPythonExtension(scopeUri?: vscode.Uri): Promise<Executable | undefined> {
     if (!this.python) {
       return
     }
 
     let activeEnvPath = this.python.environments.getActiveEnvironmentPath(scopeUri)
-    this.logger.debug(`Using environment ${activeEnvPath.id}: ${activeEnvPath.path}`)
+    this.logger.debug(`Using Python extension environment ${activeEnvPath.id}: ${activeEnvPath.path}`)
 
     let activeEnv = await this.python.environments.resolveEnvironment(activeEnvPath)
     if (!activeEnv) {
@@ -81,7 +126,36 @@ export class PythonManager {
       return
     }
 
-    return [pythonUri.fsPath]
+    return {
+      command: pythonUri.fsPath,
+      args: ["-S"],  // Isolates the interpreter from its normal environment.
+      options: { env: this.getDefaultEnv() }
+    }
+  }
+
+  /*
+   * Get the default environment to use with the server.
+   * This prepends the bundled environment to the PYTHONPATH to force the use of the bundled version of esbonio.
+   */
+  getDefaultEnv() {
+    const pathsep = process.platform === 'win32' ? ';' : ':'
+    const serverLibs = join(this.context.extensionPath, "bundled", "libs")
+    const serverEnv: any = {}
+
+    this.logger.debug("Using bundled server environment")
+    Object.keys(process.env).forEach((key) => {
+      if (key === 'PYTHONPATH') {
+        serverEnv[key] = `${serverLibs}${pathsep}${process.env[key]}`
+      } else if (!serverEnv[key]) {
+        serverEnv[key] = process.env[key]
+      }
+    });
+
+    if (!serverEnv.PYTHONPATH) {
+      serverEnv.PYTHONPATH = serverLibs
+    }
+
+    return serverEnv
   }
 
   async getDebugerCommand(): Promise<string[]> {
@@ -119,4 +193,21 @@ export class PythonManager {
     })
   }
 
+}
+
+function resolveConfVars(value: string): string {
+  // Support for ${workspaceRoot}/...
+  let match = value.match(/^\${(\w+)}/)
+  if (match && (match[1] === 'workspaceRoot' || match[1] === 'workspaceFolder')) {
+    let workspaceRoot = ""
+    let workspaceFolders = vscode.workspace.workspaceFolders
+
+    if (workspaceFolders) {
+      workspaceRoot = workspaceFolders[0].uri.fsPath
+    }
+
+    return value.replace(match[0], workspaceRoot)
+  }
+
+  return value
 }
