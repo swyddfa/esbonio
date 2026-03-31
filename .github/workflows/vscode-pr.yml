@@ -70,44 +70,15 @@ jobs:
         retention-days: 7
 
   test:
-    name: "Python v${{ matrix.python-version }}"
     runs-on: ubuntu-latest
-    # container:
-    #   image: ghcr.io/swyddfa/esbonio-devenv
-    #   credentials:
-    #      username: ${{ github.actor }}
-    #      password: ${{ secrets.github_token }}
+    container:
+      image: ghcr.io/swyddfa/esbonio-devenv
 
     timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-
     steps:
     - uses: actions/checkout@v6
 
-    - uses: 'actions/setup-node@v6'
-      with:
-        node-version: 22.x
-        cache: 'npm'
-        cache-dependency-path: 'code/package-lock.json'
-
-    - name: Setup Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-
     - run: |
         cd code
-        make dev-deps
-        npx tsc -p .
-
-        # Force the extension to use this version of Python
-        python --version
-        export ESBONIO_SERVER_PYCMD=$(command -v python)
-        echo $ESBONIO_SERVER_PYCMD
-
-        xvfb-run -a npm run test
+        make test
       name: Run Tests

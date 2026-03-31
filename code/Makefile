@@ -4,6 +4,12 @@ ESBONIO ?= esbonio
 MIN_PYTHON ?= 3.10
 PIP ?= $(UV) run --no-project --python $(MIN_PYTHON) --with pip python -m pip
 
+ifdef CI
+XVFB ?= xvfb-run -a
+else
+XVFB ?=
+endif
+
 export PATH := $(BIN):$(PATH)
 
 .PHONY: clean
@@ -14,7 +20,7 @@ clean:
 test: dev-deps | $(NPM)
 	-test -d dist && rm -r dist
 	$(NPX) tsc -p .
-	$(NPM) run test
+	$(XVFB) $(NPM) run test
 
 .PHONY: watch
 watch: dev-deps $(NPM)
