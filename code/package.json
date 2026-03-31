@@ -129,35 +129,44 @@
                         "default": [],
                         "description": "Override the extension's default document selector"
                     },
-                    "esbonio.server.startupModule": {
+                    "esbonio.server.launchArgs": {
                         "scope": "window",
-                        "type": "string",
-                        "default": "esbonio.server",
-                        "description": "The module (or script) to use to launch the server."
-                    },
-                    "esbonio.server.excludedModules": {
-                        "scope": "window",
+                        "default": ["-m", "esbonio.server"],
+                        "description": "Arguments to pass to Python when launching the language server.",
                         "type": "array",
-                        "default": [],
                         "items": {
                             "type": "string"
-                        },
-                        "description": "A list of modules to exclude from the server's configuration"
+                        }
                     },
-                    "esbonio.server.includedModules": {
+                    "esbonio.server.pythonCommand": {
                         "scope": "window",
-                        "type": "array",
-                        "default": [],
-                        "items": {
-                            "type": "string"
-                        },
-                        "description": "A list of additional modules to include in the server's configuration"
-                    },
-                    "esbonio.server.pythonPath": {
-                        "scope": "window",
-                        "type": "string",
                         "default": null,
-                        "description": "The path to the Python interpreter to use when running the Language Server.\n\nBy default this extension will try to use the interpreter configured via the Python Extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior."
+                        "oneOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            {
+                                "type": "object",
+                                "properties": {
+                                    "command": {
+                                        "type": "array",
+                                        "description": "The Python command to use when launching the language server."
+                                    },
+                                    "env": {
+                                        "type": "object",
+                                        "description": "Environment variables to set/override for the language server."
+                                    }
+                                }
+                            }
+                        ],
+                        "description": "The command to use to launch the Python interpreter that hosts the Language Server.\n\nBy default this extension will use the Python Extension to select any interpreter and point it at the default environment bundled with the extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior.",
+                        "markdownDescription": "The command to use to launch the Python interpreter that hosts the Language Server.\n\nBy default this extension will use the Python Extension to select any interpreter and point it at the default environment bundled with the extension. If you do not use the Python Extension or you wish to use a different environment, then this option can be used to override the default behavior.\n\n**Note:** This setting is **not used to build your documentation**, to select the Python environment for your Sphinx project use the `#esbonio.sphinx.pythonCommand#` setting instead."
                     }
                 }
             },
