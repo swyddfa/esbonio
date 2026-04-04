@@ -384,12 +384,6 @@
             {
                 "title": "Developer Options",
                 "properties": {
-                    "esbonio.server.enableDevTools": {
-                        "scope": "window",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Enable lsp-devtools integration for the language server"
-                    },
                     "esbonio.trace.server": {
                         "scope": "window",
                         "type": "string",
@@ -405,12 +399,6 @@
                             "log all lsp messages sent to/from the server",
                             "log all lsp messages sent to/from the server, including their contents"
                         ]
-                    },
-                    "esbonio.server.debug": {
-                        "scope": "window",
-                        "type": "boolean",
-                        "default": false,
-                        "description": "Debug the server process."
                     },
                     "esbonio.server.showDeprecationWarnings": {
                         "scope": "window",
