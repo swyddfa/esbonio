@@ -222,7 +222,7 @@ class LoggingConfigBuilder:
 class LoggingConfig:
     """Configuration options for server logging."""
 
-    level: str = attrs.field(default="error")
+    level: str = attrs.field(default="info")
     """The default logging level."""
 
     format: str = attrs.field(default="[%(name)s] %(message)s")

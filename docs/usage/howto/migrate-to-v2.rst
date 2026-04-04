@@ -9,3 +9,10 @@ Sphinx v6 No Longer Supported
 -----------------------------
 
 Inline with the :ref:`about-versioning` policy, while Esbonio v2 adds support for Sphinx v9, support for Sphinx v6 has been removed.
+
+Configuration Changes
+---------------------
+
+The default values for the following configuration options have been changed.
+
+``esbonio.logging.level`` now defaults to ``info``

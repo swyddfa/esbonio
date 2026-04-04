@@ -124,9 +124,9 @@ The following options control the logging output of the language server.
 
    - ``critical``
    - ``fatal``
-   - ``error`` (default)
+   - ``error``
    - ``warning``
-   - ``info``
+   - ``info`` (default)
    - ``debug``
 
 .. esbonio:config:: esbonio.logging.format
