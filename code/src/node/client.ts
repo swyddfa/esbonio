@@ -13,7 +13,7 @@ import {
   TextDocumentFilter
 } from "vscode-languageclient/node";
 
-import { OutputChannelLogger } from "../common/log";
+import { Logger } from "../common/log";
 import { PythonManager } from "./python";
 import { Commands, Events, Notifications, Server } from '../common/constants';
 
@@ -158,7 +158,7 @@ export class EsbonioClient {
   private extensionUri: vscode.Uri
 
   constructor(
-    private logger: OutputChannelLogger,
+    private logger: Logger,
     private python: PythonManager,
     context: vscode.ExtensionContext,
     private channel: vscode.OutputChannel,

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { OutputChannelLogger } from '../common/log'
+import { Logger } from '../common/log'
 import { EsbonioClient } from './client'
 import { Commands, Events } from '../common/constants'
 import { ShowDocumentParams, Range } from 'vscode-languageclient'
@@ -27,7 +27,7 @@ export class PreviewManager {
   private handlers: Map<string, any[]>
 
   constructor(
-    private logger: OutputChannelLogger,
+    private logger: Logger,
     context: vscode.ExtensionContext,
     private client: EsbonioClient
   ) {

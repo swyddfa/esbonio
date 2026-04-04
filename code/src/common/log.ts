@@ -6,12 +6,10 @@ export enum LogLevel {
   ERROR = 2
 }
 
-export class OutputChannelLogger {
-
+export abstract class Logger {
   public level: LogLevel
 
   constructor(
-    public channel: vscode.OutputChannel,
     logLevel?: string
   ) {
 
@@ -40,10 +38,6 @@ export class OutputChannelLogger {
     }
   }
 
-  log(message: string): void {
-    this.channel.appendLine(`[client] ${message}`)
-  }
-
   setLevel(level: string): void {
     let logLevel: LogLevel
 
@@ -60,5 +54,40 @@ export class OutputChannelLogger {
     }
 
     this.level = logLevel
+  }
+
+  abstract log(message: string): void
+}
+
+/**
+ * A logger that writes messages to an output channel.
+ */
+export class OutputChannelLogger extends Logger {
+
+  constructor(
+    private channel: vscode.OutputChannel,
+    logLevel?: string
+  ) {
+    super(logLevel)
+  }
+
+  log(message: string): void {
+    this.channel.appendLine(`[client] ${message}`)
+  }
+}
+
+/**
+ * A logger that writes messages to the console.
+ */
+export class ConsoleLogger extends Logger {
+
+  constructor(
+    logLevel?: string
+  ) {
+    super(logLevel)
+  }
+
+  log(message: string): void {
+    console.log(`[client] ${message}`)
   }
 }
