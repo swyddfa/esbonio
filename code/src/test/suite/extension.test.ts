@@ -19,8 +19,6 @@ suite('Extension Test Suite', () => {
 
     esbonio = extension.exports
     assert.ok(esbonio.client)
-
-    esbonio.logger.channel.show()
   });
 
   test('server starts', async () => { // Language server should start
@@ -43,8 +41,12 @@ suite('Extension Test Suite', () => {
       assert.strictEqual(esbonio.client.server.state, State.Running)
       esbonio.client.addHandler(Notifications.SPHINX_APP_CREATED, (params: AppCreatedNotification) => {
         try {
-          // Because no config has been applied, should be using bundled Sphinx version
-          assert.strictEqual(params.application.version, "8.1.3")
+          assert.strictEqual(params.application.version, process.env.EXPECTED_SPHINX_VERSION)
+
+          if (process.env.EXPECTED_PYTHON_VERSION) {
+            assert.ok(params.application.python.startsWith(process.env.EXPECTED_PYTHON_VERSION))
+          }
+
           resolve()
         } catch (err) {
           reject(err)
@@ -83,8 +85,7 @@ suite('Extension Test Suite', () => {
           let response = await fetch(result.uri)
           let content = await response.text()
 
-          // Default environment so esbonio should be using fallback theme.
-          assert.ok(content.includes("alabaster.css"))
+          assert.ok(content.includes(process.env.EXPECTED_SPHINX_THEME || "ERROR!!ExpectedThemeNotDefined"))
           resolve()
         } catch (err) {
           reject(err)
