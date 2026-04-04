@@ -21,6 +21,7 @@ test: dev-deps | $(NPM)
 	-test -d dist && rm -r dist
 	$(NPX) tsc -p .
 	$(XVFB) $(NPM) run test
+	rm -r /tmp/esbonio-vsc-e2e-tests
 
 .PHONY: watch
 watch: dev-deps $(NPM)
