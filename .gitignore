@@ -1,6 +1,7 @@
 *.*~
 
 .coverage
+.dir-locals.el
 .env
 .ipynb_checkpoints
 .tox
