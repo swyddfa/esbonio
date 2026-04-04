@@ -37,7 +37,7 @@ SERVER = server.EsbonioLanguageServer
                 ),
                 loggers=dict(
                     esbonio=dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["stderr01"],
                     ),
@@ -104,7 +104,7 @@ SERVER = server.EsbonioLanguageServer
                 ),
                 loggers=dict(
                     esbonio=dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["stderr01"],
                     ),
@@ -141,7 +141,7 @@ SERVER = server.EsbonioLanguageServer
                 ),
                 loggers=dict(
                     esbonio=dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["window01"],
                     ),
@@ -178,7 +178,7 @@ SERVER = server.EsbonioLanguageServer
                 ),
                 loggers=dict(
                     esbonio=dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["file01"],
                     ),
@@ -239,7 +239,7 @@ SERVER = server.EsbonioLanguageServer
                 ),
                 loggers=dict(
                     esbonio=dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["file01", "stderr02", "window03"],
                     ),
@@ -278,7 +278,7 @@ SERVER = server.EsbonioLanguageServer
                 ),
                 loggers={
                     "esbonio": dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["stderr01"],
                     ),
