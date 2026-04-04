@@ -12,7 +12,7 @@ RUN apt update && apt install libasound2 \
                               libnspr4 \
                               libnss3 \
                               xvfb \
-               && rm -rf /var/lib/apt/lists/* 
+               && rm -rf /var/lib/apt/lists/*
 
 COPY tools.mk /
 
