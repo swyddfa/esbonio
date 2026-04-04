@@ -3,7 +3,7 @@ import { join } from "path";
 import * as vscode from 'vscode'
 import { PythonExtension } from '@vscode/python-extension';
 
-import { OutputChannelLogger } from "../common/log";
+import { Logger } from "../common/log";
 import { Events } from '../common/constants';
 import { Executable } from 'vscode-languageclient/node';
 
@@ -20,7 +20,7 @@ export class PythonManager {
 
   constructor(
     private python: PythonExtension | undefined,
-    private logger: OutputChannelLogger,
+    private logger: Logger,
     private context: vscode.ExtensionContext
   ) {
     this.handlers = new Map()

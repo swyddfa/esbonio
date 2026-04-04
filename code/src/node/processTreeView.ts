@@ -1,6 +1,6 @@
 import * as vscode from 'vscode'
 import { Notifications, Events } from "../common/constants";
-import { OutputChannelLogger } from '../common/log'
+import { Logger } from '../common/log'
 
 import { AppCreatedNotification, ClientCreatedNotification, ClientDestroyedNotification, ClientErroredNotification, EsbonioClient, PythonCommand, SphinxClientConfig, SphinxInfo } from './client';
 
@@ -15,7 +15,7 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
   private _onDidChangeTreeData: vscode.EventEmitter<ProcessTreeNode | undefined | null | void> = new vscode.EventEmitter<ProcessTreeNode | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<ProcessTreeNode | undefined | null | void> = this._onDidChangeTreeData.event;
 
-  constructor(private logger: OutputChannelLogger, client: EsbonioClient) {
+  constructor(private logger: Logger, client: EsbonioClient) {
     client.addHandler(
       Notifications.SPHINX_CLIENT_CREATED,
       (params: ClientCreatedNotification) => this.clientCreated(params)
