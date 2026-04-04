@@ -56,13 +56,13 @@ The following options affect completion suggestions.
 
    Controls how completions behave when accepted, the following values are supported.
 
-   - ``replace`` (default)
+   - ``replace``
 
      Accepted completions will replace existing text, allowing the server to rewrite the current line in place.
      This allows the server to return all possible completions within the current context.
      In this mode the server will set the ``textEdit`` field of a ``CompletionItem``.
 
-   - ``insert``
+   - ``insert`` (default)
 
      Accepted completions will append to existing text rather than replacing it.
      Since rewriting is not possible, only the completions that are compatible with any existing text will be returned.

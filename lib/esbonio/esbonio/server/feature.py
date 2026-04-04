@@ -226,7 +226,7 @@ class CompletionConfig:
     """Configuration options that control completion behavior."""
 
     preferred_insert_behavior: Literal["insert", "replace"] = attrs.field(
-        default="replace"
+        default="insert"
     )
     """This option indicates if the user prefers we use ``insertText`` or ``textEdit``
     when rendering ``CompletionItems``."""

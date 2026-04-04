@@ -15,4 +15,5 @@ Configuration Changes
 
 The default values for the following configuration options have been changed.
 
-``esbonio.logging.level`` now defaults to ``info``
+- :esbonio:conf:`esbonio.logging.level` now defaults to ``info``
+- :esbonio:conf:`esbonio.server.completion.preferredInsertBehavior` now defaults to ``insert``
