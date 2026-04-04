@@ -26,6 +26,8 @@ export namespace Events {
   export const SERVER_START = "server/start"
   export const SERVER_STOP = "server/stop"
 
+  export const PREVIEW_READY = "preview/ready"
+
   export const PYTHON_ENV_CHANGE = "python/envChange"
 }
 
