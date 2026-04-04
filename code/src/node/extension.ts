@@ -11,7 +11,11 @@ let esbonio: EsbonioClient
 let logger: OutputChannelLogger
 
 export interface EsbonioExtension {
-  client: EsbonioClient
+  client: EsbonioClient,
+  preview: PreviewManager,
+  python: PythonManager,
+  logger: OutputChannelLogger
+
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<EsbonioExtension> {
@@ -36,7 +40,12 @@ export async function activate(context: vscode.ExtensionContext): Promise<Esboni
     await esbonio.start()
   }
 
-  return { client: esbonio }
+  return {
+    client: esbonio,
+    preview: previewManager,
+    python: pythonManager,
+    logger: logger
+  }
 }
 
 /**
