@@ -11,7 +11,7 @@ export class OutputChannelLogger {
   public level: LogLevel
 
   constructor(
-    private channel: vscode.OutputChannel,
+    public channel: vscode.OutputChannel,
     logLevel?: string
   ) {
 
