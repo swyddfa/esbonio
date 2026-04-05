@@ -7,9 +7,11 @@ from logging.handlers import MemoryHandler
 
 from pygls.protocol import default_converter
 
-from .server import EsbonioLanguageServer
-from .server import __version__
-from .setup import create_language_server
+from esbonio.server import EsbonioLanguageServer
+from esbonio.server import LSProtocol
+from esbonio.server import __version__
+from esbonio.server.features.log import LSPInfoFilter
+from esbonio.server.setup import create_language_server
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -18,14 +20,14 @@ def build_parser() -> argparse.ArgumentParser:
     """
 
     cli = argparse.ArgumentParser(description="The Esbonio language server")
-    cli.add_argument(
+    _ = cli.add_argument(
         "-p",
         "--port",
         type=int,
         default=None,
         help="start a TCP instance of the language server listening on the given port.",
     )
-    cli.add_argument(
+    _ = cli.add_argument(
         "--version",
         action="version",
         version=__version__,
@@ -35,7 +37,7 @@ def build_parser() -> argparse.ArgumentParser:
     modules = cli.add_argument_group(
         "modules", "include/exclude language server modules."
     )
-    modules.add_argument(
+    _ = modules.add_argument(
         "-i",
         "--include",
         metavar="MOD",
@@ -44,7 +46,7 @@ def build_parser() -> argparse.ArgumentParser:
         dest="included_modules",
         help="include an additional module in the server configuration, can be given multiple times.",
     )
-    modules.add_argument(
+    _ = modules.add_argument(
         "-e",
         "--exclude",
         metavar="MOD",
@@ -94,17 +96,20 @@ def main(argv: Sequence[str] | None = None):
 
     # Setup a temporary logging handler that can cache messages until the language server
     # is ready to forward them onto the client.
+    memory_handler = MemoryHandler(999999, flushLevel=logging.CRITICAL)
     logging.basicConfig(
         level=logging.DEBUG,
-        handlers=[MemoryHandler(999999, flushLevel=logging.CRITICAL)],
+        handlers=[memory_handler],
     )
 
     server = create_language_server(
         EsbonioLanguageServer,
         modules,
         logger=logging.getLogger("esbonio"),
+        protocol_cls=LSProtocol,
         converter_factory=default_converter,
     )
+    memory_handler.addFilter(LSPInfoFilter(server))
 
     if args.port:
         server.start_tcp("localhost", args.port)

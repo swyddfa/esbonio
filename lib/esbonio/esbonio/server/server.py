@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import collections
+import contextvars
 import inspect
 import logging
 import platform
@@ -15,6 +16,7 @@ import cattrs
 from lsprotocol import types
 from pygls.capabilities import get_capability
 from pygls.lsp.server import LanguageServer
+from pygls.protocol import LanguageServerProtocol
 from pygls.workspace import TextDocument
 from pygls.workspace import Workspace
 
@@ -59,10 +61,43 @@ class EsbonioWorkspace(Workspace):
         return super().update_text_document(text_doc, change)
 
 
+class LSProtocol(LanguageServerProtocol):
+    """A slightly modified ``LanguageServerProtocol`` implementation for use with esbonio."""
+
+    def __init__(self, server: LanguageServer, converter: cattrs.Converter):
+        self._ctx_msg_method: contextvars.ContextVar[str | None] = (
+            contextvars.ContextVar("msg_method", default=None)
+        )
+
+        # Needs to come last as parent constructor calls _register_builtin_features which
+        # walks all the properties of the class
+        super().__init__(server, converter)
+
+    @property
+    def msg_method(self) -> str | None:
+        ctx = contextvars.copy_context()
+        return ctx.get(self._ctx_msg_method)
+
+    def _handle_request(self, msg_id: str | int, method_name: str, params: Any):
+        _ = self._ctx_msg_method.set(method_name)
+        return super()._handle_request(msg_id, method_name, params)
+
+    def _handle_notification(self, method_name: str, params: Any):
+        _ = self._ctx_msg_method.set(method_name)
+        return super()._handle_notification(method_name, params)
+
+
 class EsbonioLanguageServer(LanguageServer):
     """The Esbonio language server"""
 
-    def __init__(self, logger: logging.Logger | None = None, *args, **kwargs):
+    protocol: LSProtocol
+
+    def __init__(
+        self,
+        logger: logging.Logger | None = None,
+        *args,
+        **kwargs,
+    ):
         if "name" not in kwargs:
             kwargs["name"] = "esbonio"
 
@@ -83,7 +118,7 @@ class EsbonioLanguageServer(LanguageServer):
         self._ready: Future[bool] = Future()
         """Indicates if the server is ready."""
 
-        self._tasks: set[asyncio.Task] = set()
+        self._tasks: set[asyncio.Task[Any]] = set()
         """Used to hold running tasks"""
 
         self.logger = logger or logging.getLogger(__name__)
