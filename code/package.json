@@ -342,6 +342,15 @@
                         "default": false,
                         "description": "If set, send log messages as window/logMessage notifications"
                     },
+                    "esbonio.logging.enabledMethods": {
+                        "scope": "window",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": null,
+                        "description": "If set, only log messages related to the given LSP methods (e.g. `textDocument/completion`)"
+                    },
                     "esbonio.logging.config": {
                         "scope": "window",
                         "type": "object",
