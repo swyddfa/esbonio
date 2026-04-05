@@ -40,6 +40,23 @@ class WindowLogMessageHandler(logging.Handler):
         )
 
 
+class LSPInfoFilter(logging.Filter):
+    """A logging filter for adding LSP specific information to log messages."""
+
+    def __init__(self, server: server.EsbonioLanguageServer, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.server: server.EsbonioLanguageServer = server
+
+    def filter(self, record: logging.LogRecord):
+        msg_id = self.server.protocol.msg_id or ""
+        msg_method = self.server.protocol.msg_method or ""
+
+        record.msgid = msg_id
+        record.method = msg_method
+
+        return True
+
+
 @attrs.define
 class LoggerConfiguration:
     """Configuration options for a given logger."""
@@ -65,6 +82,7 @@ class LoggingConfigBuilder:
     """Helper class for converting the user's config into the logging config."""
 
     def __init__(self):
+        self.filters = {}
         self.formatters = {}
         self.handlers = {}
         self.loggers = {}
@@ -103,6 +121,7 @@ class LoggingConfigBuilder:
             "class": "logging.FileHandler",
             "level": "DEBUG",  # this way we can handle logs from loggers at any level
             "formatter": formatter,
+            "filters": list(self.filters.keys()),
             "filename": filepath,
         }
 
@@ -126,6 +145,7 @@ class LoggingConfigBuilder:
             "class": "logging.StreamHandler",
             "level": "DEBUG",  # this way we can handle logs from loggers at any level
             "formatter": formatter,
+            "filters": list(self.filters.keys()),
             "stream": "ext://sys.stderr",
         }
 
@@ -153,6 +173,7 @@ class LoggingConfigBuilder:
             "()": handler_class,
             "level": "DEBUG",  # this way we can handle logs from loggers at any level
             "formatter": formatter,
+            "filters": list(self.filters.keys()),
             "server": server,
         }
 
@@ -207,6 +228,13 @@ class LoggingConfigBuilder:
 
         self.loggers[name] = dict(level=level, propagate=False, handlers=handlers)
 
+    def create_lsp_filter(self, server: server.EsbonioLanguageServer):
+        """Create the filter instance that adds lsp message info to the log."""
+        self.filters["lsp-filter"] = {
+            "()": LSPInfoFilter,
+            "server": server,
+        }
+
     def finish(self) -> dict[str, Any]:
         """Return the final configuration."""
         return dict(
@@ -215,6 +243,7 @@ class LoggingConfigBuilder:
             formatters=self.formatters,
             handlers=self.handlers,
             loggers=self.loggers,
+            filters=self.filters,
         )
 
 
@@ -225,7 +254,7 @@ class LoggingConfig:
     level: str = attrs.field(default="info")
     """The default logging level."""
 
-    format: str = attrs.field(default="[%(name)s] %(message)s")
+    format: str = attrs.field(default="[%(method)s(%(msgid)s)][%(name)s] %(message)s")
     """The log format string to use."""
 
     filepath: str | None = attrs.field(default=None)
@@ -254,6 +283,7 @@ class LoggingConfig:
         """
 
         builder = LoggingConfigBuilder()
+        builder.create_lsp_filter(server)
 
         # Ensure that there is at least an esbonio logger and a sphinx logger present in
         # the config.
