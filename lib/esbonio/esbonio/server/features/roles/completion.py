@@ -67,7 +67,7 @@ def get_role_renderer(language: str, insert_behavior: str) -> RoleRenderer | Non
     Optional[RoleRenderer]
        The rendering function to use that matches the given criteria, if available.
     """
-    return _ROLE_RENDERERS.get((language, insert_behavior), None)
+    return _ROLE_RENDERERS.get((language, insert_behavior))
 
 
 def get_role_target_renderer(
@@ -88,7 +88,7 @@ def get_role_target_renderer(
     Optional[RoleTargetRenderer]
        The rendering function to use that matches the given criteria, if available.
     """
-    return _ROLE_TARGET_RENDERERS.get((language, insert_behavior), None)
+    return _ROLE_TARGET_RENDERERS.get((language, insert_behavior))
 
 
 @role_renderer(language="rst", insert_behavior="insert")
