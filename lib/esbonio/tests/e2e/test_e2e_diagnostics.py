@@ -9,7 +9,7 @@ from pytest_lsp import ClientServerConfig
 from pytest_lsp import LanguageClient
 from sphinx import version_info as sphinx_version
 
-SERVER_CMD = ["-m", "esbonio"]
+SERVER_CMD = ["-m", "esbonio.server"]
 TEST_DIR = pathlib.Path(__file__).parent.parent
 
 

@@ -7,7 +7,7 @@ from lsprotocol import types
 from pytest_lsp import ClientServerConfig
 from pytest_lsp import LanguageClient
 
-SERVER_CMD = ["-m", "esbonio"]
+SERVER_CMD = ["-m", "esbonio.server"]
 TEST_DIR = pathlib.Path(__file__).parent.parent
 
 

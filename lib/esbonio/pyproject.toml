@@ -39,7 +39,7 @@ dependencies = [
 "Source Code" = "https://github.com/swyddfa/esbonio"
 
 [project.scripts]
-esbonio = "esbonio.server.cli:main"
+esbonio = "esbonio.cli:main"
 
 [project.optional-dependencies]
 typecheck = ["mypy", "pytest-lsp>=1.0", "types-docutils", "types-pygments"]

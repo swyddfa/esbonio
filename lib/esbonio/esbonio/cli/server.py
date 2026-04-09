@@ -1,40 +1,36 @@
+from __future__ import annotations
+
 import argparse
 import logging
 import sys
 import warnings
-from collections.abc import Sequence
 from logging.handlers import MemoryHandler
 
 from pygls.protocol import default_converter
 
 from esbonio.server import EsbonioLanguageServer
 from esbonio.server import LSProtocol
-from esbonio.server import __version__
 from esbonio.server.features.log import LSPInfoFilter
 from esbonio.server.setup import create_language_server
 
 
-def build_parser() -> argparse.ArgumentParser:
-    """Return an argument parser with the default command line options required for
-    main.
-    """
+def setup_cli(commands: argparse._SubParsersAction):
+    """Configure the cli commands provided by this module."""
 
-    cli = argparse.ArgumentParser(description="The Esbonio language server")
-    _ = cli.add_argument(
+    command = commands.add_parser("server", help="launch the esbonio language server")
+    setup_cli_args(command)
+
+
+def setup_cli_args(parser: argparse.ArgumentParser):
+    _ = parser.add_argument(
         "-p",
         "--port",
         type=int,
         default=None,
         help="start a TCP instance of the language server listening on the given port.",
     )
-    _ = cli.add_argument(
-        "--version",
-        action="version",
-        version=__version__,
-        help="print the current version and exit.",
-    )
 
-    modules = cli.add_argument_group(
+    modules = parser.add_argument_group(
         "modules", "include/exclude language server modules."
     )
     _ = modules.add_argument(
@@ -55,13 +51,11 @@ def build_parser() -> argparse.ArgumentParser:
         dest="excluded_modules",
         help="exclude a module from the server configuration, can be given multiple times.",
     )
+    parser.set_defaults(run=run_server)
 
-    return cli
 
-
-def main(argv: Sequence[str] | None = None):
-    cli = build_parser()
-    args = cli.parse_args(argv)
+def run_server(args):
+    """Run the language server."""
 
     # Order matters!
     modules = [
