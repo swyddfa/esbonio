@@ -10,6 +10,31 @@ Sphinx v6 No Longer Supported
 
 Inline with the :ref:`about-versioning` policy, while Esbonio ``v2.x`` adds support for Sphinx v9, support for Sphinx v6 has been removed.
 
+Command Line Changes
+--------------------
+
+The langugage server is no longer launched using the ``esbonio`` command, instead it has been pushed down into the ``esbonio server`` subcommand::
+
+   $ esbonio
+   usage: esbonio [-h] [--version] {server} ...
+
+   The Esbonio language server
+
+   options:
+   -h, --help  show this help message and exit
+   --version   print the current version and exit.
+
+   commands:
+   {server}
+      server    launch the esbonio language server
+
+This is to create space for additional utility commands that may be added in future releases.
+Alternatively, the server can be launched by invokng the ``esbonio.server`` module directly with Python::
+
+   $ python -m esbonio.server
+
+Which is how the VSCode extension invokes the server.
+
 Configuration Changes
 ---------------------
 
