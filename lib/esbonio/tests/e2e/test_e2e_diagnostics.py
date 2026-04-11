@@ -9,7 +9,7 @@ from pytest_lsp import ClientServerConfig
 from pytest_lsp import LanguageClient
 from sphinx import version_info as sphinx_version
 
-SERVER_CMD = ["-m", "esbonio"]
+SERVER_CMD = ["-m", "esbonio.server"]
 TEST_DIR = pathlib.Path(__file__).parent.parent
 
 
@@ -74,16 +74,20 @@ async def test_workspace_diagnostic(client: LanguageClient, uri_for):
     message = f"undefined label: 'not-a-real-reference'{category}"
 
     workspace_uri = uri_for("workspaces", "demo")
+
+    expected_conf_py = (
+        "no theme named 'furo' found",
+        "Could not import extension sphinx_design (exception: "
+        "No module named 'sphinx_design')",
+    )
+
     expected = {
-        str(workspace_uri / "conf.py"): (
-            "no theme named 'furo' found",
-            "Could not import extension sphinx_design (exception: "
-            "No module named 'sphinx_design')",
-        ),
-        str(workspace_uri / "index.rst"): ('Unknown directive type "grid"'),
+        str(workspace_uri / "conf.py"): expected_conf_py,
+        str(workspace_uri / "index.rst"): ('Unknown directive type "grid"',),
         str(workspace_uri / "rst" / "diagnostics.rst"): (message,),
         str(workspace_uri / "myst" / "diagnostics.md"): (message,),
     }
+
     assert len(report.items) == len(expected)
     for item in report.items:
         for diagnostic in item.items:

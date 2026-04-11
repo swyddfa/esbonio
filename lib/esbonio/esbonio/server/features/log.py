@@ -11,7 +11,9 @@ from typing import Any
 import attrs
 from lsprotocol import types
 
-from esbonio import server
+from esbonio.server import ConfigChangeEvent
+from esbonio.server import EsbonioLanguageServer
+from esbonio.server import LanguageFeature
 
 LOG_LEVELS = {"CRITICAL", "FATAL", "ERROR", "WARN", "WARNING", "INFO", "DEBUG"}
 
@@ -22,7 +24,7 @@ class WindowLogMessageHandler(logging.Handler):
 
     def __init__(
         self,
-        server: server.EsbonioLanguageServer,
+        server: EsbonioLanguageServer,
     ):
         super().__init__()
         self.server = server
@@ -38,6 +40,43 @@ class WindowLogMessageHandler(logging.Handler):
         self.server.window_log_message(
             types.LogMessageParams(message=log, type=types.MessageType.Log)
         )
+
+
+class LSPInfoFilter(logging.Filter):
+    """A logging filter for adding LSP specific information to log messages.
+
+    It will also exclude messages from the log depending on the set of enabled methods.
+    """
+
+    def __init__(
+        self,
+        server: EsbonioLanguageServer,
+        enabled_methods: list[str] | None = None,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(*args, **kwargs)
+
+        self.server: EsbonioLanguageServer = server
+        self.enabled_methods: set[str] = set(enabled_methods or [])
+
+    def filter(self, record: logging.LogRecord):
+        # Only touch records coming from esbonio
+        if "esbonio" not in record.name:
+            return True
+
+        msg_id = self.server.protocol.msg_id or ""
+        msg_method = self.server.protocol.msg_method or ""
+
+        record.msgid = msg_id
+        record.method = msg_method
+
+        # Don't exclude messages without a method.
+        if msg_method == "":
+            return True
+
+        # Only include messages for enabled method names
+        return msg_method in self.enabled_methods
 
 
 @attrs.define
@@ -65,6 +104,7 @@ class LoggingConfigBuilder:
     """Helper class for converting the user's config into the logging config."""
 
     def __init__(self):
+        self.filters = {}
         self.formatters = {}
         self.handlers = {}
         self.loggers = {}
@@ -103,6 +143,7 @@ class LoggingConfigBuilder:
             "class": "logging.FileHandler",
             "level": "DEBUG",  # this way we can handle logs from loggers at any level
             "formatter": formatter,
+            "filters": list(self.filters.keys()),
             "filename": filepath,
         }
 
@@ -126,14 +167,13 @@ class LoggingConfigBuilder:
             "class": "logging.StreamHandler",
             "level": "DEBUG",  # this way we can handle logs from loggers at any level
             "formatter": formatter,
+            "filters": list(self.filters.keys()),
             "stream": "ext://sys.stderr",
         }
 
         return key
 
-    def _get_window_handler(
-        self, server: server.EsbonioLanguageServer, formatter: str
-    ) -> str:
+    def _get_window_handler(self, server: EsbonioLanguageServer, formatter: str) -> str:
         """Return the name of the handler that will send messages as
         ``window/logMessage`` notificaitions, using the given formatter name.
 
@@ -153,6 +193,7 @@ class LoggingConfigBuilder:
             "()": handler_class,
             "level": "DEBUG",  # this way we can handle logs from loggers at any level
             "formatter": formatter,
+            "filters": list(self.filters.keys()),
             "server": server,
         }
 
@@ -165,7 +206,7 @@ class LoggingConfigBuilder:
         format: str,
         filepath: str | None,
         stderr: bool,
-        window: server.EsbonioLanguageServer | None,
+        window: EsbonioLanguageServer | None,
     ):
         """Add a configuration for the given logger
 
@@ -207,6 +248,25 @@ class LoggingConfigBuilder:
 
         self.loggers[name] = dict(level=level, propagate=False, handlers=handlers)
 
+    def create_lsp_filter(
+        self, server: EsbonioLanguageServer, enabled_methods: list[str]
+    ):
+        """Create the filter instance that adds lsp message info to the log."""
+
+        if len(enabled_methods) == 0:
+            enabled_methods = [
+                types.INITIALIZE,
+                types.INITIALIZED,
+                types.TEXT_DOCUMENT_DID_OPEN,
+                types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+            ]
+
+        self.filters["lsp-filter"] = {
+            "()": LSPInfoFilter,
+            "server": server,
+            "enabled_methods": enabled_methods,
+        }
+
     def finish(self) -> dict[str, Any]:
         """Return the final configuration."""
         return dict(
@@ -215,6 +275,7 @@ class LoggingConfigBuilder:
             formatters=self.formatters,
             handlers=self.handlers,
             loggers=self.loggers,
+            filters=self.filters,
         )
 
 
@@ -222,10 +283,10 @@ class LoggingConfigBuilder:
 class LoggingConfig:
     """Configuration options for server logging."""
 
-    level: str = attrs.field(default="error")
+    level: str = attrs.field(default="info")
     """The default logging level."""
 
-    format: str = attrs.field(default="[%(name)s] %(message)s")
+    format: str = attrs.field(default="[%(method)s(%(msgid)s)][%(name)s] %(message)s")
     """The log format string to use."""
 
     filepath: str | None = attrs.field(default=None)
@@ -240,10 +301,13 @@ class LoggingConfig:
     config: dict[str, LoggerConfiguration] = attrs.field(factory=dict)
     """Configuration of individual loggers"""
 
+    enabled_methods: list[str] = attrs.field(factory=list)
+    """Only show log messages for the listed lsp methods."""
+
     show_deprecation_warnings: bool = attrs.field(default=False)
     """Developer flag to enable deprecation warnings."""
 
-    def to_logging_config(self, server: server.EsbonioLanguageServer) -> dict[str, Any]:
+    def to_logging_config(self, server: EsbonioLanguageServer) -> dict[str, Any]:
         """Convert the user's config into a config dict that can be passed to the
         ``logging.config.dictConfig()`` function.
 
@@ -254,6 +318,7 @@ class LoggingConfig:
         """
 
         builder = LoggingConfigBuilder()
+        builder.create_lsp_filter(server, self.enabled_methods)
 
         # Ensure that there is at least an esbonio logger and a sphinx logger present in
         # the config.
@@ -304,7 +369,7 @@ class LoggingConfig:
         return builder.finish()
 
 
-class LogManager(server.LanguageFeature):
+class LogManager(LanguageFeature):
     """Manages the logging setup for the server."""
 
     def initialized(self, params: types.InitializedParams):
@@ -313,7 +378,7 @@ class LogManager(server.LanguageFeature):
             "esbonio.logging", LoggingConfig, self.setup_logging
         )
 
-    def setup_logging(self, event: server.ConfigChangeEvent[LoggingConfig]):
+    def setup_logging(self, event: ConfigChangeEvent[LoggingConfig]):
         """Setup logging according to the given config.
 
         Parameters
@@ -363,6 +428,6 @@ def dump(obj) -> str:
     return json.dumps(obj, default=default, indent=2)
 
 
-def esbonio_setup(server: server.EsbonioLanguageServer):
+def esbonio_setup(server: EsbonioLanguageServer):
     manager = LogManager(server)
     server.add_feature(manager)

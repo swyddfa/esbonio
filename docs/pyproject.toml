@@ -7,7 +7,7 @@ installer = 'uv'
 skip-install = true
 dependencies = [
     "aiosqlite",
-    "sphinx<9",
+    "sphinx>=9,<10",
     "sphinx-design",
     "furo",
     "myst-parser",

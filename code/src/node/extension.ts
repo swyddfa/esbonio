@@ -1,24 +1,31 @@
 import * as vscode from 'vscode'
 import { PythonExtension } from '@vscode/python-extension';
 
-import { OutputChannelLogger } from '../common/log'
+import { ConsoleLogger, OutputChannelLogger, Logger } from '../common/log'
 import { PythonManager } from './python'
 import { PreviewManager } from "./preview";
 import { EsbonioClient } from './client'
 import { SphinxProcessProvider } from "./processTreeView";
 
 let esbonio: EsbonioClient
-let logger: OutputChannelLogger
+let logger: Logger
 
 export interface EsbonioExtension {
-  client: EsbonioClient
+  client: EsbonioClient,
+  preview: PreviewManager,
+  python: PythonManager,
 }
 
 export async function activate(context: vscode.ExtensionContext): Promise<EsbonioExtension> {
   let channel = vscode.window.createOutputChannel("Esbonio", "esbonio-log-output")
   let logLevel = vscode.workspace.getConfiguration('esbonio').get<string>('logging.level')
 
-  logger = new OutputChannelLogger(channel, logLevel)
+  if (process.env.ESBONIO_LOG_DEST === 'console') {
+    logger = new ConsoleLogger(logLevel)
+  } else {
+    logger = new OutputChannelLogger(channel, logLevel)
+  }
+
   logger.debug('Extension activated')
 
   let python = await getPythonExtension()
@@ -36,7 +43,11 @@ export async function activate(context: vscode.ExtensionContext): Promise<Esboni
     await esbonio.start()
   }
 
-  return { client: esbonio }
+  return {
+    client: esbonio,
+    preview: previewManager,
+    python: pythonManager,
+  }
 }
 
 /**

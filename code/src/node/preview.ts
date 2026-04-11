@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { OutputChannelLogger } from '../common/log'
+import { Logger } from '../common/log'
 import { EsbonioClient } from './client'
 import { Commands, Events } from '../common/constants'
 import { ShowDocumentParams, Range } from 'vscode-languageclient'
@@ -10,13 +10,13 @@ interface PreviewFileParams {
   show?: boolean
 }
 
-interface PreviewFileResult {
+export interface PreviewFileResult {
   uri: string
 }
 
 export class PreviewManager {
 
-  private panel?: vscode.WebviewPanel
+  public panel?: vscode.WebviewPanel
 
   /** The uri of the document currently shown in the preview pane */
   private currentUri?: vscode.Uri
@@ -24,11 +24,15 @@ export class PreviewManager {
   /** If `true`, indicates that we are currently changing the document being previewed */
   private changingDocument = false
 
+  private handlers: Map<string, any[]>
+
   constructor(
-    private logger: OutputChannelLogger,
+    private logger: Logger,
     context: vscode.ExtensionContext,
     private client: EsbonioClient
   ) {
+    this.handlers = new Map()
+
     context.subscriptions.push(
       vscode.commands.registerCommand(Commands.SET_SCROLL_BEHAVIOUR, this.setScrollBehaviour, this)
     )
@@ -71,18 +75,26 @@ export class PreviewManager {
         this.currentUri = uri
       }
     )
+
+    // Try and sync the preview to the editor.
+    this.addHandler(Events.PREVIEW_READY, (_: any) => {
+      let editor = findEditorFor(this.currentUri)
+      if (editor) {
+        this.scrollView(editor)
+      }
+    })
   }
 
 
   async setScrollBehaviour() {
     let selection = await vscode.window.showQuickPick(
       [
-        { label: "$(arrow-swap) Synchronize Scrolling Both Ways", value: "bothWays"},
-        { label: "$(arrow-right) Synchronize Editor Scrolling with Preview", value: "editorWithPreview"},
-        { label: "$(arrow-left) Synchronize Preview Scrolling with Editor", value: "previewWithEditor"},
-        { label: "$(x) Disable Synchronized Scrolling", value: "disabled"},
+        { label: "$(arrow-swap) Synchronize Scrolling Both Ways", value: "bothWays" },
+        { label: "$(arrow-right) Synchronize Editor Scrolling with Preview", value: "editorWithPreview" },
+        { label: "$(arrow-left) Synchronize Preview Scrolling with Editor", value: "previewWithEditor" },
+        { label: "$(x) Disable Synchronized Scrolling", value: "disabled" },
       ],
-      {title: "Set Synchronized Scrolling Behavior"},
+      { title: "Set Synchronized Scrolling Behavior" },
     )
     if (!selection) {
       return
@@ -265,10 +277,7 @@ export class PreviewManager {
         return
       }
 
-      let editor = findEditorFor(this.currentUri)
-      if (editor) {
-        this.scrollView(editor)
-      }
+      this.callHandlers(Events.PREVIEW_READY, {})
     })
 
     this.panel.onDidDispose(() => {
@@ -277,6 +286,24 @@ export class PreviewManager {
     })
 
     return this.panel
+  }
+
+  public addHandler(event: string, handler: any) {
+    if (this.handlers.has(event)) {
+      this.handlers.get(event)?.push(handler)
+    } else {
+      this.handlers.set(event, [handler])
+    }
+  }
+
+  private callHandlers(method: string, params: any) {
+    this.handlers.get(method)?.forEach(handler => {
+      try {
+        handler(params)
+      } catch (err) {
+        this.logger.error(`Error in '${method}' notification handler: ${err}`)
+      }
+    })
   }
 
   private getWebViewHTML(origin: string): string {

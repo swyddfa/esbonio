@@ -49,6 +49,8 @@ jobs:
     if: needs.trigger.outputs.lsp
     name: esbonio release
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.info.outputs.version }}
     environment:
       name: pypi
       url: https://pypi.org/p/esbonio
@@ -82,7 +84,7 @@ jobs:
         hatch build
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: 'dist'
         path: lib/esbonio/dist
@@ -145,13 +147,15 @@ jobs:
     - run: |
         set -e
         cd code
-
-        # Use version of esbonio on PyPi for release builds
-        ESBONIO_WHL="esbonio" make dist
+        echo "ESBONIO_WHL='${ESBONIO_WHL}'"
+        make dist
       name: Package Extension
+      env:
+        # Use version of esbonio on PyPi for release builds
+        ESBONIO_WHL: "${{ case(needs.lsp-release.outputs.version != '', format('esbonio=={0}', needs.lsp-release.outputs.version), 'esbonio') }}"
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
         name: 'vsix'
         path: code/*.vsix
@@ -182,7 +186,7 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'code/package-lock.json'
 
-    - uses: actions/download-artifact@v7
+    - uses: actions/download-artifact@v8
       name: 'Download Extension'
       with:
         name: 'vsix'
@@ -212,7 +216,7 @@ jobs:
         cache: 'npm'
         cache-dependency-path: 'code/package-lock.json'
 
-    - uses: actions/download-artifact@v7
+    - uses: actions/download-artifact@v8
       name: 'Download Extension'
       with:
         name: 'vsix'

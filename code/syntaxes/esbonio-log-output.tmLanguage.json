@@ -13,10 +13,16 @@
     ],
     "repository": {
         "log-line": {
-            "match": "^\\[([.a-zA-Z]+)\\]",
+            "match": "^(\\[([./$a-zA-Z]+)\\(([\\d]+)?\\)\\])?\\[([.a-zA-Z]+)\\]",
             "captures": {
-                "1": {
-                    "name": "storage.type.namespace"
+                "2": {
+                    "name": "keyword.control"
+                },
+                "3": {
+                    "name": "constant.numeric"
+                },
+                "4": {
+                    "name": "entity.name.class"
                 }
             }
         },

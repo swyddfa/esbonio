@@ -1,12 +1,17 @@
 from __future__ import annotations
 
+import typing
+
 import pytest
+from lsprotocol import types
 
 from esbonio import server
 from esbonio.server.features.log import LoggerConfiguration
 from esbonio.server.features.log import LoggingConfig
+from esbonio.server.features.log import LSPInfoFilter
 
-SERVER = server.EsbonioLanguageServer
+if typing.TYPE_CHECKING:
+    from typing import Any
 
 
 @pytest.mark.parametrize(
@@ -17,8 +22,20 @@ SERVER = server.EsbonioLanguageServer
             dict(
                 version=1,
                 disable_existing_loggers=True,
+                filters={
+                    "lsp-filter": {
+                        "()": LSPInfoFilter,
+                        "server": server.EsbonioLanguageServer,
+                        "enabled_methods": [
+                            types.INITIALIZE,
+                            types.INITIALIZED,
+                            types.TEXT_DOCUMENT_DID_OPEN,
+                            types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+                        ],
+                    }
+                },
                 formatters=dict(
-                    fmt01=dict(format="[%(name)s] %(message)s"),
+                    fmt01=dict(format="[%(method)s(%(msgid)s)][%(name)s] %(message)s"),
                     fmt02=dict(format="%(message)s"),
                 ),
                 handlers=dict(
@@ -26,18 +43,24 @@ SERVER = server.EsbonioLanguageServer
                         "class": "logging.StreamHandler",
                         "level": "DEBUG",
                         "formatter": "fmt01",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "stream": "ext://sys.stderr",
                     },
                     stderr02={
                         "class": "logging.StreamHandler",
                         "level": "DEBUG",
                         "formatter": "fmt02",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "stream": "ext://sys.stderr",
                     },
                 ),
                 loggers=dict(
                     esbonio=dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["stderr01"],
                     ),
@@ -54,8 +77,20 @@ SERVER = server.EsbonioLanguageServer
             dict(
                 version=1,
                 disable_existing_loggers=True,
+                filters={
+                    "lsp-filter": {
+                        "()": LSPInfoFilter,
+                        "server": server.EsbonioLanguageServer,
+                        "enabled_methods": [
+                            types.INITIALIZE,
+                            types.INITIALIZED,
+                            types.TEXT_DOCUMENT_DID_OPEN,
+                            types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+                        ],
+                    }
+                },
                 formatters=dict(
-                    fmt01=dict(format="[%(name)s] %(message)s"),
+                    fmt01=dict(format="[%(method)s(%(msgid)s)][%(name)s] %(message)s"),
                     fmt02=dict(format="%(message)s"),
                 ),
                 handlers=dict(
@@ -63,12 +98,18 @@ SERVER = server.EsbonioLanguageServer
                         "class": "logging.StreamHandler",
                         "level": "DEBUG",
                         "formatter": "fmt01",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "stream": "ext://sys.stderr",
                     },
                     stderr02={
                         "class": "logging.StreamHandler",
                         "level": "DEBUG",
                         "formatter": "fmt02",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "stream": "ext://sys.stderr",
                     },
                 ),
@@ -91,6 +132,18 @@ SERVER = server.EsbonioLanguageServer
             dict(
                 version=1,
                 disable_existing_loggers=True,
+                filters={
+                    "lsp-filter": {
+                        "()": LSPInfoFilter,
+                        "server": server.EsbonioLanguageServer,
+                        "enabled_methods": [
+                            types.INITIALIZE,
+                            types.INITIALIZED,
+                            types.TEXT_DOCUMENT_DID_OPEN,
+                            types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+                        ],
+                    }
+                },
                 formatters=dict(
                     fmt01=dict(format="%(message)s"),
                 ),
@@ -99,12 +152,15 @@ SERVER = server.EsbonioLanguageServer
                         "class": "logging.StreamHandler",
                         "level": "DEBUG",
                         "formatter": "fmt01",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "stream": "ext://sys.stderr",
                     },
                 ),
                 loggers=dict(
                     esbonio=dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["stderr01"],
                     ),
@@ -121,8 +177,20 @@ SERVER = server.EsbonioLanguageServer
             dict(
                 version=1,
                 disable_existing_loggers=True,
+                filters={
+                    "lsp-filter": {
+                        "()": LSPInfoFilter,
+                        "server": server.EsbonioLanguageServer,
+                        "enabled_methods": [
+                            types.INITIALIZE,
+                            types.INITIALIZED,
+                            types.TEXT_DOCUMENT_DID_OPEN,
+                            types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+                        ],
+                    }
+                },
                 formatters=dict(
-                    fmt01=dict(format="[%(name)s] %(message)s"),
+                    fmt01=dict(format="[%(method)s(%(msgid)s)][%(name)s] %(message)s"),
                     fmt02=dict(format="%(message)s"),
                 ),
                 handlers=dict(
@@ -130,18 +198,24 @@ SERVER = server.EsbonioLanguageServer
                         "()": "esbonio.server.features.log.WindowLogMessageHandler",
                         "level": "DEBUG",
                         "formatter": "fmt01",
-                        "server": SERVER,
+                        "filters": [
+                            "lsp-filter",
+                        ],
+                        "server": server.EsbonioLanguageServer,
                     },
                     window02={
                         "()": "esbonio.server.features.log.WindowLogMessageHandler",
                         "level": "DEBUG",
                         "formatter": "fmt02",
-                        "server": SERVER,
+                        "filters": [
+                            "lsp-filter",
+                        ],
+                        "server": server.EsbonioLanguageServer,
                     },
                 ),
                 loggers=dict(
                     esbonio=dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["window01"],
                     ),
@@ -158,8 +232,20 @@ SERVER = server.EsbonioLanguageServer
             dict(
                 version=1,
                 disable_existing_loggers=True,
+                filters={
+                    "lsp-filter": {
+                        "()": LSPInfoFilter,
+                        "server": server.EsbonioLanguageServer,
+                        "enabled_methods": [
+                            types.INITIALIZE,
+                            types.INITIALIZED,
+                            types.TEXT_DOCUMENT_DID_OPEN,
+                            types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+                        ],
+                    }
+                },
                 formatters=dict(
-                    fmt01=dict(format="[%(name)s] %(message)s"),
+                    fmt01=dict(format="[%(method)s(%(msgid)s)][%(name)s] %(message)s"),
                     fmt02=dict(format="%(message)s"),
                 ),
                 handlers=dict(
@@ -167,18 +253,24 @@ SERVER = server.EsbonioLanguageServer
                         "class": "logging.FileHandler",
                         "level": "DEBUG",
                         "formatter": "fmt01",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "filename": "esbonio.log",
                     },
                     file02={
                         "class": "logging.FileHandler",
                         "level": "DEBUG",
                         "formatter": "fmt02",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "filename": "esbonio.log",
                     },
                 ),
                 loggers=dict(
                     esbonio=dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["file01"],
                     ),
@@ -195,8 +287,20 @@ SERVER = server.EsbonioLanguageServer
             dict(
                 version=1,
                 disable_existing_loggers=True,
+                filters={
+                    "lsp-filter": {
+                        "()": LSPInfoFilter,
+                        "server": server.EsbonioLanguageServer,
+                        "enabled_methods": [
+                            types.INITIALIZE,
+                            types.INITIALIZED,
+                            types.TEXT_DOCUMENT_DID_OPEN,
+                            types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+                        ],
+                    }
+                },
                 formatters=dict(
-                    fmt01=dict(format="[%(name)s] %(message)s"),
+                    fmt01=dict(format="[%(method)s(%(msgid)s)][%(name)s] %(message)s"),
                     fmt02=dict(format="%(message)s"),
                 ),
                 handlers=dict(
@@ -204,42 +308,60 @@ SERVER = server.EsbonioLanguageServer
                         "class": "logging.FileHandler",
                         "level": "DEBUG",
                         "formatter": "fmt01",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "filename": "esbonio.log",
                     },
                     stderr02={
                         "class": "logging.StreamHandler",
                         "level": "DEBUG",
                         "formatter": "fmt01",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "stream": "ext://sys.stderr",
                     },
                     window03={
                         "()": "esbonio.server.features.log.WindowLogMessageHandler",
                         "level": "DEBUG",
                         "formatter": "fmt01",
-                        "server": SERVER,
+                        "filters": [
+                            "lsp-filter",
+                        ],
+                        "server": server.EsbonioLanguageServer,
                     },
                     file04={
                         "class": "logging.FileHandler",
                         "level": "DEBUG",
                         "formatter": "fmt02",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "filename": "esbonio.log",
                     },
                     stderr05={
                         "class": "logging.StreamHandler",
                         "level": "DEBUG",
                         "formatter": "fmt02",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "stream": "ext://sys.stderr",
                     },
                     window06={
                         "()": "esbonio.server.features.log.WindowLogMessageHandler",
                         "level": "DEBUG",
                         "formatter": "fmt02",
-                        "server": SERVER,
+                        "filters": [
+                            "lsp-filter",
+                        ],
+                        "server": server.EsbonioLanguageServer,
                     },
                 ),
                 loggers=dict(
                     esbonio=dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["file01", "stderr02", "window03"],
                     ),
@@ -258,8 +380,20 @@ SERVER = server.EsbonioLanguageServer
             dict(
                 version=1,
                 disable_existing_loggers=True,
+                filters={
+                    "lsp-filter": {
+                        "()": LSPInfoFilter,
+                        "server": server.EsbonioLanguageServer,
+                        "enabled_methods": [
+                            types.INITIALIZE,
+                            types.INITIALIZED,
+                            types.TEXT_DOCUMENT_DID_OPEN,
+                            types.WORKSPACE_DID_CHANGE_CONFIGURATION,
+                        ],
+                    }
+                },
                 formatters=dict(
-                    fmt01=dict(format="[%(name)s] %(message)s"),
+                    fmt01=dict(format="[%(method)s(%(msgid)s)][%(name)s] %(message)s"),
                     fmt02=dict(format="%(message)s"),
                 ),
                 handlers=dict(
@@ -267,18 +401,24 @@ SERVER = server.EsbonioLanguageServer
                         "class": "logging.StreamHandler",
                         "level": "DEBUG",
                         "formatter": "fmt01",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "stream": "ext://sys.stderr",
                     },
                     stderr02={
                         "class": "logging.StreamHandler",
                         "level": "DEBUG",
                         "formatter": "fmt02",
+                        "filters": [
+                            "lsp-filter",
+                        ],
                         "stream": "ext://sys.stderr",
                     },
                 ),
                 loggers={
                     "esbonio": dict(
-                        level="ERROR",
+                        level="INFO",
                         propagate=False,
                         handlers=["stderr01"],
                     ),
@@ -295,11 +435,66 @@ SERVER = server.EsbonioLanguageServer
                 },
             ),
         ),
+        (  # The user should be able to customize the lsp methods that are logged
+            LoggingConfig(
+                level="debug",
+                enabled_methods=[types.TEXT_DOCUMENT_DOCUMENT_LINK],
+            ),
+            dict(
+                version=1,
+                disable_existing_loggers=True,
+                filters={
+                    "lsp-filter": {
+                        "()": LSPInfoFilter,
+                        "server": server.EsbonioLanguageServer,
+                        "enabled_methods": [
+                            types.TEXT_DOCUMENT_DOCUMENT_LINK,
+                        ],
+                    }
+                },
+                formatters=dict(
+                    fmt01=dict(format="[%(method)s(%(msgid)s)][%(name)s] %(message)s"),
+                    fmt02=dict(format="%(message)s"),
+                ),
+                handlers=dict(
+                    stderr01={
+                        "class": "logging.StreamHandler",
+                        "level": "DEBUG",
+                        "formatter": "fmt01",
+                        "filters": [
+                            "lsp-filter",
+                        ],
+                        "stream": "ext://sys.stderr",
+                    },
+                    stderr02={
+                        "class": "logging.StreamHandler",
+                        "level": "DEBUG",
+                        "formatter": "fmt02",
+                        "filters": [
+                            "lsp-filter",
+                        ],
+                        "stream": "ext://sys.stderr",
+                    },
+                ),
+                loggers={
+                    "esbonio": dict(
+                        level="DEBUG",
+                        propagate=False,
+                        handlers=["stderr01"],
+                    ),
+                    "sphinx": dict(
+                        level="INFO",
+                        propagate=False,
+                        handlers=["stderr02"],
+                    ),
+                },
+            ),
+        ),
     ],
 )
-def test_logging_config(config: LoggingConfig, expected: dict):
+def test_logging_config(config: LoggingConfig, expected: dict[str, Any]):
     """Ensure that we can convert the user's config into the config we can pass to the
     ``logging.config`` module correctly."""
 
     # SERVER in this case is a class, at runtime this will be an actual instance.
-    assert config.to_logging_config(SERVER) == expected
+    assert config.to_logging_config(server.EsbonioLanguageServer) == expected

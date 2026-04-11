@@ -1,20 +1,19 @@
 import { execSync } from "child_process";
 import * as vscode from 'vscode';
 import { ActiveEnvironmentPathChangeEvent } from '@vscode/python-extension';
-import { join } from "path";
 import {
   CancellationToken,
   ConfigurationParams,
+  Executable,
   LanguageClient,
   LanguageClientOptions,
   ResponseError,
-  ServerOptions,
   ShowDocumentParams,
   State,
   TextDocumentFilter
 } from "vscode-languageclient/node";
 
-import { OutputChannelLogger } from "../common/log";
+import { Logger } from "../common/log";
 import { PythonManager } from "./python";
 import { Commands, Events, Notifications, Server } from '../common/constants';
 
@@ -159,9 +158,9 @@ export class EsbonioClient {
   private extensionUri: vscode.Uri
 
   constructor(
-    private logger: OutputChannelLogger,
+    private logger: Logger,
     private python: PythonManager,
-    private context: vscode.ExtensionContext,
+    context: vscode.ExtensionContext,
     private channel: vscode.OutputChannel,
   ) {
     this.handlers = new Map()
@@ -263,20 +262,11 @@ export class EsbonioClient {
    */
   private async getStdioClient(): Promise<LanguageClient | undefined> {
     const config = vscode.workspace.getConfiguration("esbonio")
-    const debugServer = config.get<boolean>('server.debug')
-    const serverDevtools = config.get<boolean>('server.enableDevTools')
-    const lsp_devtools = this.resolveCommand("lsp-devtools")?.trim()
 
-    const command = []
-    if (serverDevtools && lsp_devtools) {
-      // Requires lsp-devtools to be on the user's PATH
-      command.push(lsp_devtools, "agent", "--")
-    }
-
-    let pythonCommand = await this.python.getCmd()
+    let pythonCommand = await this.python.getServerOptions()
     if (!pythonCommand) {
       let message = `Unable to start the Esbonio server as a compatible Python interpreter could not be found.
-        Please select an interpreter using the Python extension, or set the esbonio.server.pythonPath setting.`
+        Please select an interpreter using the Python extension, or set the esbonio.server.pythonCommand setting.`
 
       let result = await vscode.window.showErrorMessage(message, 'Select Interpreter')
       if (result === 'Select Interpreter') {
@@ -286,55 +276,25 @@ export class EsbonioClient {
       return
     }
 
-    // Isolate the Python interpreter from the user's environment - we brought our own.
-    command.push(...pythonCommand, "-S")
-
-    if (debugServer) {
-      let debugCommand = await this.python.getDebugerCommand()
-      command.push("-Xfrozen_modules=off", ...debugCommand)
+    let serverCommand: Executable = {
+      command: pythonCommand.command,
+      args: [...pythonCommand.args || [], ...config.get<string[]>("server.launchArgs") || []],
     }
 
-    let startupModule = config.get<string>("server.startupModule") || "esbonio.server"
-    let includedModules = config.get<string[]>('server.includedModules') || []
-    let excludedModules = config.get<string[]>('server.excludedModules') || []
-
-    // Entry point can either be a script, or it can be a python module.
-    if (startupModule.endsWith(".py") || startupModule.includes("/") || startupModule.includes("\\")) {
-      command.push(startupModule)
-    } else {
-      command.push("-m", startupModule)
+    if (pythonCommand.options?.env) {
+      serverCommand.options = { env: pythonCommand.options.env }
     }
 
-    includedModules.forEach(mod => {
-      command?.push('--include', mod)
-    })
 
-    excludedModules.forEach(mod => {
-      command?.push('--exclude', mod)
-    })
-
-    this.logger.debug(`Server start command: ${command.join(" ")}`)
-    const serverEnv: any = {
-      PYTHONPATH: join(this.context.extensionPath, "bundled", "libs")
-    };
-
-    // Passthrough any environment variables we haven't set ourselves..
-    Object.keys(process.env).forEach((key) => {
-      if (!serverEnv[key]) {
-        serverEnv[key] = process.env[key]
-      }
-    });
-
-    let server: ServerOptions = {
-      command: command[0], args: command.slice(1), options: {
-        env: serverEnv
-      }
+    this.logger.debug(`Server start command: ${serverCommand.command} ${serverCommand.args?.join(" ") || ""}`)
+    if (serverCommand.options?.env?.PYTHONPATH) {
+      this.logger.debug(`Server PYTHONPATH: '${serverCommand.options.env.PYTHONPATH}'`)
     }
 
     let client = new LanguageClient(
       'esbonio',
       'Esbonio Language Server',
-      server,
+      serverCommand,
       this.getLanguageClientOptions(pythonCommand, config)
     )
     this.registerHandlers(client)
@@ -373,10 +333,18 @@ export class EsbonioClient {
    * Returns the LanguageClient options that are common to both modes of
    * transport.
    */
-  private getLanguageClientOptions(pythonCommand: string[], config: vscode.WorkspaceConfiguration): LanguageClientOptions {
+  private getLanguageClientOptions(pythonCommand: Executable, config: vscode.WorkspaceConfiguration): LanguageClientOptions {
     let documentSelector = config.get<TextDocumentFilter[]>("server.documentSelector")
     if (!documentSelector || documentSelector.length === 0) {
       documentSelector = Server.DEFAULT_SELECTOR
+    }
+
+    let command = [pythonCommand.command]
+    if (pythonCommand.args) {
+      command.push(...pythonCommand.args)
+    }
+    if (!command.includes("-S")) {
+      command.push("-S")  // Isolates the interpreter from its normal environment.
     }
 
     let clientOptions: LanguageClientOptions = {
@@ -389,7 +357,7 @@ export class EsbonioClient {
         // Fallback sphinx configuration
         sphinx: {
           pythonCommand: {
-            command: [...pythonCommand, "-S"],
+            command: command,
             env: {
               PYTHONPATH: vscode.Uri.joinPath(this.extensionUri, "bundled", "env").fsPath
             }
@@ -446,16 +414,4 @@ export class EsbonioClient {
       }
     })
   }
-
-  private resolveCommand(command: string): string | undefined {
-    // TODO: Windows support
-    try {
-      let result = execSync(`command -v ${command}`)
-      return result.toString()
-    } catch (err) {
-      this.logger.debug(`Unable to resolve command ${command}: ${err}`)
-      return undefined
-    }
-  }
-
 }

@@ -69,7 +69,7 @@ def get_directive_renderer(
     Optional[DirectiveRenderer]
        The rendering function to use that matches the given criteria, if available.
     """
-    return _DIRECTIVE_RENDERERS.get((language, insert_behavior), None)
+    return _DIRECTIVE_RENDERERS.get((language, insert_behavior))
 
 
 def get_directive_argument_renderer(
@@ -90,7 +90,7 @@ def get_directive_argument_renderer(
     Optional[DirectiveArgumentRenderer]
        The rendering function to use that matches the given criteria, if available.
     """
-    return _DIRECTIVE_ARGUMENT_RENDERERS.get((language, insert_behavior), None)
+    return _DIRECTIVE_ARGUMENT_RENDERERS.get((language, insert_behavior))
 
 
 @directive_renderer(language="rst", insert_behavior="insert")

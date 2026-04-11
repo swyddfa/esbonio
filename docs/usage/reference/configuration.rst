@@ -56,13 +56,13 @@ The following options affect completion suggestions.
 
    Controls how completions behave when accepted, the following values are supported.
 
-   - ``replace`` (default)
+   - ``replace``
 
      Accepted completions will replace existing text, allowing the server to rewrite the current line in place.
      This allows the server to return all possible completions within the current context.
      In this mode the server will set the ``textEdit`` field of a ``CompletionItem``.
 
-   - ``insert``
+   - ``insert`` (default)
 
      Accepted completions will append to existing text rather than replacing it.
      Since rewriting is not possible, only the completions that are compatible with any existing text will be returned.
@@ -124,9 +124,9 @@ The following options control the logging output of the language server.
 
    - ``critical``
    - ``fatal``
-   - ``error`` (default)
+   - ``error``
    - ``warning``
-   - ``info``
+   - ``info`` (default)
    - ``debug``
 
 .. esbonio:config:: esbonio.logging.format
@@ -136,7 +136,7 @@ The following options control the logging output of the language server.
    Sets the default format string to apply to log messages.
    This can be any valid :external:ref:`%-style <old-string-formatting>` format string, referencing valid :external:ref:`logrecord-attributes`
 
-   **Default value:** ``[%(name)s]: %(message)s``
+   **Default value:** ``[%(method)s(%(msgid)s)][%(name)s]: %(message)s``
 
 .. esbonio:config:: esbonio.logging.filepath
    :scope: global
@@ -155,6 +155,20 @@ The following options control the logging output of the language server.
    :type: boolean
 
    If ``True``, the server will send messages to the client as :lsp:`window/logMessage` notifications
+
+.. esbonio:config:: esbonio.logging.enabledMethods
+   :scope: global
+   :type: string[]
+
+   Only log messages for the given list of LSP method names will be emitted.
+   If not given, the following list of method names will be used by default
+
+   - ``initialize``
+   - ``initialized``
+   - ``textDocument/didOpen``
+   - ``workspace/didChangeConfiguration``
+
+   **Note:** This only applies to log messages emitted from the ``esbonio`` logger, or any of its child loggers.
 
 .. esbonio:config:: esbonio.logging.config
    :scope: global
@@ -179,9 +193,15 @@ The following is equivalent to the server's default logging configuration::
    {
      "esbonio": {
        "logging": {
-         "level": "error",
-         "format": "[%(name)s]: %(message)s",
+         "level": "info",
+         "format": "[%(method)s(%(msgid)s)][%(name)s]: %(message)s",
          "stderr": true,
+         "enabledMethods": [
+            "initialize",
+            "initialized",
+            "textDocument/didOpen",
+            "workspace/didChangeConfiguration",
+         ],
          "config": {
            "sphinx": {
              "level": "info",
@@ -319,7 +339,7 @@ The following options control the creation and management of background Sphinx p
 
    This can be as simple as the full path to the Python executable in your virtual environment::
 
-     ["/home/user/Projects/example/venv/bin/python"]
+     "/home/user/Projects/example/venv/bin/python"
 
    Or a complex command with a number of options and arguments::
 

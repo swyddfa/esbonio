@@ -389,7 +389,11 @@ def register_structure_hooks(converter: cattrs.Converter):
         for a in attrs.fields(SphinxConfig)
     }
 
-    hook = cattrs.gen.make_dict_structure_fn(SphinxConfig, converter, **fields)
+    hook = cattrs.gen.make_dict_structure_fn(
+        SphinxConfig,
+        converter,
+        **fields,  # type: ignore[arg-type]
+    )
 
     def _structure_sphinx_config(obj, typ):
         """A wrapper around the ``cattrs.gen`` hook to implement multiple names mapping
@@ -426,6 +430,9 @@ def sphinx_config_struct_hooks(field_name: str):
         ``["/bin/python"]`` to a SubProcess instance."""
         if isinstance(obj, list):
             return typ(command=obj)
+
+        if isinstance(obj, str):
+            return typ(command=[obj])
 
         return typ(**obj)
 

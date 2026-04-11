@@ -23,17 +23,24 @@ def check_diagnostics(
     for k, ex_diags in expected.items():
         actual_diags = [converter.structure(d, types.Diagnostic) for d in actual[k]]
 
-        assert len(ex_diags) == len(actual_diags)
+        assert len(ex_diags) == len(actual_diags), (
+            f"Expected {len(ex_diags)} diagnostics for {k}, got {len(actual_diags)}"
+        )
 
-        for actual_diagnostic in actual_diags:
-            # Assumes ranges are unique
-            matches = [e for e in ex_diags if e.range == actual_diagnostic.range]
-            assert len(matches) == 1
+        for expected_diagnostic in ex_diags:
+            # Match by message prefix (diagnostics may be in the same range (line/column))
+            matches = [
+                a
+                for a in actual_diags
+                if a.message.startswith(expected_diagnostic.message)
+            ]
+            assert len(matches) == 1, (
+                f"Expected exactly one match for '{expected_diagnostic.message}' in {k}"
+            )
 
-            expected_diagnostic = matches[0]
-            assert actual_diagnostic.range == expected_diagnostic.range
+            actual_diagnostic = matches[0]
             assert actual_diagnostic.severity == expected_diagnostic.severity
-            assert actual_diagnostic.message.startswith(expected_diagnostic.message)
+            assert actual_diagnostic.range == expected_diagnostic.range
 
 
 @pytest.mark.asyncio

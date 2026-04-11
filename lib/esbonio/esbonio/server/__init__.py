@@ -18,6 +18,7 @@ from .feature import HoverTrigger
 from .feature import LanguageFeature
 from .server import EsbonioLanguageServer
 from .server import EsbonioWorkspace
+from .server import LSProtocol
 from .server import __version__
 from .setup import create_language_server
 
@@ -40,6 +41,7 @@ __all__ = (
     "HoverContext",
     "HoverTrigger",
     "LanguageFeature",
+    "LSProtocol",
     "Uri",
     "create_language_server",
 )

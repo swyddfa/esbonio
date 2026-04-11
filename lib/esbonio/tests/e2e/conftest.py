@@ -7,7 +7,7 @@ from lsprotocol import types
 from pytest_lsp import ClientServerConfig
 from pytest_lsp import LanguageClient
 
-SERVER_CMD = ["-m", "esbonio"]
+SERVER_CMD = ["-m", "esbonio.server"]
 TEST_DIR = pathlib.Path(__file__).parent.parent
 
 
@@ -24,7 +24,17 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
 
     # Override the project configuration so that builds are written into a temporary folder
     build_dir = tmp_path_factory.mktemp("build")
-    lsp_client.set_configuration({"logging": {"level": "debug"}}, section="esbonio")
+    lsp_client.set_configuration(
+        {
+            "logging": {"level": "debug"},
+            "server": {
+                "completion": {
+                    "preferredInsertBehavior": "replace",
+                }
+            },
+        },
+        section="esbonio",
+    )
     lsp_client.set_configuration(
         {
             "buildCommand": [
