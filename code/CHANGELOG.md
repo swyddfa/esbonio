@@ -1,3 +1,36 @@
+## v2.0.0 - 2026-04-11
+
+### Breaking Changes
+
+- Drop support for Sphinx v6. ([#1086](https://github.com/swyddfa/esbonio/issues/1086))
+- The following configuration options have been removed
+
+  - `esbonio.server.startupModule` (replaced with `esbonio.server.launchArgs`)
+  - `esbonio.server.excludedModules` (replaced with `esbonio.server.launchArgs`)
+  - `esbonio.server.includedModules` (replaced with `esbonio.server.launchArgs`)
+  - `esbonio.server.enableDevTools` (replaced with `esbonio.server.pythonCommand`)
+  - `esbonio.server.pythonPath` (replaced with `esbonio.server.pythonCommand`)
+  - `esbonio.server.debug`
+
+  ([#1091](https://github.com/swyddfa/esbonio/issues/1091))
+
+### Features
+
+- Add `esbonio.server.pythonCommand` setting which can be used to instruct the extension to use a different version of esbonio to the one that is bundled with the server.
+
+  Add the `esbonio.server.launchArgs` setting which can be used to change the arguments the language server is launched with. ([#1091](https://github.com/swyddfa/esbonio/issues/1091))
+- Expose `esbonio.logging.enabledMethods` configuration option. ([#1095](https://github.com/swyddfa/esbonio/issues/1095))
+
+### Enhancements
+
+- The `esbonio.sphinx.pythonCommand` can now be set to a single string, useful when working with virtual environments by @gastmaier ([#1089](https://github.com/swyddfa/esbonio/issues/1089))
+- Update Esbonio output window syntax highlighting to align with logging changes in the `esbonio` language server. ([#1095](https://github.com/swyddfa/esbonio/issues/1095))
+
+### Misc
+
+- Update bundled version of `esbonio` to `v2.0` ([#1102](https://github.com/swyddfa/esbonio/issues/1102))
+
+
 ## v1.1.1 - 2026-02-19
 
 ### Fixes
