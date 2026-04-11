@@ -24,6 +24,7 @@ IS_DEVELOP = os.environ.get("GITHUB_REF", "") == "refs/heads/develop"
 IS_RELEASE = os.environ.get("GITHUB_REF", "") == "refs/heads/release"
 
 ENV = os.environ.get("GITHUB_ENV", "")
+GH_OUT = os.environ.get("GITHUB_OUTPUT", "")
 STEP_SUMMARY = os.environ.get("GITHUB_STEP_SUMMARY", "")
 
 REPO = pathlib.Path(__file__).parent.parent.resolve()
@@ -132,6 +133,9 @@ def main(component_name: str):
         f"VERSION={version}" >> env
         f"RELEASE_DATE={date:%Y-%m-%d}" >> env
         f"RELEASE_TAG={tag}" >> env
+
+    with Output(GH_OUT) as out:
+        f"version={version}" >> out
 
 
 def set_version(component: Component) -> str:
