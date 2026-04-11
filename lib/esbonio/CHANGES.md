@@ -1,3 +1,33 @@
+## v2.0.0 - 2026-04-11
+
+### Breaking Changes
+
+- Drop support for Sphinx v6. ([#1086](https://github.com/swyddfa/esbonio/issues/1086))
+- The default values for the following configuration options have been changed.
+
+  - `esbonio.logging.level` now defaults to `info`
+  - `esbonio.server.completion.preferredInsertBehavior` now defaults to `insert`
+
+  ([#1094](https://github.com/swyddfa/esbonio/issues/1094))
+- The default values for the following configuration options have been changed.
+
+  - `esbonio.logging.format` now defaults to `[%(method)s(%(msgid)s)][%(name)s] %(message)s`
+
+  Only log messages associated with the LSP methods `initialize`, `initialized`, `textDocument/didOpen` and `workspace/didChangeConfiguration` are shown by default, regardless of logging level.
+
+  ([#1095](https://github.com/swyddfa/esbonio/issues/1095))
+- The `esbonio` command no longer starts the server, instead the server is launched by running `esbonio server`, or by invoking the `python -m esbonio.server` ([#1098](https://github.com/swyddfa/esbonio/issues/1098))
+
+### Features
+
+- Add support for Sphinx v9 by @gastmaier ([#1085](https://github.com/swyddfa/esbonio/issues/1085))
+- Introduce the `esbonio.logging.enabledMethods` option which can be used to override the list of LSP methods for which log messages are shown. ([#1095](https://github.com/swyddfa/esbonio/issues/1095))
+
+### Enhancements
+
+- The `esbonio.sphinx.pythonCommand` can now be set to a single string, useful when working with virtual environments by @gastmaier ([#1085](https://github.com/swyddfa/esbonio/issues/1085))
+
+
 ## v1.1.0 - 2026-02-19
 
 ### Enhancements
