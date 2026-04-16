@@ -75,7 +75,11 @@ The language server provides the following features.
 
 ## `code/` - A VSCode extension for editing Sphinx projects
 
-[![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/swyddfa.esbonio?style=flat-square)![Visual Studio Marketplace Installs](https://img.shields.io/visual-studio-marketplace/i/swyddfa.esbonio?style=flat-square)![Visual Studio Marketplace Downloads](https://img.shields.io/visual-studio-marketplace/d/swyddfa.esbonio?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio)[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/code/LICENSE)
+[![Open VSX Version](https://img.shields.io/open-vsx/v/swyddfa/esbonio?style=flat-square)![Open VSX Downloads](https://img.shields.io/open-vsx/dt/swyddfa/esbonio?style=flat-square)](https://open-vsx.org/extension/swyddfa/esbonio)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/code/LICENSE)
+
+[VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio)
+
 
 <p align="center">
    <img src="./resources/images/vscode-preview-demo.gif" alt="HTML Preview Demo"></img>
