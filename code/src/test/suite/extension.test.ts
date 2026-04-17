@@ -22,23 +22,42 @@ suite('Extension Test Suite', () => {
   });
 
   test('server starts', async () => { // Language server should start
-    if (!esbonio) {
-      assert.fail("Extension not activated")
-    }
+    let promise = new Promise<void>(async (resolve, reject) => {
 
-    await esbonio.client.start()
-    assert.ok(esbonio.client.server)
-    assert.strictEqual(esbonio.client.server.state, State.Running)
+      if (!esbonio) {
+        reject("Extension not activated")
+        return
+      }
+
+      try {
+        await esbonio.client.start()
+        assert.ok(esbonio.client.server && esbonio.client.server !== 'starting')
+        assert.strictEqual(esbonio.client.server.state, State.Running)
+
+        resolve()
+      } catch(err) {
+        reject(err)
+      }
+    })
+    return promise
   });
 
   test('file open', async () => { // Opening a file should create a Sphinx client instance.
     let promise = new Promise<void>((resolve, reject) => {
+
       if (!esbonio) {
-        assert.fail("Extension not activated")
+        reject("Extension not activated")
+        return
       }
 
-      assert.ok(esbonio.client.server)
-      assert.strictEqual(esbonio.client.server.state, State.Running)
+      try {
+        assert.ok(esbonio.client.server && esbonio.client.server !== 'starting')
+        assert.strictEqual(esbonio.client.server.state, State.Running)
+      } catch(err) {
+        reject(err)
+        return
+      }
+
       esbonio.client.addHandler(Notifications.SPHINX_APP_CREATED, (params: AppCreatedNotification) => {
         try {
           assert.strictEqual(params.application.version, process.env.EXPECTED_SPHINX_VERSION)
@@ -64,11 +83,17 @@ suite('Extension Test Suite', () => {
   test('preview open', async () => { // Should be able to open preview
     let promise = new Promise<void>(async (resolve, reject) => {
       if (!esbonio) {
-        assert.fail("Extension not activated")
+        reject("Extension not activated")
+        return
       }
 
-      assert.ok(esbonio.client.server)
-      assert.strictEqual(esbonio.client.server.state, State.Running)
+      try{
+        assert.ok(esbonio.client.server && esbonio.client.server !== 'starting')
+        assert.strictEqual(esbonio.client.server.state, State.Running)
+      } catch(err) {
+        reject(err)
+        return
+      }
 
       let previewUri = vscode.Uri.joinPath(workspace.uri, 'index.rst')
 

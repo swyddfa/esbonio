@@ -49,6 +49,24 @@ module.exports = defineConfig([
     mocha: MOCHA_ARGS,
   },
   {
+    label: 'Python Environments', // Ensure we handle the case where the Python environments extension is used, see https://github.com/swyddfa/esbonio/issues/1035.
+    files: 'dist/test/**/*.test.js',
+    workspaceFolder: createWorkspaceWithConfig(DEMO_WORKSPACE, "python-envs-extension", {
+      "esbonio.logging.level": "debug",
+      "esbonio.logging.filepath": "esbonio.log",
+      "esbonio.server.enabled": true,
+
+      "python.locator": "native",
+      "python.useEnvironmentsExtension": true,
+    }),
+    env: {
+      ESBONIO_LOG_DEST: 'console',
+      EXPECTED_SPHINX_VERSION: "8.1.3",
+      EXPECTED_SPHINX_THEME: "alabaster.css"
+    },
+    mocha: MOCHA_ARGS,
+  },
+  {
     label: 'Python 3.10', // Using uv to install esbonio under 3.10, using bundled Sphinx env.
     files: 'dist/test/**/*.test.js',
     workspaceFolder: createWorkspaceWithConfig(DEMO_WORKSPACE, "uv-3.10-bundled", {
