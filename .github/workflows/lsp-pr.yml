@@ -6,6 +6,7 @@ on:
     - release
     paths:
     - 'lib/esbonio/**'
+    - '!lib/esbonio/changes/**'
 
 jobs:
   build:
