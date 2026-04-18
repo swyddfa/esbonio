@@ -9,7 +9,7 @@ vim.diagnostic.config({
 
 -- LSP Config
 vim.lsp.config('esbonio', {
-  cmd = { 'esbonio' },
+  cmd = { 'esbonio', 'server' },
   filetypes = { 'rst' },
   root_markers = { '.git' },
   settings = {
