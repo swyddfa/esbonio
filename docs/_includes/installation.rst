@@ -11,7 +11,8 @@ or `pipx <https://pipx.pypa.io/stable/>`__::
 
    pipx install esbonio
 
-Of course, you can use ``pip`` to install esbonio into a virtual environment of your choosing, the most important thing is that the ``esbonio`` command is available on your ``PATH``::
+Alternatively, you can use ``pip`` to install esbonio into a virtual environment of your choosing.
+However you decide to install the server, the ``esbonio`` command must be available on your ``PATH``::
 
    $ esbonio --help
    usage: esbonio [-h] [--version] {server} ...
