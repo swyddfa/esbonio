@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import argparse
+import asyncio
 import importlib
+import inspect
 import logging
 import typing
 
@@ -14,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 BUILTIN_COMMANDS = [
     "esbonio.cli.server",
+    "esbonio.cli.sphinx",
 ]
 
 
@@ -67,10 +70,18 @@ def main(argv: Sequence[str] | None = None):
 
     if hasattr(args, "run"):
         try:
-            return args.run(args)
+            result = args.run(args)
+            if inspect.iscoroutine(result):
+                return asyncio.run(result)
+
+            return result
         except Exception:
             logger.exception("Error running command")
             return -1
 
-    cli.print_help()
+    elif hasattr(args, "help_fn"):
+        args.help_fn()
+    else:
+        cli.print_help()
+
     return 0
