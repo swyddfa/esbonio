@@ -173,6 +173,15 @@
             {
                 "title": "Sphinx",
                 "properties": {
+                    "esbonio.sphinx.buildArguments": {
+                        "scope": "resource",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": null,
+                        "description": "The sphinx-build arguments to use."
+                    },
                     "esbonio.sphinx.buildCommand": {
                         "scope": "resource",
                         "type": "array",
@@ -180,7 +189,8 @@
                             "type": "string"
                         },
                         "default": null,
-                        "description": "The sphinx-build command to use."
+                        "deprecationMessage": "Deprecated in favour of esbonio.sphinx.buildArguments",
+                        "description": "The sphinx-build arguments to use."
                     },
                     "esbonio.sphinx.buildTriggers": {
                         "scope": "window",
