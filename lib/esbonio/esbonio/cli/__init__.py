@@ -34,6 +34,14 @@ def build_parser() -> argparse.ArgumentParser:
         help="print the current version and exit.",
     )
 
+    _ = cli.add_argument(
+        "-v",
+        "--verbose",
+        action="count",
+        default=0,
+        help="increase output verbosity (can be repeated e.g. -vv)",
+    )
+
     commands = cli.add_subparsers(title="commands")
 
     for module in BUILTIN_COMMANDS:

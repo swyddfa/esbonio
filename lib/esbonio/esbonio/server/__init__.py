@@ -6,6 +6,7 @@ from esbonio.sphinx_agent.types import Uri
 
 from ._configuration import ConfigChangeEvent
 from ._configuration import ConfigurationContext
+from ._configuration import merge_configs
 from .events import EventSource
 from .feature import CompletionConfig
 from .feature import CompletionContext
@@ -44,4 +45,5 @@ __all__ = (
     "LSProtocol",
     "Uri",
     "create_language_server",
+    "merge_configs",
 )

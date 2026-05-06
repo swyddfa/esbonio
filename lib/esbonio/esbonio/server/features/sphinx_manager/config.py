@@ -113,9 +113,7 @@ class SubProcess:
            The command to use when invoking python
         """
         if len(command := list(self.command)) == 0:
-            logger.warning(
-                "No pythonCommand configured! Reusing the server's environment."
-            )
+            logger.info("No pythonCommand configured, reusing host environment.")
             return [sys.executable]
 
         command = [_resolve_variable(c, cwd) for c in command]
