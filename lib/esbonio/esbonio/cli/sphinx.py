@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import logging
 import pathlib
+import shlex
 import sys
 from functools import partial
 
@@ -11,6 +12,7 @@ from pygls.protocol import default_converter
 
 from esbonio.server import EsbonioWorkspace
 from esbonio.server import Uri
+from esbonio.server import merge_configs
 from esbonio.server.features.sphinx_manager import ClientState
 from esbonio.server.features.sphinx_manager import SphinxClient
 from esbonio.server.features.sphinx_manager import SphinxConfig
@@ -25,7 +27,7 @@ except ImportError:
 def setup_cli(commands: argparse._SubParsersAction[argparse.ArgumentParser]):
     """Configure the cli commands provided by this module."""
 
-    sphinx_cli = commands.add_parser("sphinx", help="interact with Sphinx projects")
+    sphinx_cli = commands.add_parser("sphinx", help="interact with sphinx projects")
     sphinx_cli.set_defaults(help_fn=sphinx_cli.print_help)
 
     _ = sphinx_cli.add_argument(
@@ -37,12 +39,49 @@ def setup_cli(commands: argparse._SubParsersAction[argparse.ArgumentParser]):
     )
     sphinx_commands = sphinx_cli.add_subparsers(title="commands")
 
-    build_cmd = sphinx_commands.add_parser("build", help="build a Sphinx project")
+    build_cmd = sphinx_commands.add_parser(
+        "build",
+        help="build a sphinx project",
+        description="""\
+Build a sphinx project.
+
+This command builds a sphinx project in the same manner as the esbonio language server,
+meaning:
+
+- Esbonio's additional sphinx extensions will be enabled
+- Resulting html files will contain the HTML and JS necessary to support sync scrolling
+- The esbonio.db file will be generated.
+
+Useful as a debugging aid for compatibility issues.
+
+In the absence of any additional command line flags, this command will look for a
+pyproject.toml file in the current working directory and use the options in the
+`[tool.esbonio.sphinx]` section to configure the build.
+
+If the pyproject.toml file is not found, or does not contain the relevant options
+this command will attempt to derive a valid configuration, following the same
+rules as the language server.
+
+Providing additional command line flags will override this behaviour.""",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     setup_build_args(build_cmd)
 
 
 def setup_build_args(parser: argparse.ArgumentParser):
+    """Configure the arguments for the build command."""
     parser.set_defaults(run=sphinx_build)
+
+    parser.add_argument(
+        "--build-args",
+        default=None,
+        help="override the arguments passed to sphinx-build",
+    )
+    parser.add_argument(
+        "--python-cmd",
+        default=None,
+        help="override the python envrionment used",
+    )
 
 
 async def handle_client(
@@ -64,17 +103,70 @@ async def handle_client(
         return
 
 
-def load_config(path: pathlib.Path, logger: logging.Logger) -> SphinxConfig | None:
-    config_uri = Uri.for_file(path)
-    workspace = EsbonioWorkspace(root_uri=(config_uri / "..").as_string())
+def get_sphinx_config(
+    path: pathlib.Path,
+    build_args: str | None,
+    python_cmd: str | None,
+    logger: logging.Logger,
+) -> SphinxConfig | None:
+    """Return the SphinxConfig instance to use.
+
+    This will attempt to read ``path`` as a pyproject.toml file and construct a
+    ``SphinxConfig`` instance from the ``[tool.esbonio.sphinx]`` section. If the path
+    does not exist this function will attempt to continue without it, any other error
+    will lead to an abort.
+
+    If additional parameters are given, they will override any values present in the config.
+
+    Parameters
+    ----------
+    path
+       The path to the ``pyproject.toml`` file to load configuration values from
+
+    build_args
+       If set, override ``esbonio.sphinx.buildArguments``.
+
+    python_cmd
+       If set, override ``esbonio.sphinx.pythonCommand``.
+
+    logger
+       The logger instance to use.
+
+    Returns
+    -------
+    SphinxConfig
+       The fully resolved SphinxConfig instance to use, ``None`` otherwise.
+    """
+    workspace = EsbonioWorkspace(root_uri=Uri.for_file(path.parent).as_string())
 
     converter = default_converter()
     register_structure_hooks(converter)
 
-    data = toml.loads(path.read_text())
-    values = data.get("tool", {}).get("esbonio", {}).get("sphinx", {})
+    defaults = {}
+    if path.is_file():
+        try:
+            data = toml.loads(path.read_text())
+            defaults = data.get("tool", {}).get("esbonio", {}).get("sphinx", {})
+        except Exception:
+            logging.exception("Unable to load configuration")
+            return None
 
-    config = converter.structure(values, SphinxConfig)
+    overrides = {}
+    if build_args is not None:
+        overrides["buildArguments"] = shlex.split(build_args)
+
+    if python_cmd is not None:
+        overrides["pythonCommand"] = shlex.split(python_cmd)
+
+    values = merge_configs(defaults, overrides)
+
+    try:
+        config = converter.structure(values, SphinxConfig)
+    except Exception:
+        logging.exception("Unable to parse configuration")
+        return None
+
+    config_uri = Uri.for_file(path)
     return config.resolve(config_uri, workspace, logger)
 
 
@@ -88,23 +180,50 @@ def get_sphinx_client(config: SphinxConfig, logger: logging.Logger):
     return client
 
 
+LOG_LEVELS = [
+    logging.WARNING,
+    logging.INFO,
+    logging.DEBUG,
+]
+
+
+def setup_logging(args):
+    # Sphinx output is handled separately.
+    sphinx_handler = logging.StreamHandler()
+    sphinx_handler.setLevel(logging.INFO)
+
+    sphinx_log = logging.getLogger("sphinx")
+    sphinx_log.setLevel(logging.INFO)
+    sphinx_log.addHandler(sphinx_handler)
+
+    try:
+        log_level = LOG_LEVELS[args.verbose]
+    except IndexError:
+        log_level = LOG_LEVELS[-1]
+
+    handler = logging.StreamHandler()
+    handler.setLevel(log_level)
+    handler.setFormatter(logging.Formatter("[%(name)s]: %(message)s"))
+
+    logger = logging.getLogger("esbonio")
+    logger.setLevel(log_level)
+    logger.addHandler(handler)
+
+    return logger
+
+
 async def sphinx_build(args):
     """Run a Sphinx build including all of esbonio's extras, just as if it was running
     under the language server."""
 
-    handler = logging.StreamHandler()
-    handler.setLevel(logging.INFO)
-    handler.setFormatter(logging.Formatter("[%(name)s]: %(message)s"))
+    logger = setup_logging(args)
 
-    sphinx_log = logging.getLogger("sphinx")
-    sphinx_log.setLevel(logging.INFO)
-    sphinx_log.addHandler(handler)
-
-    logger = logging.getLogger("esbonio")
-    logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
-
-    config = load_config(args.config.resolve(), logger)
+    config = get_sphinx_config(
+        path=args.config.resolve(),
+        build_args=args.build_args,
+        python_cmd=args.python_cmd,
+        logger=logger,
+    )
     if config is None:
         print("Unable to generate a valid Sphinx configuration", file=sys.stderr)
         return 1

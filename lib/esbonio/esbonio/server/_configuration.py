@@ -379,7 +379,7 @@ class Configuration:
         workspace_config = self._workspace_config.get(context.workspace_scope, {})
 
         # Combine and resolve all the config sources - order matters!
-        config = _merge_configs(
+        config = merge_configs(
             self._initialization_options, file_config, workspace_config
         )
         # self.logger.debug("Full config: %s", json.dumps(config, indent=2))
@@ -537,7 +537,7 @@ def _uri_to_scope(known_scopes: list[str], uri: Uri | None) -> str:
     return sorted(candidates, key=len, reverse=True)[0]
 
 
-def _merge_configs(*configs: dict[str, Any]):
+def merge_configs(*configs: dict[str, Any]):
     """Recursively merge all the given configuration sources together.
 
     The last config given takes precedence.
@@ -556,7 +556,7 @@ def _merge_configs(*configs: dict[str, Any]):
         # Do we need to recurse?
         if isinstance(values[-1], dict):
             # Be sure to only pass dictionary values to _merge_configs.
-            final[k] = _merge_configs(*[v for v in values if isinstance(v, dict)])
+            final[k] = merge_configs(*[v for v in values if isinstance(v, dict)])
         else:
             final[k] = values[-1]
 
