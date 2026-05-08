@@ -8,14 +8,13 @@ This can be changed by setting `esbonio.sphinx.buildArguments` in your `pyprojec
 ```toml
 [tool.esbonio.sphinx]
 buildArguments = [
-    "sphinx-build", "-M", "html", "docs", "${defaultBuildDir}", "--nitpicky", "--verbose",
+    "-M", "html", "docs", "${defaultBuildDir}", "--nitpicky", "--verbose",
 ]
 ```
 Alternatively, you can include the setting in your `.vscode/settings.json`
 ```json
 {
     "esbonio.sphinx.buildArguments": [
-        "sphinx-build",
         "-b", "html",
         "-j", "auto",
         "docs", "docs/_build"
