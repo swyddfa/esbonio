@@ -17,7 +17,7 @@ Of course, the ``sphinx-build`` command you use with your project may be differe
 .. code-block:: toml
 
    [tool.esbonio.sphinx]
-   buildArguments = ["sphinx-build", "-M", "html", "docs", "${defaultBuildDir}", "--nitpicky", "--verbose"]
+   buildArguments = ["-M", "html", "docs", "${defaultBuildDir}", "--nitpicky", "--verbose"]
 
 :esbonio:conf:`esbonio.sphinx.buildArguments` must be the genuine command line for ``sphinx-build``.
 Wrapper scripts around ``sphinx-build``, e.g. a Makefile, are not supported.
@@ -60,7 +60,7 @@ Then your :esbonio:conf:`esbonio.sphinx.buildArguments` might look something lik
 .. code-block:: toml
 
    [tool.esbonio.sphinx]
-   buildArguments = ["sphinx-build", "-M", "html", "docs", "${defaultBuildDir}"]
+   buildArguments = ["-M", "html", "docs", "${defaultBuildDir}"]
 
 If you set the build command using the settings in your editor, the "current directory" will be set to root of your workspace
 
@@ -75,7 +75,7 @@ For example, to override the theme used by the project
 .. code-block:: toml
 
    [tool.esbonio.sphinx]
-   buildArguments = ["sphinx-build", "-M", "dirhtml", ".", "${defaultBuildDir}"]
+   buildArguments = ["-M", "dirhtml", ".", "${defaultBuildDir}"]
    configOverrides = { html_theme = "alabaster" }
 
 Though of course, this setting probably make most sense to be set via your editor.
@@ -92,7 +92,7 @@ To override it to be ``My Custom Title`` you could use the following
 .. code-block:: toml
 
    [tool.esbonio.sphinx]
-   buildArguments = ["sphinx-build", "-M", "dirhtml", ".", "${defaultBuildDir}"]
+   buildArguments = ["-M", "dirhtml", ".", "${defaultBuildDir}"]
    configOverrides = { html_context.docstitle = "My Custom Title" }
 
 Though of course, this setting probably make most sense to be set via your editor.
