@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import inspect
 import logging
+import os
 import sys
 import traceback
 import typing
@@ -102,6 +103,17 @@ class SphinxHandler:
             handlers[request_type.method] = (request_type, method_func)
 
         return handlers
+
+    def initialize(self, request: types.InitializeRequest):
+        """Currently just a hack to return the process pid to the server early-ish in
+        the program's lifecycle."""
+
+        response = types.InitializeResponse(
+            id=request.id,
+            result=types.InitializeResult(pid=os.getpid()),
+            jsonrpc=request.jsonrpc,
+        )
+        send_message(response)
 
     def create_sphinx_app(self, request: types.CreateApplicationRequest):
         """Create a new sphinx application instance."""

@@ -4,6 +4,7 @@ import argparse
 import asyncio
 import logging
 import pathlib
+import pdb
 import shlex
 import sys
 from functools import partial
@@ -72,24 +73,40 @@ def setup_build_args(parser: argparse.ArgumentParser):
     """Configure the arguments for the build command."""
     parser.set_defaults(run=sphinx_build)
 
-    parser.add_argument(
+    _ = parser.add_argument(
         "--build-args",
         default=None,
         help="override the arguments passed to sphinx-build",
     )
-    parser.add_argument(
+    _ = parser.add_argument(
         "--python-cmd",
         default=None,
         help="override the python envrionment used",
     )
+    _ = parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="attach a debugger to the build process (Python 3.14+)",
+    )
 
 
 async def handle_client(
+    logger: logging.Logger,
     future: asyncio.Future[None],
+    debug: bool,
     client: SphinxClient,
     old_state: ClientState,
     new_state: ClientState,
 ):
+    if new_state == ClientState.Starting:
+        if debug:
+            try:
+                logger.info("Attaching to build process...")
+                pdb.attach(client.sphinx_pid)
+            except RuntimeError as exc:
+                await client.stop()
+                logger.error("Unable to attach to build process: %s", exc)
+
     if old_state == ClientState.Starting and new_state == ClientState.Running:
         _ = await client.build()
 
@@ -181,7 +198,6 @@ def get_sphinx_client(config: SphinxConfig, logger: logging.Logger):
 
 
 LOG_LEVELS = [
-    logging.WARNING,
     logging.INFO,
     logging.DEBUG,
 ]
@@ -218,6 +234,10 @@ async def sphinx_build(args):
 
     logger = setup_logging(args)
 
+    if args.debug and sys.version_info < (3, 14):
+        logger.error("--debug is only available on Python 3.14+")
+        return
+
     config = get_sphinx_config(
         path=args.config.resolve(),
         build_args=args.build_args,
@@ -231,7 +251,17 @@ async def sphinx_build(args):
     client = get_sphinx_client(config, logger)
 
     future = asyncio.Future()
-    client.add_listener("state-change", partial(handle_client, future))
+    client.add_listener(
+        "state-change", partial(handle_client, logger, future, args.debug)
+    )
 
-    _ = await client.start()
-    await asyncio.ensure_future(future)
+    try:
+        _ = await client.start()
+        await asyncio.ensure_future(future)
+        return 0
+    except RuntimeError as exc:
+        logger.error("%s", exc)
+        return 1
+    except Exception:
+        logger.exception("Error occured during build")
+        return 1

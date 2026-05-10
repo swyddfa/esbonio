@@ -27,6 +27,9 @@ if typing.TYPE_CHECKING:
 class ClientState(enum.Enum):
     """The set of possible states the client may be in."""
 
+    Spawning = enum.auto()
+    """The client process is being spwaned."""
+
     Starting = enum.auto()
     """The client is starting."""
 
@@ -85,6 +88,9 @@ class SphinxClient(JsonRPCClient):
         self.logger = logger or logging.getLogger(__name__)
         """The logger instance to use."""
 
+        self.sphinx_pid: int = 0
+        """The pid of the sphinx build process (or ``0`` if not known)"""
+
         self.sphinx_info: types.SphinxInfo | None = None
         """Information about the Sphinx application the client is connected to."""
 
@@ -127,8 +133,16 @@ class SphinxClient(JsonRPCClient):
 
     @property
     def pid(self) -> int:
-        """The pid of the sphinx agent process, if no process is running this will
-        return ``0``."""
+        """The pid of the process launched by the client
+
+        .. important::
+
+           When the user uses tools like ``uv`` this may be a different process to the
+           actual Sphinx build process!. To get the pid of the sphinx build process use
+           ``sphinx_pid``
+
+        If no process is running this will return ``0``.
+        """
         if self._server is None:
             return 0
 
@@ -229,10 +243,17 @@ class SphinxClient(JsonRPCClient):
             return self
 
         try:
+            self._set_state(ClientState.Spawning)
+
             sphinx = self.config.sphinx_command
 
             self.logger.debug("Python command: %r", sphinx.command)
             await self.start_io(*sphinx.command, env=sphinx.env, cwd=sphinx.cwd)
+
+            result: types.InitializeResult = await self.protocol.send_request_async(
+                "initialize", types.InitializeParams()
+            )
+            self.sphinx_pid = result.pid
 
             self._set_state(ClientState.Starting)
 
