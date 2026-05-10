@@ -36,6 +36,9 @@ if typing.TYPE_CHECKING:
         ) -> Coroutine[None, None, tuple[EsbonioLanguageServer, SphinxManager]]: ...
 
 
+STARTING_STATES = {None, ClientState.Starting, ClientState.Spawning}
+
+
 @pytest.fixture
 def demo_workspace(uri_for):
     return uri_for("workspaces", "demo")
@@ -144,7 +147,11 @@ async def test_get_client(
     client = manager.clients[str(demo_workspace)]
 
     assert client is not None
-    assert client.state in {ClientState.Starting, ClientState.Running}
+    assert client.state in {
+        ClientState.Spawning,
+        ClientState.Starting,
+        ClientState.Running,
+    }
 
     # Now when we ask for the client, the client should be started and we should
     # get back the same instance
@@ -256,7 +263,7 @@ async def test_get_client_with_many_uris(
 
     client = manager.clients[str(demo_workspace)]
     assert client is not None
-    assert client.state in {None, ClientState.Starting}
+    assert client.state in STARTING_STATES
 
     # Now if we do the same again we should get the same client instance for each case.
     coros = [manager.get_client(s) for s in src_uris]
@@ -339,11 +346,11 @@ async def test_get_client_with_many_uris_in_many_projects(
 
     demo_client = manager.clients[str(demo_workspace)]
     assert demo_client is not None
-    assert demo_client.state in {None, ClientState.Starting}
+    assert demo_client.state in STARTING_STATES
 
     docs_client = manager.clients[str(docs_workspace)]
     assert docs_client is not None
-    assert docs_client.state in {None, ClientState.Starting}
+    assert docs_client.state in STARTING_STATES
 
     # Now if we do the same again we should get the same client instance for each case.
     coros = [manager.get_client(s) for s in src_uris]
@@ -400,7 +407,11 @@ async def test_updated_config(
     client = manager.clients[str(demo_workspace)]
 
     assert client is not None
-    assert client.state in {ClientState.Starting, ClientState.Running}
+    assert client.state in {
+        ClientState.Spawning,
+        ClientState.Starting,
+        ClientState.Running,
+    }
 
     # Now when we ask for the client, the client should be started and we should
     # get back the same instance
@@ -430,7 +441,11 @@ async def test_updated_config(
     new_client = manager.clients[str(demo_workspace)]
 
     assert new_client is not client
-    assert new_client.state in {ClientState.Starting, ClientState.Running}
+    assert new_client.state in {
+        ClientState.Spawning,
+        ClientState.Starting,
+        ClientState.Running,
+    }
 
     # Ensure that the client has finished starting
     await new_client

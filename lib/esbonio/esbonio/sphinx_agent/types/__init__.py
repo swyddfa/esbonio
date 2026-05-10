@@ -208,6 +208,40 @@ class ProgressMessage:
 
 
 @dataclasses.dataclass
+class InitializeParams:
+    pass
+
+
+@dataclasses.dataclass
+class InitializeResult:
+    pid: int
+
+
+@dataclasses.dataclass
+class InitializeRequest:
+    """An ``initialize`` request"""
+
+    id: int | str
+
+    params: InitializeParams
+
+    method: str = "initialize"
+
+    jsonrpc: str = dataclasses.field(default="2.0")
+
+
+@dataclasses.dataclass
+class InitializeResponse:
+    """A ``initialize`` response."""
+
+    id: int | str
+
+    result: InitializeResult
+
+    jsonrpc: str = dataclasses.field(default="2.0")
+
+
+@dataclasses.dataclass
 class ExitNotification:
     """An ``exit`` notification"""
 
@@ -222,9 +256,11 @@ METHOD_TO_MESSAGE_TYPE = {
     BuildRequest.method: BuildRequest,
     ExitNotification.method: ExitNotification,
     CreateApplicationRequest.method: CreateApplicationRequest,
+    InitializeRequest.method: InitializeRequest,
 }
 METHOD_TO_RESPONSE_TYPE = {
     BuildRequest.method: BuildResponse,
     ExitNotification.method: None,
     CreateApplicationRequest.method: CreateApplicationResponse,
+    InitializeRequest.method: InitializeResponse,
 }
