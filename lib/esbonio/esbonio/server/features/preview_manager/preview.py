@@ -10,6 +10,7 @@ from esbonio import server
 from esbonio.server import Uri
 
 if typing.TYPE_CHECKING:
+    from os import PathLike
     from typing import Any
 
     from .config import PreviewConfig
@@ -32,6 +33,17 @@ class RequestHandler(SimpleHTTPRequestHandler):
         #      https://github.com/swyddfa/esbonio/issues/987
         self.send_header("Cache-Control", "no-store")
         return super().end_headers()
+
+    def guess_type(self, path: str | PathLike[str]) -> str:
+        # Append ``charset=utf-8`` to text/* MIME types so browsers consistently
+        # decode UTF-8 content from the build directory; Sphinx writes UTF-8 by
+        # default and Python's SimpleHTTPRequestHandler returns the bare type.
+        #
+        # See: https://github.com/swyddfa/esbonio/issues/1115
+        mimetype = super().guess_type(path)
+        if mimetype.startswith("text/") and "charset=" not in mimetype:
+            return f"{mimetype}; charset=utf-8"
+        return mimetype
 
     def log_message(self, format: str, *args: Any) -> None:
         self.logger.debug(format, *args)
