@@ -19,12 +19,6 @@ jobs:
       with:
         python-version: "3.11"
 
-    - name: pip cache
-      uses: actions/cache@v5
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-lsp-pr-pip-deps-3.11
-
     - run: |
         python --version
         python -m pip install --upgrade pip
@@ -59,12 +53,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: true
-
-    - name: pip cache
-      uses: actions/cache@v5
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-lsp-pr-pip-deps-${{ matrix.python-version }}
 
     - run: |
         python --version
