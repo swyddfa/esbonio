@@ -8,6 +8,8 @@ on:
     - 'lib/esbonio/**'
     - '!lib/esbonio/changes/**'
 
+permissions: {}
+
 jobs:
   build:
     runs-on: ubuntu-latest

@@ -7,6 +7,8 @@ on:
     - 'code/**'
     - 'lib/esbonio/**'
 
+permissions: {}
+
 jobs:
   trigger:
     runs-on: ubuntu-latest
