@@ -4,9 +4,10 @@ import argparse
 import asyncio
 import logging
 import pathlib
-import pdb
+import pdb  # noqa: T100
 import shlex
 import sys
+import typing
 from functools import partial
 
 from pygls.protocol import default_converter
@@ -18,6 +19,9 @@ from esbonio.server.features.sphinx_manager import ClientState
 from esbonio.server.features.sphinx_manager import SphinxClient
 from esbonio.server.features.sphinx_manager import SphinxConfig
 from esbonio.server.features.sphinx_manager import register_structure_hooks
+
+if typing.TYPE_CHECKING:
+    from typing import Any
 
 try:
     import tomllib as toml
@@ -102,10 +106,10 @@ async def handle_client(
         if debug:
             try:
                 logger.info("Attaching to build process...")
-                pdb.attach(client.sphinx_pid)
+                pdb.attach(client.sphinx_pid)  # type: ignore[attr-defined]
             except RuntimeError as exc:
                 await client.stop()
-                logger.error("Unable to attach to build process: %s", exc)
+                logger.error("Unable to attach to build process: %s", exc)  # noqa: TRY400
 
     if old_state == ClientState.Starting and new_state == ClientState.Running:
         _ = await client.build()
@@ -116,7 +120,9 @@ async def handle_client(
 
     if new_state == ClientState.Errored:
         await client.stop()
-        future.set_exception(client.exception)
+        future.set_exception(
+            client.exception or RuntimeError("Client errored but no exception given")
+        )
         return
 
 
@@ -245,12 +251,12 @@ async def sphinx_build(args):
         logger=logger,
     )
     if config is None:
-        print("Unable to generate a valid Sphinx configuration", file=sys.stderr)
+        logger.error("Unable to generate a valid Sphinx configuration")
         return 1
 
     client = get_sphinx_client(config, logger)
 
-    future = asyncio.Future()
+    future: asyncio.Future[Any] = asyncio.Future()
     client.add_listener(
         "state-change", partial(handle_client, logger, future, args.debug)
     )
@@ -260,7 +266,7 @@ async def sphinx_build(args):
         await asyncio.ensure_future(future)
         return 0
     except RuntimeError as exc:
-        logger.error("%s", exc)
+        logger.error("%s", exc)  # noqa: TRY400
         return 1
     except Exception:
         logger.exception("Error occured during build")
