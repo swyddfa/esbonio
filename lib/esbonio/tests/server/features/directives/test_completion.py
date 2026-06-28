@@ -701,3 +701,215 @@ def test_render_directive_completion(
         assert item is None
     else:
         assert item == expected
+
+
+@pytest.mark.parametrize(
+    "client,language,insert_behavior,item,text,character,expected",
+    [
+        # Simple values
+        (
+            VSCODE,
+            "rst",
+            "replace",
+            types.CompletionItem(label="python"),
+            ".. code-block:: ",
+            None,
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Text,
+                data=dict(completion_type="directive_argument"),
+            ),
+        ),
+        (
+            VSCODE,
+            "rst",
+            "insert",
+            types.CompletionItem(label="python"),
+            ".. code-block:: ",
+            None,
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Text,
+                data=dict(completion_type="directive_argument"),
+            ),
+        ),
+        (
+            VSCODE,
+            "markdown",
+            "replace",
+            types.CompletionItem(label="python"),
+            "```{code-block} ",
+            None,
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Text,
+                data=dict(completion_type="directive_argument"),
+            ),
+        ),
+        (
+            VSCODE,
+            "markdown",
+            "insert",
+            types.CompletionItem(label="python"),
+            "```{code-block} ",
+            None,
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Text,
+                data=dict(completion_type="directive_argument"),
+            ),
+        ),
+        # Values should be able to override the defaults.
+        (
+            VSCODE,
+            "rst",
+            "replace",
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Constant,
+                data={"source": "pygments"},
+            ),
+            ".. code-block:: ",
+            None,
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "completion_type": "directive_argument",
+                    "source": "pygments",
+                },
+            ),
+        ),
+        (
+            VSCODE,
+            "rst",
+            "insert",
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "source": "pygments",
+                },
+            ),
+            ".. code-block:: ",
+            None,
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "completion_type": "directive_argument",
+                    "source": "pygments",
+                },
+            ),
+        ),
+        (
+            VSCODE,
+            "markdown",
+            "replace",
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "source": "pygments",
+                },
+            ),
+            "```{code-block} ",
+            None,
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "completion_type": "directive_argument",
+                    "source": "pygments",
+                },
+            ),
+        ),
+        (
+            VSCODE,
+            "markdown",
+            "insert",
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "source": "pygments",
+                },
+            ),
+            "```{code-block} ",
+            None,
+            types.CompletionItem(
+                label="python",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "completion_type": "directive_argument",
+                    "source": "pygments",
+                },
+            ),
+        ),
+    ],
+)
+def test_render_directive_argument_completion(
+    client: str,
+    language: Literal["rst", "markdown"],
+    insert_behavior: Literal["insert", "replace"],
+    item: types.CompletionItem,
+    text: str,
+    character: int | None,
+    expected: types.CompletionItem | None,
+):
+    """Ensure that we can render directive argument completions correctly.
+
+    Parameters
+    ----------
+    client
+       The name of the client to use.
+
+       This will be passed to the ``client_capabilities`` function from ``pytest_lsp``
+       and will control what capabilities (e.g. snippet support) will be available.
+
+    language
+       The language in which the completion item will be inserted.
+
+    insert_behavior
+       How the completion item should behave when inserted.
+
+    item
+       The CompletionItem representing the directive argument.
+
+    text
+       The text used to help generate the completion context.
+
+    character
+       The character column at which the request is being made.
+       If ``None``, it will be assumed that the request is being made at
+       the end of ``text``.
+
+    expected
+       The expected result.
+    """
+
+    match = PATTERNS[language].match(text)
+    if not match:
+        raise ValueError(f"'{text}' is not valid in this context")
+
+    line = 0
+    character = len(text) if character is None else character
+    uri = "file:///test.txt"
+
+    context = server.CompletionContext(
+        uri=server.Uri.parse(uri),
+        doc=TextDocument(uri=uri),
+        match=match,
+        position=types.Position(line=line, character=character),
+        language=language,
+        capabilities=client_capabilities(client),
+    )
+
+    render_func = completion.get_directive_argument_renderer(language, insert_behavior)
+    assert render_func is not None
+
+    actual = render_func(context, item)
+    if expected is None:
+        assert actual is None
+    else:
+        assert actual == expected

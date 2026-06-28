@@ -1,9 +1,9 @@
 # Esbonio
 
-[![Stable Version](https://img.shields.io/visual-studio-marketplace/v/swyddfa.esbonio.svg?label=stable&color=&style=flat-square)](https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio)
-[![Install Count](https://img.shields.io/visual-studio-marketplace/i/swyddfa.esbonio.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio)
-[![Download Count](https://img.shields.io/visual-studio-marketplace/d/swyddfa.esbonio.svg?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio)
-![Pre-release Version](https://img.shields.io/visual-studio-marketplace/v/swyddfa.esbonio?include_prereleases&label=pre-release&style=flat-square)
+[![Open VSX Version](https://img.shields.io/open-vsx/v/swyddfa/esbonio?style=flat-square)![Open VSX Downloads](https://img.shields.io/open-vsx/dt/swyddfa/esbonio?style=flat-square)](https://open-vsx.org/extension/swyddfa/esbonio)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/swyddfa/esbonio/blob/develop/code/LICENSE)
+
+[VSCode Marketplace](https://marketplace.visualstudio.com/items?itemName=swyddfa.esbonio)
 
 The Esbonio extension integrates the [`esbonio`](https://pypi.org/project/esbonio/) language server into VSCode.
 

@@ -12,7 +12,7 @@ from pygls.workspace import Workspace
 
 from esbonio.server import EsbonioLanguageServer
 from esbonio.server import Uri
-from esbonio.server._configuration import _merge_configs
+from esbonio.server import merge_configs
 from esbonio.server._configuration import _uri_to_scope
 
 T = TypeVar("T")
@@ -602,4 +602,4 @@ def test_uri_to_scope_windows(known_scopes, setup):
 )
 def test_merge_configs(configs, expected):
     """Ensure that we can merge configurations together correctly."""
-    assert expected == _merge_configs(*configs)
+    assert expected == merge_configs(*configs)

@@ -10,6 +10,7 @@ from pytest_lsp import client_capabilities
 from esbonio import server
 from esbonio.server.features.roles import completion
 from esbonio.server.testing import range_from_str
+from esbonio.sphinx_agent.types import MYST_ROLE
 from esbonio.sphinx_agent.types import RST_ROLE
 from esbonio.sphinx_agent.types import Role
 
@@ -19,7 +20,7 @@ if typing.TYPE_CHECKING:
 
 VSCODE = "visual-studio-code"
 NVIM = "neovim"
-PATTERNS = {"rst": RST_ROLE}
+PATTERNS = {"rst": RST_ROLE, "markdown": MYST_ROLE}
 
 
 @pytest.mark.parametrize(
@@ -274,3 +275,215 @@ def test_render_role_completion(
         assert item is None
     else:
         assert item == expected
+
+
+@pytest.mark.parametrize(
+    "client,language,insert_behavior,item,text,character,expected",
+    [
+        # Simple values
+        (
+            VSCODE,
+            "rst",
+            "replace",
+            types.CompletionItem(label="getting-started"),
+            ":ref:`",
+            None,
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Text,
+                data=dict(completion_type="role_target"),
+            ),
+        ),
+        (
+            VSCODE,
+            "rst",
+            "insert",
+            types.CompletionItem(label="getting-started"),
+            ":ref:`",
+            None,
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Text,
+                data=dict(completion_type="role_target"),
+            ),
+        ),
+        (
+            VSCODE,
+            "markdown",
+            "replace",
+            types.CompletionItem(label="getting-started"),
+            "{ref}`",
+            None,
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Text,
+                data=dict(completion_type="role_target"),
+            ),
+        ),
+        (
+            VSCODE,
+            "markdown",
+            "insert",
+            types.CompletionItem(label="getting-started"),
+            "{ref}`",
+            None,
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Text,
+                data=dict(completion_type="role_target"),
+            ),
+        ),
+        # Values should be able to override the defaults.
+        (
+            VSCODE,
+            "rst",
+            "replace",
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Constant,
+                data={"source": "std"},
+            ),
+            ":ref:`",
+            None,
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "completion_type": "role_target",
+                    "source": "std",
+                },
+            ),
+        ),
+        (
+            VSCODE,
+            "rst",
+            "insert",
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "source": "std",
+                },
+            ),
+            ":ref:`",
+            None,
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "completion_type": "role_target",
+                    "source": "std",
+                },
+            ),
+        ),
+        (
+            VSCODE,
+            "markdown",
+            "replace",
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "source": "std",
+                },
+            ),
+            "{ref}`",
+            None,
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "completion_type": "role_target",
+                    "source": "std",
+                },
+            ),
+        ),
+        (
+            VSCODE,
+            "markdown",
+            "insert",
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "source": "std",
+                },
+            ),
+            "{ref}`",
+            None,
+            types.CompletionItem(
+                label="getting-started",
+                kind=types.CompletionItemKind.Constant,
+                data={
+                    "completion_type": "role_target",
+                    "source": "std",
+                },
+            ),
+        ),
+    ],
+)
+def test_render_role_target_completion(
+    client: str,
+    language: Literal["rst", "markdown"],
+    insert_behavior: Literal["insert", "replace"],
+    item: types.CompletionItem,
+    text: str,
+    character: int | None,
+    expected: types.CompletionItem | None,
+):
+    """Ensure that we can render role target completions correctly.
+
+    Parameters
+    ----------
+    client
+       The name of the client to use.
+
+       This will be passed to the ``client_capabilities`` function from ``pytest_lsp``
+       and will control what capabilities (e.g. snippet support) will be available.
+
+    language
+       The language in which the completion item will be inserted.
+
+    insert_behavior
+       How the completion item should behave when inserted.
+
+    item
+       The CompletionItem representing the role target.
+
+    text
+       The text used to help generate the completion context.
+
+    character
+       The character column at which the request is being made.
+       If ``None``, it will be assumed that the request is being made at
+       the end of ``text``.
+
+    expected
+       The expected result.
+    """
+
+    match = PATTERNS[language].match(text)
+    if not match:
+        raise ValueError(f"'{text}' is not valid in this context")
+
+    line = 0
+    character = len(text) if character is None else character
+    uri = "file:///test.txt"
+
+    context = server.CompletionContext(
+        uri=server.Uri.parse(uri),
+        doc=TextDocument(uri=uri),
+        match=match,
+        position=types.Position(line=line, character=character),
+        language=language,
+        capabilities=client_capabilities(client),
+    )
+
+    render_func = completion.get_role_target_renderer(language, insert_behavior)
+    assert render_func is not None
+
+    actual = render_func(context, item)
+    if expected is None:
+        assert actual is None
+    else:
+        assert actual == expected

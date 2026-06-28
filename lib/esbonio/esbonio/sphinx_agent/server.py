@@ -109,6 +109,6 @@ async def main_loop(loop, executor, stop_event, rfile, proxy):
 async def main():
     loop = asyncio.get_running_loop()
     event = threading.Event()
-    executor = ThreadPoolExecutor(max_workers=2)
+    executor = ThreadPoolExecutor()
 
     await main_loop(loop, executor, event, sys.stdin.buffer, handle_message)

@@ -151,7 +151,7 @@ export interface AppCreatedNotification {
 
 export class EsbonioClient {
 
-  public server?: LanguageClient
+  public server?: LanguageClient | 'starting'
 
   private handlers: Map<string, any[]>
 
@@ -180,7 +180,12 @@ export class EsbonioClient {
         return
       }
 
-      let states = [State.Running, State.Starting]
+      if (this.server === 'starting') {
+        logger.debug("Server is currently starting, ignoring Python environment change.")
+        return
+      }
+
+      let states = [State.Starting]
       logger.debug(`Server state is ${State[this.server.state]}`)
 
       if (!states.includes(this.server.state)) {
@@ -203,6 +208,11 @@ export class EsbonioClient {
    */
   async start(): Promise<void> {
 
+    if (this.server === 'starting') {
+      this.logger.debug("Server is already starting, doing nothing.")
+      return
+    }
+
     let states = [State.Running, State.Starting]
     if (this.server && states.includes(this.server.state)) {
       this.logger.debug("Server is starting or already running, doing nothing.")
@@ -210,9 +220,11 @@ export class EsbonioClient {
     }
 
     try {
+      this.server = 'starting'
       this.server = await this.getStdioClient()
     } catch (err) {
       this.logger.error(`${err}`)
+      this.server = undefined
       return
     }
 
@@ -246,6 +258,11 @@ export class EsbonioClient {
    * Stop the language server.
    */
   async stop() {
+
+    if (this.server === 'starting') {
+      this.logger.debug("Server is currently starting and cannot be stopped.")
+      return
+    }
 
     if (this.server && this.server.state === State.Running) {
       this.logger.info("Stopping Language Server")
@@ -303,7 +320,12 @@ export class EsbonioClient {
 
 
   public scrollView(uri: vscode.Uri, line: number) {
-    this.server?.sendNotification(Notifications.VIEW_SCROLL, {
+
+    if (!this.server || this.server === 'starting') {
+      return
+    }
+
+    this.server.sendNotification(Notifications.VIEW_SCROLL, {
       uri: uri.toString(), line: line
     })
   }

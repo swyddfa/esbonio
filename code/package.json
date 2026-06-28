@@ -32,18 +32,19 @@
     ],
     "dependencies": {
         "@vscode/python-extension": "^1.0.6",
-        "semver": "^7.7.4",
+        "semver": "^7.8.5",
         "vscode-languageclient": "^9.0.1"
     },
     "devDependencies": {
+        "@types/mocha": "^10.0.10",
         "@types/node": "^22",
         "@types/vscode": "1.82.0",
         "@vscode/test-cli": "^0.0.12",
         "@vscode/test-electron": "^2.5.2",
-        "@vscode/vsce": "^3.7.1",
-        "esbuild": "^0.27.3",
-        "ovsx": "^0.10.9",
-        "typescript": "^5.9.3"
+        "@vscode/vsce": "^3.9.2",
+        "esbuild": "^0.28.1",
+        "ovsx": "^0.10.12",
+        "typescript": "^6.0.3"
     },
     "engines": {
         "vscode": "^1.82.0"
@@ -94,6 +95,12 @@
                 "title": "Restart Sphinx Process",
                 "category": "Esbonio",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "esbonio.sphinx.selectProcessToRestart",
+                "title": "Restart Sphinx Process",
+                "category": "Esbonio",
+                "icon": "$(refresh)"
             }
         ],
         "configuration": [
@@ -131,7 +138,10 @@
                     },
                     "esbonio.server.launchArgs": {
                         "scope": "window",
-                        "default": ["-m", "esbonio.server"],
+                        "default": [
+                            "-m",
+                            "esbonio.server"
+                        ],
                         "description": "Arguments to pass to Python when launching the language server.",
                         "type": "array",
                         "items": {
@@ -173,6 +183,15 @@
             {
                 "title": "Sphinx",
                 "properties": {
+                    "esbonio.sphinx.buildArguments": {
+                        "scope": "resource",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": null,
+                        "description": "The sphinx-build arguments to use."
+                    },
                     "esbonio.sphinx.buildCommand": {
                         "scope": "resource",
                         "type": "array",
@@ -180,7 +199,8 @@
                             "type": "string"
                         },
                         "default": null,
-                        "description": "The sphinx-build command to use."
+                        "deprecationMessage": "Deprecated in favour of esbonio.sphinx.buildArguments",
+                        "description": "The sphinx-build arguments to use."
                     },
                     "esbonio.sphinx.buildTriggers": {
                         "scope": "window",
@@ -193,8 +213,11 @@
                                 "description": "Trigger a build each time a file is saved"
                             },
                             "onChange": {
-                                "type": ["boolean", "number"],
-                                "default": 2.0,
+                                "type": [
+                                    "boolean",
+                                    "number"
+                                ],
+                                "default": 2,
                                 "description": "Trigger a build each time a file is changed"
                             }
                         },
@@ -474,6 +497,12 @@
             }
         ],
         "menus": {
+            "commandPalette": [
+                {
+                    "command": "esbonio.sphinx.restart",
+                    "when": "false"
+                }
+            ],
             "editor/title": [
                 {
                     "command": "esbonio.preview.openSide",
@@ -519,26 +548,19 @@
                 "steps": [
                     {
                         "id": "pickenv",
-                        "title": "Select Environment",
-                        "description": "Choose the Python environment that you want to use with Esbonio.\n[Select Environment](command:python.setInterpreter)\n[Set Python Command](command:getting-started-sample.runCommand2)",
+                        "title": "Select Build Environment",
+                        "description": "Configure the Python environment that you want Esbonio to use when building your documentation.",
                         "media": {
                             "markdown": "guides/bring-your-own-sphinx.md"
-                        },
-                        "completionEvents": [
-                            "onCommand:python.setInterpreter",
-                            "onSettingChanged:esbonio.sphinx.pythonCommand"
-                        ]
+                        }
                     },
                     {
                         "id": "setbuildcommand",
-                        "title": "Set your `sphinx-build` command",
+                        "title": "Configure Build Arguments",
                         "media": {
                             "markdown": "guides/example-commands.md"
                         },
-                        "description": "Provide the `sphinx-build` command that you use to build your documentation\n[Change Setting](command:getting-started-sample.changeSetting)",
-                        "completionEvents": [
-                            "onSettingChanged:getting-started-sample.sampleSetting"
-                        ]
+                        "description": "Provide the `sphinx-build` arguments that you want Esbonio to use when building your documentation"
                     }
                 ]
             }

@@ -25,9 +25,9 @@ The following configuration should be all you need to instruct Neovim to launch 
 .. code-block:: lua
 
    vim.lsp.config('esbonio', {
-     cmd = {'esbonio'},
+     cmd = {'esbonio', 'server'},
      filetypes = { 'rst' }, -- or 'markdown' if you use MyST
-     root_markers = { '.git' },
+     root_markers = { '.git', 'conf.py' },
    })
    vim.lsp.enable('esbonio')
 
@@ -51,7 +51,7 @@ If you don't have a ``pyproject.toml`` file, or would prefer to set these option
    vim.lsp.config('esbonio', {
      cmd = {'esbonio'},
      filetypes = { 'rst' }, -- or 'markdown' if you use MyST
-     root_markers = { '.git' },
+     root_markers = { '.git', 'conf.py' },
      settings = {
        esbonio = {
          sphinx = {
@@ -82,7 +82,55 @@ If you want to try it out, you can download it :download:`here <./nvim/init.lua>
 Tips and Tricks
 ---------------
 
-**sphinx-build progress notifications**
+This section contains examples on how you might build on the minimal examples included above
+
+Log to a File
+^^^^^^^^^^^^^
+
+By default, ``esbonio`` will log to stderr which can be viewed in neovim's ``lsp.log`` file.
+However, it's not necessarily the easiest file to read so you might prefer configuring ``esbonio`` to log to a file instead.
+
+.. code-block:: lua
+
+   vim.lsp.config('esbonio', {
+     ...,
+     settings = {
+       esbonio = {
+         logging = {
+           level = 'debug',
+           filename = 'esbonio.log',
+           stderr = false,
+         }
+       },
+     },
+   })
+   vim.lsp.enable('esbonio')
+
+Provide a Default Build Environment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you have ever used the Esbonio VSCode extension, you may have noticed that it provides a fallback build environment for use with projects that do not provide their own esbonio config.
+
+To replicate the same functionality with neovim, you can provide the :esbonio:conf:`esbonio.sphinx.pythonCommand` setting under the ``init_options`` key.
+
+.. code-block:: lua
+
+   vim.lsp.config('esbonio', {
+     ...,
+     init_options = {
+       esbonio = {
+         sphinx = {
+           pythonCommand = {'/path/to/fallback/venv/bin/python'},
+         }
+       },
+     },
+   })
+   vim.lsp.enable('esbonio')
+
+This value will be overidden by any project-local instances of this option.
+
+Sphinx Build Progress Notifications
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 ``esbonio`` uses the :lsp:`window/workDoneProgress/create` mechanism to report the progress of background Sphinx builds.
 You can use a plugin like `fidget <https://github.com/j-hui/fidget.nvim>`__ to provide a UI for these.
@@ -100,24 +148,35 @@ The ``:checkhealth vim.lsp`` command will show you details about your current co
 
       vim.lsp:                                     require("vim.lsp.health").check()
 
-      - LSP log level : DEBUG
-      - ⚠️ WARNING Log level DEBUG will cause degraded performance and high disk usage
+      - LSP log level : WARN
       - Log path: /var/home/username/.local/state/nvim/lsp.log
-      - Log size: 267 KB
+      - Log size: 245 KB
+
+      vim.lsp: Active Features ~
+      - semantic_tokens
+        - Active buffers:
+
+      - document_color
+        - Active buffers:
+
+      - folding_range
+        - Active buffers:
+
+      - inline_completion
+        - Active buffers:
+
 
       vim.lsp: Active Clients ~
       - esbonio (id: 1)
-        - Version: 1.0.0b11
-        - Root directory: /tmp/rst
-        - Command: { "esbonio" }
+        - Version: 2.0.0
+        - Root directory: ~/Projects/my-project/docs
+        - Command: { "esbonio", "server" }
         - Settings: {
             esbonio = {
               logging = {
-                level = "debug"
-              },
-              sphinx = {
-                buildCommand = { "sphinx-build", ".", "./_build" },
-                pythonCommand = { "python" }
+                filepath = "esbonio.log",
+                level = "debug",
+                stderr = false
               }
             }
           }
@@ -125,17 +184,15 @@ The ``:checkhealth vim.lsp`` command will show you details about your current co
 
       vim.lsp: Enabled Configurations ~
       - esbonio:
-        - cmd: { "esbonio" }
+        - cmd: { "esbonio", "server" }
         - filetypes: rst
-        - root_markers: .git
+        - root_markers: { ".git", "conf.py" }
         - settings: {
             esbonio = {
               logging = {
-                level = "debug"
-              },
-              sphinx = {
-                buildCommand = { "sphinx-build", ".", "./_build" },
-                pythonCommand = { "python" }
+                filepath = "esbonio.log",
+                level = "debug",
+                stderr = false
               }
             }
           }

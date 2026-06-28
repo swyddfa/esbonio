@@ -1,24 +1,24 @@
-# The `sphinx-build` command
+# Configure your `sphinx-build` arguments
 
-
-> `usage: sphinx-build [OPTIONS] SOURCEDIR OUTPUTDIR [FILENAMES...]`
-
-Build documentation for the web using the `html` builder, alternatively you can use the `dirhtml` builder if you want "pretty" URLs
-
-- `sphinx-build -M html docs docs/_build`
-- `sphinx-build -M dirhtml docs docs/_build`
-
-Here are some additional options you might find useful, these must come **after** the `-M <builder-name>` option.
-
-- `-j auto`: enable parallel builds
-- `-a`: write all files, even if their source has not changed
-- `-E`: ignore previously saved enironment
-- `-c <path>`: use an alternate path to `conf.py`
-
-See `sphinx-build -h` for a comprehensive list of the available options.
-
-> **Important:**
->
-> The following options are **not** supported by `esbonio`
-> - `-P`: run Pdb on exception
-> - `--color, -N, --no-color`: color options
+By default `esbonio` will choose `sphinx-build` arguments that are roughly equivalent to the following.
+```
+$ sphinx-build -M dirhtml <project_src> <user_cache_dir>/<project_hash>
+```
+This can be changed by setting `esbonio.sphinx.buildArguments` in your `pyproject.toml`
+```toml
+[tool.esbonio.sphinx]
+buildArguments = [
+    "-M", "html", "docs", "${defaultBuildDir}", "--nitpicky", "--verbose",
+]
+```
+Alternatively, you can include the setting in your `.vscode/settings.json`
+```json
+{
+    "esbonio.sphinx.buildArguments": [
+        "-b", "html",
+        "-j", "auto",
+        "docs", "docs/_build"
+    ]
+}
+```
+See [this guide](https://docs.esbon.io/en/latest/usage/howto/configure-the-sphinx-build-cmd.html) for further details.

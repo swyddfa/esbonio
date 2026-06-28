@@ -4,6 +4,7 @@ import re
 from urllib.parse import parse_qs
 
 import pytest
+import requests
 from lsprotocol import types
 from pytest_lsp import LanguageClient
 
@@ -31,3 +32,11 @@ async def test_preview(client: LanguageClient, uri_for):
 
     query_params = parse_qs(preview_uri.query)
     assert re.match(r"ws://localhost:\d+", query_params["ws"][0]) is not None
+
+    # Check that the content looks ok
+    response = requests.get(response["uri"])  # noqa: ASYNC210
+    assert response.status_code == 200
+    assert '<div id="esbonio-marker-index"' in response.text
+
+    # See: https://github.com/swyddfa/esbonio/issues/1115
+    assert response.headers["Content-Type"] == "text/html; charset=utf-8"

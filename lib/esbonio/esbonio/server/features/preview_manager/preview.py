@@ -16,6 +16,15 @@ if typing.TYPE_CHECKING:
 
 
 class RequestHandler(SimpleHTTPRequestHandler):
+    extensions_map = {
+        # Ensure that charset is also provided in the Content-Type: header.
+        # Since Sphinx generates utf-8 it should be safe to hardcode this.
+        #
+        # See: https://github.com/swyddfa/esbonio/issues/1115
+        ".html": "text/html; charset=utf-8",
+        **SimpleHTTPRequestHandler.extensions_map,
+    }
+
     def __init__(self, *args, logger: logging.Logger, directory: str, **kwargs) -> None:
         self.logger = logger
         super().__init__(*args, directory=directory, **kwargs)

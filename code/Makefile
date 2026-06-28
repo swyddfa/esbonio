@@ -66,7 +66,7 @@ release-deps: node_modules/.installed bundled/libs/.installed bundled/env/.insta
 
 # Generic rule for converting requirements-*.in to requirements-*.txt
 %.txt: %.in | $(UV)
-	$(UV) pip compile --generate-hashes --upgrade --python-version $(MIN_PYTHON) --output-file $@ $<
+	$(UV) pip compile --generate-hashes --exclude-newer '1 week' --upgrade --python-version $(MIN_PYTHON) --output-file $@ $<
 
 # Can't use uv for installation until --implementation py is supported
 # https://github.com/astral-sh/uv/issues/6246

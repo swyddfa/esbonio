@@ -7,6 +7,8 @@ on:
     - 'code/**'
     - 'lib/esbonio/**'
 
+permissions: {}
+
 jobs:
   trigger:
     runs-on: ubuntu-latest
@@ -14,8 +16,9 @@ jobs:
       lsp: ${{steps.check-lsp.outputs.build}}
       code: ${{steps.check-code.outputs.build}}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
+        persist-credentials: false
         fetch-depth: 0
 
     - run: |
@@ -59,9 +62,11 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        persist-credentials: true  # needed to push commits to the release branch
 
-    - uses: actions/setup-python@v6
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
       with:
         python-version: "3.10"
 
@@ -84,13 +89,13 @@ jobs:
         hatch build
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
       with:
         name: 'dist'
         path: lib/esbonio/dist
 
     - name: Publish
-      uses: pypa/gh-action-pypi-publish@release/v1
+      uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # v1.14.0
       with:
         packages-dir: lib/esbonio/dist/
 
@@ -112,26 +117,18 @@ jobs:
       (needs.lsp-release.result == 'success' || needs.lsp-release.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
-    - uses: 'actions/checkout@v6'
-
-    - uses: 'actions/setup-node@v6'
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
-        node-version: 22.x
-        cache: 'npm'
-        cache-dependency-path: 'code/package-lock.json'
+        persist-credentials: true  # needed to push commits to the release branch
 
-    - uses: 'actions/setup-python@v6'
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+      with:
+        package-manager-cache: false
+
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
       with:
         # This must be the minimum Python version we support
         python-version: "3.10"
-
-    - name: pip cache
-      uses: actions/cache@v5
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-vscode-pip-deps-${{ hashFiles('code/requirements.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-vscode-pip-deps
 
     - run: |
         python --version
@@ -155,7 +152,7 @@ jobs:
         ESBONIO_WHL: "${{ case(needs.lsp-release.outputs.version != '', format('esbonio=={0}', needs.lsp-release.outputs.version), 'esbonio') }}"
 
     - name: 'Upload Artifact'
-      uses: actions/upload-artifact@v7
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
       with:
         name: 'vsix'
         path: code/*.vsix
@@ -178,15 +175,15 @@ jobs:
     environment:
       name: vscode-marketplace
     steps:
-    - uses: 'actions/checkout@v6'
-
-    - uses: 'actions/setup-node@v6'
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
       with:
-        node-version: 22.x
-        cache: 'npm'
-        cache-dependency-path: 'code/package-lock.json'
+        persist-credentials: false
 
-    - uses: actions/download-artifact@v8
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+      with:
+        package-manager-cache: false
+
+    - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
       name: 'Download Extension'
       with:
         name: 'vsix'
@@ -208,15 +205,15 @@ jobs:
     environment:
       name: open-vsx
     steps:
-    - uses: 'actions/checkout@v6'
-
-    - uses: 'actions/setup-node@v6'
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
-        node-version: 22.x
-        cache: 'npm'
-        cache-dependency-path: 'code/package-lock.json'
+        persist-credentials: false
 
-    - uses: actions/download-artifact@v8
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e  # v6.4.0
+      with:
+        package-manager-cache: false
+
+    - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
       name: 'Download Extension'
       with:
         name: 'vsix'

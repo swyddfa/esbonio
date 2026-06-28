@@ -8,6 +8,7 @@ from .client import SphinxClient
 from .client import make_sphinx_client
 from .config import SphinxConfig
 from .config import SubProcess
+from .config import register_structure_hooks
 from .manager import RestartSphinxParams
 from .manager import SphinxManager
 
@@ -17,6 +18,7 @@ __all__ = [
     "SphinxConfig",
     "SphinxManager",
     "SubProcess",
+    "register_structure_hooks",
 ]
 
 
