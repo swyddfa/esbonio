@@ -95,6 +95,12 @@
                 "title": "Restart Sphinx Process",
                 "category": "Esbonio",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "esbonio.sphinx.selectProcessToRestart",
+                "title": "Restart Sphinx Process",
+                "category": "Esbonio",
+                "icon": "$(refresh)"
             }
         ],
         "configuration": [

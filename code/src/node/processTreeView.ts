@@ -1,5 +1,5 @@
 import * as vscode from 'vscode'
-import { Notifications, Events } from "../common/constants";
+import { Notifications, Events, Commands } from "../common/constants";
 import { Logger } from '../common/log'
 
 import { AppCreatedNotification, ClientCreatedNotification, ClientDestroyedNotification, ClientErroredNotification, EsbonioClient, PythonCommand, SphinxClientConfig, SphinxInfo } from './client';
@@ -15,7 +15,7 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
   private _onDidChangeTreeData: vscode.EventEmitter<ProcessTreeNode | undefined | null | void> = new vscode.EventEmitter<ProcessTreeNode | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<ProcessTreeNode | undefined | null | void> = this._onDidChangeTreeData.event;
 
-  constructor(private logger: Logger, client: EsbonioClient) {
+  constructor(private logger: Logger, context: vscode.ExtensionContext, client: EsbonioClient) {
     client.addHandler(
       Notifications.SPHINX_CLIENT_CREATED,
       (params: ClientCreatedNotification) => this.clientCreated(params)
@@ -39,6 +39,10 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
     client.addHandler(
       Events.SERVER_STOP,
       (_: any) => { this.serverStopped() }
+    )
+
+    context.subscriptions.push(
+       vscode.commands.registerCommand(Commands.RESTART_SPHINX_PROMPT, this.restartSphinxPrompt, this)
     )
   }
 
@@ -284,6 +288,50 @@ export class SphinxProcessProvider implements vscode.TreeDataProvider<ProcessTre
     this.sphinxClients.clear()
     this._onDidChangeTreeData.fire()
   }
+
+  /**
+   * Restart a sphinx process, if there are more than one, ask the user which they want to restart.
+   */
+  private async restartSphinxPrompt() {
+    if (this.sphinxClients.size === 0) {
+      vscode.window.showInformationMessage("No Sphinx processes running.")
+      return
+    }
+
+    let clientId: string | undefined
+    let clientIds = Array.from(this.sphinxClients.keys())
+
+    if (this.sphinxClients.size === 1) {
+      clientId = clientIds[0]
+    } else {
+      const picks: SphinxProcessQuickPickItem[] = clientIds.map((id) => {
+        let client = this.sphinxClients.get(id)!
+        let buildCommand = client.config.buildCommand
+        if (buildCommand[0] !== 'sphinx-build') {
+          buildCommand = ["sphinx-build", ...buildCommand]
+        }
+
+        return {
+          id: id,
+          label: `$(folder) ${client.app!.src_dir}`,
+          detail: `Python v${client.app!.python} $(primitive-dot) Sphinx v${client.app!.version} $(primitive-dot) ${buildCommand.join(" ")}`,
+        }
+      })
+
+      let selected = await vscode.window.showQuickPick(picks, {placeHolder: "Select Sphinx process to restart..."})
+      if (selected) {
+        clientId = selected.id
+      }
+    }
+
+    if (!clientId) { return }
+
+    await vscode.commands.executeCommand(Commands.RESTART_SPHINX, {id: clientId})
+  }
+}
+
+interface SphinxProcessQuickPickItem extends vscode.QuickPickItem {
+  id: string
 }
 
 type ProcessTreeNode = ProcessContainerNode | SphinxProcessNode | SphinxBuilderNode | SphinxCommandNode | PythonNode | PythonCommandNode | DirNode | FileNode

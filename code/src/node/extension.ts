@@ -34,7 +34,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<Esboni
 
   let previewManager = new PreviewManager(logger, context, esbonio)
   context.subscriptions.push(vscode.window.registerTreeDataProvider(
-    'sphinxProcesses', new SphinxProcessProvider(logger, esbonio)
+    'sphinxProcesses', new SphinxProcessProvider(logger, context, esbonio)
   ));
 
   let config = vscode.workspace.getConfiguration("esbonio.server")
