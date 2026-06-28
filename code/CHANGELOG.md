@@ -1,3 +1,24 @@
+## v2.1.0 - 2026-06-28
+
+### Enhancements
+
+- Expose `esbonio.sphinx.buildArguments` setting. ([#1108](https://github.com/swyddfa/esbonio/issues/1108))
+- Rather than throwing a cryptic error, the `Esbonio: Restart Sphinx Process` command now restarts the underlying Sphinx process.
+  When multiple processes are running, it prompts the user to make a choice. ([#1120](https://github.com/swyddfa/esbonio/issues/1120))
+
+### Fixes
+
+- The extension should no longer attempt to start multiple server instances, resulting in the `Error: command 'esbonio.sphinx.restart' already exists` error. ([#1035](https://github.com/swyddfa/esbonio/issues/1035))
+
+### Docs
+
+- Updated the Getting Started walkthrough included in the extension. ([#1107](https://github.com/swyddfa/esbonio/issues/1107))
+
+### Deprecated
+
+- Deprecate `esbonio.sphinx.buildCommand` in favour of `esbonio.sphinx.buildArguments`. ([#1108](https://github.com/swyddfa/esbonio/issues/1108))
+
+
 ## v2.0.0 - 2026-04-11
 
 ### Breaking Changes
