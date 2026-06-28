@@ -139,6 +139,49 @@ def render_rst_role_with_insert_text(
     return item
 
 
+@role_renderer(language="rst", insert_behavior="replace")
+def render_rst_role_with_text_edit(
+    context: server.CompletionContext, role: Role
+) -> types.CompletionItem | None:
+    """Render a role's ``CompletionItem`` using ``textEdit``.
+
+    This implements the ``replace`` insert behavior for roles.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    role
+       The role.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the directive should be skipped
+    """
+    match = context.match
+    groups = match.groupdict()
+
+    # Insert text starting from the starting ':' character of the role.
+    start = match.span()[0] + match.group(0).find(":")
+    end = start + len(groups["role"])
+
+    range_ = types.Range(
+        start=types.Position(line=context.position.line, character=start),
+        end=types.Position(line=context.position.line, character=end),
+    )
+
+    insert_text = f":{role.name}:"
+
+    item = _render_role_common(role)
+    item.filter_text = insert_text
+    item.insert_text_format = types.InsertTextFormat.PlainText
+    item.text_edit = types.TextEdit(range=range_, new_text=insert_text)
+
+    return item
+
+
 @role_target_renderer(language="rst", insert_behavior="replace")
 def render_rst_target_with_text_edit(
     context: server.CompletionContext, item: types.CompletionItem
@@ -160,6 +203,32 @@ def render_rst_target_with_text_edit(
     Optional[types.CompletionItem]
        The rendered completion item, or ``None`` if the item should be skipped
     """
+    item = _render_role_target_common(item)
+    return item
+
+
+@role_target_renderer(language="rst", insert_behavior="insert")
+def render_rst_target_with_insert_text(
+    context: server.CompletionContext, item: types.CompletionItem
+) -> types.CompletionItem | None:
+    """Render a ``CompletionItem`` using ``insertText``.
+
+    This implements the ``inser`` behavior for role targets.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    item
+       The ``CompletionItem`` representing the role target.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the item should be skipped
+    """
+    item = _render_role_target_common(item)
     return item
 
 
@@ -208,49 +277,6 @@ def render_myst_role_with_insert_text(
     item = _render_role_common(role)
     item.insert_text = insert_text[start_index:]
     item.insert_text_format = types.InsertTextFormat.PlainText
-    return item
-
-
-@role_renderer(language="rst", insert_behavior="replace")
-def render_rst_role_with_text_edit(
-    context: server.CompletionContext, role: Role
-) -> types.CompletionItem | None:
-    """Render a role's ``CompletionItem`` using ``textEdit``.
-
-    This implements the ``replace`` insert behavior for roles.
-
-    Parameters
-    ----------
-    context
-       The context in which the completion is being generated.
-
-    role
-       The role.
-
-    Returns
-    -------
-    Optional[types.CompletionItem]
-       The rendered completion item, or ``None`` if the directive should be skipped
-    """
-    match = context.match
-    groups = match.groupdict()
-
-    # Insert text starting from the starting ':' character of the role.
-    start = match.span()[0] + match.group(0).find(":")
-    end = start + len(groups["role"])
-
-    range_ = types.Range(
-        start=types.Position(line=context.position.line, character=start),
-        end=types.Position(line=context.position.line, character=end),
-    )
-
-    insert_text = f":{role.name}:"
-
-    item = _render_role_common(role)
-    item.filter_text = insert_text
-    item.insert_text_format = types.InsertTextFormat.PlainText
-    item.text_edit = types.TextEdit(range=range_, new_text=insert_text)
-
     return item
 
 
@@ -318,6 +344,32 @@ def render_myst_target_with_text_edit(
     Optional[types.CompletionItem]
        The rendered completion item, or ``None`` if the item should be skipped
     """
+    item = _render_role_target_common(item)
+    return item
+
+
+@role_target_renderer(language="markdown", insert_behavior="insert")
+def render_myst_target_with_insert_text(
+    context: server.CompletionContext, item: types.CompletionItem
+) -> types.CompletionItem | None:
+    """Render a ``CompletionItem`` using ``textEdit``.
+
+    This implements the ``insert` behavior for role targets.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    item
+       The ``CompletionItem`` representing the role target.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the item should be skipped
+    """
+    item = _render_role_target_common(item)
     return item
 
 
@@ -329,3 +381,14 @@ def _render_role_common(role: Role) -> types.CompletionItem:
         kind=types.CompletionItemKind.Function,
         data={"completion_type": "role"},
     )
+
+
+def _render_role_target_common(item: types.CompletionItem) -> types.CompletionItem:
+    """Render the common fields of a role target completion"""
+
+    item.kind = item.kind or types.CompletionItemKind.Text
+    item.data = {
+        "completion_type": "role_target",
+        **(item.data or {}),
+    }
+    return item
