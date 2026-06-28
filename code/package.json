@@ -40,7 +40,7 @@
         "@types/vscode": "1.82.0",
         "@vscode/test-cli": "^0.0.12",
         "@vscode/test-electron": "^2.5.2",
-        "@vscode/vsce": "^3.7.1",
+        "@vscode/vsce": "^3.9.2",
         "esbuild": "^0.27.3",
         "ovsx": "^0.10.9",
         "typescript": "^5.9.3"
@@ -131,7 +131,10 @@
                     },
                     "esbonio.server.launchArgs": {
                         "scope": "window",
-                        "default": ["-m", "esbonio.server"],
+                        "default": [
+                            "-m",
+                            "esbonio.server"
+                        ],
                         "description": "Arguments to pass to Python when launching the language server.",
                         "type": "array",
                         "items": {
@@ -203,8 +206,11 @@
                                 "description": "Trigger a build each time a file is saved"
                             },
                             "onChange": {
-                                "type": ["boolean", "number"],
-                                "default": 2.0,
+                                "type": [
+                                    "boolean",
+                                    "number"
+                                ],
+                                "default": 2,
                                 "description": "Trigger a build each time a file is changed"
                             }
                         },
