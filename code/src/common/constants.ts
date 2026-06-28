@@ -1,6 +1,4 @@
 export namespace Server {
-  export const REQUIRED_PYTHON = "3.9.0"
-
   export const DEFAULT_SELECTOR = [
     { scheme: 'file', language: 'restructuredtext' },
     { scheme: 'file', language: 'markdown' },
@@ -15,6 +13,9 @@ export namespace Commands {
   export const SET_SCROLL_BEHAVIOUR = "esbonio.preview.setScrollingBehavior"
 
   export const RESTART_SERVER = "esbonio.server.restart"
+
+  export const RESTART_SPHINX = "esbonio.sphinx.restart"
+  export const RESTART_SPHINX_PROMPT = "esbonio.sphinx.selectProcessToRestart"
 
   export const PYTHON_SELECT_INTERPRETER = "python.setInterpreter"
 }
