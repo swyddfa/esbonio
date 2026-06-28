@@ -35,6 +35,7 @@ Goto definition is implemented for objects linked to by `:ref:` and `:doc:` role
 Goto implementation is available for roles and directives
 
 ![Goto Implementation Demo](../resources/images/implementation-demo.gif)
+
 ### Diagnostics
 
 Errors from a build are published to VSCode as diagnostics
