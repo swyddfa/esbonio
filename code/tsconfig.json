@@ -1,25 +1,28 @@
 {
-    "compilerOptions": {
-        "module": "commonjs",
-        "target": "ES2020",
-        "baseUrl": ".",
-        "paths": {
-            "vscode": [
-                "node_modules/@types/vscode"
-            ]
-        },
-        "lib": [
-            "ES2020"
-        ],
-        "sourceMap": true,
-        "rootDir": "src",
-        "outDir": "dist",
-        "strict": true,
-        "noImplicitReturns": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUnusedParameters": true
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "ES2020",
+    "paths": {
+      "src/*": [
+        "./src/*"
+      ],
+      "vscode": [
+        "./node_modules/@types/vscode"
+      ]
     },
-    "exclude": [
-        "node_modules/",
-    ]
+    "types": ["mocha"],
+    "lib": [
+      "ES2020"
+    ],
+    "sourceMap": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "strict": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedParameters": true
+  },
+  "exclude": [
+    "node_modules/",
+  ]
 }
