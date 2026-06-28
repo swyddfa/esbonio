@@ -50,10 +50,6 @@ async def client(lsp_client: LanguageClient, uri_for, tmp_path_factory):
         scope_uri=str(workspace_uri),
     )
 
-    @lsp_client.feature(types.WORKSPACE_DIAGNOSTIC_REFRESH)
-    def _(lc: LanguageClient, params):
-        print(f"{types.WORKSPACE_DIAGNOSTIC_REFRESH} requsted", file=sys.stderr)
-
     await lsp_client.initialize_session(
         types.InitializeParams(
             capabilities=types.ClientCapabilities(
