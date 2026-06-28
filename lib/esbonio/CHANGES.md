@@ -1,3 +1,20 @@
+## v2.1.0 - 2026-06-28
+
+### Features
+
+- Add `esbonio sphinx build` command, which will perform a Sphinx build as if it was running as part of the language server. ([#1110](https://github.com/swyddfa/esbonio/issues/1110))
+
+### Fixes
+
+- When previewing ``.html`` files the preview server now specifies the charset in the `Content-Type` header. ([#1115](https://github.com/swyddfa/esbonio/issues/1115))
+- `esbonio` should no longer fail to produce completion suggestions for role targets and directive arguments when `esbonio.server.completion.preferredInsertBehavior` is set to `insert`. ([#1122](https://github.com/swyddfa/esbonio/issues/1122))
+
+### Docs
+
+- Update getting started guide for neovim ([#1103](https://github.com/swyddfa/esbonio/issues/1103))
+- Update getting started guide for Emacs ([#1106](https://github.com/swyddfa/esbonio/issues/1106))
+
+
 ## v2.0.0 - 2026-04-11
 
 ### Breaking Changes
