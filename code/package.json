@@ -42,7 +42,7 @@
         "@vscode/test-electron": "^2.5.2",
         "@vscode/vsce": "^3.9.2",
         "esbuild": "^0.27.3",
-        "ovsx": "^0.10.9",
+        "ovsx": "^0.10.12",
         "typescript": "^5.9.3"
     },
     "engines": {
