@@ -7,7 +7,7 @@
 
 The Esbonio extension integrates the [`esbonio`](https://pypi.org/project/esbonio/) language server into VSCode.
 
-The `esbonio` language server aims to make it easier to work with [Sphinx](https://www.sphinx-doc.org/en/master/) documentation projects by proving IDE-like features to your reStructuredText and Markdown files.
+The `esbonio` language server aims to make it easier to work with [Sphinx](https://www.sphinx-doc.org/en/master/) documentation projects by proving IDE-like features to your reStructuredText and Markdown ([MyST](https://myst-parser.readthedocs.io/en/latest/)) files.
 
 ## Features
 
