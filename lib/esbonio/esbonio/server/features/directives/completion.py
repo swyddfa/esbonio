@@ -100,7 +100,8 @@ def render_rst_directive_with_insert_text(
 ) -> types.CompletionItem | None:
     """Render a ``CompletionItem`` using ``insertText`` fields.
 
-    This implements the ``insert`` behavior for directives.
+    This implements the ``insert`` behavior for rst directives.
+
     Parameters
     ----------
     context
@@ -111,7 +112,7 @@ def render_rst_directive_with_insert_text(
 
     Returns
     -------
-    Optional[types.CompletionItem]
+    types.CompletionItem | None
        The rendered completion item, or ``None`` if the directive should be skipped
     """
     insert_text = f".. {directive.name}::"
@@ -170,30 +171,6 @@ def render_rst_directive_with_insert_text(
     return item
 
 
-@directive_argument_renderer(language="rst", insert_behavior="replace")
-def render_rst_argument_with_text_edit(
-    context: server.CompletionContext, item: types.CompletionItem
-) -> types.CompletionItem | None:
-    """Render a ``CompletionItem`` using ``textEdit``.
-
-    This implements the ``replace`` insert behavior for rst directive arguments.
-
-    Parameters
-    ----------
-    context
-       The context in which the completion is being generated.
-
-    item
-       The ``CompletionItem`` representing the directive argument.
-
-    Returns
-    -------
-    Optional[types.CompletionItem]
-       The rendered completion item, or ``None`` if the item should be skipped
-    """
-    return item
-
-
 @directive_renderer(language="rst", insert_behavior="replace")
 def render_rst_directive_with_text_edit(
     context: server.CompletionContext,
@@ -241,6 +218,56 @@ def render_rst_directive_with_text_edit(
         ),
     )
 
+    return item
+
+
+@directive_argument_renderer(language="rst", insert_behavior="replace")
+def render_rst_argument_with_text_edit(
+    context: server.CompletionContext, item: types.CompletionItem
+) -> types.CompletionItem | None:
+    """Render a ``CompletionItem`` using ``textEdit``.
+
+    This implements the ``replace`` insert behavior for rst directive arguments.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    item
+       The ``CompletionItem`` representing the directive argument.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the item should be skipped
+    """
+    item = _render_directive_argument_common(item)
+    return item
+
+
+@directive_argument_renderer(language="rst", insert_behavior="insert")
+def render_rst_argument_with_insert_text(
+    context: server.CompletionContext, item: types.CompletionItem
+) -> types.CompletionItem | None:
+    """Render a ``CompletionItem`` using ``insertText`` fields.
+
+    This implements the ``insert`` behavior for rst directive arguments.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    item
+       The ``CompletionItem`` representing the directive argument.
+
+    Returns
+    -------
+    types.CompletionItem | None
+       The rendered completion item, or ``None`` if the item should be skipped
+    """
+    item = _render_directive_argument_common(item)
     return item
 
 
@@ -292,30 +319,6 @@ def render_myst_directive_with_text_edit(
         ),
     )
 
-    return item
-
-
-@directive_argument_renderer(language="markdown", insert_behavior="replace")
-def render_myst_argument_with_text_edit(
-    context: server.CompletionContext, item: types.CompletionItem
-) -> types.CompletionItem | None:
-    """Render a ``CompletionItem`` using ``textEdit``.
-
-    This implements the ``replace`` insert behavior for MyST directive arguments.
-
-    Parameters
-    ----------
-    context
-       The context in which the completion is being generated.
-
-    item
-       The ``CompletionItem`` representing the directive argument.
-
-    Returns
-    -------
-    Optional[types.CompletionItem]
-       The rendered completion item, or ``None`` if the item should be skipped
-    """
     return item
 
 
@@ -375,6 +378,56 @@ def render_myst_directive_with_insert_text(
     return item
 
 
+@directive_argument_renderer(language="markdown", insert_behavior="replace")
+def render_myst_argument_with_text_edit(
+    context: server.CompletionContext, item: types.CompletionItem
+) -> types.CompletionItem | None:
+    """Render a ``CompletionItem`` using ``textEdit``.
+
+    This implements the ``replace`` insert behavior for MyST directive arguments.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    item
+       The ``CompletionItem`` representing the directive argument.
+
+    Returns
+    -------
+    Optional[types.CompletionItem]
+       The rendered completion item, or ``None`` if the item should be skipped
+    """
+    item = _render_directive_argument_common(item)
+    return item
+
+
+@directive_argument_renderer(language="markdown", insert_behavior="insert")
+def render_myst_argument_with_insert_text(
+    context: server.CompletionContext, item: types.CompletionItem
+) -> types.CompletionItem | None:
+    """Render a ``CompletionItem`` using ``insertText`` fields.
+
+    This implements the ``insert`` behavior for MyST directive arguments.
+
+    Parameters
+    ----------
+    context
+       The context in which the completion is being generated.
+
+    item
+       The ``CompletionItem`` representing the directive argument.
+
+    Returns
+    -------
+    types.CompletionItem | None
+       The rendered completion item, or ``None`` if the item should be skipped
+    """
+    item = _render_directive_argument_common(item)
+    return item
+
+
 def _render_directive_common(directive: Directive) -> types.CompletionItem:
     """Render the common fields of a directive's completion item."""
 
@@ -384,6 +437,19 @@ def _render_directive_common(directive: Directive) -> types.CompletionItem:
         kind=types.CompletionItemKind.Class,
         data={"completion_type": "directive"},
     )
+
+
+def _render_directive_argument_common(
+    item: types.CompletionItem,
+) -> types.CompletionItem:
+    """Render the common fields for a directive argument completion."""
+
+    item.kind = item.kind or types.CompletionItemKind.Text
+    item.data = {
+        "completion_type": "directive_argument",
+        **(item.data or {}),
+    }
+    return item
 
 
 # def _render_directive_option_with_insert_text(
