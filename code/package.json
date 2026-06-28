@@ -491,6 +491,12 @@
             }
         ],
         "menus": {
+            "commandPalette": [
+                {
+                    "command": "esbonio.sphinx.restart",
+                    "when": "false"
+                }
+            ],
             "editor/title": [
                 {
                     "command": "esbonio.preview.openSide",
