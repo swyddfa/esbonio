@@ -126,6 +126,9 @@ class Directive:
     implementation: str | None
     """The dotted name of the directive's implementation."""
 
+    documentation: str | None = field(default=None)
+    """Usage documentation for the directive, if known."""
+
     location: Location | None = field(default=None)
     """The location of the directive's implementation, if known"""
 
@@ -134,7 +137,7 @@ class Directive:
 
     def to_db(
         self, dumps: Callable[[Any], str]
-    ) -> tuple[str, str | None, str | None, str | None]:
+    ) -> tuple[str, str | None, str | None, str | None, str | None]:
         """Convert this directive to its database representation"""
 
         providers = None
@@ -142,7 +145,7 @@ class Directive:
             providers = dumps(self.argument_providers)
 
         location = dumps(self.location) if self.location is not None else None
-        return (self.name, self.implementation, location, providers)
+        return (self.name, self.implementation, self.documentation, location, providers)
 
     @classmethod
     def from_db(
@@ -150,6 +153,7 @@ class Directive:
         load_as: JsonLoader,
         name: str,
         implementation: str | None,
+        documentation: str | None,
         location: str | None,
         providers: str | None,
     ) -> Directive:
@@ -165,6 +169,7 @@ class Directive:
         return cls(
             name=name,
             implementation=implementation,
+            documentation=documentation,
             location=loc,
             argument_providers=argument_providers,
         )
