@@ -1,4 +1,62 @@
-.. _lsp-getting-started:
+🚀 Installing Terminal Environment...
+This may take a few minutes depending on your connection.
+
+📦  Extracting assets...
+📁  Setting up directories...
+📦  Extracting sandbox filesystem...
+⚙️  Applying basic configuration...
+✅  Extraction complete
+⚙️  Updating sandbox enviroment...
+proot warning: can't sanitize binding "/proc/self/fd/0": No such file or directory
+proot warning: can't sanitize binding "/proc/self/fd/1": No such file or directory
+proot warning: can't sanitize binding "/proc/self/fd/2": No such file or directory
+[*] Installing important packages
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.21/main/aarch64/APKINDEX.tar.gz
+fetch https://dl-cdn.alpinelinux.org/alpine/v3.21/community/aarch64/APKINDEX.tar.gz
+v3.21.7-186-g60f8d914baf [https://dl-cdn.alpinelinux.org/alpine/v3.21/main]
+v3.21.7-184-g13d64f0643a [https://dl-cdn.alpinelinux.org/alpine/v3.21/community]
+OK: 25264 distinct packages available
+Upgrading critical system libraries and apk-tools:
+(1/1) Upgrading apk-tools (2.14.6-r2 -> 2.14.6-r3)
+Executing busybox-1.37.0-r8.trigger
+Continuing the upgrade transaction with new apk-tools:
+(1/12) Upgrading alpine-baselayout-data (3.6.8-r0 -> 3.6.8-r1)
+(2/12) Upgrading musl (1.2.5-r8 -> 1.2.5-r11)
+(3/12) Upgrading busybox (1.37.0-r8 -> 1.37.0-r14)
+Executing busybox-1.37.0-r14.post-upgrade
+(4/12) Upgrading busybox-binsh (1.37.0-r8 -> 1.37.0-r14)
+(5/12) Upgrading alpine-baselayout (3.6.8-r0 -> 3.6.8-r1)
+Executing alpine-baselayout-3.6.8-r1.pre-upgrade
+Executing alpine-baselayout-3.6.8-r1.post-upgrade
+(6/12) Upgrading alpine-release (3.21.0-r0 -> 3.21.7-r0)
+(7/12) Upgrading ca-certificates-bundle (20241010-r0 -> 20260413-r0)
+(8/12) Upgrading libcrypto3 (3.3.2-r4 -> 3.3.7-r0)
+(9/12) Upgrading libssl3 (3.3.2-r4 -> 3.3.7-r0)
+(10/12) Upgrading ssl_client (1.37.0-r8 -> 1.37.0-r14)
+(11/12) Upgrading zlib (1.3.1-r2 -> 1.3.2-r0)
+(12/12) Upgrading musl-utils (1.2.5-r8 -> 1.2.5-r11)
+Executing busybox-1.37.0-r14.trigger
+OK: 7 MiB in 15 packages
+(1/10) Installing ncurses-terminfo-base (6.5_p20241006-r3)
+(2/10) Installing libncursesw (6.5_p20241006-r3)
+(3/10) Installing readline (8.2.13-r0)
+(4/10) Installing bash (5.2.37-r0)
+Executing bash-5.2.37-r0.post-install
+(5/10) Installing command-not-found (0.3-r1)
+(6/10) Installing tzdata (2026c-r0)
+(7/10) Installing libunistring (1.2-r0)
+(8/10) Installing libidn2 (2.3.7-r0)
+(9/10) Installing pcre2 (10.43-r0)
+(10/10) Installing wget (1.25.0-r0)
+Executing busybox-1.37.0-r14.trigger
+OK: 15 MiB in 25 packages
+[+] Successfully installed
+[*] Use apk to install new packages
+Configuring timezone...
+Timezone set to: Asia/Kolkata
+Installation completed.
+exit 0
+. _lsp-getting-started:
 
 Getting Started
 ===============
