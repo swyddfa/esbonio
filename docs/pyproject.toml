@@ -1,20 +1,3 @@
 [tool.esbonio.sphinx]
 buildArguments = ["-M", "dirhtml", ".", "${defaultBuildDir}"]
-pythonCommand = ["hatch", "-e", "docs", "run", "python"]
-
-[tool.hatch.envs.docs]
-installer = 'uv'
-skip-install = true
-dependencies = [
-    "aiosqlite",
-    "sphinx>=9,<10",
-    "sphinx-design",
-    "furo",
-    "myst-parser",
-    "platformdirs",
-    "pytest_lsp>=1.0",
-    "pygls>=2.0",
-]
-
-[tool.hatch.envs.docs.env-vars]
-UV_PRERELEASE = "allow"
+pythonCommand = ["uv", "run", "--python", "3.14", "--with-requirements", "requirements.txt", "python"]
