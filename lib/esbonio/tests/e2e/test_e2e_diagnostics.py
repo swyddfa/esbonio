@@ -85,7 +85,13 @@ async def test_workspace_diagnostic(client: LanguageClient, uri_for):
         str(workspace_uri / "conf.py"): expected_conf_py,
         str(workspace_uri / "index.rst"): ('Unknown directive type "grid"',),
         str(workspace_uri / "rst" / "diagnostics.rst"): (message,),
+        str(workspace_uri / "rst" / "directives.rst"): (
+            'Unknown directive type "not-a-real-directive"',
+        ),
         str(workspace_uri / "myst" / "diagnostics.md"): (message,),
+        str(workspace_uri / "myst" / "directives.md"): (
+            "Unknown directive type: 'not-a-real-directive'",
+        ),
     }
 
     assert len(report.items) == len(expected)
