@@ -532,3 +532,105 @@ async def test_directive_argument_definitions(
             expected_uri = location.uri.replace("${ROOT}", root_uri)
             assert expected_uri == actual.uri
             assert location.range == actual.range
+
+
+@pytest.mark.asyncio(loop_scope="session")
+@pytest.mark.parametrize(
+    "filename,position,expected",
+    [
+        (
+            ["workspaces", "demo", "rst", "directives.rst"],
+            # Handle the case where we aren't hovering a directive.
+            types.Position(line=70, character=12),
+            None,
+        ),
+        (
+            ["workspaces", "demo", "rst", "directives.rst"],
+            # Handle the case where we are hovering an unknown/undefined directive.
+            types.Position(line=80, character=12),
+            None,
+        ),
+        (
+            ["workspaces", "demo", "rst", "directives.rst"],
+            # No hover expected for this directive's argument.
+            types.Position(line=71, character=20),
+            None,
+        ),
+        (
+            ["workspaces", "demo", "rst", "directives.rst"],
+            # Handle the case where we are hovering a documented directive.
+            types.Position(line=71, character=8),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="# Container\n",
+                ),
+                range=types.Range(
+                    start=types.Position(line=71, character=3),
+                    end=types.Position(line=71, character=12),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "rst", "directives.rst"],
+            # Handle the case where we are hovering an undocumented directive.
+            types.Position(line=78, character=8),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="sphinx.directives.code.Highlight",
+                ),
+                range=types.Range(
+                    start=types.Position(line=78, character=3),
+                    end=types.Position(line=78, character=12),
+                ),
+            ),
+        ),
+    ],
+)
+async def test_directive_hover(
+    client: LanguageClient,
+    uri_for,
+    filename: list[str],
+    position: types.Position,
+    expected: types.Hover | None,
+):
+    """Ensure that we handle ``textDocument/hover`` requests correctly for
+    directives."""
+
+    test_uri = uri_for(*filename)
+
+    fpath = pathlib.Path(test_uri)
+    contents = fpath.read_text()
+
+    # Open the file - needed so that esbonio can correctly determine the language_id of
+    # the document. Strictly speaking, you could probably consider the fact that this is
+    # necessary to be a bug... but 99% of the time I'm fairly sure the client will have
+    # done this before making the goto definition call.
+    client.text_document_did_open(
+        types.DidOpenTextDocumentParams(
+            text_document=types.TextDocumentItem(
+                uri=str(test_uri),
+                language_id="restructuredtext"
+                if fpath.suffix == ".rst"
+                else "markdown",
+                version=1,
+                text=contents,
+            )
+        )
+    )
+
+    hover = await client.text_document_hover_async(
+        types.HoverParams(
+            text_document=types.TextDocumentIdentifier(uri=str(test_uri)),
+            position=position,
+        )
+    )
+
+    if expected is None:
+        assert hover is None
+    else:
+        assert hover.contents.kind == expected.contents.kind
+        assert hover.contents.value.startswith(expected.contents.value)
+
+        assert hover.range == expected.range

@@ -62,3 +62,20 @@ Esbonio supports GoTo Definition requests for directive arguments, including
   .. code-block:: rst
 
      .. include:: ./symbols.rst
+
+Hover
+-----
+
+When hovering on a directive ``esbonio`` will provide documentation on it's usage (assuming it is available).
+Try hovering on the ``container`` directive below
+
+.. container:: admonition
+
+   When exporing to html, ``container`` directives wrap their contents in ``<div>`` elements with the given class name.
+
+If the directive is known to ``esbonio``, but no documentation is provided, then the implementation's name will be provided.
+Try hovering on the ``highlight`` directive below
+
+.. highlight:: none
+
+.. not-a-real-directive:: included for test purposes.
