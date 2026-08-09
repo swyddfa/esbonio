@@ -17,17 +17,6 @@ class RstDirectives(server.LanguageFeature):
         self.directives = directives
         self._insert_behavior = "replace"
 
-    completion_trigger = server.CompletionTrigger(
-        patterns=[RST_DIRECTIVE],
-        languages={"rst"},
-        characters={".", "`"},
-    )
-
-    definition_trigger = server.DefinitionTrigger(
-        patterns=[RST_DIRECTIVE],
-        languages={"rst"},
-    )
-
     def initialized(self, params: types.InitializedParams):
         """Called once the initial handshake between client and server has finished."""
         self.configuration.subscribe(
@@ -41,6 +30,12 @@ class RstDirectives(server.LanguageFeature):
     ):
         """Called when the user's configuration is updated."""
         self._insert_behavior = event.value.preferred_insert_behavior
+
+    completion_trigger = server.CompletionTrigger(
+        patterns=[RST_DIRECTIVE],
+        languages={"rst"},
+        characters={".", "`"},
+    )
 
     async def completion(
         self, context: server.CompletionContext
@@ -111,6 +106,11 @@ class RstDirectives(server.LanguageFeature):
 
         return None
 
+    definition_trigger = server.DefinitionTrigger(
+        patterns=[RST_DIRECTIVE],
+        languages={"rst"},
+    )
+
     async def definition(
         self, context: server.DefinitionContext
     ) -> list[types.Location] | None:
@@ -172,6 +172,59 @@ class RstDirectives(server.LanguageFeature):
                 )
 
         return links if len(links) > 0 else None
+
+    hover_trigger = server.HoverTrigger(
+        patterns=[RST_DIRECTIVE],
+        languages={"rst"},
+    )
+
+    async def hover(self, context: server.HoverContext) -> types.Hover | None:
+        """Find the hover text of the item under the cursor."""
+
+        groups = context.match.groupdict()
+
+        # Are we hovering a directive's options?
+        if "directive" not in groups:
+            return None
+
+        # Don't offer hovers for targets
+        if (groups["name"] or "").startswith("_"):
+            return None
+
+        # Are we hovering the directive's argument?
+        directive_end = context.match.span()[0] + len(groups["directive"])
+        hover_directive = groups["directive"].endswith("::")
+
+        if hover_directive and directive_end < context.position.character:
+            return None
+
+        return await self.hover_directive(context)
+
+    async def hover_directive(self, context: server.HoverContext) -> types.Hover | None:
+        """Find the hover text for the directive under the cursor."""
+        uri = context.uri
+        pos = context.position
+        name = context.match.group("name")
+
+        self.logger.debug("Looking for directive...")
+        if (directive := await self.directives.get_directive(uri, name)) is None:
+            return None
+
+        self.logger.debug("Hovering directive: %r", directive.name)
+
+        start = context.match.group(0).index(name)
+        end = start + len(name)
+
+        return types.Hover(
+            contents=types.MarkupContent(
+                kind=types.MarkupKind.Markdown,
+                value=directive.documentation or directive.implementation or name,
+            ),
+            range=types.Range(
+                start=types.Position(line=pos.line, character=start),
+                end=types.Position(line=pos.line, character=end),
+            ),
+        )
 
 
 def esbonio_setup(esbonio: server.EsbonioLanguageServer, directives: DirectiveFeature):
