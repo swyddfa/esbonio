@@ -132,6 +132,13 @@ def _get_location_path(location: str) -> tuple[str, list[str]]:
     # working directory, so ensure the path is absolute.
     path = os.path.abspath(path)
 
+    # Versions of myst_parser < 5.1.0 can report warnings against <filename>.md.rst
+    # See https://github.com/executablebooks/MyST-Parser/pull/1114
+    if len((pth := pathlib.Path(path)).suffixes) > 1:
+        # There's always a (slim!) chance this is a real filepath
+        if not pth.exists():
+            path = str(pth.with_suffix(""))
+
     return path, parts
 
 
