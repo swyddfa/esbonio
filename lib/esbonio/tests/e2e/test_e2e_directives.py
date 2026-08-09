@@ -538,6 +538,7 @@ async def test_directive_argument_definitions(
 @pytest.mark.parametrize(
     "filename,position,expected",
     [
+        # reStructuredText
         (
             ["workspaces", "demo", "rst", "directives.rst"],
             # Handle the case where we aren't hovering a directive.
@@ -583,6 +584,55 @@ async def test_directive_argument_definitions(
                 range=types.Range(
                     start=types.Position(line=78, character=3),
                     end=types.Position(line=78, character=12),
+                ),
+            ),
+        ),
+        # MyST
+        (
+            ["workspaces", "demo", "myst", "directives.md"],
+            # Handle the case where we aren't hovering a directive.
+            types.Position(line=70, character=12),
+            None,
+        ),
+        (
+            ["workspaces", "demo", "myst", "directives.md"],
+            # Handle the case where we are hovering an unknown/undefined directive.
+            types.Position(line=78, character=12),
+            None,
+        ),
+        (
+            ["workspaces", "demo", "myst", "directives.md"],
+            # No hover expected for this directive's argument.
+            types.Position(line=71, character=20),
+            None,
+        ),
+        (
+            ["workspaces", "demo", "myst", "directives.md"],
+            # Handle the case where we are hovering a documented directive.
+            types.Position(line=68, character=8),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="# Container\n",
+                ),
+                range=types.Range(
+                    start=types.Position(line=68, character=4),
+                    end=types.Position(line=68, character=13),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "myst", "directives.md"],
+            # Handle the case where we are hovering an undocumented directive.
+            types.Position(line=75, character=8),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="sphinx.directives.code.Highlight",
+                ),
+                range=types.Range(
+                    start=types.Position(line=75, character=4),
+                    end=types.Position(line=75, character=13),
                 ),
             ),
         ),
