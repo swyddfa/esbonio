@@ -126,7 +126,7 @@ class LanguageFeature:
 class CompletionTrigger:
     """Define when the feature's completion method should be called."""
 
-    patterns: list[re.Pattern]
+    patterns: list[re.Pattern[str]]
     """A list of regular expressions to try"""
 
     languages: set[str] = attrs.field(factory=set)
@@ -242,7 +242,7 @@ class CompletionContext:
     doc: TextDocument
     """The document within which the completion request was made."""
 
-    match: re.Match
+    match: re.Match[str]
     """The match object describing the site of the completion request."""
 
     position: types.Position
@@ -335,7 +335,7 @@ class CompletionContext:
 class DefinitionTrigger:
     """Define when the feature's definition method should be called."""
 
-    patterns: list[re.Pattern]
+    patterns: list[re.Pattern[str]]
     """A list of regular expressions to try"""
 
     languages: set[str] = attrs.field(factory=set)
@@ -414,7 +414,7 @@ class DefinitionContext:
     doc: TextDocument
     """The document within which the definition request was made"""
 
-    match: re.Match
+    match: re.Match[str]
     """The match object describing the site of the definition request."""
 
     position: types.Position
@@ -461,7 +461,7 @@ class DocumentLinkContext:
 class HoverTrigger:
     """Define when the feature's hover method should be called."""
 
-    patterns: list[re.Pattern]
+    patterns: list[re.Pattern[str]]
     """A list of regular expressions to try"""
 
     languages: set[str] = attrs.field(factory=set)
@@ -540,7 +540,7 @@ class HoverContext:
     doc: TextDocument
     """The document within which the hover request was made"""
 
-    match: re.Match
+    match: re.Match[str]
     """The match object describing the site of the hover request."""
 
     position: types.Position
