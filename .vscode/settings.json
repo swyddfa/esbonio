@@ -29,6 +29,20 @@
         "**/.mypy_cache": true,
         "**/.ruff_cache": true
     },
+    "esbonio.logging.level": "debug",
+    // Uncomment to override default list of lsp messages that emit log messages.
+    // "esbonio.logging.enabledMethods": [
+    //    "textDocument/hover",
+    // ],
+    "esbonio.server.pythonCommand": [
+        "uv",
+        "run",
+        "--with-editable", "${workspaceFolder}/lib/esbonio",
+        // Uncomment to enable use of `lsp-devtools` tools with the server process.
+        // "--with", "lsp-devtools",
+        // "lsp-devtools", "agent", "--",
+        "python",
+    ],
     "esbonio.server.showDeprecationWarnings": true,
     "esbonio.sphinx.configOverrides": {
         // "extensions": [
@@ -50,5 +64,5 @@
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true,
-    //"esbonio.trace.server": "verbose"
+    // "esbonio.trace.server": "verbose"
 }
