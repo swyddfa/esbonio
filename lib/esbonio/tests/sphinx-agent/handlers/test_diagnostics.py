@@ -18,7 +18,7 @@ def check_diagnostics(
 ):
     """Ensure that two sets of diagnostics are equal."""
     converter = default_converter()
-    assert set(actual.keys()) == set(expected.keys())
+    assert set(str(k) for k in actual.keys()) == set(str(k) for k in expected.keys())
 
     for k, ex_diags in expected.items():
         actual_diags = [converter.structure(d, types.Diagnostic) for d in actual[k]]
@@ -48,11 +48,15 @@ async def test_diagnostics(client: SphinxClient, project: Project, uri_for):
     """Ensure that the sphinx agent reports diagnostics collected during the build, and
     that they are correctly reset when fixed."""
     rst_diagnostics_uri = uri_for("workspaces/demo/rst/diagnostics.rst")
+    rst_directives_uri = uri_for("workspaces/demo/rst/directives.rst")
+
     myst_diagnostics_uri = uri_for("workspaces/demo/myst/diagnostics.md")
+    myst_directives_uri = uri_for("workspaces/demo/myst/directives.md")
+
     index_uri = uri_for("workspaces/demo/index.rst")
     conf_uri = uri_for("workspaces/demo/conf.py")
 
-    message = "undefined label: 'not-a-real-reference'"
+    undef_label = "undefined label: 'not-a-real-reference'"
 
     expected = {
         index_uri: [
@@ -85,7 +89,7 @@ async def test_diagnostics(client: SphinxClient, project: Project, uri_for):
         ],
         rst_diagnostics_uri: [
             types.Diagnostic(
-                message=message,
+                message=undef_label,
                 severity=types.DiagnosticSeverity.Warning,
                 range=types.Range(
                     start=types.Position(line=5, character=0),
@@ -93,13 +97,36 @@ async def test_diagnostics(client: SphinxClient, project: Project, uri_for):
                 ),
             ),
         ],
+        rst_directives_uri: [
+            types.Diagnostic(
+                message=(
+                    'Unknown directive type "not-a-real-directive".\n\n'
+                    ".. not-a-real-directive:: included for test purposes."
+                ),
+                severity=types.DiagnosticSeverity.Error,
+                range=types.Range(
+                    start=types.Position(line=80, character=0),
+                    end=types.Position(line=81, character=0),
+                ),
+            ),
+        ],
         myst_diagnostics_uri: [
             types.Diagnostic(
-                message=message,
+                message=undef_label,
                 severity=types.DiagnosticSeverity.Warning,
                 range=types.Range(
                     start=types.Position(line=4, character=0),
                     end=types.Position(line=5, character=0),
+                ),
+            ),
+        ],
+        myst_directives_uri: [
+            types.Diagnostic(
+                message="Unknown directive type: 'not-a-real-directive'",
+                severity=types.DiagnosticSeverity.Warning,
+                range=types.Range(
+                    start=types.Position(line=78, character=0),
+                    end=types.Position(line=79, character=0),
                 ),
             ),
         ],
