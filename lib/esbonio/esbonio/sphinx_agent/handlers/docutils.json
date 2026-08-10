@@ -1,6 +1,158 @@
 {
   "roles": {
-    "docutils.parsers.rst.roles.GenericRole": {
+    "abbreviation(docutils.parsers.rst.roles.GenericRole)": {
+      "documentation": [
+        "# :abbreviation:",
+        "| | |",
+        "|-|-|",
+        "| Aliases | :ab: |",
+        "| Doctree Element | [<abbreviation>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#abbreviation) |",
+        "",
+        "An abbreviation used in the document.",
+        "An example of an abbreviation is \u2018St\u2019 being used instead of \u2018Street\u2019."
+      ],
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#abbreviation",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "acronym(docutils.parsers.rst.roles.GenericRole)": {
+      "documentation": [
+        "# :acronym:",
+        "| | |",
+        "|-|-|",
+        "| Aliases | :ac: |",
+        "| Doctree Element | [<acronym>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#acronym) |",
+        "",
+        "An acronym."
+      ],
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#acronym",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "emphasis(docutils.parsers.rst.roles.GenericRole)": {
+      "documentation": [
+        "# :emphasis:",
+        "| | |",
+        "|-|-|",
+        "| Aliases | None |",
+        "| Doctree Element | [<emphasis>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#emphasis) |",
+        "",
+        "Implements emphasis.  These are equivalent:",
+        "```",
+        "*text*",
+        ":emphasis:`text`",
+        "```"
+      ],
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#emphasis",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "literal(docutils.parsers.rst.roles.GenericRole)": {
+      "documentation": [
+        "# :literal:",
+        "| | |",
+        "|-|-|",
+        "| Aliases | None |",
+        "| Doctree Element | [<literal>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#literal) |",
+        "",
+        "Implements inline literal text.  These are equivalent:",
+        "```",
+        "``text``",
+        ":literal:`text`",
+        "```",
+        "",
+        "Care must be taken with backslash-escapes though.  These are *not*",
+        "equivalent:",
+        "```",
+        "``text \\ and \\ backslashes``",
+        ":literal:`text \\ and \\ backslashes`",
+        "```",
+        "",
+        "The backslashes in the first line are preserved (and do nothing),",
+        "whereas the backslashes in the second line escape the following",
+        "spaces."
+      ],
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#literal",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "strong(docutils.parsers.rst.roles.GenericRole)": {
+      "documentation": [
+        "# :strong:",
+        "| | |",
+        "|-|-|",
+        "| Aliases | None |",
+        "| Doctree Element | [<strong>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#strong) |",
+        "",
+        "Implements strong emphasis.  These are equivalent:",
+        "```",
+        "**text**",
+        ":strong:`text`",
+        "```"
+      ],
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#strong",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "subscript(docutils.parsers.rst.roles.GenericRole)": {
+      "documentation": [
+        "# :subscript:",
+        "| | |",
+        "|-|-|",
+        "| Aliases | :sub: |",
+        "| Doctree Element | [<subscript>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#subscript) |",
+        "",
+        "Implements subscripts.",
+        "",
+        "----",
+        "**TIP**",
+        "",
+        "",
+        "Whitespace or punctuation is required around interpreted text, but",
+        "often not desired with subscripts & superscripts.",
+        "Backslash-escaped whitespace can be used; the whitespace will be",
+        "removed from the processed document:",
+        "```",
+        "H\\ :sub:`2`\\ O",
+        "E = mc\\ :sup:`2`",
+        "```",
+        "",
+        "In such cases, readability of the plain text can be greatly",
+        "improved with substitutions [^2]:",
+        "```",
+        "The chemical formula for pure water is |H2O|.",
+        "",
+        ".. |H2O| replace:: H\\ :sub:`2`\\ O",
+        "```",
+        "",
+        "See [the reStructuredText spec](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html) for further information on",
+        "[character-level markup](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#character-level-inline-markup-1) and [the substitution mechanism](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#substitution-references).",
+        "[^2]: ",
+        "Alternatives are the [:math:](https://docutils.sourceforge.io/docs/ref/rst/roles.html#math) role (E=mc^2)",
+        "or literal Unicode characters (H\u2082O)",
+        "",
+        "",
+        "----"
+      ],
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#subscript",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "superscript(docutils.parsers.rst.roles.GenericRole)": {
+      "documentation": [
+        "# :superscript:",
+        "| | |",
+        "|-|-|",
+        "| Aliases | :sup: |",
+        "| Doctree Element | [<superscript>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#superscript) |",
+        "",
+        "Implements superscripts.  See the tip in [:subscript:](https://docutils.sourceforge.io/docs/ref/rst/roles.html#subscript) above."
+      ],
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#superscript",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "title-reference(docutils.parsers.rst.roles.GenericRole)": {
       "documentation": [
         "# :title-reference:",
         "| | |",
@@ -46,7 +198,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#title-reference",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.roles.pep_reference_role": {
+    "pep-reference(docutils.parsers.rst.roles.pep_reference_role)": {
       "documentation": [
         "# :pep-reference:",
         "| | |",
@@ -72,7 +224,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#pep-reference",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.roles.rfc_reference_role": {
+    "rfc-reference(docutils.parsers.rst.roles.rfc_reference_role)": {
       "documentation": [
         "# :rfc-reference:",
         "| | |",
@@ -114,7 +266,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#rfc-reference",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.roles.raw_role": {
+    "raw(docutils.parsers.rst.roles.raw_role)": {
       "documentation": [
         "# :raw:",
         "| | |",
@@ -178,7 +330,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#raw",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.roles.code_role": {
+    "code(docutils.parsers.rst.roles.code_role)": {
       "documentation": [
         "# :code:",
         "| | |",
@@ -208,7 +360,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#code",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.roles.math_role": {
+    "math(docutils.parsers.rst.roles.math_role)": {
       "documentation": [
         "# :math:",
         "| | |",
@@ -233,16 +385,354 @@
       "argument_providers": [],
       "source": "https://docutils.sourceforge.io/docs/ref/rst/roles.html#math",
       "license": "https://docutils.sourceforge.io/COPYING.html"
-    },
-    "docutils.parsers.rst.roles.unimplemented_role": {
-      "documentation": "",
-      "argument_providers": [],
-      "source": "",
-      "license": ""
     }
   },
   "directives": {
-    "docutils.parsers.rst.directives.admonitions.Attention": {
+    "contents(docutils.parsers.rst.directives.parts.Contents)": {
+      "documentation": [
+        "# Table of Contents",
+        "| | |",
+        "|-|-|",
+        "| Directive Type | \"contents\" |",
+        "| Doctree Elements | [<pending>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#pending), [<topic>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#topic) |",
+        "| Directive Arguments | one, optional: title |",
+        "| Directive Options | [see below](https://docutils.sourceforge.io/docs/ref/rst/directives.html#contents-options) |",
+        "| Directive Content | none |",
+        "| Configuration Settings | [toc_backlinks](https://docutils.sourceforge.io/docs/ref/rst/../../user/config.html#toc-backlinks), [use_latex_toc](https://docutils.sourceforge.io/docs/ref/rst/../../user/config.html#use-latex-toc), [generate_oowriter_toc](https://docutils.sourceforge.io/docs/ref/rst/../../user/config.html#generate-oowriter-toc) |",
+        "",
+        "The \"contents\" directive generates a table of contents (TOC) in",
+        "a [<topic>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#topic) element.  Topics, and therefore tables of contents,",
+        "may occur anywhere a section or transition may occur.",
+        "Body elements and topics may not contain tables of contents.",
+        "",
+        "Here's the directive in its simplest form:",
+        "```",
+        ".. contents::",
+        "```",
+        "",
+        "Language-dependent boilerplate text will be used for the title.  The",
+        "English default title text is \"Contents\".",
+        "",
+        "An explicit title may be specified:",
+        "```",
+        ".. contents:: Table of Contents",
+        "```",
+        "",
+        "The title may span lines, although it is not recommended:",
+        "```",
+        ".. contents:: Here's a very long Table of",
+        "   Contents title",
+        "```",
+        "",
+        "Directive options may be specified using a field list:",
+        "```",
+        ".. contents:: Table of Contents",
+        "   :depth: 2",
+        "```",
+        "",
+        "If the default title is to be used, the options field list may begin",
+        "on the same line as the directive marker:",
+        "```",
+        ".. contents:: :depth: 2",
+        "```",
+        "",
+        "The \"contents\" directive recognizes the common option",
+        "[class](https://docutils.sourceforge.io/docs/ref/rst/directives.html#class-option) as well as",
+        "",
+        "`backlinks`: \"entry\" or \"top\" or \"none\"",
+        "",
+        "Generate links from section headers back to the table of contents",
+        "entries, the table of contents itself, or generate no back-links.",
+        "",
+        "`depth`: [integer](https://docutils.sourceforge.io/docs/ref/rst/directives.html#integer)",
+        "",
+        "The number of section levels that are collected in the table of",
+        "contents.  The default is unlimited depth.",
+        "",
+        "`local`: [flag](https://docutils.sourceforge.io/docs/ref/rst/directives.html#flag)",
+        "",
+        "Generate a local table of contents.  Entries will only include",
+        "subsections of the section in which the directive is given.  If no",
+        "explicit title is given, the table of contents will not be titled.",
+        ""
+      ],
+      "option_providers": {
+        "depth": null,
+        "local": null,
+        "backlinks": null,
+        "class": null
+      },
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#table-of-contents",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "class(docutils.parsers.rst.directives.misc.Class)": {
+      "documentation": [
+        "# Class",
+        "| | |",
+        "|-|-|",
+        "| Directive Type | \"class\" or \"rst-class\" (synonyms) [^14] |",
+        "| Doctree Element | [<pending>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#pending) |",
+        "| Directive Arguments | one or more, required(class names / attribute values) |",
+        "| Directive Options | none |",
+        "| Directive Content | Optional.  If present, it is interpreted as bodyelements. |",
+        "",
+        "The \"class\" directive sets the [classes attribute](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#classes) value on its content",
+        "or on the next visible [^15] element. [^16]",
+        "The directive argument consists of one or more space-separated class",
+        "names. The names are transformed to conform to the regular expression",
+        "`[a-z](-?[a-z0-9]+)*` (see [Identifier Normalization](https://docutils.sourceforge.io/docs/ref/rst/directives.html#identifier-normalization) below).",
+        "",
+        "----",
+        "**TIP**",
+        "",
+        "",
+        "For reStructuredText directives, the [class option](https://docutils.sourceforge.io/docs/ref/rst/directives.html#class-option) provides",
+        "a more compact markup alternative.",
+        "",
+        "----",
+        "",
+        "Examples:",
+        "```",
+        ".. class:: special",
+        "",
+        "This is a \"special\" paragraph.",
+        "",
+        ".. class:: exceptional remarkable",
+        "",
+        "An Exceptional Section",
+        "======================",
+        "",
+        "This is an ordinary paragraph.",
+        "",
+        ".. class:: multiple",
+        "",
+        "   First paragraph.",
+        "",
+        "   Second paragraph.",
+        "```",
+        "",
+        "The text above is parsed and transformed into this [doctree](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html) fragment:",
+        "```",
+        "<paragraph classes=\"special\">",
+        "    This is a \"special\" paragraph.",
+        "<section classes=\"exceptional remarkable\">",
+        "    <title>",
+        "        An Exceptional Section",
+        "    <paragraph>",
+        "        This is an ordinary paragraph.",
+        "    <paragraph classes=\"multiple\">",
+        "        First paragraph.",
+        "    <paragraph classes=\"multiple\">",
+        "        Second paragraph.",
+        "```",
+        "",
+        "Indented text after the directive is interpreted as content block.",
+        "To set a classes attribute value on a [block quote](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#block-quotes), the",
+        "\"class\" directive must be followed by a comment:",
+        "```",
+        ".. class:: special",
+        "..",
+        "",
+        "    Special block quote.",
+        "```",
+        "",
+        "results in this [doctree](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html) fragment:",
+        "```",
+        "<comment xml:space=\"preserve\">",
+        "<block_quote classes=\"special\">",
+        "    <paragraph>",
+        "        Special block quote.",
+        "```",
+        "[^14]: ",
+        "[Sphinx](http://sphinx-doc.org/) uses the directive name \"class\" for [domain specific](https://www.sphinx-doc.org/en/master/usage/domains/)",
+        "directives (by default \"[py:class](https://www.sphinx-doc.org/en/master/usage/domains/python.html#directive-py-class)\").",
+        "The \"rst-class\" synonym is compatible with Sphinx.",
+        "",
+        "[^15]: ",
+        "Elements that are not shown in the output ([comments](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#comments),",
+        "[substitution definitions](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#substitution-definitions), [hyperlink targets](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#hyperlink-targets), ...) as well as",
+        "\"[header](https://docutils.sourceforge.io/docs/ref/rst/directives.html#header)\" and \"[footer](https://docutils.sourceforge.io/docs/ref/rst/directives.html#footer)\" directives are skipped.",
+        "",
+        "[^16]: ",
+        "This also works if the class directive is \"nested\" at the end of",
+        "an indented text block.",
+        "This allows the \"classification\" of individual list items (except the",
+        "first, as a preceding class directive applies to the list as a whole):",
+        "```",
+        "* bullet list",
+        "",
+        "  .. class:: classy-item",
+        "",
+        "* second item, with class argument",
+        "```",
+        "",
+        "## Identifier Normalization",
+        "Docutils normalizes [class names](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#class-names) and [identifiers](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#identifiers) to conform",
+        "to the regular expression \"`[a-z](-?[a-z0-9]+)*`\" by converting",
+        "- alphabetic characters to lowercase,",
+        "- accented characters to the base character,",
+        "- non-alphanumeric characters to hyphens,",
+        "- consecutive hyphens into one hyphen",
+        "",
+        "and stripping",
+        "- leading hyphens and number characters, and",
+        "- trailing hyphens.",
+        "",
+        "For example `\"Rot.Gelb&Gr\u00fcn::2008+\"` becomes `\"rot-gelb-grun-2008\"` and",
+        "`\"1000_Steps!\"` becomes `\"steps\"`.",
+        "",
+        "----",
+        "**RATIONALE:**",
+        "",
+        "",
+        "Identifier keys must be valid in all supported output formats.",
+        "",
+        "For HTML\u00a04.1 + CSS1 compatibility, identifiers should have no",
+        "underscores, colons, or periods.  Hyphens may be used.",
+        "- The [HTML 4.01 spec](https://www.w3.org/TR/html401/) defines identifiers based on SGML tokens:",
+        "",
+        "----",
+        "",
+        "",
+        "",
+        "ID and NAME tokens must begin with a letter ([A-Za-z]) and",
+        "may be followed by any number of letters, digits ([0-9]),",
+        "hyphens (\"-\"), underscores (\"_\"), colons (\":\"), and periods",
+        "(\".\").",
+        "",
+        "-- [https://www.w3.org/TR/html401/types.html#type-name](https://www.w3.org/TR/html401/types.html#type-name)",
+        "",
+        "----",
+        "- The [CSS1 spec](https://www.w3.org/TR/REC-CSS1) defines identifiers based on the \"name\" token",
+        "(\"flex\" tokenizer notation below):",
+        "```",
+        "unicode     \\\\[0-9a-f]{1,4}",
+        "latin1      [\u00a1-\u00ff]",
+        "escape      {unicode}|\\\\[ -~\u00a1-\u00ff]",
+        "nmchar      [-a-z0-9]|{latin1}|{escape}",
+        "name        {nmchar}+",
+        "```",
+        "",
+        "The CSS1 rule requires underscores (\"_\"), colons (\":\"), and",
+        "periods (\".\") to be escaped [^17],",
+        "therefore [classes](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#classes) and [ids attribute](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#ids)s should not",
+        "contain these characters.  Combined with HTML4.1 requirements (the",
+        "first character must be a letter; no \"unicode\", \"latin1\", or",
+        "\"escape\" characters), this results in the regular expression",
+        "`[A-Za-z][-A-Za-z0-9]*`. Docutils adds a normalization by",
+        "downcasing and merge of consecutive hyphens.",
+        "[^17]: ",
+        "CSS identifiers may use underscores (\"_\") directly in",
+        "[CSS\u00a0Level\u00a01](https://www.w3.org/TR/CSS21/syndata.html#value-def-identifier), [CSS2.1](https://www.w3.org/TR/CSS/#css-level-1), [CSS2.2](https://www.w3.org/TR/CSS22/syndata.html), and [CSS3](https://www.w3.org/TR/css-syntax-3/#typedef-ident-token).",
+        "",
+        "",
+        "----"
+      ],
+      "option_providers": {},
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#class-20",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "warning(docutils.parsers.rst.directives.admonitions.Warning)": {
+      "documentation": [
+        "# Specific Admonitions",
+        "| | |",
+        "|-|-|",
+        "| Directive Types | \"attention\", \"caution\", \"danger\", \"error\", \"hint\",\"important\", \"note\", \"tip\", \"warning\" |",
+        "| Doctree Elements | [<attention>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#attention), [<caution>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#caution), [<danger>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#danger),[<error>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#error), [<hint>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#hint), [<important>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#important),[<note>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#note), [<tip>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#tip), [<warning>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#warning) |",
+        "| Directive Arguments | none |",
+        "| Directive Options | [class](https://docutils.sourceforge.io/docs/ref/rst/directives.html#class-option), [name](https://docutils.sourceforge.io/docs/ref/rst/directives.html#name) |",
+        "| Directive Content | Interpreted as body elements. |",
+        "",
+        "Specific admonitions are rendered with a title matching the admonition type.",
+        "For example:",
+        "```",
+        ".. DANGER::",
+        "   Beware killer rabbits!",
+        "```",
+        "",
+        "This directive might be rendered something like this:",
+        "```",
+        "+------------------------+",
+        "|        !DANGER!        |",
+        "|                        |",
+        "| Beware killer rabbits! |",
+        "+------------------------+",
+        "```",
+        "",
+        "Any text immediately following the directive indicator (on the same",
+        "line and/or indented on following lines) is interpreted as a directive",
+        "block and is parsed for normal body elements.  For example, the",
+        "following \"note\" admonition directive contains one paragraph and a",
+        "bullet list consisting of two list items:",
+        "```",
+        ".. note:: This is a note admonition.",
+        "   This is the second line of the first paragraph.",
+        "",
+        "   - The note contains all indented body elements",
+        "     following.",
+        "   - It includes this bullet list.",
+        "```"
+      ],
+      "option_providers": {
+        "class": null,
+        "name": null
+      },
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#warning",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "tip(docutils.parsers.rst.directives.admonitions.Tip)": {
+      "documentation": [
+        "# Specific Admonitions",
+        "| | |",
+        "|-|-|",
+        "| Directive Types | \"attention\", \"caution\", \"danger\", \"error\", \"hint\",\"important\", \"note\", \"tip\", \"warning\" |",
+        "| Doctree Elements | [<attention>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#attention), [<caution>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#caution), [<danger>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#danger),[<error>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#error), [<hint>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#hint), [<important>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#important),[<note>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#note), [<tip>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#tip), [<warning>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#warning) |",
+        "| Directive Arguments | none |",
+        "| Directive Options | [class](https://docutils.sourceforge.io/docs/ref/rst/directives.html#class-option), [name](https://docutils.sourceforge.io/docs/ref/rst/directives.html#name) |",
+        "| Directive Content | Interpreted as body elements. |",
+        "",
+        "Specific admonitions are rendered with a title matching the admonition type.",
+        "For example:",
+        "```",
+        ".. DANGER::",
+        "   Beware killer rabbits!",
+        "```",
+        "",
+        "This directive might be rendered something like this:",
+        "```",
+        "+------------------------+",
+        "|        !DANGER!        |",
+        "|                        |",
+        "| Beware killer rabbits! |",
+        "+------------------------+",
+        "```",
+        "",
+        "Any text immediately following the directive indicator (on the same",
+        "line and/or indented on following lines) is interpreted as a directive",
+        "block and is parsed for normal body elements.  For example, the",
+        "following \"note\" admonition directive contains one paragraph and a",
+        "bullet list consisting of two list items:",
+        "```",
+        ".. note:: This is a note admonition.",
+        "   This is the second line of the first paragraph.",
+        "",
+        "   - The note contains all indented body elements",
+        "     following.",
+        "   - It includes this bullet list.",
+        "```"
+      ],
+      "option_providers": {
+        "class": null,
+        "name": null
+      },
+      "argument_providers": [],
+      "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#tip",
+      "license": "https://docutils.sourceforge.io/COPYING.html"
+    },
+    "attention(docutils.parsers.rst.directives.admonitions.Attention)": {
       "documentation": [
         "# Specific Admonitions",
         "| | |",
@@ -291,7 +781,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#attention",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.admonitions.Caution": {
+    "caution(docutils.parsers.rst.directives.admonitions.Caution)": {
       "documentation": [
         "# Specific Admonitions",
         "| | |",
@@ -340,7 +830,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#caution",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.CodeBlock": {
+    "code(docutils.parsers.rst.directives.body.CodeBlock)": {
       "documentation": [
         "# Code",
         "| | |",
@@ -396,7 +886,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#code",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.admonitions.Danger": {
+    "danger(docutils.parsers.rst.directives.admonitions.Danger)": {
       "documentation": [
         "# Specific Admonitions",
         "| | |",
@@ -445,7 +935,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#danger",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.admonitions.Error": {
+    "error(docutils.parsers.rst.directives.admonitions.Error)": {
       "documentation": [
         "# Specific Admonitions",
         "| | |",
@@ -494,7 +984,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#error",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.admonitions.Important": {
+    "important(docutils.parsers.rst.directives.admonitions.Important)": {
       "documentation": [
         "# Specific Admonitions",
         "| | |",
@@ -543,7 +1033,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#important",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.admonitions.Note": {
+    "note(docutils.parsers.rst.directives.admonitions.Note)": {
       "documentation": [
         "# Specific Admonitions",
         "| | |",
@@ -592,56 +1082,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#note",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.admonitions.Tip": {
-      "documentation": [
-        "# Specific Admonitions",
-        "| | |",
-        "|-|-|",
-        "| Directive Types | \"attention\", \"caution\", \"danger\", \"error\", \"hint\",\"important\", \"note\", \"tip\", \"warning\" |",
-        "| Doctree Elements | [<attention>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#attention), [<caution>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#caution), [<danger>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#danger),[<error>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#error), [<hint>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#hint), [<important>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#important),[<note>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#note), [<tip>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#tip), [<warning>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#warning) |",
-        "| Directive Arguments | none |",
-        "| Directive Options | [class](https://docutils.sourceforge.io/docs/ref/rst/directives.html#class-option), [name](https://docutils.sourceforge.io/docs/ref/rst/directives.html#name) |",
-        "| Directive Content | Interpreted as body elements. |",
-        "",
-        "Specific admonitions are rendered with a title matching the admonition type.",
-        "For example:",
-        "```",
-        ".. DANGER::",
-        "   Beware killer rabbits!",
-        "```",
-        "",
-        "This directive might be rendered something like this:",
-        "```",
-        "+------------------------+",
-        "|        !DANGER!        |",
-        "|                        |",
-        "| Beware killer rabbits! |",
-        "+------------------------+",
-        "```",
-        "",
-        "Any text immediately following the directive indicator (on the same",
-        "line and/or indented on following lines) is interpreted as a directive",
-        "block and is parsed for normal body elements.  For example, the",
-        "following \"note\" admonition directive contains one paragraph and a",
-        "bullet list consisting of two list items:",
-        "```",
-        ".. note:: This is a note admonition.",
-        "   This is the second line of the first paragraph.",
-        "",
-        "   - The note contains all indented body elements",
-        "     following.",
-        "   - It includes this bullet list.",
-        "```"
-      ],
-      "option_providers": {
-        "class": null,
-        "name": null
-      },
-      "argument_providers": [],
-      "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#tip",
-      "license": "https://docutils.sourceforge.io/COPYING.html"
-    },
-    "docutils.parsers.rst.directives.admonitions.Hint": {
+    "hint(docutils.parsers.rst.directives.admonitions.Hint)": {
       "documentation": [
         "# Specific Admonitions",
         "| | |",
@@ -690,56 +1131,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#hint",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.admonitions.Warning": {
-      "documentation": [
-        "# Specific Admonitions",
-        "| | |",
-        "|-|-|",
-        "| Directive Types | \"attention\", \"caution\", \"danger\", \"error\", \"hint\",\"important\", \"note\", \"tip\", \"warning\" |",
-        "| Doctree Elements | [<attention>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#attention), [<caution>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#caution), [<danger>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#danger),[<error>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#error), [<hint>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#hint), [<important>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#important),[<note>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#note), [<tip>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#tip), [<warning>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#warning) |",
-        "| Directive Arguments | none |",
-        "| Directive Options | [class](https://docutils.sourceforge.io/docs/ref/rst/directives.html#class-option), [name](https://docutils.sourceforge.io/docs/ref/rst/directives.html#name) |",
-        "| Directive Content | Interpreted as body elements. |",
-        "",
-        "Specific admonitions are rendered with a title matching the admonition type.",
-        "For example:",
-        "```",
-        ".. DANGER::",
-        "   Beware killer rabbits!",
-        "```",
-        "",
-        "This directive might be rendered something like this:",
-        "```",
-        "+------------------------+",
-        "|        !DANGER!        |",
-        "|                        |",
-        "| Beware killer rabbits! |",
-        "+------------------------+",
-        "```",
-        "",
-        "Any text immediately following the directive indicator (on the same",
-        "line and/or indented on following lines) is interpreted as a directive",
-        "block and is parsed for normal body elements.  For example, the",
-        "following \"note\" admonition directive contains one paragraph and a",
-        "bullet list consisting of two list items:",
-        "```",
-        ".. note:: This is a note admonition.",
-        "   This is the second line of the first paragraph.",
-        "",
-        "   - The note contains all indented body elements",
-        "     following.",
-        "   - It includes this bullet list.",
-        "```"
-      ],
-      "option_providers": {
-        "class": null,
-        "name": null
-      },
-      "argument_providers": [],
-      "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#warning",
-      "license": "https://docutils.sourceforge.io/COPYING.html"
-    },
-    "docutils.parsers.rst.directives.admonitions.Admonition": {
+    "admonition(docutils.parsers.rst.directives.admonitions.Admonition)": {
       "documentation": [
         "# Generic Admonition",
         "| | |",
@@ -783,7 +1175,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#admonition",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.Sidebar": {
+    "sidebar(docutils.parsers.rst.directives.body.Sidebar)": {
       "documentation": [
         "# Sidebar",
         "| | |",
@@ -833,7 +1225,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#sidebar",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.Topic": {
+    "topic(docutils.parsers.rst.directives.body.Topic)": {
       "documentation": [
         "# Topic",
         "| | |",
@@ -869,7 +1261,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#topic",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.LineBlock": {
+    "line-block(docutils.parsers.rst.directives.body.LineBlock)": {
       "documentation": [
         "# Line Block",
         "----",
@@ -919,7 +1311,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#line-block",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.ParsedLiteral": {
+    "parsed-literal(docutils.parsers.rst.directives.body.ParsedLiteral)": {
       "documentation": [
         "# Parsed Literal Block",
         "| | |",
@@ -962,7 +1354,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#parsed-literal",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.MathBlock": {
+    "math(docutils.parsers.rst.directives.body.MathBlock)": {
       "documentation": [
         "# Math",
         "| | |",
@@ -1000,7 +1392,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#math",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.Rubric": {
+    "rubric(docutils.parsers.rst.directives.body.Rubric)": {
       "documentation": [
         "# Rubric",
         "| | |",
@@ -1035,7 +1427,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#rubric",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.Epigraph": {
+    "epigraph(docutils.parsers.rst.directives.body.Epigraph)": {
       "documentation": [
         "# Epigraph",
         "| | |",
@@ -1074,7 +1466,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#epigraph",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.Highlights": {
+    "highlights(docutils.parsers.rst.directives.body.Highlights)": {
       "documentation": [
         "# Highlights",
         "| | |",
@@ -1096,7 +1488,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#highlights",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.PullQuote": {
+    "pull-quote(docutils.parsers.rst.directives.body.PullQuote)": {
       "documentation": [
         "# Pull-Quote",
         "| | |",
@@ -1119,7 +1511,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#pull-quote",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.Compound": {
+    "compound(docutils.parsers.rst.directives.body.Compound)": {
       "documentation": [
         "# Compound Paragraph",
         "| | |",
@@ -1180,7 +1572,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#compound-paragraph",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.body.Container": {
+    "container(docutils.parsers.rst.directives.body.Container)": {
       "documentation": [
         "# Container",
         "| | |",
@@ -1219,7 +1611,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#container",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.tables.RSTTable": {
+    "table(docutils.parsers.rst.directives.tables.RSTTable)": {
       "documentation": [
         "# Table",
         "| | |",
@@ -1294,7 +1686,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#table",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.tables.CSVTable": {
+    "csv-table(docutils.parsers.rst.directives.tables.CSVTable)": {
       "documentation": [
         "# CSV Table",
         "| | |",
@@ -1464,7 +1856,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#csv-table",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.tables.ListTable": {
+    "list-table(docutils.parsers.rst.directives.tables.ListTable)": {
       "documentation": [
         "# List Table",
         "| | |",
@@ -1551,7 +1943,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#list-table",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.images.Image": {
+    "image(docutils.parsers.rst.directives.images.Image)": {
       "documentation": [
         "# Image",
         "| | |",
@@ -1689,7 +2081,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#image",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.images.Figure": {
+    "figure(docutils.parsers.rst.directives.images.Figure)": {
       "documentation": [
         "# Figure",
         "| | |",
@@ -1803,85 +2195,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#figure",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.parts.Contents": {
-      "documentation": [
-        "# Table of Contents",
-        "| | |",
-        "|-|-|",
-        "| Directive Type | \"contents\" |",
-        "| Doctree Elements | [<pending>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#pending), [<topic>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#topic) |",
-        "| Directive Arguments | one, optional: title |",
-        "| Directive Options | [see below](https://docutils.sourceforge.io/docs/ref/rst/directives.html#contents-options) |",
-        "| Directive Content | none |",
-        "| Configuration Settings | [toc_backlinks](https://docutils.sourceforge.io/docs/ref/rst/../../user/config.html#toc-backlinks), [use_latex_toc](https://docutils.sourceforge.io/docs/ref/rst/../../user/config.html#use-latex-toc), [generate_oowriter_toc](https://docutils.sourceforge.io/docs/ref/rst/../../user/config.html#generate-oowriter-toc) |",
-        "",
-        "The \"contents\" directive generates a table of contents (TOC) in",
-        "a [<topic>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#topic) element.  Topics, and therefore tables of contents,",
-        "may occur anywhere a section or transition may occur.",
-        "Body elements and topics may not contain tables of contents.",
-        "",
-        "Here's the directive in its simplest form:",
-        "```",
-        ".. contents::",
-        "```",
-        "",
-        "Language-dependent boilerplate text will be used for the title.  The",
-        "English default title text is \"Contents\".",
-        "",
-        "An explicit title may be specified:",
-        "```",
-        ".. contents:: Table of Contents",
-        "```",
-        "",
-        "The title may span lines, although it is not recommended:",
-        "```",
-        ".. contents:: Here's a very long Table of",
-        "   Contents title",
-        "```",
-        "",
-        "Directive options may be specified using a field list:",
-        "```",
-        ".. contents:: Table of Contents",
-        "   :depth: 2",
-        "```",
-        "",
-        "If the default title is to be used, the options field list may begin",
-        "on the same line as the directive marker:",
-        "```",
-        ".. contents:: :depth: 2",
-        "```",
-        "",
-        "The \"contents\" directive recognizes the common option",
-        "[class](https://docutils.sourceforge.io/docs/ref/rst/directives.html#class-option) as well as",
-        "",
-        "`backlinks`: \"entry\" or \"top\" or \"none\"",
-        "",
-        "Generate links from section headers back to the table of contents",
-        "entries, the table of contents itself, or generate no back-links.",
-        "",
-        "`depth`: [integer](https://docutils.sourceforge.io/docs/ref/rst/directives.html#integer)",
-        "",
-        "The number of section levels that are collected in the table of",
-        "contents.  The default is unlimited depth.",
-        "",
-        "`local`: [flag](https://docutils.sourceforge.io/docs/ref/rst/directives.html#flag)",
-        "",
-        "Generate a local table of contents.  Entries will only include",
-        "subsections of the section in which the directive is given.  If no",
-        "explicit title is given, the table of contents will not be titled.",
-        ""
-      ],
-      "option_providers": {
-        "depth": null,
-        "local": null,
-        "backlinks": null,
-        "class": null
-      },
-      "argument_providers": [],
-      "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#table-of-contents",
-      "license": "https://docutils.sourceforge.io/COPYING.html"
-    },
-    "docutils.parsers.rst.directives.parts.Sectnum": {
+    "sectnum(docutils.parsers.rst.directives.parts.Sectnum)": {
       "documentation": [
         "# Automatic Section Numbering",
         "| | |",
@@ -1948,7 +2262,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#sectnum",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.parts.Header": {
+    "header(docutils.parsers.rst.directives.parts.Header)": {
       "documentation": [
         "# Document Header & Footer",
         "| | |",
@@ -1998,7 +2312,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#header",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.parts.Footer": {
+    "footer(docutils.parsers.rst.directives.parts.Footer)": {
       "documentation": [
         "# Document Header & Footer",
         "| | |",
@@ -2048,7 +2362,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#footer",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.references.TargetNotes": {
+    "target-notes(docutils.parsers.rst.directives.references.TargetNotes)": {
       "documentation": [
         "# Target Footnotes",
         "| | |",
@@ -2080,7 +2394,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#target-notes",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.misc.Meta": {
+    "meta(docutils.parsers.rst.directives.misc.Meta)": {
       "documentation": [
         "# Metadata",
         "| | |",
@@ -2168,7 +2482,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#meta",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.misc.Raw": {
+    "raw(docutils.parsers.rst.directives.misc.Raw)": {
       "documentation": [
         "# Raw Data Pass-Through",
         "| | |",
@@ -2269,7 +2583,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#raw",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.misc.Include": {
+    "include(docutils.parsers.rst.directives.misc.Include)": {
       "documentation": [
         "# Including an External Document Fragment",
         "| | |",
@@ -2422,7 +2736,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#include",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.misc.Replace": {
+    "replace(docutils.parsers.rst.directives.misc.Replace)": {
       "documentation": [
         "# Replacement Text",
         "| | |",
@@ -2459,7 +2773,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#replace",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.misc.Unicode": {
+    "unicode(docutils.parsers.rst.directives.misc.Unicode)": {
       "documentation": [
         "# Unicode Character Codes",
         "| | |",
@@ -2536,175 +2850,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#unicode",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.misc.Class": {
-      "documentation": [
-        "# Class",
-        "| | |",
-        "|-|-|",
-        "| Directive Type | \"class\" or \"rst-class\" (synonyms) [^14] |",
-        "| Doctree Element | [<pending>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#pending) |",
-        "| Directive Arguments | one or more, required(class names / attribute values) |",
-        "| Directive Options | none |",
-        "| Directive Content | Optional.  If present, it is interpreted as bodyelements. |",
-        "",
-        "The \"class\" directive sets the [classes attribute](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#classes) value on its content",
-        "or on the next visible [^15] element. [^16]",
-        "The directive argument consists of one or more space-separated class",
-        "names. The names are transformed to conform to the regular expression",
-        "`[a-z](-?[a-z0-9]+)*` (see [Identifier Normalization](https://docutils.sourceforge.io/docs/ref/rst/directives.html#identifier-normalization) below).",
-        "",
-        "----",
-        "**TIP**",
-        "",
-        "",
-        "For reStructuredText directives, the [class option](https://docutils.sourceforge.io/docs/ref/rst/directives.html#class-option) provides",
-        "a more compact markup alternative.",
-        "",
-        "----",
-        "",
-        "Examples:",
-        "```",
-        ".. class:: special",
-        "",
-        "This is a \"special\" paragraph.",
-        "",
-        ".. class:: exceptional remarkable",
-        "",
-        "An Exceptional Section",
-        "======================",
-        "",
-        "This is an ordinary paragraph.",
-        "",
-        ".. class:: multiple",
-        "",
-        "   First paragraph.",
-        "",
-        "   Second paragraph.",
-        "```",
-        "",
-        "The text above is parsed and transformed into this [doctree](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html) fragment:",
-        "```",
-        "<paragraph classes=\"special\">",
-        "    This is a \"special\" paragraph.",
-        "<section classes=\"exceptional remarkable\">",
-        "    <title>",
-        "        An Exceptional Section",
-        "    <paragraph>",
-        "        This is an ordinary paragraph.",
-        "    <paragraph classes=\"multiple\">",
-        "        First paragraph.",
-        "    <paragraph classes=\"multiple\">",
-        "        Second paragraph.",
-        "```",
-        "",
-        "Indented text after the directive is interpreted as content block.",
-        "To set a classes attribute value on a [block quote](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#block-quotes), the",
-        "\"class\" directive must be followed by a comment:",
-        "```",
-        ".. class:: special",
-        "..",
-        "",
-        "    Special block quote.",
-        "```",
-        "",
-        "results in this [doctree](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html) fragment:",
-        "```",
-        "<comment xml:space=\"preserve\">",
-        "<block_quote classes=\"special\">",
-        "    <paragraph>",
-        "        Special block quote.",
-        "```",
-        "[^14]: ",
-        "[Sphinx](http://sphinx-doc.org/) uses the directive name \"class\" for [domain specific](https://www.sphinx-doc.org/en/master/usage/domains/)",
-        "directives (by default \"[py:class](https://www.sphinx-doc.org/en/master/usage/domains/python.html#directive-py-class)\").",
-        "The \"rst-class\" synonym is compatible with Sphinx.",
-        "",
-        "[^15]: ",
-        "Elements that are not shown in the output ([comments](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#comments),",
-        "[substitution definitions](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#substitution-definitions), [hyperlink targets](https://docutils.sourceforge.io/docs/ref/rst/restructuredtext.html#hyperlink-targets), ...) as well as",
-        "\"[header](https://docutils.sourceforge.io/docs/ref/rst/directives.html#header)\" and \"[footer](https://docutils.sourceforge.io/docs/ref/rst/directives.html#footer)\" directives are skipped.",
-        "",
-        "[^16]: ",
-        "This also works if the class directive is \"nested\" at the end of",
-        "an indented text block.",
-        "This allows the \"classification\" of individual list items (except the",
-        "first, as a preceding class directive applies to the list as a whole):",
-        "```",
-        "* bullet list",
-        "",
-        "  .. class:: classy-item",
-        "",
-        "* second item, with class argument",
-        "```",
-        "",
-        "## Identifier Normalization",
-        "Docutils normalizes [class names](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#class-names) and [identifiers](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#identifiers) to conform",
-        "to the regular expression \"`[a-z](-?[a-z0-9]+)*`\" by converting",
-        "- alphabetic characters to lowercase,",
-        "- accented characters to the base character,",
-        "- non-alphanumeric characters to hyphens,",
-        "- consecutive hyphens into one hyphen",
-        "",
-        "and stripping",
-        "- leading hyphens and number characters, and",
-        "- trailing hyphens.",
-        "",
-        "For example `\"Rot.Gelb&Gr\u00fcn::2008+\"` becomes `\"rot-gelb-grun-2008\"` and",
-        "`\"1000_Steps!\"` becomes `\"steps\"`.",
-        "",
-        "----",
-        "**RATIONALE:**",
-        "",
-        "",
-        "Identifier keys must be valid in all supported output formats.",
-        "",
-        "For HTML\u00a04.1 + CSS1 compatibility, identifiers should have no",
-        "underscores, colons, or periods.  Hyphens may be used.",
-        "- The [HTML 4.01 spec](https://www.w3.org/TR/html401/) defines identifiers based on SGML tokens:",
-        "",
-        "----",
-        "",
-        "",
-        "",
-        "ID and NAME tokens must begin with a letter ([A-Za-z]) and",
-        "may be followed by any number of letters, digits ([0-9]),",
-        "hyphens (\"-\"), underscores (\"_\"), colons (\":\"), and periods",
-        "(\".\").",
-        "",
-        "-- [https://www.w3.org/TR/html401/types.html#type-name](https://www.w3.org/TR/html401/types.html#type-name)",
-        "",
-        "----",
-        "- The [CSS1 spec](https://www.w3.org/TR/REC-CSS1) defines identifiers based on the \"name\" token",
-        "(\"flex\" tokenizer notation below):",
-        "```",
-        "unicode     \\\\[0-9a-f]{1,4}",
-        "latin1      [\u00a1-\u00ff]",
-        "escape      {unicode}|\\\\[ -~\u00a1-\u00ff]",
-        "nmchar      [-a-z0-9]|{latin1}|{escape}",
-        "name        {nmchar}+",
-        "```",
-        "",
-        "The CSS1 rule requires underscores (\"_\"), colons (\":\"), and",
-        "periods (\".\") to be escaped [^17],",
-        "therefore [classes](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#classes) and [ids attribute](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#ids)s should not",
-        "contain these characters.  Combined with HTML4.1 requirements (the",
-        "first character must be a letter; no \"unicode\", \"latin1\", or",
-        "\"escape\" characters), this results in the regular expression",
-        "`[A-Za-z][-A-Za-z0-9]*`. Docutils adds a normalization by",
-        "downcasing and merge of consecutive hyphens.",
-        "[^17]: ",
-        "CSS identifiers may use underscores (\"_\") directly in",
-        "[CSS\u00a0Level\u00a01](https://www.w3.org/TR/CSS21/syndata.html#value-def-identifier), [CSS2.1](https://www.w3.org/TR/CSS/#css-level-1), [CSS2.2](https://www.w3.org/TR/CSS22/syndata.html), and [CSS3](https://www.w3.org/TR/css-syntax-3/#typedef-ident-token).",
-        "",
-        "",
-        "----"
-      ],
-      "option_providers": {},
-      "argument_providers": [],
-      "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#class-20",
-      "license": "https://docutils.sourceforge.io/COPYING.html"
-    },
-    "docutils.parsers.rst.directives.misc.Role": {
+    "role(docutils.parsers.rst.directives.misc.Role)": {
       "documentation": [
         "# Custom Interpreted Text Roles",
         "| | |",
@@ -2813,7 +2959,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#role",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.misc.DefaultRole": {
+    "default-role(docutils.parsers.rst.directives.misc.DefaultRole)": {
       "documentation": [
         "# Setting the Default Interpreted Text Role",
         "| | |",
@@ -2861,7 +3007,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#default-role",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.misc.Title": {
+    "title(docutils.parsers.rst.directives.misc.Title)": {
       "documentation": [
         "# Metadata Document Title",
         "| | |",
@@ -2883,7 +3029,7 @@
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#title",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     },
-    "docutils.parsers.rst.directives.misc.Date": {
+    "date(docutils.parsers.rst.directives.misc.Date)": {
       "documentation": [
         "# Date",
         "| | |",
@@ -2914,30 +3060,6 @@
       "option_providers": {},
       "argument_providers": [],
       "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#date",
-      "license": "https://docutils.sourceforge.io/COPYING.html"
-    },
-    "docutils.parsers.rst.directives.misc.TestDirective": {
-      "documentation": [
-        "# Restructuredtext-Test-Directive",
-        "| | |",
-        "|-|-|",
-        "| Directive Type | \"restructuredtext-test-directive\" |",
-        "| Doctree Element | [<system_message>](https://docutils.sourceforge.io/docs/ref/rst/../doctree.html#system-message) |",
-        "| Directive Arguments | none |",
-        "| Directive Options | none |",
-        "| Directive Content | Interpreted as a literal block. |",
-        "",
-        "This directive is provided for test purposes only.  (Nobody is",
-        "expected to type in a name *that* long!)  It is converted into a",
-        "level-1 (info) system message showing the directive data, possibly",
-        "followed by a literal block containing the rest of the directive",
-        "block."
-      ],
-      "option_providers": {
-        "option": null
-      },
-      "argument_providers": [],
-      "source": "https://docutils.sourceforge.io/docs/ref/rst/directives.html#restructuredtext-test-directive",
       "license": "https://docutils.sourceforge.io/COPYING.html"
     }
   }
