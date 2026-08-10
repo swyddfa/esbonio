@@ -129,10 +129,13 @@ def update_directives(directive_index: dict[str, DirectiveInfo]):
         doctree.source = DIRECTIVES_DOC_URL.replace(".rst", ".html")
 
     for k, spec in items.items():
+        if k == "restructuredtext-test-directive":
+            continue
+
         impl, dotted_name = resolve_directive(spec)
 
         # Make sure we don't stomp on any existing records
-        record = directive_index.setdefault(dotted_name, new_directive())
+        record = directive_index.setdefault(f"{k}({dotted_name})", new_directive())
         update_documentation(record, doctree, k)
 
         # Ensure options are up to date
@@ -171,8 +174,11 @@ def update_roles(role_index: dict[str, RoleInfo]):
         except AttributeError:
             dotted_name = f"{impl.__module__}.{impl.__class__.__name__}"
 
+        if "unimplemented_role" in dotted_name:
+            continue
+
         # Make sure we don't stomp on any existing records
-        record = role_index.setdefault(dotted_name, new_role())
+        record = role_index.setdefault(f"{k}({dotted_name})", new_role())
         update_documentation(record, doctree, k)
 
     return role_index
@@ -214,12 +220,12 @@ def update_documentation(
     record: DirectiveInfo | RoleInfo, doctree: nodes.document | None, item: str
 ):
     """Update the documentation for the given item."""
-    logging.debug("Documenting item: %r", item)
 
     if doctree is None:
         return
 
     section_id = SECTION_ID_MAP.get(item, item)
+    logging.debug("Documenting item: %r -> section %r", item, section_id)
 
     if (node := doctree.next_node(condition=find_section(section_id))) is None:
         logging.warning("Unable to find section node for %r", item)
