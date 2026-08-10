@@ -42,7 +42,7 @@ GoTo ...
 ... Definition
 ^^^^^^^^^^^^^^
 
-Esbonio supports GoTo Definition requests for role targets, including
+``esbonio`` supports GoTo Definition requests for role targets, including
 
 - Local files :download:`./roles.rst`
 - Documents :doc:`/myst/roles`
@@ -54,12 +54,18 @@ Try invoking GoTo Definition on any of the above targets
 Hover
 -----
 
-Esbonio provides documentation hovers for role targets, including
+``esbonio`` provides documentation hovers for role targets, including:
 
-- Local Python objects, for example
+- Local Python objects, for example:
 
   - :py:class:`counters.pattern.PatternCounter`
   - :meth:`counters.pattern.PatternCounter.fromstr`
   - :obj:`counters.pattern.DEFAULT_PATTERN`
 
-Hover over any of the above targets to see their associated content
+Hover over any of the above targets to see their associated content.
+
+``esbonio`` also provides documentation hovers for the roles themselves:
+
+- :pep-reference:`8`
+- :emphasis:``
+- :strong:

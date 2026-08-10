@@ -851,19 +851,67 @@ async def test_role_target_definitions(
     [
         (
             ["workspaces", "demo", "rst", "roles.rst"],
-            # Requests for the role itself should return nothing
+            # Requests for unkown roles should return the implementation name
             types.Position(line=60, character=10),
-            None,
-        ),
-        (
-            ["workspaces", "demo", "myst", "roles.md"],
-            # Requests for the role itself should return nothing
-            types.Position(line=53, character=10),
-            None,
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="sphinx.domains.python.PyXRefRole",
+                ),
+                range=types.Range(
+                    start=types.Position(line=60, character=4),
+                    end=types.Position(line=60, character=14),
+                ),
+            ),
         ),
         (
             ["workspaces", "demo", "rst", "roles.rst"],
-            # Requests for the role itself should return nothing
+            # Requests for known roles should describe the role's usage
+            types.Position(line=68, character=10),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="# :pep-reference:",
+                ),
+                range=types.Range(
+                    start=types.Position(line=68, character=2),
+                    end=types.Position(line=68, character=17),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            # Even if the role's use is incomplete
+            types.Position(line=69, character=10),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="# :emphasis:",
+                ),
+                range=types.Range(
+                    start=types.Position(line=69, character=2),
+                    end=types.Position(line=69, character=12),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            # Even if the role's use is incomplete
+            types.Position(line=70, character=5),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="# :strong:",
+                ),
+                range=types.Range(
+                    start=types.Position(line=70, character=2),
+                    end=types.Position(line=70, character=10),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            # For supported roles, requests from the role target should describe the target itself.
             types.Position(line=60, character=26),
             types.Hover(
                 contents=types.MarkupContent(
@@ -875,6 +923,40 @@ async def test_role_target_definitions(
                     end=types.Position(line=60, character=47),
                 ),
             ),
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            types.Position(line=61, character=10),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="Helper for creating a PatternCounter",
+                ),
+                range=types.Range(
+                    start=types.Position(line=61, character=10),
+                    end=types.Position(line=61, character=51),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "rst", "roles.rst"],
+            types.Position(line=62, character=43),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="The default pattern used",
+                ),
+                range=types.Range(
+                    start=types.Position(line=62, character=9),
+                    end=types.Position(line=62, character=43),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            # Requests for the role itself should return nothing
+            types.Position(line=53, character=10),
+            None,
         ),
         (
             ["workspaces", "demo", "myst", "roles.md"],
@@ -892,21 +974,6 @@ async def test_role_target_definitions(
             ),
         ),
         (
-            ["workspaces", "demo", "rst", "roles.rst"],
-            # Requests for the role itself should return nothing
-            types.Position(line=61, character=10),
-            types.Hover(
-                contents=types.MarkupContent(
-                    kind=types.MarkupKind.Markdown,
-                    value="Helper for creating a PatternCounter",
-                ),
-                range=types.Range(
-                    start=types.Position(line=61, character=10),
-                    end=types.Position(line=61, character=51),
-                ),
-            ),
-        ),
-        (
             ["workspaces", "demo", "myst", "roles.md"],
             # Requests for the role itself should return nothing
             types.Position(line=54, character=15),
@@ -918,21 +985,6 @@ async def test_role_target_definitions(
                 range=types.Range(
                     start=types.Position(line=54, character=13),
                     end=types.Position(line=54, character=54),
-                ),
-            ),
-        ),
-        (
-            ["workspaces", "demo", "rst", "roles.rst"],
-            # Requests for the role itself should return nothing
-            types.Position(line=62, character=43),
-            types.Hover(
-                contents=types.MarkupContent(
-                    kind=types.MarkupKind.Markdown,
-                    value="The default pattern used",
-                ),
-                range=types.Range(
-                    start=types.Position(line=62, character=9),
-                    end=types.Position(line=62, character=43),
                 ),
             ),
         ),
@@ -953,7 +1005,7 @@ async def test_role_target_definitions(
         ),
     ],
 )
-async def test_role_target_hover(
+async def test_role_hover(
     client: LanguageClient,
     uri_for,
     filename: list[str],
