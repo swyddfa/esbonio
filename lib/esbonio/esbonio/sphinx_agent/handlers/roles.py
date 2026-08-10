@@ -1,22 +1,39 @@
+from __future__ import annotations
+
 import inspect
-from typing import Any
+import json
+import pathlib
+import typing
 
 from docutils.parsers.rst import roles as docutils_roles
+from sphinx.util.logging import getLogger
 
 from .. import types
 from ..app import Database
 from ..app import Sphinx
 from ..util import as_json
 
+if typing.TYPE_CHECKING:
+    from typing import Any
+    from typing import TypedDict
+
+    class RoleInfo(TypedDict):
+        documentation: str
+        source: str
+        license: str
+
+
 ROLES_TABLE = Database.Table(
     "roles",
     [
         Database.Column(name="name", dtype="TEXT"),
         Database.Column(name="implementation", dtype="TEXT"),
+        Database.Column(name="documentation", dtype="TEXT"),
         Database.Column(name="location", dtype="JSON"),
         Database.Column(name="target_providers", dtype="JSON"),
     ],
 )
+logger = getLogger(__name__)
 
 
 def get_impl_name(role: Any) -> str:
@@ -71,7 +88,7 @@ def index_roles(app: Sphinx):
 
         roles[name] = types.Role(name, get_impl_name(role))
 
-    _add_providers(app, roles)
+    populate_known_roles(app, roles)
 
     app.esbonio.db.ensure_table(ROLES_TABLE)
     app.esbonio.db.clear_table(ROLES_TABLE)
@@ -85,8 +102,60 @@ def setup(app: Sphinx):
     app.connect("builder-inited", index_roles, priority=999)
 
 
-def _add_providers(app: Sphinx, roles: dict[str, types.Role]):
-    """Add provider definitions to built in role types we know about."""
+def populate_known_roles(app: Sphinx, roles: dict[str, types.Role]):
+    """Add documentation and target provider definitions to the role types we know
+    about."""
+
+    role_info = _load_role_info()
+
+    for role in roles.values():
+        key = f"{role.name}({role.implementation})"
+        if (info := role_info.get(key)) is None:
+            continue
+
+        role.documentation = render_docs(info)
+
+    # Add additional information that is best determined at runtime
+    _add_filepath_provider_to(roles, app)
+
+
+def _load_role_info() -> dict[str, RoleInfo]:
+    """Load the bundled data on known directives."""
+
+    info: dict[str, RoleInfo] = {}
+
+    try:
+        path = pathlib.Path(__file__).parent / "docutils.json"
+        items = json.loads(path.read_text())
+        info.update(items.get("roles", {}))
+    except Exception:
+        logger.exception("Unable to load info on docutils roles.")
+
+    try:
+        path = pathlib.Path(__file__).parent / "sphinx.json"
+        items = json.loads(path.read_text())
+        info.update(items.get("roles", {}))
+    except Exception:
+        logger.exception("Unable to load info on sphinx roles.")
+
+    return info
+
+
+def render_docs(info: RoleInfo) -> str:
+    lines = list(info["documentation"])
+
+    if (source := info.get("source", "")) != "":
+        lines.append(f"\n\n[Source]({source})")
+
+    if (link := info.get("license", "")) != "":
+        lines.append(f"\n\n[License]({link})")
+
+    return "\n".join(lines)
+
+
+def _add_filepath_provider_to(roles: dict[str, types.Role], app: Sphinx):
+    """Add a target provider that returns filepaths relative to the given sphinx project
+    to the relevant roles.."""
 
     filepath_provider = types.Role.TargetProvider("filepath", {"root": app.srcdir})
 

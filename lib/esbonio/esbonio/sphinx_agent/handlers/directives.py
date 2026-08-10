@@ -135,13 +135,13 @@ def populate_known_directives(app: Sphinx, directives: dict[str, types.Directive
     directive_info = _load_directive_info()
 
     for directive in directives.values():
-        if directive.implementation not in directive_info:
+        key = f"{directive.name}({directive.implementation})"
+        if (info := directive_info.get(key)) is None:
             continue
 
-        info = directive_info[directive.implementation]
         directive.documentation = render_docs(info)
 
-    # Add additional information that it best determined at runtime.
+    # Add additional information that is best determined at runtime.
     _add_lexers_provider_to(directives)
     _add_filepath_provider_to(directives, app)
 

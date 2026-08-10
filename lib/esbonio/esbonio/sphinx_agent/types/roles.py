@@ -16,7 +16,7 @@ if typing.TYPE_CHECKING:
     JsonLoader = Callable[[str, type[T]], T]
 
 
-MYST_ROLE: re.Pattern = re.compile(
+MYST_ROLE: re.Pattern[str] = re.compile(
     r"""
     ([^\w`]|^\s*)                     # roles cannot be preceeded by letter chars
     (?P<role>
@@ -63,7 +63,7 @@ is overriden, for example::
 """
 
 
-RST_ROLE = re.compile(
+RST_ROLE: re.Pattern[str] = re.compile(
     r"""
     ([^\w:]|^\s*)                     # roles cannot be preceeded by letter chars
     (?P<role>
@@ -110,7 +110,7 @@ is overriden, for example::
 """
 
 
-RST_DEFAULT_ROLE = re.compile(
+RST_DEFAULT_ROLE: re.Pattern[str] = re.compile(
     r"""
     (?<![:`])
     (?P<target>
@@ -150,6 +150,9 @@ class Role:
     implementation: str | None
     """The dotted name of the role's implementation."""
 
+    documentation: str | None = field(default=None)
+    """Usage documentation, if known"""
+
     location: Location | None = field(default=None)
     """The location of the role's implementation, if known."""
 
@@ -158,7 +161,7 @@ class Role:
 
     def to_db(
         self, dumps: Callable[[Any], str]
-    ) -> tuple[str, str | None, str | None, str | None]:
+    ) -> tuple[str, str | None, str | None, str | None, str | None]:
         """Convert this role to its database representation."""
         if len(self.target_providers) > 0:
             providers = dumps(self.target_providers)
@@ -166,7 +169,7 @@ class Role:
             providers = None
 
         location = dumps(self.location) if self.location is not None else None
-        return (self.name, self.implementation, location, providers)
+        return (self.name, self.implementation, self.documentation, location, providers)
 
     @classmethod
     def from_db(
@@ -174,6 +177,7 @@ class Role:
         load_as: JsonLoader,
         name: str,
         implementation: str | None,
+        documentation: str | None,
         location: str | None,
         providers: str | None,
     ) -> Role:
@@ -189,6 +193,7 @@ class Role:
         return cls(
             name=name,
             implementation=implementation,
+            documentation=documentation,
             location=loc,
             target_providers=target_providers,
         )

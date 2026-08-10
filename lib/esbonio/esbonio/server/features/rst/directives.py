@@ -210,7 +210,9 @@ class RstDirectives(server.LanguageFeature):
         if (directive := await self.directives.get_directive(uri, name)) is None:
             return None
 
-        self.logger.debug("Hovering directive: %r", directive.name)
+        self.logger.debug(
+            "Hovering directive: '%s(%s)'", directive.name, directive.implementation
+        )
 
         start = context.match.group(0).index(name)
         end = start + len(name)
