@@ -17,17 +17,6 @@ class MystRoles(server.LanguageFeature):
         self.roles = roles
         self._insert_behavior = "replace"
 
-    completion_trigger = server.CompletionTrigger(
-        patterns=[MYST_ROLE],
-        languages={"markdown"},
-        characters={"{", "`", "<", "/"},
-    )
-
-    definition_trigger = server.DefinitionTrigger(
-        patterns=[MYST_ROLE],
-        languages={"markdown"},
-    )
-
     def initialized(self, params: types.InitializedParams):
         """Called once the initial handshake between client and server has finished."""
         self.configuration.subscribe(
@@ -41,6 +30,12 @@ class MystRoles(server.LanguageFeature):
     ):
         """Called when the user's configuration is updated."""
         self._insert_behavior = event.value.preferred_insert_behavior
+
+    completion_trigger = server.CompletionTrigger(
+        patterns=[MYST_ROLE],
+        languages={"markdown"},
+        characters={"{", "`", "<", "/"},
+    )
 
     async def completion(
         self, context: server.CompletionContext
@@ -101,6 +96,11 @@ class MystRoles(server.LanguageFeature):
             return items
 
         return None
+
+    definition_trigger = server.DefinitionTrigger(
+        patterns=[MYST_ROLE],
+        languages={"markdown"},
+    )
 
     async def definition(
         self, context: server.DefinitionContext
@@ -171,24 +171,62 @@ class MystRoles(server.LanguageFeature):
 
     async def hover(self, context: server.HoverContext) -> types.Hover | None:
         """Find the hover text of the requested item"""
-        role = context.match.group("name")
-        target = context.match.group("target")
-        label = context.match.group("label")
-
-        if not label:
-            return None
-
-        idx = context.match.group(0).index(target)
-        start = context.match.start() + idx
-        end = start + len(target)
+        start = context.match.start("role")
+        end = context.match.end("role") - 1
 
         if start <= context.position.character <= end:
-            if (text := await self.roles.hover_target(context, role, label)) is None:
-                return None
-        else:
+            return await self.hover_role(context)
+
+        if not context.match.group("label"):
+            return None
+
+        start = context.match.start("target")
+        end = context.match.end("target")
+
+        if start <= context.position.character <= end:
+            return await self.hover_role_target(context)
+
+        return None
+
+    async def hover_role(self, context: server.HoverContext) -> types.Hover | None:
+        """Find the hover text of the role under cursor."""
+        uri = context.uri
+        pos = context.position
+        name = context.match.group("name")
+
+        self.logger.debug("Lookng for role..")
+        if (role := await self.roles.get_role(uri, name)) is None:
+            return None
+
+        self.logger.debug("Hovering role: '%s(%s)'", role.name, role.implementation)
+        start = context.match.start("role")
+        end = context.match.end("role")
+
+        return types.Hover(
+            contents=types.MarkupContent(
+                kind=types.MarkupKind.Markdown,
+                value=role.documentation or role.implementation or name,
+            ),
+            range=types.Range(
+                start=types.Position(line=pos.line, character=start),
+                end=types.Position(line=pos.line, character=end),
+            ),
+        )
+
+    async def hover_role_target(
+        self, context: server.HoverContext
+    ) -> types.Hover | None:
+        """Find the hover text of the role's target"""
+        role = context.match.group("name")
+        label = context.match.group("label")
+
+        if (text := await self.roles.hover_target(context, role, label)) is None:
             return None
 
         linum = context.position.line
+        start = context.match.start("target")
+        end = context.match.end("target")
+
         return types.Hover(
             contents=types.MarkupContent(kind=types.MarkupKind.Markdown, value=text),
             range=types.Range(
