@@ -18,7 +18,7 @@ def check_diagnostics(
 ):
     """Ensure that two sets of diagnostics are equal."""
     converter = default_converter()
-    assert set(str(k) for k in actual.keys()) == set(str(k) for k in expected.keys())
+    assert {str(k) for k in actual.keys()} == {str(k) for k in expected.keys()}
 
     for k, ex_diags in expected.items():
         actual_diags = [converter.structure(d, types.Diagnostic) for d in actual[k]]
