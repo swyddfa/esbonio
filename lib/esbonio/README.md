@@ -7,42 +7,55 @@
 
 A [Language Server](https://microsoft.github.io/language-server-protocol/) that aims to make it easier to work with [reStructuredText](https://docutils.sourceforge.io/rst.html) tools such as [Sphinx](https://www.sphinx-doc.org/en/master/)
 
+## Features
+
 The language server provides the following features
 
-## Completion
+### Completion
 
 ![Completion Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/completion-demo.gif)
 
-## Definitions
+### Definitions
 
 ![Definition Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/definition-demo.png)
 
-## Diagnostics
+### Diagnostics
 
 ![Diagnostics Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/diagnostic-sphinx-errors-demo.png)
 
-## Document Links
+### Document Links
 
 ![Document Link Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/document-links-demo.png)
 
-## Document & Workspace Symbols
+### Document & Workspace Symbols
 
 ![Document & Workspace Symbol Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/document-workspace-symbols-demo.png)
 
-## Hover
+### Hover
 
 ![Hover Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/hover-demo.png)
 
-## Implementations
+### Implementations
 
 ![Implementations Demo](https://github.com/swyddfa/esbonio/raw/release/resources/images/implementation-demo.gif)
 
 ## Installation
 
-It's recommended to install the language server with [`pipx`](https://pipx.pypa.io/stable/)
+It's recommended to install the language server as a standalone application in a dedicated environment.
+This can be done using tools like  [`pipx`](https://pipx.pypa.io/stable/)
 
-Be sure to check out the [Getting Started](https://docs.esbon.io/en/latest/lsp/getting-started.html) guide for details on integrating the server with your editor of choice.
+```sh
+pipx install esbonio
+```
 
+Or [`uv`](https://docs.astral.sh/uv/)
+
+```sh
+uv tool install esbonio
 ```
-$ pipx install esbonio
-```
+
+## Getting Started
+
+Be sure to check out the [Getting Started](https://docs.esbon.io/en/release/usage/getting-started.html) guide for an overview on using the language server from within VSCode.
+
+Alternatively, check out the page on [Editor Integrations](https://docs.esbon.io/en/release/integrating/getting-started.html) for details on using `esbonio` from your editor of choice.
