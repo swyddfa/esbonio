@@ -35,7 +35,7 @@ dependencies = [
 
 [project.urls]
 "Bug Tracker" = "https://github.com/swyddfa/esbonio/issues"
-"Documentation" = "https://swyddfa.github.io/esbonio/"
+"Documentation" = "https://docs.esbon.io/"
 "Source Code" = "https://github.com/swyddfa/esbonio"
 
 [project.scripts]
