@@ -47,7 +47,7 @@ Try invoking GoTo Definition on any of the above targets.
 
 ## Hover
 
-Esbonio provides documentation hovers for role targets, including:
+`esbonio` provides documentation hovers for role targets, including:
 
 - Local Python objects, for example:
 
@@ -56,3 +56,9 @@ Esbonio provides documentation hovers for role targets, including:
   - {py:obj}`counters.pattern.DEFAULT_PATTERN`
 
 Hover over any of the above targets to see their associated content.
+
+`esbonio` also provides documentation hovers for the roles themselves:
+
+- {pep-reference}`8`
+- {emphasis}``
+- {strong}

@@ -954,13 +954,22 @@ async def test_role_target_definitions(
         ),
         (
             ["workspaces", "demo", "myst", "roles.md"],
-            # Requests for the role itself should return nothing
+            # Requests for unknown roles should return the implementation name
             types.Position(line=53, character=10),
-            None,
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="sphinx.domains.python.PyXRefRole",
+                ),
+                range=types.Range(
+                    start=types.Position(line=53, character=4),
+                    end=types.Position(line=53, character=14),
+                ),
+            ),
         ),
         (
             ["workspaces", "demo", "myst", "roles.md"],
-            # Requests for the role itself should return nothing
+            # For supported roles, requests from the role target should describe the target itself.
             types.Position(line=53, character=26),
             types.Hover(
                 contents=types.MarkupContent(
@@ -975,7 +984,6 @@ async def test_role_target_definitions(
         ),
         (
             ["workspaces", "demo", "myst", "roles.md"],
-            # Requests for the role itself should return nothing
             types.Position(line=54, character=15),
             types.Hover(
                 contents=types.MarkupContent(
@@ -990,7 +998,6 @@ async def test_role_target_definitions(
         ),
         (
             ["workspaces", "demo", "myst", "roles.md"],
-            # Requests for the role itself should return nothing
             types.Position(line=55, character=43),
             types.Hover(
                 contents=types.MarkupContent(
@@ -1000,6 +1007,50 @@ async def test_role_target_definitions(
                 range=types.Range(
                     start=types.Position(line=55, character=12),
                     end=types.Position(line=55, character=46),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            # Requests for known roles should describe the role's usage
+            types.Position(line=61, character=5),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="# :pep-reference:",
+                ),
+                range=types.Range(
+                    start=types.Position(line=61, character=2),
+                    end=types.Position(line=61, character=17),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            # Even if the role's use is incomplete
+            types.Position(line=62, character=11),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="# :emphasis:",
+                ),
+                range=types.Range(
+                    start=types.Position(line=62, character=2),
+                    end=types.Position(line=62, character=12),
+                ),
+            ),
+        ),
+        (
+            ["workspaces", "demo", "myst", "roles.md"],
+            types.Position(line=63, character=3),
+            types.Hover(
+                contents=types.MarkupContent(
+                    kind=types.MarkupKind.Markdown,
+                    value="# :strong:",
+                ),
+                range=types.Range(
+                    start=types.Position(line=63, character=2),
+                    end=types.Position(line=63, character=10),
                 ),
             ),
         ),
