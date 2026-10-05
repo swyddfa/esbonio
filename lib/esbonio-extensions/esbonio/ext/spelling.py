@@ -1,26 +1,24 @@
 """Spell checking."""
 
 import re
-from typing import Dict
-from typing import List
-from typing import Optional
 
 import pygls.uris as Uri
 from docutils import nodes
-from lsprotocol.types import CodeAction
-from lsprotocol.types import CodeActionKind
-from lsprotocol.types import CodeActionParams
-from lsprotocol.types import Diagnostic
-from lsprotocol.types import DiagnosticSeverity
-from lsprotocol.types import DidSaveTextDocumentParams
-from lsprotocol.types import Position
-from lsprotocol.types import Range
-from lsprotocol.types import TextEdit
-from lsprotocol.types import WorkspaceEdit
-from spellchecker import SpellChecker  # type: ignore
-
 from esbonio.lsp.rst import LanguageFeature
 from esbonio.lsp.sphinx import SphinxLanguageServer
+from lsprotocol.types import (
+    CodeAction,
+    CodeActionKind,
+    CodeActionParams,
+    Diagnostic,
+    DiagnosticSeverity,
+    DidSaveTextDocumentParams,
+    Position,
+    Range,
+    TextEdit,
+    WorkspaceEdit,
+)
+from spellchecker import SpellChecker  # type: ignore
 
 IGNORED_NODES = {nodes.raw, nodes.literal, nodes.literal_block}
 """Don't spell check Text contained in any of these nodes."""
@@ -31,9 +29,9 @@ class Spelling(LanguageFeature):
         super().__init__(*args, **kwargs)
 
         self.lang = SpellChecker()
-        self.errors: Dict[str, List[MisSpelling]] = {}
+        self.errors: dict[str, list[MisSpelling]] = {}
 
-    def code_action(self, params: CodeActionParams) -> List[CodeAction]:
+    def code_action(self, params: CodeActionParams) -> list[CodeAction]:
         uri = params.text_document.uri
         ranges = {d.range for d in params.context.diagnostics}
 
@@ -72,7 +70,7 @@ class Spelling(LanguageFeature):
     def save(self, params: DidSaveTextDocumentParams):
         self.find_errors_for_uri(params.text_document.uri)
 
-    def find_errors_for_uri(self, uri: str) -> List["MisSpelling"]:
+    def find_errors_for_uri(self, uri: str) -> list["MisSpelling"]:
         """Find any mis-spellings in the given document."""
 
         doctree = self.rst.get_doctree(uri=uri)
@@ -114,7 +112,7 @@ class Spelling(LanguageFeature):
 class MisSpelling:
     """Represents an incorrectly spelled word."""
 
-    def __init__(self, line: int, character: int, text: str, source: Optional[str]):
+    def __init__(self, line: int, character: int, text: str, source: str | None):
         self.line = line
         self.character = character
         self.text = text
@@ -133,7 +131,7 @@ class MisSpelling:
         return f"MisSpelling<{self.line}:{self.character}, {self.text}>"
 
 
-def errors_to_diagnostics(errors: List[MisSpelling]) -> List[Diagnostic]:
+def errors_to_diagnostics(errors: list[MisSpelling]) -> list[Diagnostic]:
     diagnostics = []
 
     for error in errors:
@@ -155,8 +153,8 @@ def errors_to_diagnostics(errors: List[MisSpelling]) -> List[Diagnostic]:
 
 
 def find_words(
-    text: str, startline: int = 0, source: Optional[str] = None
-) -> List[MisSpelling]:
+    text: str, startline: int = 0, source: str | None = None
+) -> list[MisSpelling]:
     words = []
     delimiters = " \n"
     skip_characters = ",'\"()[]"

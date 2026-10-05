@@ -6,8 +6,7 @@ from docutils import nodes
 from docutils.transforms import Transform
 from sphinx.application import Sphinx
 from sphinx.util.docutils import SphinxDirective
-from sphinx.util.nodes import make_id
-from sphinx.util.nodes import nested_parse_with_titles
+from sphinx.util.nodes import make_id, nested_parse_with_titles
 
 __version__ = "0.2.2"
 

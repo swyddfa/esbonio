@@ -3,12 +3,10 @@ from unittest import mock
 
 import pytest
 from docutils.io import StringInput
-from docutils.parsers.rst import Parser
-from docutils.parsers.rst import directives
+from docutils.parsers.rst import Parser, directives
 from docutils.readers.standalone import Reader
-from sphinx.ext.doctest import DoctestDirective
-
 from esbonio.tutorial import Solution
+from sphinx.ext.doctest import DoctestDirective
 
 
 @pytest.fixture(scope="session")

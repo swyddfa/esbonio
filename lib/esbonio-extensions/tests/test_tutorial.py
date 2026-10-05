@@ -1,8 +1,8 @@
 import json
 import pathlib
 
-import esbonio.tutorial as tutorial
 import pytest
+from esbonio import tutorial
 
 
 @pytest.mark.parametrize(

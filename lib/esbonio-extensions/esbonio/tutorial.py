@@ -17,7 +17,8 @@ from sphinx.util.logging import getLogger
 from sphinx.util.osutil import copyfile, relative_uri
 
 if typing.TYPE_CHECKING:
-    from typing import Any, Iterable, Literal, Set, Tuple, TypedDict, Union
+    from collections.abc import Iterable
+    from typing import Any, Literal, TypedDict
 
     CellType = Literal["code", "markdown"]
 
@@ -112,7 +113,7 @@ class NotebookTranslator(nodes.NodeVisitor):
         self._list_styles: list[str] = []
         """Used to keep track of the current list style."""
 
-        self._prefix: list[Tuple[nodes.Node, str]] = []
+        self._prefix: list[tuple[nodes.Node, str]] = []
         """Used to keep track of the prefix to insert before text. e.g. ``> `` for
         markdown quote blocks."""
 
@@ -495,14 +496,14 @@ class Tutorial(Builder):
     def get_target_uri(self, docname: str, typ: str = None) -> str:
         return f"{docname}.ipynb"
 
-    def get_outdated_docs(self) -> Union[str, Iterable[str]]:
+    def get_outdated_docs(self) -> str | Iterable[str]:
         """This should return the outdated documents that should be processed.
 
         For the moment, we just return everything.
         """
         return self.env.found_docs
 
-    def prepare_writing(self, docnames: Set[str]) -> None:
+    def prepare_writing(self, docnames: set[str]) -> None:
         pass
 
     def write_doc(self, docname: str, doctree: nodes.document) -> None:
